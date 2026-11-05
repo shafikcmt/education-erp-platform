@@ -14,7 +14,7 @@
 
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
-| 0 | Documentation & architecture baseline | Complete | Phase 0 docs PR (see session log) | ADR-009…014 approved; PR merge pending owner |
+| 0 | Documentation & architecture baseline | Complete | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | ADR-009…014 approved; PR merge pending owner |
 | 1 | Repository foundation & infrastructure | Planned | | Plan awaiting approval |
 | 2 | Authentication, users, roles & permissions | Not started | | |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
@@ -67,6 +67,6 @@ See `DECISION_LOG.md`.
 - `DECISION_LOG.md`: recorded precise decisions (transaction-scoped `set_config` via `core.db.tenant_atomic`, FORCE RLS with fail-closed policy, `erp_owner`/`erp_app`/`erp_platform` roles, campus/institution limits, cookie attributes, `core.ids.new_id()` abstraction, uv/pnpm specifics, layout). Added ADR-028 (Proposed) for mobile/third-party auth. No other ADR status changed.
 - Updated `CLAUDE.md`, `SECURITY.md`, `API_STANDARDS.md`, `FRONTEND_STANDARDS.md`, `SYSTEM_ARCHITECTURE.md`, `MULTI_TENANT_ARCHITECTURE.md`, `DATABASE_DESIGN.md`, `TECH_STACK.md`, `DOCKER_DEPLOYMENT.md`, `SUBSCRIPTION_AND_BILLING.md`, `DEVELOPMENT_ROADMAP.md`. Removed the obsolete Next.js BFF token design.
 - Added `docs/plans/PHASE_01_PLAN.md` (status Proposed).
-- Opened the Phase 0 documentation PR into `main` (not merged; awaiting owner).
+- Opened the Phase 0 documentation PR [shafikcmt/education-erp-platform#1](https://github.com/shafikcmt/education-erp-platform/pull/1) into `main` (not merged; awaiting owner).
 - Tests/lint: not applicable (documentation only).
 - **Next recommended task:** owner approves the Phase 1 plan and answers Q1–Q8, merges the Phase 0 PR, then Phase 1 implementation starts.
