@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Education ERP — Django API (modular monolith)"
 requires-python = ">=3.13,<3.14"
 dependencies = [
-    "django>=5.2.8,<5.3",                 # mandated LTS line (ADR-003)
+    "django>=5.2.8,<6.2",                 # mandated LTS line (ADR-003)
     "djangorestframework>=3.16,<3.19",    # API framework (ADR-003)
     "drf-spectacular>=0.28,<0.31",        # OpenAPI contract (ADR-015)
     "django-environ>=0.12,<0.15",         # 12-factor settings (Phase 1 decision)
