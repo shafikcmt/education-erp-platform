@@ -194,14 +194,14 @@ Details: `docs/SUBSCRIPTION_AND_BILLING.md`.
 
 ## 9. Users and Roles
 
-**Platform-level roles** (no tenant membership by default):
+**Platform-level roles** (no tenant membership by default; **no implicit tenant-data access**: support access only via audited, time-limited support sessions, Phase 3):
 - `super_admin` — full platform administration (tenants, plans, modules, global config). MFA mandatory.
 - `platform_support` — read-only tenant diagnostics; tenant data access **only** via time-bound, reason-logged, audited support sessions (optionally requiring tenant consent).
 - `platform_billing` — plans, subscriptions, invoices; no tenant academic data.
 - `platform_onboarding` — create/configure new tenants during onboarding.
 
 **Institution-level (tenant) role templates** (tenants may clone and customize):
-`tenant_owner`, `institution_admin` (Principal/Head/Rector/Muhtamim), `campus_admin`, `academic_coordinator` (incl. Head of Department), `teacher`, `class_teacher` (advisor), `exam_controller`, `admission_officer`, `accountant`, `cashier`, `hr_manager`, `librarian`, `hostel_warden`, `transport_manager`, `front_desk`, `student`, `guardian`.
+`tenant_owner`, `institution_admin` (Principal/Head/Rector/Muhtamim), `campus_admin`, `academic_coordinator` (incl. Head of Department), `teacher`, `class_teacher` (advisor), `exam_controller`, `admission_officer`, `accountant`, `cashier`, `hr_manager`, `librarian`, `hostel_warden`, `transport_manager`, `front_desk`, `staff_member` (generic non-teaching staff), `student`, `guardian`.
 
 - Roles are **bundles of permissions**; authorization checks **permissions**, never role names.
 - A user may hold different roles in different institutions/campuses (scoped role assignments). One person (e.g. teacher who is also a parent) uses one account.
@@ -285,7 +285,7 @@ Details: `docs/AI_ASSISTANT.md`.
 
 ## 14. Security, Testing, Backup and Monitoring Standards
 
-**Security:** OWASP ASVS L2 target; Argon2 password hashing; MFA (mandatory for platform roles and tenant owners/admins, configurable for others); secure cookies; CSRF protection; strict CORS; CSP; rate limiting; input validation; output encoding; dependency and secret scanning in CI; secrets only via environment/secret manager — **never commit secrets**; least-privilege DB roles; encrypted backups; audit logging; PII handling and data retention policies. Details: `docs/SECURITY.md`.
+**Security:** OWASP ASVS L2 target; Argon2 password hashing; MFA mandatory for **privileged accounts** (data-driven: any permission flagged `requires_mfa`; ADR-035), optional for ordinary users; step-up re-authentication for sensitive operations; no user enumeration; encrypted security-event IPs (ADR-036); secure cookies; CSRF protection; strict CORS; CSP; rate limiting; input validation; output encoding; dependency and secret scanning in CI; secrets only via environment/secret manager — **never commit secrets**; least-privilege DB roles; encrypted backups; audit logging; PII handling and data retention policies. Details: `docs/SECURITY.md`.
 
 **Testing:** pytest + pytest-django + factory_boy (backend); Vitest + Testing Library (frontend); Playwright (E2E). Mandatory per module: unit tests for services, API tests for permissions (allowed + denied), **tenant isolation tests**, and transaction/concurrency tests for financial code. Coverage target ≥ 85% for backend services. Details: `docs/TESTING_STRATEGY.md`.
 
@@ -432,3 +432,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 and ADR-011 (with modification: Django session auth). Updated §2, §10, §11, §12, §16 accordingly. ADR-028 added (Proposed).
 - 2026-11-05 — Phase 1: ADR-015/021 accepted; storage service renamed to `objectstore` (SeaweedFS, ADR-029); phase table updated.
 - 2026-11-05 — Phase 1 review: ADR-029 (SeaweedFS, conditions verified) and ADR-030 (TS 5.9 / ESLint 9 held temporarily) accepted.
+- 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037): `staff_member` role code; privileged-account MFA + step-up; IP privacy; platform roles have no implicit tenant-data access.

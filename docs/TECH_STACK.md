@@ -30,6 +30,9 @@
 |---|---|---|
 | OpenAPI schema | `drf-spectacular` | Source of truth for the TS client |
 | Browser auth | Django sessions + DRF `SessionAuthentication` (built in) | ADR-011 accepted. `cached_db` session backend (Redis + PostgreSQL) |
+| TOTP MFA (Phase 2) | `pyotp` `>=2.10,<3` | Owner-approved 2026-11-05; installed at Phase 2 implementation |
+| Field encryption / HMAC (Phase 2) | `cryptography` `>=50.0.2,<51` | Owner-approved; ADR-031/036 |
+| QR codes (Phase 2) | `segno` `>=1.6.6,<2` | Owner-approved; server-side SVG; low release cadence noted |
 | Mobile/third-party auth (future) | `django-oauth-toolkit` or `djangorestframework-simplejwt` | ADR-028 Proposed. **Not** installed until decided |
 | UUIDv7 | `uuid-utils` (stdlib-compatible API), fallback `uuid6` | ADR-012 accepted. Pinned. Used only inside `core.ids` |
 | Filtering | `django-filter` | |
@@ -52,8 +55,8 @@
 
 | Purpose | Library |
 |---|---|
-| Server state | TanStack Query |
-| Forms | react-hook-form + zod |
+| Server state | TanStack Query `5.106.x` (owner-approved; installed in Phase 2) |
+| Forms | react-hook-form `7.91.x` + zod `4.6.x` (owner-approved; installed in Phase 2); `@hookform/resolvers` pending owner decision (Phase 2 plan Q11) |
 | API types | `openapi-typescript` (+ `openapi-fetch`) generated from DRF schema |
 | i18n | `next-intl` |
 | Tables | TanStack Table |
@@ -102,3 +105,4 @@
 
 Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml`.
 - 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).
+- 2026-11-05 — Phase 2 owner-approved libraries recorded with version ranges (installed at implementation).

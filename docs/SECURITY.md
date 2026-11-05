@@ -22,8 +22,12 @@
 ## 2. Authentication
 
 - Password hashing: Argon2id (Django `Argon2PasswordHasher` first in `PASSWORD_HASHERS`).
-- Password policy: min length 10 (proposed), Django validators, optional breached-password check.
-- MFA: TOTP (Phase 2); WebAuthn/passkeys later. **Mandatory** for `super_admin`, all platform roles, `tenant_owner`, `institution_admin`; tenant-configurable for others (cannot be turned off for mandated roles).
+- Password policy: Django password hashers and validators (ADR-033): minimum 10, maximum 128. Breached-password check (HIBP k-anonymity) is an **optional integration, disabled by default** (ADR-037).
+- MFA: TOTP + single-use recovery codes (Phase 2); WebAuthn/passkeys later.
+  - **Mandatory for privileged accounts** (ADR-035), defined by data: a user must have MFA if any effective permission has `requires_mfa`. This covers all platform roles, `tenant_owner`, `institution_admin`, and roles that manage roles/assignments or approve financial operations.
+  - Ordinary accounts are not forced and are not asked for MFA on ordinary actions. Tenants may require it for more roles but cannot turn off the mandated ones.
+  - TOTP secrets are encrypted at rest (ADR-031) and **never returned by any API**: enrollment shows a server-rendered QR only (ADR-037). Recovery codes are stored only as hashes.
+- **Step-up re-authentication** (password + MFA, valid 10 minutes) is required for sensitive operations: password/email change, MFA changes, role grants, deactivation, admin MFA reset, revoking others' sessions, IP reveal, and future permissions flagged `requires_step_up` (ADR-035).
 - Login: rate-limited per IP and per account; progressive delays/lockout with notification; generic error messages.
 - **Browser sessions (ADR-011, accepted with modification):** Django session authentication for the first-party web app.
   - Session cookie: `HttpOnly; Secure; SameSite=Lax`, **host-only** (no `Domain` attribute, so a cookie for one tenant's host is never sent to another tenant's host).
@@ -34,8 +38,14 @@
   - MFA completes before the session is fully authenticated.
 - **No access/refresh tokens in `localStorage`, `sessionStorage`, IndexedDB or JS-readable cookies — ever.** Next.js does not hold or mint credentials.
 - **Mobile / third-party (future):** a separate OAuth 2.1-compatible token path (Authorization Code + PKCE, client credentials), with short-lived access tokens, rotating refresh tokens with reuse detection, tenant- and scope-bound tokens, revocation and audit. Mechanism to be chosen in ADR-028 (Proposed). It uses the same authorization pipeline.
-- Session list & revoke; revoke all sessions on password change/reset; idle timeout and absolute session lifetime configurable per tenant within platform bounds.
-- Phone OTP login (common in Bangladesh) is a candidate feature; requires SMS cost and abuse analysis (open question).
+- **Sessions:** 30-minute idle timeout and 12-hour absolute lifetime (ADR-037); tenant-configurable within platform bounds from Phase 3.
+  - Users can list and revoke their sessions; admins can revoke a user's sessions (step-up).
+  - All sessions are revoked on password reset, deactivation and admin MFA reset; other sessions are revoked on password change, email change and MFA disable.
+- **No user enumeration:** login, password reset, activation resend and (Phase 3) invitations return identical responses whether or not an account exists.
+- **No public registration.** Accounts are created only by authorized administrators (platform) or by invitation (tenants, Phase 3) (ADR-037).
+- **Email-link tokens** (activation, verification, reset, email change) are 256-bit random, stored only as SHA-256 hashes, single-use, purpose-bound, expiring, invalidated by newer tokens and rate-limited (ADR-034).
+- **New sign-in notifications** go to platform staff by policy, and contain no IP, location or tokens (ADR-037).
+- Phone number / SMS-code login is **deferred to Phase 14** (ADR-037).
 - Enterprise SSO (SAML/OIDC) later.
 
 ## 3. Authorization (RBAC) {#rbac}
@@ -104,6 +114,14 @@ Audit (append-only, `audit_event`) is mandatory for:
 - Exports of personal data; viewing of sensitive fields.
 - AI tool calls.
 
+**Never logged** (audit, application logs, Sentry, emails): passwords, password hashes, email-link tokens, MFA secrets/QR payloads, MFA codes, recovery codes, session keys, CSRF tokens. Audit metadata is built from per-event allow-lists, and leak tests run for every auth flow (Phase 2 plan §6.8).
+
+**IP addresses (ADR-036):**
+- Encrypted at rest, with a keyed blind index for exact-match search.
+- Masked in the UI by default; revealing one requires `audit.event.view_ip` + step-up and is itself audited.
+- Retention is configurable (default 365 days, **pending legal review**), after which a job anonymizes them to a network prefix. A documented `erase_ip_data` procedure handles data-subject requests.
+- Audit-event IPs live in a separate, deletable side table, so the audit log itself stays immutable.
+
 Audit records: never updated or deleted by application code; DB role for app has INSERT-only on audit tables; retention per policy (proposed ≥ 7 years for financial, ≥ 1 year for others — **owner/legal confirmation needed**).
 
 ## 7. Secrets & configuration
@@ -144,3 +162,4 @@ Audit records: never updated or deleted by application code; DB role for app has
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1 review: production guards and database least-privilege controls documented as implemented.
+- 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.

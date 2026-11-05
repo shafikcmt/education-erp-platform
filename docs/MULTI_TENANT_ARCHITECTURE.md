@@ -91,7 +91,21 @@ Provisioning steps: create tenant → create first institution with type preset 
 ## 7. Support access
 
 - Platform support cannot read tenant data by default.
-- A **support session** requires: reason, ticket reference, duration (max e.g. 2 h), optional tenant-admin approval (tenant setting), and is fully audited (every request logged with `support_session_id`). Tenant admins can view support-access history.
+- A **support session** requires a reason, a ticket reference, a duration (max 2 h) and an access level (read-only by default). Tenant-admin approval is required when the tenant's setting says so.
+- **Activation:** starting a session requires platform-staff MFA and step-up (ADR-035).
+- **Execution:** during the session, requests run **inside the tenant context** (`tenant_atomic`, normal RLS as `erp_app`; **not** the `BYPASSRLS` role). Permissions come only from a fixed read-only `SupportSessionSource` (Phase 2 plan §4.5).
+- **Audit and control:** every request is audited with `actor_type = support` and `support_session_id`. Tenant admins can view the history and revoke an active session, and sessions expire automatically.
+- **Built in Phase 3**; designed in the Phase 2 plan.
+
+## 7a. Dual-scope tables (Phase 2 plan §4.6)
+
+`rbac_role`, `rbac_rolepermission` and `audit_auditevent` hold platform rows (`tenant_id IS NULL`) and, from Phase 3, tenant rows. With `ctx = NULLIF(current_setting('app.tenant_id', true), '')::uuid`, their Phase 3 RLS policies are:
+
+- **Writes:** `WITH CHECK (tenant_id IS NOT DISTINCT FROM ctx)` — no tenant context means only platform rows can be written; a tenant context means only that tenant's rows.
+- **Reads, `rbac_*`:** `USING (tenant_id IS NULL OR tenant_id = ctx)`, so tenants can see the system templates.
+- **Reads, `audit_auditevent`:** `USING (tenant_id IS NOT DISTINCT FROM ctx)`, so tenants and the platform never see each other's events.
+
+These tables are the **only** exception to "unset context → no rows", because their platform rows contain no tenant data. They are kept on an explicit allowlist in the CI RLS check, and a tenant context still never sees another tenant's rows.
 
 ## 8. Mandatory isolation tests (every module)
 
@@ -115,3 +129,4 @@ A failure blocks merge.
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.

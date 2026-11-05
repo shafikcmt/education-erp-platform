@@ -35,11 +35,13 @@
 | 028 | Mobile / third-party API authentication mechanism (library & token format) | Proposed | 2026-11-05 |
 | 029 | Dev/self-hosted object storage: SeaweedFS (S3 API) instead of MinIO; production storage configurable | **Accepted** (owner, conditional — conditions verified) | 2026-11-05 |
 | 030 | Phase 1 toolchain, library and image pins; TypeScript 5.9 + ESLint 9 held temporarily | **Accepted** (owner; upgrades tracked) | 2026-11-05 |
-| 031 | Field-level encryption for secrets at rest (`cryptography`, key ring + rotation) | Proposed (Phase 2 plan) | 2026-11-05 |
-| 032 | Membership + tenant RoleAssignment implemented in Phase 3 together with RLS | Proposed (Phase 2 plan) | 2026-11-05 |
-| 033 | Authorization via own `rbac` tables; Django auth groups/permissions only for Django admin | Proposed (Phase 2 plan) | 2026-11-05 |
-| 034 | Email-link tokens: DB-stored, hashed, single-use, purpose-bound, short-lived | Proposed (Phase 2 plan) | 2026-11-05 |
-| 035 | Sudo-mode re-authentication; mandatory MFA for platform roles (P2) and tenant owner/admin (P3) | Proposed (Phase 2 plan) | 2026-11-05 |
+| 031 | Field-level encryption for secrets at rest (`cryptography`, key ring + rotation) | **Accepted** | 2026-11-05 |
+| 032 | Membership + tenant RoleAssignment implemented in Phase 3 together with RLS | **Accepted** | 2026-11-05 |
+| 033 | Business roles/permissions in own `rbac` tables; reuse Django auth/session/password primitives | **Accepted (with conditions)** | 2026-11-05 |
+| 034 | Email-link tokens: random, hashed, single-use, purpose-bound, expiring, invalidated, rate-limited | **Accepted** | 2026-11-05 |
+| 035 | Step-up re-authentication for sensitive operations; MFA mandatory for privileged accounts only | **Accepted** | 2026-11-05 |
+| 036 | Security-event IP addresses: encrypted at rest, restricted access, configurable retention + anonymization | **Accepted (owner, Q7 with privacy conditions)** | 2026-11-05 |
+| 037 | Phase 2 scope decisions: phone/SMS login → Phase 14; no public registration; breach check optional/off; server-side QR; 30 min idle / 12 h absolute; new sign-in notices; Django admin disabled | **Accepted** | 2026-11-05 |
 
 ---
 
@@ -304,7 +306,12 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 **Enforced in `.github/dependabot.yml` (2026-11-05):** `ignore` rules block updates that would break an accepted decision. Blocked: Django ≥5.3 and django-stubs ≥5.3 (ADR-003); TypeScript ≥6 and ESLint ≥10 (this ADR); `@types/node` ≥25 and the `node` image ≥25 (Node 24 LTS); the `python` image ≥3.14 (ADR-003); Redis ≥8 (this ADR); Nginx minor/major bumps, to stay on the stable line (this ADR); pgvector image majors. Lifting a block needs an ADR update first.
 
 ## ADR-031 — Field-level encryption for secrets at rest
-**Status:** Proposed (Phase 2 plan §12).
+**Status:** **Accepted** — approved by owner 2026-11-05: "Encrypt sensitive secrets at rest using maintained cryptographic libraries and secure key management. Never store plaintext MFA secrets or recovery codes."
+**Owner conditions recorded:**
+- **MFA secrets** are encrypted (reversible; needed to verify codes).
+- **Recovery codes** are stored only as one-way hashes, never as plaintext or ciphertext.
+- **Keys** come from the environment in dev and a secret manager in production; they are never committed.
+- **Library:** `cryptography` (maintained), pinned per ADR-030 practice.
 
 **Context:** MFA TOTP secrets (Phase 2), and later payment/SMS integration credentials, must not sit in plaintext in the database or in backups.
 
@@ -315,21 +322,31 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 - Production keys live in a secret manager (KMS choice decided with ADR-019).
 
 ## ADR-032 — Phase boundary for tenant membership
-**Status:** Proposed (Phase 2 plan §2, §4).
+**Status:** **Accepted** — approved by owner 2026-11-05.
+- Phase 2 builds authentication and the authorization foundation.
+- Tenant memberships, tenant roles and tenant-scoped records are implemented together with RLS in Phase 3.
+- **Condition:** the permission interfaces must be clean enough that Phase 3 integration needs no rewrite of Phase 2. This is verified in Phase 2 plan §4.6.
 
 **Proposal:**
 - `Membership` and tenant `RoleAssignment` are tenant-owned tables, so they are built in **Phase 3** together with `TenantScopedModel`, RLS and `tenant_atomic` (ADR-009). Building them earlier would mean tenant data without RLS.
 - Phase 2 delivers the scope-aware `has_perm` engine, roles, role templates and platform roles, so callers don't change when tenant sources are added.
 
 ## ADR-033 — Authorization data model
-**Status:** Proposed (Phase 2 plan §5, §7).
+**Status:** **Accepted with conditions** — approved by owner 2026-11-05.
+
+**Conditions:**
+- Use custom business role and permission tables.
+- Continue to use Django's secure password hashing, authentication primitives and session framework where appropriate.
+- Do not duplicate Django security functionality unnecessarily.
+
+The reuse list is in Phase 2 plan §6.10.
 
 **Proposal:**
 - Application authorization uses the project's `rbac` tables only: `Permission(code)`, `Role`, `RolePermission`, `PlatformRoleAssignment`, and in Phase 3 `RoleAssignment`.
 - Django's `auth.Group`/`auth.Permission` (present via `PermissionsMixin`) are used only for Django admin by platform staff, and never in application permission checks.
 
 ## ADR-034 — Email-link tokens
-**Status:** Proposed (Phase 2 plan §6.4).
+**Status:** **Accepted** — approved by owner 2026-11-05. Password reset and email verification tokens must be cryptographically random, single-use and hashed, with expiration, invalidation and rate limiting.
 
 **Proposal:**
 - Activation, email verification, password reset and email change use random 32-byte tokens.
@@ -340,11 +357,39 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 **Why not Django's `PasswordResetTokenGenerator`:** it can't be individually revoked, audited or purpose-scoped.
 
 ## ADR-035 — Re-authentication and mandatory MFA
-**Status:** Proposed (Phase 2 plan §6.6).
+**Status:** **Accepted** — approved by owner 2026-11-05.
+- Sensitive operations require appropriate step-up authentication.
+- MFA is required for the platform Super Admin and other **privileged accounts**, defined in Phase 2 plan §6.6.
+- MFA is **not** required for every ordinary user action.
 
 **Proposal:**
 - **Sudo mode:** sensitive actions require password + MFA re-authentication within the last 10 minutes. These are password/email change, MFA disable/regenerate, platform role grants and admin MFA reset.
 - **Mandatory MFA:** all platform roles from Phase 2; `tenant_owner` and `institution_admin` from Phase 3. Tenants may add more roles, but cannot remove the mandatory ones.
+
+## ADR-036 — Security-event IP addresses
+**Status:** **Accepted** — owner approval of Phase 2 Q7 "with privacy conditions", 2026-11-05. Implementation design in Phase 2 plan §6.9.
+
+**Decision:**
+- **Encrypted at rest.** IP addresses in security records (session records, audit events) are stored encrypted (ADR-031).
+- **Searchable without decryption.** A keyed HMAC "blind index" allows exact-match search (e.g. "all events from this IP").
+- **Restricted access.** Viewing decrypted IPs needs a separate permission, `audit.event.view_ip`, and each view is itself audited.
+- **Configurable retention.** After the retention period (default 365 days), a scheduled job **anonymizes** IPs: it deletes the ciphertext and blind index and keeps only a coarse network prefix.
+- **Deletion procedure.** A documented procedure erases a person's IP data on request.
+
+**Pending legal review before production:** the retention period and lawful basis (minors' data; Bangladesh and other applicable data-protection law). This is listed in `DEVELOPMENT_PROGRESS.md` Known gaps.
+
+## ADR-037 — Phase 2 scope decisions (owner answers to plan Q2–Q9)
+**Status:** **Accepted** — owner 2026-11-05.
+
+| Topic | Decision |
+|---|---|
+| Phone / SMS-code login | Moves to Phase 14 (needs an SMS provider) |
+| Registration | No public registration in Phase 2; accounts are created only through authorized administrative workflows |
+| Breached-password check | Disabled by default; optional, configurable integration kept |
+| MFA QR code | Generated server-side; the raw MFA secret is never in API responses or logs |
+| Sessions | 30-minute idle timeout; 12-hour absolute lifetime |
+| New sign-in notices | Sent to platform staff according to configured security policy; no sensitive data in email |
+| Django admin | Disabled in production; all administration through application interfaces and audited APIs |
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
@@ -353,3 +398,5 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 - 2026-11-05 — Owner approved ADR-029 (conditional; all four conditions verified, evidence recorded) and ADR-030 (TypeScript 5.9/ESLint 9 held temporarily; upgrade tracking table added). No other ADR changed.
 - 2026-11-05 — ADR-030: Dependabot `ignore` rules added to enforce accepted version policies; actions-upgrade tracking row updated with the Dependabot PRs.
 - 2026-11-05 — Added ADR-031 to ADR-035 (Proposed) with the Phase 2 plan. No existing ADR changed.
+
+- 2026-11-05 — Owner approved ADR-031, ADR-032, ADR-034 and ADR-035, and ADR-033 with conditions. Added ADR-036 (IP privacy, Q7) and ADR-037 (Q2–Q9 scope decisions) as Accepted. No other ADR changed.

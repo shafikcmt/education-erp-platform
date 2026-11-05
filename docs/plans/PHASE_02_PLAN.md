@@ -1,80 +1,69 @@
 # Phase 2 Implementation Plan — Authentication, Users, Roles & Permissions
 
-- **Status:** Proposed — awaiting owner approval. **No application code may be written until approved.**
-- **Prepared:** 2026-11-05
+- **Status:** Proposed (revision 2). Owner decisions of 2026-11-05 are incorporated and ADR-031 to ADR-037 are Accepted. **Awaiting final owner approval of this plan. No application code until approved.**
+- **Prepared:** 2026-11-05 (rev. 1); revised 2026-11-05 (rev. 2: approvals, owner conditions, additional requirements, Phase 3 consistency review)
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 2
-- **Builds on (accepted):**
-  - ADR-009 (tenancy/RLS), ADR-010 (hierarchy), ADR-011 (Django session auth), ADR-012 (UUIDv7), ADR-015 (REST/OpenAPI), ADR-021 (en/bn), ADR-030 (pins).
-  - Phase 1 foundation: `core`, `identity.User` stub, DB roles.
-- **Decisions requested with this plan:** ADR-031 to ADR-035 (§12) and questions Q1–Q8 (§13).
+- **Governing decisions (Accepted):**
+  - ADR-009 (tenancy/RLS), ADR-010 (hierarchy), ADR-011 (session auth), ADR-012 (UUIDv7), ADR-015 (REST/OpenAPI), ADR-021 (en/bn), ADR-030 (pins).
+  - **ADR-031** (field encryption), **ADR-032** (membership in Phase 3), **ADR-033** (custom business RBAC + reuse of Django security primitives), **ADR-034** (email-link tokens), **ADR-035** (step-up + privileged-account MFA), **ADR-036** (IP privacy), **ADR-037** (Q2–Q9 scope decisions).
+- **Still open:** Q10 and Q11 (§13).
 
 ---
 
 ## 1. Goal
 
-Deliver secure, production-grade **identity and authorization primitives** that every later phase depends on:
+Deliver secure, production-grade **identity and authorization primitives** for every later phase:
 
-1. **Authentication.** Email + password login with Django sessions (ADR-011), MFA (TOTP + recovery codes), logout, and session management: list sessions, revoke sessions, idle and absolute timeouts.
-2. **Account lifecycle.**
-   - Activation: email verification combined with setting the first password.
-   - Password change, and password reset with single-use tokens.
-   - Email change with re-verification.
-   - Deactivation.
-3. **RBAC engine.**
-   - A permission registry populated from module manifests.
-   - Roles as bundles of permissions.
-   - System role templates (data) for every role in `CLAUDE.md` §9.
-   - Platform role assignments.
-   - The evaluation service `has_perm(actor, code, scope)` and its DRF permission classes.
-   - **Scope-aware by design**, so that Phase 3 can add tenant memberships without changing callers.
-4. **Audit.** An append-only `audit_event` log covering all authentication and authorization events, protected at the database level (no UPDATE or DELETE for the app role).
-5. **Frontend.** Login, MFA, password and activation flows; an account security page; a minimal platform console (users, roles, audit).
-6. **Tenant-aware membership architecture.** Fully designed here (§4). It is implemented in Phase 3 together with tenants and RLS. See §2 for why.
+1. **Authentication.** Email + password login using Django's session framework, MFA (TOTP + recovery codes) for privileged accounts, logout, session listing and revocation, a 30-minute idle timeout and a 12-hour absolute lifetime.
+2. **Account lifecycle (administrative only; no public registration).**
+   - Account creation by authorized administrators, then activation (verifies the email and sets the first password).
+   - Password change, password reset, and email change with re-verification.
+   - Deactivation and reactivation.
+3. **RBAC foundation.**
+   - A permission registry built from module manifests.
+   - Roles as permission bundles, with system role templates for every `CLAUDE.md` §9 role.
+   - Platform roles and their assignments.
+   - A scope-aware `has_perm` engine with **pluggable permission sources**, so Phase 3 adds tenant memberships without rewriting it (ADR-032 condition).
+4. **Audit.** An append-only `AuditEvent` log (DB-enforced) of all security events. Passwords, tokens, MFA secrets, recovery codes and session keys are **never** logged. IPs are kept in a separate encrypted table so retention and anonymization work (ADR-036).
+5. **Frontend.** English and Bengali authentication screens, an account security page, and a minimal platform console (users, roles, audit).
+6. **Designs for Phase 3.** The tenant-aware membership architecture and audited, time-limited support access are fully designed here and **implemented in Phase 3 with RLS** (§4).
 
-## 2. Scope boundary with Phase 3 (important)
+## 2. Scope boundary with Phase 3 (ADR-032, Accepted)
 
-`Membership` and tenant `RoleAssignment` are **tenant-owned tables**. ADR-009 requires every tenant-owned table to:
-- inherit `TenantScopedModel` (fail-closed manager);
-- have RLS enabled + forced;
-- run inside `core.db.tenant_atomic`.
-
-All of these are **Phase 3 deliverables**. Creating membership tables in Phase 2 would mean either shipping tenant data without RLS, which ADR-009 forbids, or pulling half of Phase 3 forward.
-
-**Therefore (proposed ADR-032):**
-
-| Item | Phase 2 (this plan) | Phase 3 |
+| Item | Phase 2 | Phase 3 |
 |---|---|---|
-| User accounts, auth, MFA, sessions, password/email flows | ✅ Implemented | — |
-| Permission registry, roles, role templates, `has_perm` engine | ✅ Implemented (scope-aware API) | Tenant scopes plugged in |
-| Platform roles (`super_admin`, `platform_support`, `platform_billing`, `platform_onboarding`) + assignment | ✅ Implemented | — |
-| Audit log (tenant_id column present, nullable) | ✅ Implemented | RLS policy for tenant rows + tenant viewer |
-| `Tenant`, `Institution`, `Campus` | ❌ | ✅ |
-| `Membership`, tenant `RoleAssignment`, invitations to a tenant | ❌ (designed in §4) | ✅ Implemented on the §4 design |
-| Tenant role cloning/customization UI | ❌ | ✅ (basic) / Phase 5 (Studio) |
-| Object scopes (teacher → own sections, guardian → own children) | Interface only | Phase 7 (domain relations exist then) |
+| Users, auth, MFA, sessions, password/email flows, throttling | ✅ | — |
+| Permission registry, roles, role templates, `has_perm` engine + platform permission source | ✅ | Tenant permission source plugged in |
+| Platform roles + assignments, platform console | ✅ | — |
+| Audit log + IP side table | ✅ (platform rows) | Tenant rows under the dual-scope RLS policy (§4.6) |
+| `Tenant`, `Institution`, `Campus`, `Membership`, tenant `RoleAssignment`, tenant invitations | ❌ (designed §4) | ✅ |
+| Audited, time-limited **support access** | ❌ (designed §4.5) | ✅ |
+| Object scopes (teacher → own sections, guardian → own children) | Hook interface only | Phase 7 |
 
-Phase 2 serves **only the platform host** (`admin.<platform-domain>`; `localhost` in dev). Tenant hosts arrive in Phase 3.
+Phase 2 serves **only the platform host** (`admin.<platform-domain>`; `localhost:8080` in dev).
 
 ## 3. Prerequisites checklist
 
 | Item | State |
 |---|---|
 | Phase 1 foundation on `main` (PR #2) | ✅ Merged 2026-11-05 18:42:43 UTC |
-| Phase 1 review follow-up (PR #12): prod guards, DB hardening, ADR-029/030 Accepted, S3 suite | ⏳ **Open, CI green, not merged.** Must be merged before Phase 2 implementation |
-| Phase 1 marked `Approved` by owner | ⏳ Pending owner confirmation |
-| ADR-031 to ADR-035 + Q1–Q8 answered | ⏳ This plan |
-| Dependabot PRs #5, #10, #11 closed (would break ADR-003/030) | ⏳ Owner |
+| **Phase 1 review follow-up PR #12** (prod guards, DB hardening, ADR-029/030, S3 suite, Dependabot guards) | ⏳ **Open, CI green, not merged.** It must be merged before implementation starts. This plan's branch is stacked on it |
+| Phase 1 marked `Approved` | ⏳ Owner |
+| ADR-031 to ADR-037 | ✅ Accepted 2026-11-05 |
+| Q10, Q11 (§13) | ⏳ Owner |
+| Final approval of this plan (rev. 2) | ⏳ Owner |
+| Dependabot PRs #5, #10, #11 closed (they conflict with ADR-003/030) | ⏳ Owner (recommended) |
 
 ---
 
-## 4. Tenant-aware user membership architecture (design; built in Phase 3)
+## 4. Tenant-aware membership and support-access architecture (designed now; built in Phase 3)
 
-### 4.1 Principles
-1. **One person = one `User`** (global, platform-level, not tenant-scoped). An email belongs to one account across all tenants.
-2. **Belonging to a tenant = `Membership`** (tenant-scoped, RLS-protected). One user may hold many memberships: a teacher in tenant A who is also a parent in tenant B.
-3. **What a member may do = `RoleAssignment`** to one of their memberships, with a **scope** (tenant, institution or campus) and an optional validity window.
-4. **Platform staff power is separate.** `PlatformRoleAssignment` grants platform permissions only. A Super Admin has **no implicit access to tenant data**; access goes through an audited support session (Phase 3, `MULTI_TENANT_ARCHITECTURE.md` §7).
-5. **Authorization checks permissions, never role names.**
+### 4.1 Principles (owner requirements 1–4)
+1. **One person = one global `User`.** A user can **belong to multiple institutions**, within one tenant or across tenants, through memberships.
+2. **`Membership`** (tenant-owned, RLS) links a user to a tenant: one per (tenant, user).
+3. **`RoleAssignment`** (tenant-owned, RLS) gives a membership a role at **tenant, institution or campus scope**. The same user can have **different roles in different institutions and campuses** (e.g. `teacher` at campus A, `institution_admin` at institution B, `guardian` in another tenant).
+4. **Platform power is separate.** `PlatformRoleAssignment` grants **platform** permissions only. **A Super Admin has no implicit access to tenant data.** Tenant data needs an audited, time-limited support session (§4.5).
+5. Authorization checks **permissions, never role names**.
 
 ### 4.2 Entities
 
@@ -90,225 +79,329 @@ erDiagram
   ROLE ||--o{ PLATFORM_ROLE_ASSIGNMENT : "platform role"
   ROLE ||--o{ ROLE_PERMISSION : "contains"
   PERMISSION ||--o{ ROLE_PERMISSION : "in"
+  TENANT ||--o{ SUPPORT_SESSION : "grants access"
+  USER ||--o{ SUPPORT_SESSION : "platform staff"
 ```
 
-| Model | Key fields | Constraints |
-|---|---|---|
-| `tenancy.Membership` (Phase 3, `TenantScopedModel`, RLS) | `tenant`, `user`, `status` (`invited`/`active`/`suspended`/`left`), `invited_by`, `invited_at`, `joined_at`, `last_seen_at` | `UNIQUE(tenant_id, user_id)` |
-| `rbac.RoleAssignment` (Phase 3, `TenantScopedModel`, RLS) | `tenant`, `membership`, `role`, `scope_type` (`tenant`/`institution`/`campus`), `institution` (nullable), `campus` (nullable), `valid_from`, `valid_until`, `granted_by` | CHECK: scope fields match `scope_type`; role is a tenant role of the same tenant (or a platform template cloned for it); `UNIQUE(membership, role, scope_type, institution, campus)` |
-| `rbac.Role` (**Phase 2**) | `tenant_id` (NULL = system template / platform role), `code`, `name`, `name_i18n`, `kind` (`platform`/`template`/`tenant`), `institution_types[]` (template applicability), `is_system`, `description` | `UNIQUE(COALESCE(tenant_id), code)` |
+| Model | Phase | Key fields | Constraints |
+|---|---|---|---|
+| `rbac.Permission` | **2** | `code`, `module_code`, `description`, `is_sensitive`, `requires_mfa`, `requires_step_up`, `deprecated_at` | `UNIQUE(code)` |
+| `rbac.Role` | **2** | `tenant_id` (NULL = platform role or system template), `code`, `name`, `name_i18n`, `kind` (`platform`/`template`/`tenant`), `institution_types[]`, `is_system` | `UNIQUE(tenant_id, code)` with NULLs treated as equal (`NULLS NOT DISTINCT`, PG15+) |
+| `rbac.RolePermission` | **2** | `role`, `permission`, **`tenant_id` (nullable, mirrors the role's tenant)** | `UNIQUE(role, permission)`; tenant equality enforced by the service and by a trigger (§4.6) |
+| `rbac.PlatformRoleAssignment` | **2** | `user`, `role` (kind = platform), `granted_by`, `granted_at`, `reason` | `UNIQUE(user, role)` |
+| `tenancy.Membership` | 3 | `tenant`, `user`, `status` (`invited`/`active`/`suspended`/`left`), `invited_by`, `joined_at`, `last_seen_at` | `UNIQUE(tenant, user)`; RLS |
+| `rbac.RoleAssignment` | 3 | `tenant`, `membership`, `role`, `scope_type` (`tenant`/`institution`/`campus`), `institution`, `campus`, `valid_from`, `valid_until`, `granted_by` | CHECK scope consistency; role ∈ same tenant; RLS |
+| `tenancy.Invitation` | 3 | `tenant`, `email`, `role`, `scope…`, `token_hash`, `expires_at`, `used_at` | Uses the Phase 2 `core.tokens` utility; RLS |
+| `tenancy.SupportSession` | 3 | `tenant`, `staff_user`, `reason`, `ticket_ref`, `access_level` (`read_only` default), `starts_at`, `ends_at` (≤ 2 h), `approved_by` (tenant admin, if the tenant requires consent), `revoked_at` | RLS |
 
-> **RLS note for `rbac.Role`:** system templates and platform roles have `tenant_id = NULL`. They are platform reference data, readable by all and writable only by migrations or seed commands. Tenant-specific roles (Phase 3) get RLS. The Phase 3 policy is: `tenant_id IS NULL OR tenant_id = current tenant` for SELECT, and `tenant_id = current tenant` for writes.
-
-### 4.3 Request flow (Phase 3 target; Phase 2 implements the platform-host branch)
+### 4.3 Request flow
 
 ```
-Request → RequestID → Session auth (user or anonymous)
-        → Host resolution
-            ├── platform host  → platform context: PlatformRoleAssignments only            [Phase 2]
-            └── tenant host    → tenant = resolve(host) → Membership(user, tenant).status == active  [Phase 3]
-        → tenant_atomic(tenant) (sets app.tenant_id)                                         [Phase 3]
-        → ModuleEntitled → HasPermission(code, scope) → object policy → masking → audit
+Request → RequestID → Django session auth
+  → host resolution
+     ├── platform host → PlatformPermissionSource                                   [Phase 2]
+     └── tenant host   → tenant = resolve(host)
+                          → active Membership OR active SupportSession              [Phase 3]
+                          → tenant_atomic(tenant)  (app.tenant_id set per transaction)
+  → ModuleEntitled (Phase 4) → HasPermission(code, scope) → object policy → field masking → audit
 ```
 
-- **Session per host.** The session cookie is host-only (ADR-011), so each tenant host has its own session. Switching tenants means visiting another host and logging in there. Cross-host SSO between tenant hosts is a later decision (enterprise SSO, Phase 17/18).
-- A suspended or left membership results in `403 membership_inactive` on every request, even with a valid session.
-- `last_active_tenant` is not stored. The tenant always comes from the host.
+- Each host has its own session, because the cookie is host-only (ADR-011).
+- An inactive membership → `403 membership_inactive`.
 
-### 4.4 Permission evaluation (Phase 2 engine, Phase 3 adds tenant sources)
+### 4.4 Permission engine and pluggable sources (ADR-032 condition: no rewrite in Phase 3)
 
 ```python
-has_perm(actor: User, code: str, *, tenant=None, institution=None, campus=None, obj=None) -> bool
+@dataclass(frozen=True)
+class ScopeTarget:
+    tenant_id: UUID | None = None
+    institution_id: UUID | None = None
+    campus_id: UUID | None = None
+
+class PermissionSource(Protocol):          # Phase 2 defines; Phase 3 adds implementations
+    def grants(self, actor: User, target: ScopeTarget) -> frozenset[str]: ...
+
+def has_perm(actor, code: str, *, target: ScopeTarget = PLATFORM, obj=None) -> bool: ...
+def require_perm(actor, code: str, *, target=PLATFORM, obj=None) -> None   # raises PermissionDenied
 ```
 
-1. Unknown permission code → `ImproperlyConfigured` in dev/test (catches typos). In production it is denied and logged.
-2. **Platform context** (`tenant is None`): the union of the actor's `PlatformRoleAssignment` role permissions.
-3. **Tenant context** (Phase 3): the active membership in `tenant` is required. The union covers role permissions from assignments that are currently valid and whose scope **covers** the target. Coverage: tenant ⊇ any institution ⊇ its campuses. A campus-scoped assignment never covers another campus or the institution as a whole.
-4. Module entitlement for the code's module (Phase 4; Phase 2 treats all platform modules as entitled).
-5. Object policy hook (`rbac.policies.register(resource, fn)`), e.g. "teacher may mark attendance only for assigned sections" (Phase 7+).
-6. Default **deny**.
+| Source | Phase | Grants |
+|---|---|---|
+| `PlatformRoleSource` | 2 | Union of platform-role permissions, **only for `target.tenant_id is None`** |
+| `TenantMembershipSource` | 3 | Union of currently valid assignments whose scope **covers** the target (tenant ⊇ institution ⊇ campus; never sideways) |
+| `SupportSessionSource` | 3 | Fixed read-only set for an active support session on `target.tenant_id` |
 
-**Caching:**
-- The effective permission set per (user, tenant or platform) lives in Redis under key `perm:{scope}:{user_id}:v{version}`.
-- The version counter is bumped on any change to role permissions, assignments or memberships for that scope.
-- TTL is 5 minutes as a safety net.
-- The cache is never the only check for security-critical writes: services re-check through the same function.
+**Phase 3 compatibility points:**
+- `has_perm` and the DRF classes `HasPermission(code)` / `HasAnyPermission(...)` take the scope from `request.scope_target`. Phase 2 sets it to `PLATFORM` in middleware; Phase 3 middleware sets the tenant/institution/campus. **Views and services don't change.**
+- Object policies: `rbac.policies.register("students.student", fn)` (Phase 7).
+- Cache:
+  - Phase 2 key: `perm:platform:{user}:v{ver}`.
+  - Phase 3 key: `t:{tenant}:perm:{user}:v{ver}` (tenant-prefixed per CLAUDE.md §10.7).
+  - The version is bumped on any role/permission/assignment change; TTL is 300 s; security-critical writes re-check without the cache.
+
+### 4.5 Audited, time-limited support access (owner requirement 5; built in Phase 3)
+
+1. A platform staff member with `platform.support_session.request` (registered in Phase 3; MFA + step-up required) requests access to a tenant. The request records a reason, a ticket reference, a duration (max 2 h) and an access level (read-only by default).
+2. If the tenant's setting requires consent, a tenant admin approves it in-app. Either way, the tenant admin sees the session and can **revoke** it at any time.
+3. During the session, requests run **inside the tenant context** (`tenant_atomic`, normal RLS as `erp_app`; **not** the `BYPASSRLS` role). Permissions come only from `SupportSessionSource`.
+4. **Every request** in the session is audited with `actor_type = support` and `support_session_id`. Starting, approving, revoking and expiring the session are also audited.
+5. The session ends automatically at `ends_at`. Further requests get `403 support_session_expired`.
+
+Phase 2 already provides the audit columns (`actor_type`, `support_session_id`), step-up and mandatory MFA for platform staff.
+
+### 4.6 Consistency review with Phase 3 RLS (owner action 3)
+
+| Concern | Resolution in this plan |
+|---|---|
+| Tenant-owned tables must have RLS from day one | No tenant-owned tables in Phase 2 (ADR-032) |
+| **Dual-scope tables** (`rbac_role`, `rbac_rolepermission`, `audit_auditevent`) hold both platform rows (`tenant_id IS NULL`) and, from Phase 3, tenant rows | Phase 3 RLS policies (ENABLE + FORCE), with `ctx = NULLIF(current_setting('app.tenant_id', true), '')::uuid`: **writes** `WITH CHECK (tenant_id IS NOT DISTINCT FROM ctx)`, so without a tenant only platform rows can be written and with a tenant only that tenant's rows. **Reads:** `rbac_*` `USING (tenant_id IS NULL OR tenant_id = ctx)` (tenants see system templates); `audit_auditevent` `USING (tenant_id IS NOT DISTINCT FROM ctx)` (tenants never see platform events and vice versa; cross-tenant platform reports use `platform_scope`). A tenant context still never sees another tenant's rows. These tables go on an explicit **dual-scope allowlist** in the Phase 3 CI check "every table with `tenant_id` has RLS" |
+| `RolePermission` rows for tenant roles are tenant data | `tenant_id` is added in Phase 2 (NULL for now). A trigger keeps it equal to `role.tenant_id`, so Phase 3 needs no backfill |
+| Platform-only tables (`identity_*`, `rbac_permission`, `rbac_platformroleassignment`) | No `tenant_id` and no tenant data: user-owned or platform reference data |
+| `SessionRecord` must work for tenant hosts | Stores `host` (no `tenant_id`), so it stays a platform table. In Phase 3, tenant admins revoke member sessions through a membership-checked service |
+| Invitation tokens are tenant data | Phase 3 `tenancy.Invitation` (RLS) stores its own token hash using the Phase 2 `core.tokens` utility. The platform `AccountToken` table is not reused for tenant data |
+| Audit writes inside tenant transactions | `audit.record()` takes `tenant`; it is called inside `tenant_atomic` in Phase 3, so the RLS `WITH CHECK` passes. Platform events are written with no tenant context |
+| Celery | Phase 2 email tasks are **declared platform tasks** (no tenant data). Phase 3 invitation emails are tenant tasks carrying `tenant_id` |
+| Support access must not use BYPASSRLS | §4.5: runs as `erp_app` inside the tenant context |
 
 ---
 
 ## 5. Roles and permissions
 
-### 5.1 Permission code catalog delivered in Phase 2
+### 5.1 Permission catalog delivered in Phase 2
 
-Format: `<module>.<resource>.<action>` (CLAUDE.md §10). Each module registers its codes in its `manifest.py`, and `manage.py sync_permissions` upserts them. A code is never deleted automatically; codes removed from manifests are flagged.
-
-| Code | Meaning |
-|---|---|
-| `identity.account.view_own` / `identity.account.update_own` | Own profile |
-| `identity.session.view_own` / `identity.session.revoke_own` | Own sessions |
-| `identity.mfa.manage_own` | Enroll or remove own MFA |
-| `identity.user.view` / `identity.user.create` / `identity.user.update` / `identity.user.deactivate` | Platform user administration |
-| `identity.user.view_sensitive` | See security attributes (MFA state, login history) |
-| `identity.session.revoke_any` | Revoke another user's sessions |
-| `identity.mfa.reset` | Reset another user's MFA (audited, reason required) |
-| `rbac.permission.view` | View the permission catalog |
-| `rbac.role.view` / `rbac.role.create` / `rbac.role.update` / `rbac.role.delete` | Manage roles (platform roles in Phase 2; tenant roles in Phase 3) |
-| `rbac.platform_role.assign` | Grant or revoke platform roles |
-| `audit.event.view` | Read the audit log (platform scope in Phase 2) |
+| Code | Meaning | Flags |
+|---|---|---|
+| `identity.account.view_own` / `identity.account.update_own` | Own profile | — |
+| `identity.session.view_own` / `identity.session.revoke_own` | Own sessions | — |
+| `identity.mfa.manage_own` | Enroll or remove own MFA | step-up |
+| `identity.user.view` / `identity.user.create` / `identity.user.update` | Platform user administration | MFA |
+| `identity.user.deactivate` | Deactivate/reactivate users | MFA, step-up |
+| `identity.user.view_sensitive` | MFA state and session details of others | MFA, sensitive |
+| `identity.session.revoke_any` | Revoke another user's sessions | MFA, step-up |
+| `identity.mfa.reset` | Reset another user's MFA (reason required) | MFA, step-up |
+| `rbac.permission.view` | Permission catalog | MFA |
+| `rbac.role.view` / `rbac.role.create` / `rbac.role.update` / `rbac.role.delete` | Platform roles (tenant roles in Phase 3) | MFA; create/update/delete also step-up |
+| `rbac.platform_role.assign` | Grant or revoke platform roles | MFA, step-up |
+| `audit.event.view` | Audit log (platform scope) | MFA |
+| `audit.event.view_ip` | Reveal decrypted IPs in audit and session views (each reveal audited, ADR-036) | MFA, step-up, sensitive |
 
 **Guard rails:**
-- **No self-escalation.** Nobody can grant a permission they don't hold, or grant roles in a scope they don't control.
-- **Two-person rule for `super_admin`.** Granting `super_admin` requires an existing `super_admin`, plus MFA re-authentication within the last 10 minutes ("sudo mode", §6.6).
-- **The last `super_admin`** cannot be removed or deactivated.
-- **Every grant and revoke** writes an audit event.
+- No self-escalation: nobody can grant permissions they don't hold, or grant in a scope they don't control.
+- Only an existing `super_admin`, in step-up mode, can grant `super_admin`.
+- The last active `super_admin` can't be deactivated or demoted.
+- Every grant and revoke is audited.
 
 ### 5.2 Role templates (seeded as data in Phase 2; used by tenants from Phase 3)
 
-Permissions for modules that don't exist yet are listed as **planned codes**. They are registered when their module ships, and the template definitions in `rbac/templates/*.yaml` already reference them so presets stay consistent. Scope column: **P** = platform, **T** = tenant, **I** = institution, **C** = campus, **A** = assigned objects only, **O** = own records only.
+Permissions of modules not yet built are **planned codes** (registered when the module ships). Scope: **P** platform, **T** tenant, **I** institution, **C** campus, **A** assigned objects, **O** own/linked records.
 
-| Role | Kind | Default scope | Phase 2 permissions | Planned permissions (registered by later phases) | MFA |
-|---|---|---|---|---|---|
-| **Super Admin** (`super_admin`) | platform | P | All `identity.*`, `rbac.*`, `audit.event.view`; `platform.*` (Phase 3+: tenants, plans, support sessions) | Tenant data **only** via audited support session | **Mandatory** |
-| Platform Support (`platform_support`) | platform | P | `identity.user.view`, `identity.session.revoke_any`, `identity.mfa.reset`, `audit.event.view` | Support sessions (Phase 3) | Mandatory |
-| Platform Billing (`platform_billing`) | platform | P | `identity.account.*_own` | `billing.*` (Phase 4) | Mandatory |
-| Platform Onboarding (`platform_onboarding`) | platform | P | `identity.user.create`, `identity.user.view` | `tenancy.tenant.create` (Phase 3) | Mandatory |
-| **Institution Admin** (`institution_admin`) | template | I | — (own-account codes only) | `tenancy.institution.*` (own), `tenancy.campus.*`, `rbac.role.*` + `rbac.assignment.*` within institution, `identity.member.invite`, `audit.event.view` (institution), and **view/manage** for all entitled ERP modules in the institution (`academics.*`, `students.*`, `staff.*`, `attendance.*`, `examinations.*`, `fees.*` (no `fees.payment.refund` approve if SoD is on), `communication.*`, `reports_analytics.*`, …) | **Mandatory** |
-| **Campus Admin** (`campus_admin`) | template | C | own-account | Same families as Institution Admin, **limited to their campus**; cannot edit institution-level settings, roles or other campuses | Recommended (tenant-configurable; default on) |
-| **Teacher** (`teacher`) | template | A | own-account | `academics.offering.view` (A), `attendance.record.mark` (A), `attendance.record.view` (A), `examinations.mark.enter` (A, until locked), `examinations.result.view` (A), `lms.*` content/assignments (A), `students.student.view` (A: students in assigned sections, non-sensitive fields), `communication.message.send` (A: classes/guardians) | Configurable |
-| **Staff** (`staff_member`, generic non-teaching) | template | C | own-account | `staff.profile.view_own`, `attendance.self.view`, `hr_payroll.payslip.view_own`, `hr_payroll.leave.request_own`, `communication.notice.view`. Specialised staff roles add module scopes: `accountant`, `cashier`, `librarian`, `hostel_warden`, `transport_manager`, `front_desk`, `admission_officer`, `exam_controller`, `hr_manager` | Configurable (Mandatory for `accountant`/`cashier`/`hr_manager`, proposed) |
-| **Student** (`student`) | template | O | own-account | `students.profile.view_own`, `timetable.view_own`, `attendance.record.view_own`, `examinations.result.view_own` (published only), `fees.invoice.view_own`, `lms.*` (enrolled courses), `online_exams.attempt.take_own`, `communication.notice.view` | Optional |
-| **Parent / Guardian** (`guardian`) | template | O (linked children) | own-account | For each **linked child**: `students.profile.view_child`, `attendance.record.view_child`, `examinations.result.view_child` (published), `fees.invoice.view_child`, `fees.payment.pay_child` (online), `communication.notice.view`, `attendance.leave.request_child` | Optional |
+| Role | Kind | Scope | Permissions (summary) | MFA (ADR-035) |
+|---|---|---|---|---|
+| **Super Admin** `super_admin` | platform | P | All Phase 2 codes. `platform.*` (Phase 3+: tenants, plans, support-session request/approve). **No tenant data** except via an audited support session | **Required** |
+| Platform Support `platform_support` | platform | P | `identity.user.view`, `identity.session.revoke_any`, `identity.mfa.reset`, `audit.event.view`; support-session request (Phase 3) | **Required** |
+| Platform Billing `platform_billing` | platform | P | Own account; `billing.*` (Phase 4) | **Required** |
+| Platform Onboarding `platform_onboarding` | platform | P | `identity.user.create`, `identity.user.view`; `tenancy.tenant.create` (Phase 3) | **Required** |
+| **Institution Admin** `institution_admin` | template | I | Institution/campus settings, tenant roles and assignments within the institution, member invitations, institution audit view, and view/manage for all entitled ERP modules in the institution (segregation-of-duties exceptions such as refund approval) | **Required** (Phase 3) |
+| **Campus Admin** `campus_admin` | template | C | The Institution Admin families **limited to their campus**; no institution-level settings, roles or other campuses | **Required** (holds assignment permissions, which are flagged `requires_mfa`) |
+| **Teacher** `teacher` | template | A | View assigned offerings; mark/view attendance (assigned); enter marks (assigned, until locked); results (assigned); LMS content (assigned); view assigned students' non-sensitive data; message own classes/guardians | Optional (tenant-configurable) |
+| **Staff** `staff_member` | template | C | Own staff profile, own attendance, own payslips, own leave requests, notices. Specialised roles add scopes: `accountant`, `cashier`, `librarian`, `hostel_warden`, `transport_manager`, `front_desk`, `admission_officer`, `exam_controller`, `hr_manager` | Optional; **Required** where the role holds `requires_mfa` permissions (e.g. refunds, payroll approval, period close) |
+| **Student** `student` | template | O | Own profile, timetable, attendance, published results, invoices, enrolled LMS courses, own online exam attempts, notices | Optional |
+| **Parent / Guardian** `guardian` | template | O (linked children) | For each linked child: profile, attendance, published results, invoices + online payment, leave requests; notices | Optional |
 
-> **New code name in the catalog:** the generic non-teaching role is `staff_member`. The `staff` module code already names the HR/staff module (CLAUDE.md §5), so the role can't also be called `staff`. CLAUDE.md §9 will list `staff_member` as a role template once this plan is approved. Specialised staff roles already listed there are unchanged.
+**"Privileged account" (ADR-035) is defined by data, not role names.** A user must have MFA if **any** permission in their effective set has `requires_mfa = true`. Every platform role meets this. So do tenant roles holding role/assignment management, financial approvals or other permissions flagged later. Ordinary teacher, student and guardian accounts are not forced, but tenants may require MFA for more roles.
 
-**Sensitive fields** (medical info, national ID, guardian income, staff salary) require explicit `*.view_sensitive` codes, which no template includes by default except where a role's job needs them (e.g. `hr_manager` → staff salary).
+`staff_member` is the role code for generic non-teaching staff, because `staff` already names the HR/staff module. CLAUDE.md §9 is updated in this revision.
 
 ---
 
-## 6. Authentication & session design
+## 6. Authentication, session and security design
 
-### 6.1 Login (session-based, two-step when MFA applies)
+### 6.1 Login (session-based; MFA step when the account has or requires MFA)
 
 ```mermaid
 sequenceDiagram
   participant B as Browser
   participant A as API
-  B->>A: GET /api/v1/auth/csrf/ (sets csrftoken cookie)
+  B->>A: GET /api/v1/auth/csrf/
   B->>A: POST /auth/login/ {email, password} + X-CSRFToken
-  A->>A: throttle (IP + email) → authenticate (Argon2) → constant-time on unknown user
-  alt MFA enrolled or required
-    A->>A: session[pending_auth] = {user_id, started_at, attempts}  (NOT logged in)
-    A-->>B: 200 {status:"mfa_required", methods:["totp","recovery_code"]}
+  A->>A: throttle (IP-hash + email-hash) → django.contrib.auth.authenticate() (Argon2); dummy hash on unknown user
+  alt MFA enrolled
+    A->>A: session["pending_auth"] = {user_id, started_at, attempts}   (not logged in)
+    A-->>B: 200 {status:"mfa_required"}
     B->>A: POST /auth/mfa/verify/ {code}
-    A->>A: verify TOTP (±1 step, replay-protected) or recovery code (single use)
+  else MFA required but not enrolled
+    A-->>B: 200 {status:"mfa_enrollment_required"}  (restricted session: MFA setup + logout only)
   end
-  A->>A: django.contrib.auth.login() → cycle_key (session fixation defence), record session
-  A-->>B: 200 {status:"authenticated", user:{...}}  (+ Set-Cookie session, HttpOnly/Secure/SameSite=Lax)
+  A->>A: django.contrib.auth.login() (cycle_key) → SessionRecord → audit
+  A-->>B: 200 {status:"authenticated"}  (HttpOnly/Secure/SameSite=Lax host-only cookie)
 ```
 
-- **No enumeration.** Unknown email, wrong password and an inactive account all return the same `401 invalid_credentials`, with similar timing (a dummy hash check runs for unknown users).
-- The **pending-MFA state** expires after 5 minutes or 5 failed codes, after which login restarts. It lives in the session, not in a token.
-- **MFA enrollment required.** A user who must have MFA but hasn't enrolled gets `status:"mfa_enrollment_required"`. The session is then in a restricted state that can call only the MFA-setup endpoints and logout.
-- **Logout** (`POST /auth/logout/`): flushes the session and marks the session record revoked.
+**No user enumeration (owner requirement 7).**
+- Unknown email, wrong password, inactive account and unactivated account all return the same `401 invalid_credentials`, with equalized timing (a dummy password hash runs for unknown users).
+- Password-reset and activation-resend requests always return `202` with the same body.
+- Throttle responses are identical whether or not the account exists.
+- There is no registration endpoint in Phase 2 (ADR-037). Phase 3 invitation flows follow the same rules.
 
-### 6.2 Throttling and lockout (no new dependency; Redis counters)
-| Bucket | Limit (proposed defaults) | On exceed |
+The pending-MFA state expires after 5 minutes or 5 failed codes.
+
+### 6.2 Brute-force protection (owner requirement 8)
+
+Implemented with Redis counters, with no new dependency. Keys use **HMACs** of the IP and the normalized email, never plaintext (ADR-036).
+
+| Bucket | Default (configurable) | On exceed |
 |---|---|---|
 | Login per IP | 20 / 5 min | `429` + `Retry-After` |
-| Login per email (normalized) | 5 failures / 15 min | progressive delay, then temporary lock 15 min; email notice to the account owner |
-| MFA verify per pending login | 5 attempts | pending state cleared |
-| Password reset / activation resend per email | 3 / hour | silent (still `202`, no enumeration) |
-| Password reset per IP | 10 / hour | `429` |
+| Login failures per email | 5 / 15 min | Progressive delay → temporary lock 15 min; notice to the account owner (no sensitive data) |
+| MFA codes per pending login | 5 | Pending state cleared |
+| Reset / activation resend per email | 3 / hour | Silent (still `202`) |
+| Reset / resend per IP | 10 / hour | `429` |
+| Step-up attempts per session | 5 / 15 min | Step-up locked; sensitive action denied |
 
-Lockouts are keyed on the normalized email and **never** leak whether the account exists. Every lock, unlock and throttle event is audited.
+All locks and throttle events are audited.
 
 ### 6.3 Passwords
-- Argon2id (Phase 1 setting).
-- Validators: minimum length 10, user-attribute similarity, common-password list, not all-numeric.
-- Maximum length 128, to prevent long-input DoS.
-- **Breached-password check** (Have I Been Pwned k-anonymity range API): optional, **off by default** (Q4).
-- Password change requires the current password. It revokes **all other** sessions and sends a notification email.
+- **Django password hashers and validators** (ADR-033): Argon2id; minimum length 10, attribute similarity, common passwords, not all-numeric; maximum length 128.
+- **Breached-password check (ADR-037):** a Django `AUTH_PASSWORD_VALIDATORS` entry `BreachedPasswordValidator`, **disabled by default** (`PASSWORD_BREACH_CHECK_ENABLED=false`).
+  - When enabled, it uses the HIBP range API (k-anonymity: only a 5-character SHA-1 prefix is sent, with `Add-Padding`), a 2 s timeout and the standard library HTTP client.
+  - If the service is unreachable it **fails open** by default (`PASSWORD_BREACH_CHECK_FAIL_CLOSED=false`), logging a warning without the password.
+  - Its outbound host is documented for network allow-listing.
+- **Password change** requires the current password and step-up. Other sessions are revoked and a notification email is sent.
 
-### 6.4 Tokens for email links (proposed ADR-034)
-Activation, email verification, password reset and email change use **DB-stored, single-use, hashed tokens**:
+### 6.4 Email-link tokens (ADR-034)
+- `core.tokens` utility, reused in Phase 3:
+  - generates tokens with `secrets.token_urlsafe(32)` (256 bits);
+  - stores only the **SHA-256 hash**;
+  - looks tokens up by hash; the raw token is never stored or logged.
+- `identity.AccountToken`: `purpose` (`activation` / `email_verification` / `password_reset` / `email_change`), `user`, `token_hash` (unique), `expires_at`, `used_at`, `payload` (e.g. the new email address).
+- **Expiry:** activation 72 h; email verification 24 h; password reset **30 min**; email change 24 h.
+- **Single use.** A new token of the same purpose **invalidates** older unused ones. Requests are rate-limited (§6.2).
+- **Delivery.** Links are `/{locale}/reset-password#token=…`. The token is in the URL fragment, so it doesn't reach server logs or `Referer` headers. The page POSTs it to the API and clears the fragment.
+- **Password reset completes by revoking all sessions** and sends a confirmation email.
 
-| Field | Note |
-|---|---|
-| `purpose` | `activation` / `email_verification` / `password_reset` / `email_change` |
-| `user` | FK |
-| `token_hash` | SHA-256 of a 32-byte random token. The raw token is only ever in the email link |
-| `expires_at` | activation 72 h, email verification 24 h, password reset 30 min, email change 24 h (proposed) |
-| `used_at`, `created_ip` | single use; audit context |
-| `payload` | e.g. new email address for `email_change` |
+### 6.5 Account creation, activation, email verification (ADR-037: administrative workflows only)
+- Platform users are created by holders of `identity.user.create`; tenant members are invited in Phase 3.
+- Creation sends an **activation** email: the link verifies the email, the user sets a password, and MFA enrollment follows if required.
+- An unactivated account can't log in. The response is the generic `invalid_credentials`, and the activation resend is enumeration-safe.
+- **Email change:** step-up → verification link to the new address → notice to the old address → applied after verification → other sessions revoked.
 
-- Issuing a new token of the same purpose invalidates older unused ones.
-- A **password reset completes by revoking all sessions** and sends a confirmation email.
-- Links have the form `/{locale}/reset-password#token=…`. The token goes in the URL **fragment**, so it never reaches server logs or `Referer` headers. The page POSTs it to the API and then clears the fragment.
+### 6.6 MFA and step-up (ADR-035)
 
-### 6.5 Activation and email verification
-- There is **no public self-registration in Phase 2.** Tenant signup belongs to Phase 3 onboarding (Q3).
-- Platform users are **created** by a Super Admin or Platform Onboarding user. Phase 3 adds tenant invitations, which reuse the same token mechanism.
-- Creation sends an **activation email**. The user opens the link, sets a password (which verifies the email) and must then enroll MFA if their role requires it.
-- `User.email_verified_at` records verification. An unverified account cannot log in. The response is the same `invalid_credentials`, plus an optional "resend activation" flow that doesn't reveal account state.
-- **Email change:**
-  1. A verification link goes to the **new** address.
-  2. A notification goes to the **old** address.
-  3. The change is applied only after verification.
-  4. All other sessions are revoked.
+**TOTP (RFC 6238):** 30 s steps, 6 digits, ±1 step tolerance. The last used step is stored to **block replay**.
 
-### 6.6 MFA (TOTP + recovery codes)
-- **TOTP** (RFC 6238), 30 s steps, 6 digits, ±1 step tolerance. The last used time-step is stored per device to **prevent replay**.
-- **Secrets are encrypted at rest** (proposed ADR-031, field encryption) and never returned after enrollment.
-- **Enrollment:**
-  - `POST /me/mfa/totp/setup/` creates an unconfirmed device and returns the otpauth URI plus an SVG QR code (Q5).
-  - `POST /me/mfa/totp/confirm/` with a valid code activates it and returns **10 recovery codes**. They are shown once and stored hashed (Django password hasher), each single use.
-- **Re-authentication ("sudo mode")** for sensitive actions: changing password, disabling MFA, regenerating recovery codes, changing email, granting platform roles, and admin MFA reset. It requires the password, plus an MFA code if enrolled, within the last 10 minutes; the timestamp is stored in the session.
-- **Mandatory MFA:**
-  - **Phase 2:** every platform role.
-  - **Phase 3:** `tenant_owner` and `institution_admin`, with tenant-configurable additions.
-  - A user with mandatory MFA cannot disable it.
-- **Admin MFA reset** requires `identity.mfa.reset` + sudo mode + a reason. It is audited and notifies the user by email.
-- **WebAuthn/passkeys:** later (Phase 18); the device table is designed to allow additional device types.
+**Secret encrypted at rest (ADR-031).**
 
-### 6.7 Sessions
-- `cached_db` engine (Phase 1).
-- **New `identity.SessionRecord`** (Django sessions can't be listed per user): `user`, `session_key_hash` (SHA-256; the raw session key is never stored), `created_at`, `last_seen_at` (updated at most once per minute), `ip` (truncated per privacy policy, Q7), `user_agent` (shortened), `mfa_verified_at`, `revoked_at`, `revoke_reason`.
-- **Timeouts:** absolute lifetime 12 h (Phase 1 setting) and idle timeout 30 min (proposed; configurable per tenant within platform bounds in Phase 3). Both are enforced by middleware and checked on every request.
-- **Revocation:** a user can revoke one session or all others; an admin can revoke all of a user's sessions (`identity.session.revoke_any`). Revocation deletes the Django session and marks the record.
-- **Automatic revoke-all:** on password reset, admin deactivation and admin MFA reset. Password change and email change revoke **others** only.
-- The session key rotates (`cycle_key`) on login, on MFA completion and on privilege change (platform role granted or revoked).
+**Raw secret never exposed (ADR-037 / Q5):**
+- `POST /me/mfa/totp/setup/` returns **only a server-rendered SVG QR code** (via `segno`) and a device ID.
+- **No** `otpauth://` URI, **no** manual-entry key and **no** secret field in any API response.
+- The response carries `Cache-Control: no-store`, and its body is excluded from all logging.
+- The QR image inevitably encodes the secret, because the authenticator app needs it. It is shown only during unconfirmed enrollment, which expires after 10 minutes. (A manual-entry option for users who can't scan is **Q10**.)
 
-### 6.8 Audit logging (`audit` app, delivered in Phase 2)
+**Confirmation:** `POST /me/mfa/totp/confirm/` with a valid code activates the device and returns **10 recovery codes** once.
+- Each code is 16 base32 characters (80 bits).
+- **Only SHA-256 hashes are stored**, never plaintext (ADR-031 condition).
+- Each code is single use; regenerating requires step-up and invalidates the old set.
 
-`audit.AuditEvent`:
+**MFA required** for privileged accounts (data-driven `requires_mfa`, §5.2):
+- they can't disable MFA;
+- they can't use any endpoint except MFA setup until they enroll;
+- they can't use any permission flagged `requires_mfa` unless the session completed MFA.
 
-| Field | Note |
-|---|---|
-| `id` | UUIDv7 (time-ordered) |
-| `occurred_at` | `timestamptz` |
-| `tenant_id` | nullable. Phase 3 adds an RLS policy for tenant rows; platform rows are NULL |
-| `actor_user_id` | nullable for anonymous or system |
-| `actor_type` | `user` / `system` / `support` / `ai` |
-| `support_session_id` | nullable (Phase 3) |
-| `action` | dotted, e.g. `identity.login.succeeded` |
-| `outcome` | `success` / `failure` / `denied` |
-| `target_type`, `target_id` | resource acted on |
-| `metadata` | JSONB, **redacted** with the same sensitive-key processor as logs |
-| `ip`, `user_agent`, `request_id` | request context |
+**Step-up (sudo) mode** applies to:
+- password change, email change, MFA disable or recovery regeneration;
+- platform role grants, user deactivation, admin MFA reset, revoking others' sessions;
+- IP reveal;
+- every future permission flagged `requires_step_up` (e.g. refunds, period close).
 
-- **Database-level immutability.** A migration grants `erp_app` only `SELECT, INSERT` on `audit_auditevent` (revoking `UPDATE, DELETE`) and adds a trigger rejecting UPDATE/DELETE, even for `erp_owner`. The trigger can only be removed by an explicit, reviewed migration. The same reusable grant helper restricts `django_migrations` to `SELECT` for `erp_app`, closing a Phase 1 known gap.
-- **Written in the same transaction** as the action where possible (on rollback, no false "success").
-  - Failed logins are recorded outside the failing transaction.
-  - If writing the audit row itself fails, the action fails: it fails closed for security events.
-- **Events in Phase 2:**
-  - `identity.login.succeeded|failed|locked`, `identity.logout`;
-  - `identity.mfa.challenge_failed|enrolled|disabled|reset|recovery_code_used`;
+How it works:
+- Re-entering the password + a current MFA code (if enrolled) sets `session["step_up_at"]`, valid for **10 minutes**.
+- Without it, protected endpoints return `403 step_up_required`.
+- **Ordinary actions never ask for MFA again** (ADR-035).
+
+**Admin MFA reset:** `identity.mfa.reset` + step-up + a reason. It revokes the user's sessions, emails the user and is audited.
+
+**Later:** WebAuthn/passkeys (Phase 18; the device model allows more kinds).
+
+### 6.7 Sessions (ADR-037 timeouts)
+- **Django session framework** (`cached_db`) stores the session.
+- `identity.SessionRecord` is the per-user index Django lacks:
+  - `user`, `session_key_hash` (SHA-256), `host`, `created_at`, `last_seen_at` (written at most once per minute), `mfa_verified_at`, `step_up_at`, `user_agent_summary` (browser/OS family only), `revoked_at`, `revoke_reason`;
+  - the IP is stored only through the encrypted IP fields (§6.9).
+- **Timeouts:**
+  - **idle 30 min**, enforced by middleware using `session["last_activity"]`;
+  - **absolute 12 h**, using `session["auth_at"]`;
+  - both are platform settings now and tenant-configurable within bounds in Phase 3.
+- **Revocation (owner requirement 8):**
+  - a user can revoke one of their own sessions, or all others;
+  - holders of `identity.session.revoke_any` can revoke all of a user's sessions (step-up);
+  - revocation deletes the Django session and marks the record.
+- **Automatic revocation:**
+  - **all** sessions on password reset, deactivation and admin MFA reset;
+  - **other** sessions on password change, email change and MFA disable.
+- The session key rotates (`cycle_key`) on login, MFA completion and privilege change.
+
+### 6.8 Audit logging (owner requirement 9)
+- **`audit.AuditEvent`:**
+  - `id` (UUIDv7), `occurred_at`, `tenant_id` (nullable; dual-scope §4.6);
+  - `actor_user_id`, `actor_type` (`user`/`system`/`support`/`ai`), `support_session_id`;
+  - `action`, `outcome` (`success`/`failure`/`denied`), `target_type`, `target_id`;
+  - `metadata` (JSONB, redacted), `user_agent_summary`, `request_id`.
+  - **There is no IP column on this table** (§6.9).
+- **Immutability (DB-enforced).** A `RestrictTableGrants` migration gives `erp_app` only `SELECT, INSERT`. A trigger rejects UPDATE/DELETE for every role and can be removed only by a reviewed migration. The same helper makes `django_migrations` SELECT-only for `erp_app` (closing a Phase 1 gap).
+- **Never logged anywhere (audit, structlog, Sentry, emails):** passwords, password hashes, email-link tokens, TOTP secrets/QR payloads, MFA codes, recovery codes, session keys, CSRF tokens.
+  - The redaction key list is extended (`password`, `token`, `secret`, `otp`, `code`, `recovery`, `session`, `csrf`, `authorization`, `cookie`).
+  - Audit `metadata` is built from an **allow-list** per event type, never from raw request data.
+  - Tests assert that the sensitive values used in each flow do not appear in captured logs, audit rows or emails (§10).
+- **Events:**
+  - `identity.login.succeeded|failed|locked|throttled`, `identity.logout`;
+  - `identity.mfa.enrolled|challenge_failed|disabled|reset|recovery_code_used|recovery_codes_regenerated`;
+  - `identity.step_up.succeeded|failed`;
   - `identity.password.changed|reset_requested|reset_completed`;
-  - `identity.email.change_requested|changed`, `identity.account.activated|deactivated|reactivated`;
-  - `identity.session.revoked`;
-  - `rbac.role.created|updated|deleted`, `rbac.role.permissions_changed`, `rbac.platform_role.granted|revoked`;
-  - `authz.denied` (sampled/aggregated to avoid flooding: one row per actor+code per minute).
-- **Partitioning** (monthly) is deferred to Phase 18 when volume requires it. The table and indexes are designed for it: `(occurred_at)`, `(actor_user_id, occurred_at)`, `(tenant_id, occurred_at)`.
+  - `identity.email.change_requested|changed`;
+  - `identity.account.created|activated|deactivated|reactivated`;
+  - `identity.session.revoked|expired_idle|expired_absolute`, `identity.signin.new_device_notified`;
+  - `rbac.role.created|updated|deleted|permissions_changed`, `rbac.platform_role.granted|revoked`;
+  - `audit.ip.revealed`;
+  - `authz.denied` (aggregated: at most 1 row per actor + code per minute).
+- **Transactions.** Events are written in the same transaction as the action. Failed logins are written in their own transaction. An audit write failure fails the security action (fail closed).
+- **Partitioning:** Phase 18 (indexes are partition-friendly).
+
+### 6.9 IP address privacy (ADR-036; owner Q7 conditions)
+
+| Requirement | Design |
+|---|---|
+| Encrypted at rest | `ip_encrypted` (AES-GCM via the ADR-031 key ring) in `identity_sessionrecord` and in a separate **`audit_auditeventip`** table (`event_id`, `ip_encrypted`, `ip_index`, `ip_prefix`, `created_at`). The audit event itself stays fully immutable |
+| Searchable for forensics without decryption | `ip_index = HMAC-SHA256(IP_INDEX_KEY, normalized_ip)`; exact-match search by an investigator's IP |
+| Restricted access | API responses show a **masked** IP by default (`203.0.113.•` / `2001:db8::•`). Decryption needs `audit.event.view_ip` + MFA + step-up, and each reveal writes `audit.ip.revealed` |
+| Configurable retention | `SECURITY_IP_RETENTION_DAYS` (default **365**, pending legal review). A daily Celery beat job **anonymizes** expired rows: it deletes `ip_encrypted` and `ip_index` and keeps only `ip_prefix` (IPv4 /24, IPv6 /48) for abuse statistics. Audit IP rows are deleted from the side table (`erp_app` may DELETE there, not on `audit_auditevent`) |
+| Deletion / anonymization procedure | `manage.py erase_ip_data --user <id> [--before <date>]` for data-subject requests, documented in `SECURITY.md`; the run itself is audited |
+| Throttling | Redis keys use the IP HMAC, never the plaintext IP; short TTLs |
+| Not stored elsewhere | structlog request logs don't include IPs. **Nginx access logs** do include `remote_addr`, so log retention is set in Phase 19, and this is listed as a known gap |
+| Legal | Retention period and lawful basis **pending legal review before production** (Known gaps) |
+
+Keys: `FIELD_ENCRYPTION_KEYS` (ADR-031 key ring) and `IP_INDEX_KEY` (separate HMAC key). Dummy values go in `.env.example`; production keys go in a secret manager (ADR-019). Commands: `rotate_field_encryption` re-encrypts, and `rebuild_ip_index` handles HMAC key rotation.
+
+### 6.10 Reuse of Django security primitives (ADR-033 condition)
+
+| Concern | Reused from Django | Custom (why) |
+|---|---|---|
+| Password hashing | `PASSWORD_HASHERS` (Argon2), `make_password`, `check_password`, `set_password` | — |
+| Password rules | `AUTH_PASSWORD_VALIDATORS` + `validate_password` | `BreachedPasswordValidator` plugs into the same framework |
+| Credential check | `django.contrib.auth.authenticate()` + `ModelBackend` | Throttling wrapper (Django has none) |
+| Login / logout | `django.contrib.auth.login()` / `logout()` (session fixation protection via `cycle_key`) | Two-step MFA state stored **in the Django session** |
+| Session storage | `django.contrib.sessions` (`cached_db`), `SessionMiddleware` | `SessionRecord` index (Django can't list sessions per user); idle/absolute timeout middleware |
+| CSRF | `CsrfViewMiddleware`, DRF `SessionAuthentication` | — |
+| Constant-time compare and randomness | `django.utils.crypto.constant_time_compare`, `secrets` | — |
+| Email | `django.core.mail` + Django templates | Celery task wrapper; en/bn templates |
+| Tokens | — (`PasswordResetTokenGenerator` can't be individually revoked or audited) | `core.tokens` + `AccountToken` (ADR-034) |
+| MFA | — (none in Django) | `pyotp` + encrypted device (ADR-031) |
+| Authorization | Not `auth.Group`/`auth.Permission` for app logic (kept only because `PermissionsMixin` exists) | `rbac` tables (ADR-033) |
+| Django admin | **Disabled** (`django.contrib.admin` not installed; ADR-037) | Platform console + audited APIs |
+
+### 6.11 New sign-in notifications (ADR-037)
+- Setting `SECURITY_NOTIFY_NEW_SIGNIN = platform_staff` (default); alternatives are `privileged` (all users with `requires_mfa` permissions), `all` or `off`. Phase 3 makes it tenant-configurable.
+- A sign-in counts as new when the (browser/OS family, IP HMAC) pair hasn't been seen for this user in the last 90 days.
+- **Email content:** time (UTC + the user's locale), browser/OS family, a link to the account security page and a "reset your password" page link.
+- The email has **no** IP address, location, session key or token.
 
 ---
 
@@ -316,182 +409,239 @@ Activation, email verification, password reset and email change use **DB-stored,
 
 | App | Model / table | Notes |
 |---|---|---|
-| `identity` | `User` (**alter**) | Add `email_verified_at`, `last_password_change_at`, `deactivated_at`, `locale` (en/bn), `display_name`. Migration is additive and nullable (expand-only) |
-| `identity` | `MFADevice` | `user`, `kind` (`totp`), `name`, `secret_encrypted` (bytes, ADR-031), `confirmed_at`, `last_used_step`, `last_used_at` |
-| `identity` | `RecoveryCode` | `user`, `code_hash`, `used_at` (10 per generation; regenerating deletes unused ones, audited) |
+| `core` | `RestrictTableGrants` migration operation; `core.crypto` (ADR-031 key ring), `core.tokens` | Reusable helpers |
+| `identity` | `User` (**alter**) | Add `email_verified_at`, `activated_at`, `last_password_change_at`, `deactivated_at`, `locale`, `display_name`. Additive, nullable |
+| `identity` | `MFADevice` | `user`, `kind` (`totp`), `secret_encrypted`, `confirmed_at`, `enrollment_expires_at`, `last_used_step`, `last_used_at` |
+| `identity` | `RecoveryCode` | `user`, `code_hash` (SHA-256, unique), `used_at`, `generation` |
 | `identity` | `AccountToken` | §6.4 |
-| `identity` | `SessionRecord` | §6.7 |
-| `rbac` | `Permission` | `code` (unique), `module_code`, `description`, `is_sensitive`, `deprecated_at` |
-| `rbac` | `Role` | §4.2 (platform, template; tenant roles in Phase 3) |
-| `rbac` | `RolePermission` | `role`, `permission` (`UNIQUE` pair) |
-| `rbac` | `PlatformRoleAssignment` | `user`, `role` (kind = platform), `granted_by`, `granted_at`, `reason` |
-| `audit` | `AuditEvent` | §6.8; grants + immutability trigger migration |
-| `core` | migration helper `RestrictTableGrants` | Reusable operation; used for `audit_auditevent` and `django_migrations` |
+| `identity` | `SessionRecord` | §6.7 + encrypted IP fields §6.9 |
+| `identity` | `SeenDevice` | `user`, `fingerprint_hmac`, `first_seen_at`, `last_seen_at` (new sign-in detection) |
+| `rbac` | `Permission`, `Role`, `RolePermission` (+ nullable `tenant_id` and consistency trigger), `PlatformRoleAssignment` | §4.2 |
+| `audit` | `AuditEvent` (+ grants + immutability trigger), `AuditEventIP` (encrypted, deletable) | §6.8, §6.9 |
 
-None of these tables are tenant-owned, so none need RLS in Phase 2. `AuditEvent` carries a nullable `tenant_id` for Phase 3, and a CI check that "every `tenant_id` table has RLS" will be activated in Phase 3 with a documented exemption list. Migrations are reviewed for lock impact; all tables are new except one additive `ALTER` on the small `identity_user` table.
+- No tenant-owned tables (ADR-032). The dual-scope tables get their RLS policies in Phase 3 (§4.6).
+- Migrations: new tables plus one additive `ALTER` on the small `identity_user` table. All are reviewed for lock impact.
 
-## 8. API endpoints (`/api/v1`, OpenAPI documented, Problem Details errors)
+## 8. API endpoints (`/api/v1`; OpenAPI; Problem Details)
 
-**Auth (anonymous allowed where marked; CSRF on all unsafe methods):**
+**Every protected endpoint enforces server-side authorization (owner requirement 6).** A CI test enumerates all URL patterns and fails if a view lacks `HasPermission`/`HasAnyPermission`, unless it is on a reviewed allow-list of anonymous auth endpoints. Services also call `require_perm` (defense in depth).
 
-| Method & path | Auth | Purpose |
+| Method & path | Auth | Permission / notes |
 |---|---|---|
-| `GET /auth/csrf/` | anon | Set CSRF cookie |
-| `POST /auth/login/` | anon | Step 1 (§6.1) |
-| `POST /auth/mfa/verify/` | pending | Step 2 (TOTP or recovery code) |
-| `POST /auth/logout/` | user | End session |
-| `POST /auth/password/reset/` | anon | Request reset (always `202`) |
-| `POST /auth/password/reset/confirm/` | anon (token) | Set new password; revoke all sessions |
-| `POST /auth/activate/` | anon (token) | Verify email + set first password |
-| `POST /auth/activation/resend/` | anon | Always `202` |
-| `POST /auth/email/verify/` | anon (token) | Confirm email change |
-| `POST /auth/reauthenticate/` | user | Enter sudo mode (password [+ MFA]) |
+| `GET /auth/csrf/` | anon | — |
+| `POST /auth/login/` | anon | throttled; enumeration-safe |
+| `POST /auth/mfa/verify/` | pending | throttled |
+| `POST /auth/logout/` | user | — |
+| `POST /auth/password/reset/` | anon | always `202`; throttled |
+| `POST /auth/password/reset/confirm/` | token | revokes all sessions |
+| `POST /auth/activate/` | token | sets first password |
+| `POST /auth/activation/resend/` | anon | always `202`; throttled |
+| `POST /auth/email/verify/` | token | applies email change |
+| `POST /auth/step-up/` | user | password + MFA → step-up for 10 min |
+| `GET/PATCH /me/` | user | `identity.account.view_own` / `update_own` |
+| `POST /me/password/` | user | step-up |
+| `POST /me/email/` | user | step-up |
+| `GET /me/mfa/` | user | `identity.mfa.manage_own` |
+| `POST /me/mfa/totp/setup/` | user | Returns **QR SVG only**; `no-store` |
+| `POST /me/mfa/totp/confirm/` | user | Returns recovery codes once; `no-store` |
+| `DELETE /me/mfa/totp/` | user | step-up; blocked if MFA required |
+| `POST /me/mfa/recovery-codes/` | user | step-up; regenerate |
+| `GET /me/sessions/` | user | `identity.session.view_own` (masked IPs) |
+| `DELETE /me/sessions/{id}/` | user | `identity.session.revoke_own` |
+| `POST /me/sessions/revoke-others/` | user | `identity.session.revoke_own` |
+| `GET/POST /platform/users/` | platform, MFA | `identity.user.view` / `create` |
+| `GET/PATCH /platform/users/{id}/` | platform, MFA | `identity.user.view` / `update` |
+| `POST /platform/users/{id}/deactivate/` · `/reactivate/` | platform, MFA | `identity.user.deactivate` + step-up |
+| `POST /platform/users/{id}/sessions/revoke/` | platform, MFA | `identity.session.revoke_any` + step-up |
+| `POST /platform/users/{id}/mfa/reset/` | platform, MFA | `identity.mfa.reset` + step-up + reason |
+| `POST /platform/users/{id}/activation/resend/` | platform, MFA | `identity.user.create` |
+| `GET /platform/permissions/` | platform, MFA | `rbac.permission.view` |
+| `GET/POST /platform/roles/` · `GET/PATCH/DELETE /platform/roles/{id}/` | platform, MFA | `rbac.role.*` (system roles read-only) |
+| `GET/POST /platform/users/{id}/platform-roles/` · `DELETE …/{assignment_id}/` | platform, MFA | `rbac.platform_role.assign` + step-up |
+| `GET /platform/audit-events/` | platform, MFA | `audit.event.view` (cursor pagination; filters) |
+| `POST /platform/audit-events/{id}/reveal-ip/` | platform, MFA | `audit.event.view_ip` + step-up; audited |
 
-**Self-service (`/me`), each requiring `identity.*_own` codes held by every active user:**
-
-| Method & path | Purpose |
-|---|---|
-| `GET /me/` | Profile, permissions in current context, MFA state, flags (`mfa_enrollment_required`) |
-| `PATCH /me/` | `display_name`, `locale` |
-| `POST /me/password/` | Change password (current + new) |
-| `POST /me/email/` | Request email change (sudo) |
-| `GET /me/mfa/` · `POST /me/mfa/totp/setup/` · `POST /me/mfa/totp/confirm/` · `DELETE /me/mfa/totp/` (sudo; blocked if mandatory) · `POST /me/mfa/recovery-codes/` (sudo, regenerate) | MFA management |
-| `GET /me/sessions/` · `DELETE /me/sessions/{id}/` · `POST /me/sessions/revoke-others/` | Session management |
-
-**Platform administration (`/api/v1/platform/…`, platform host only, MFA-verified session required):**
-
-| Method & path | Permission |
-|---|---|
-| `GET/POST /platform/users/` | `identity.user.view` / `identity.user.create` |
-| `GET/PATCH /platform/users/{id}/` | `identity.user.view` / `identity.user.update` |
-| `POST /platform/users/{id}/deactivate/` · `/reactivate/` | `identity.user.deactivate` |
-| `POST /platform/users/{id}/sessions/revoke/` | `identity.session.revoke_any` |
-| `POST /platform/users/{id}/mfa/reset/` | `identity.mfa.reset` (+ sudo, reason) |
-| `POST /platform/users/{id}/activation/resend/` | `identity.user.create` |
-| `GET /platform/permissions/` | `rbac.permission.view` |
-| `GET/POST /platform/roles/` · `GET/PATCH/DELETE /platform/roles/{id}/` | `rbac.role.*` (system roles read-only) |
-| `GET/POST /platform/users/{id}/platform-roles/` · `DELETE …/{assignment_id}/` | `rbac.platform_role.assign` (+ sudo) |
-| `GET /platform/audit-events/` (cursor pagination; filters: action, actor, outcome, time range) | `audit.event.view` |
-
-Every endpoint declares `HasPermission(...)` (or an explicit, reviewed anonymous exemption), and a CI test enumerates URL patterns to enforce this. List endpoints use selectors with `select_related`/`prefetch_related` (N+1 checks in tests).
-
-## 9. Frontend screens (Next.js 16, en + bn, mobile-first)
+## 9. Frontend screens (English + Bengali; mobile-first; owner requirement 10)
 
 | Route | Screen |
 |---|---|
 | `/[locale]/login` | Email + password; generic errors; throttle message with retry time |
 | `/[locale]/login/mfa` | TOTP code or "use a recovery code" |
-| `/[locale]/login/mfa-setup` | Forced enrollment (QR, manual key, confirm code, show and download recovery codes once) |
-| `/[locale]/forgot-password` | Request reset (same confirmation message whether or not the account exists) |
-| `/[locale]/reset-password` | Reads `#token`, sets new password with strength guidance |
-| `/[locale]/activate` | Reads `#token`, sets first password → MFA setup if required |
-| `/[locale]/verify-email` | Confirms email change |
-| `/[locale]/account/security` | Change password, email, MFA (enroll/disable/regenerate codes), active sessions with revoke |
-| `/[locale]/platform/users` · `/platform/users/[id]` | Platform user list/detail: create user, deactivate, revoke sessions, reset MFA, platform roles |
+| `/[locale]/login/mfa-setup` | Forced enrollment: QR (server SVG), confirm code, recovery codes shown once with copy/download and an acknowledgement checkbox |
+| `/[locale]/forgot-password` | Request reset (identical confirmation for all inputs) |
+| `/[locale]/reset-password` | Reads `#token`; new password with validation feedback |
+| `/[locale]/activate` | Reads `#token`; set first password → MFA setup if required |
+| `/[locale]/verify-email` | Confirm email change |
+| `/[locale]/account/security` | Change password, email, MFA, recovery codes; active sessions with revoke (masked IPs) |
+| `/[locale]/platform/users` (+ `/[id]`) | Create user, deactivate, revoke sessions, reset MFA, platform roles |
 | `/[locale]/platform/roles` | Roles + permission catalog (system roles read-only) |
-| `/[locale]/platform/audit` | Audit log with filters (cursor pagination) |
-| App shell | Server-side session check via `/me/`; redirects anonymous users to login; navigation from the permission manifest; "re-authenticate" dialog for sudo actions |
+| `/[locale]/platform/audit` | Audit log with filters; IP reveal (permission + step-up) |
+| App shell | Server-side `/me/` check; redirect to login; permission-driven navigation; step-up dialog; idle-timeout warning before expiry |
 
-- **Tech:** TanStack Query, react-hook-form + zod (deferred from Phase 1; now justified), generated API client and existing shadcn/ui components.
-- **i18n:** all strings in `en.json` and `bn.json`, with a parity test.
+- **Tech:** TanStack Query; react-hook-form + zod (+ resolver, Q11); generated API client; shadcn/ui.
+- **i18n:**
+  - every string lives in `en.json` and `bn.json` (parity test);
+  - emails come in `en` and `bn` (Django templates, chosen by user locale);
+  - Bengali copy is reviewed for natural wording, not literal translation.
 - **Security:**
-  - No tokens in JS storage.
-  - The CSRF header is added by the existing client.
-  - Password fields use correct `autocomplete` values, and the OTP field uses `one-time-code`.
-  - Error messages never reveal whether an account exists.
+  - no tokens in JS storage; CSRF header via the existing client;
+  - `autocomplete` set to `current-password` / `new-password` / `one-time-code` as appropriate;
+  - no messages that reveal account existence.
 
-**Emails** (Celery task, Django templates, `en`/`bn`, captured by Mailpit in dev): activation, password reset, password changed, email change verify/notify, MFA reset notice, account locked notice, new login notice (optional, Q8).
-
-## 10. Tests (definition of done for Phase 2)
+## 10. Tests (definition of done)
 
 | Area | Tests |
 |---|---|
-| Login | success; wrong password / unknown email / inactive / unverified all give identical response; timing-safe path for unknown user; CSRF required; session cycled; cookie flags |
-| Throttling | per-IP and per-email limits; lockout and unlock; no enumeration via throttle responses |
-| MFA | enrollment; replay of the same TOTP step rejected; ±1 window; recovery code single use; pending-MFA expiry and attempt limit; mandatory-MFA enrollment gate; cannot disable when mandatory; secret encrypted at rest (raw DB value ≠ secret) |
-| Tokens | single use; expiry; wrong purpose rejected; new token invalidates old; only the hash is stored; reset revokes all sessions |
-| Sessions | list/revoke own; cannot revoke others' without permission; idle and absolute timeout; revoke-others on password change |
-| RBAC | `has_perm` allow/deny matrix; unknown code raises in tests; no self-escalation; last-super-admin protection; sudo required for platform role grants; cache invalidation on change |
-| API authz | URL-pattern audit (every view has a permission class); each platform endpoint allowed + denied cases; anonymous endpoints explicitly listed |
-| Audit | every listed event written with redacted metadata; `erp_app` UPDATE/DELETE on audit table → permission denied; trigger blocks owner UPDATE/DELETE; failed logins recorded |
-| DB | `django_migrations` is SELECT-only for `erp_app`; migrations reversible where safe |
-| Frontend | Vitest for forms/validation and the auth client; Playwright E2E: login → MFA setup → logout → login with MFA → recovery code → password reset via Mailpit → session revoke; axe on auth pages; mobile viewport |
-| Security | ruff `S`, pip-audit, Trivy, gitleaks unchanged; a dedicated `SECURITY.md` §10 checklist in the PR |
+| Enumeration (req. 7) | Login (unknown, wrong password, inactive, unactivated) → identical status, body and timing band. Reset/resend → identical `202`. Throttle responses identical for existing and non-existing accounts |
+| Brute force (req. 8) | Per-IP and per-email limits; progressive delay and lock; MFA attempt limit; step-up attempt limit; locks audited; Redis keys contain no plaintext IP or email |
+| Sessions (req. 8) | Idle 30 min and absolute 12 h (time-frozen); list/revoke own; revoke-others; admin revoke-any with step-up; automatic revocation on reset/deactivation/MFA reset; `cycle_key` on login/MFA/privilege change |
+| MFA / step-up | Enrollment; replay rejected; ±1 window; recovery code single use and hashed; enrollment gate for privileged users; cannot disable when required; step-up required and expires after 10 min; **no API response contains the TOTP secret or an `otpauth://` URI** |
+| Tokens (ADR-034) | 256-bit randomness; hash-only storage; single use; expiry; purpose binding; new token invalidates old; rate limited |
+| Secrets at rest (ADR-031/036) | Raw DB values of MFA secrets and IPs differ from the plaintext; decryption round-trip; key-ring rotation; blind-index search; anonymization job; `erase_ip_data` |
+| No secrets in logs (req. 9) | For each flow, capture structlog, audit rows (incl. metadata), Sentry events (stubbed) and outgoing emails, and assert that the password, raw token, TOTP secret, MFA code, recovery codes, session key and CSRF token never appear |
+| RBAC (req. 1–4, 6) | `has_perm` allow/deny matrix incl. scope-coverage rules (unit-tested against a fake tenant source to prove Phase 3 pluggability); Super Admin denied on a simulated tenant target without a support session; unknown code raises; no self-escalation; last super admin protected; cache invalidation |
+| API authz (req. 6) | URL-pattern audit; allowed + denied tests for every platform endpoint |
+| Audit | All §6.8 events written with allow-listed metadata; `erp_app` UPDATE/DELETE → permission denied; trigger blocks owner UPDATE/DELETE; IP side table deletable; dual-scope RLS policy **prototype test** (throwaway table, §4.6 policy) passes |
+| DB | `django_migrations` SELECT-only for `erp_app`; additive migrations |
+| Frontend (req. 10) | Vitest: forms, validation, auth client, en/bn parity. Playwright (desktop + mobile, en + bn): activation via Mailpit → MFA setup → logout → login with MFA → recovery code → password reset via Mailpit → session revoke → step-up dialog → idle-timeout warning; axe on all auth pages |
+| Regression | All Phase 1 checks unchanged (ruff, mypy, import-linter, pip-audit, Trivy, gitleaks, S3 suite) |
 
-Coverage gate unchanged (≥ 85%); target ≥ 90% for `identity`, `rbac` and `audit` services.
+Coverage: ≥ 85% overall; **≥ 90%** for `identity`, `rbac` and `audit` services.
 
-## 11. Dependencies (each needs approval; pinned in lockfiles)
+## 11. Dependencies (owner-approved; pinned; recorded in `TECH_STACK.md`)
 
-| Package | Why | Alternative considered |
+| Package | Version to pin | License | Notes |
+|---|---|---|---|
+| `pyotp` | `>=2.10,<3` (2.10.0, released 2026-06-14) | MIT | TOTP (RFC 6238) |
+| `cryptography` | `>=50.0.2,<51` (50.0.2, 2026-09-30) | Apache-2.0 / BSD | AES-GCM field encryption, HMAC |
+| `segno` | `>=1.6.6,<2` (1.6.6, 2025-03-12) | BSD | Server-side SVG QR; zero runtime deps on Python 3.13. Low release cadence noted (QR encoding is a stable standard); Dependabot watches it |
+| `@tanstack/react-query` | `5.106.1` | MIT | Server state |
+| `react-hook-form` | `7.91.0` | MIT | Forms |
+| `zod` | `4.6.7` | MIT | Validation |
+| `@hookform/resolvers` | `7.0.3` | MIT | **Q11:** glue between react-hook-form and zod; not explicitly approved yet |
+
+Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lock.yaml`. Not added: `django-axes`, `django-otp`, JWT/OAuth libraries (ADR-028 pending), any GeoIP database.
+
+## 12. Decisions (all Accepted 2026-11-05)
+
+| ADR | Decision |
+|---|---|
+| ADR-031 | Secrets encrypted at rest with `cryptography`; key ring + rotation; recovery codes hashed only |
+| ADR-032 | Memberships/tenant roles/tenant records in Phase 3 with RLS; clean interfaces (§4.4, §4.6) |
+| ADR-033 | Custom business RBAC; reuse Django hashing, auth primitives, sessions and CSRF (§6.10) |
+| ADR-034 | Random, single-use, hashed, expiring, invalidated, rate-limited tokens |
+| ADR-035 | Step-up for sensitive operations; MFA for privileged accounts (data-driven), not for every action |
+| ADR-036 | Encrypted IPs, restricted access, configurable retention and anonymization (legal review pending) |
+| ADR-037 | Q2–Q9 scope decisions |
+
+## 13. Owner answers and open questions
+
+| # | Topic | Answer |
 |---|---|---|
-| `pyotp` | RFC 6238 TOTP generation/verification (small, MIT) | `django-otp` (pulls its own device models without UUIDv7/encryption; less control) |
-| `cryptography` | Field-level encryption for MFA secrets (ADR-031); industry standard | `django-fernet-fields` (unmaintained) |
-| `segno` | Server-rendered SVG QR code for TOTP enrollment (pure Python, no deps) | Client-side QR library (adds JS; secret still has to reach the browser) |
-| `@tanstack/react-query` | Server state (already in FRONTEND_STANDARDS) | — |
-| `react-hook-form`, `zod`, `@hookform/resolvers` | Forms + validation (already in FRONTEND_STANDARDS) | — |
+| Q1 | ADR-031 to ADR-035 | **Approved** (033 with conditions) |
+| Q2 | Phone/SMS login | **Approved:** moves to Phase 14 |
+| Q3 | Public registration | **Approved:** none in Phase 2; administrative workflows only |
+| Q4 | Breached-password check | **Approved:** off by default; optional integration (§6.3) |
+| Q5 | QR code | **Approved:** server-side; raw secret never in API responses or logs (§6.6) |
+| Q6 | Timeouts | **Approved:** 30 min idle / 12 h absolute |
+| Q7 | IP storage | **Approved with privacy conditions:** encrypted, restricted, retention + anonymization, legal review pending (§6.9, ADR-036) |
+| Q8 | New sign-in notices | **Approved:** platform staff by policy; no sensitive data (§6.11) |
+| Q9 | Django admin | **Approved:** disabled; application interfaces and audited APIs only |
+| **Q10** | **Manual-entry key for TOTP enrollment** (users who can't scan a QR code, e.g. screen-reader users or setting up on the same phone). Showing it would put the raw secret in an API response, which the Q5 condition forbids | **Open.** Default in this plan: **not provided**. Alternative, only if you approve an exception: an explicit "can't scan?" action that returns the key once (step-up, `no-store`, audited) |
+| **Q11** | `@hookform/resolvers` (official react-hook-form ↔ zod adapter, MIT) | **Open.** Recommend approving. The alternative is a small in-house adapter (duplicated, less tested code) |
 
-Not added: `django-axes` (throttling/lockout via Redis counters in ~150 lines with tests); `djangorestframework-simplejwt` / `django-oauth-toolkit` (ADR-028 still pending; not needed for browser auth).
+## 14. Owner additional requirements: traceability
 
-## 12. Decisions requested (new ADRs, all Proposed)
+| # | Requirement | Where satisfied | Phase |
+|---|---|---|---|
+| 1 | User can belong to multiple institutions | §4.1–4.2 (Membership per tenant, RoleAssignment per institution/campus) | Designed 2 / built 3 |
+| 2 | Different roles in different institutions | §4.2 RoleAssignment scope; §4.4 coverage rules | Designed 2 / built 3 |
+| 3 | Tenant, institution and campus permission scopes | §4.4 `ScopeTarget` + coverage; engine in Phase 2 | 2 (engine) / 3 (data) |
+| 4 | Super Admin has no unrestricted tenant data access | §4.1, §4.4 (`PlatformRoleSource` only for platform targets), §10 test | 2 (enforced) |
+| 5 | Audited, time-limited support access | §4.5 | Designed 2 / built 3 |
+| 6 | Server-side authorization on every protected API | §8 URL audit + `require_perm` in services | 2 |
+| 7 | No user enumeration | §6.1, §6.4, §6.5, §10 | 2 |
+| 8 | Brute-force protection + session revocation | §6.2, §6.7 | 2 |
+| 9 | No passwords/tokens/MFA secrets/recovery codes in security logs | §6.8 allow-list metadata + redaction + leak tests | 2 |
+| 10 | English and Bengali auth interfaces | §9 (UI + emails) | 2 |
 
-| ADR | Decision | Recommendation |
-|---|---|---|
-| **ADR-031** | Field-level encryption for secrets at rest (MFA secrets now; integration credentials later). Uses `cryptography` AES-GCM (`MultiFernet`-style key ring) with keys from `FIELD_ENCRYPTION_KEYS` (comma-separated, first = active). Rotation by re-encrypt command. Production keys in a secret manager (KMS decision with ADR-019) | Accept |
-| **ADR-032** | Phase boundary: `Membership` + tenant `RoleAssignment` are implemented in **Phase 3** (together with RLS), on the §4 design; Phase 2 ships the scope-aware engine and platform roles | Accept |
-| **ADR-033** | Authorization uses the project's own `rbac` tables. Django's `auth.Group`/`auth.Permission` remain only for Django admin (platform staff), never for app authorization | Accept |
-| **ADR-034** | Email-link tokens are DB-stored, hashed, single use, purpose-bound, short-lived (§6.4), not Django's stateless `PasswordResetTokenGenerator` (which can't be individually revoked or audited) | Accept |
-| **ADR-035** | Sudo mode (re-authentication within 10 min) for sensitive actions; mandatory MFA for platform roles (Phase 2) and for `tenant_owner`/`institution_admin` (Phase 3) | Accept |
+---
 
-## 13. Open questions for the owner
+## 15. Final implementation checklist (after approval; on `feat/phase-02-auth-rbac` from updated `main`)
 
-| # | Question | Recommendation |
-|---|---|---|
-| Q1 | Approve ADR-031 to ADR-035? | Yes |
-| Q2 | **Phone-number login / SMS OTP** is in the original roadmap text. It needs an SMS provider (Phase 14) and cost/abuse analysis. Defer to Phase 14? | Defer; Phase 2 is email-only |
-| Q3 | **No public self-registration** in Phase 2. Platform users are created by Super Admin; tenant signup arrives with Phase 3 onboarding | Yes |
-| Q4 | Breached-password check (HIBP k-anonymity, outbound call) | Off by default; optional setting |
-| Q5 | QR code rendered server-side as SVG with `segno` | Yes |
-| Q6 | Default idle timeout 30 min / absolute 12 h for all users in Phase 2 (tenant-configurable from Phase 3) | Yes |
-| Q7 | Store IP addresses in session records and audit events **in full** for security forensics (retention set later in the data-retention policy), or truncated? | Full IP, retention ≤ 1 year (pending legal review already listed in Known gaps) |
-| Q8 | "New sign-in" notification email on every successful login from a new device/IP | Yes for platform staff; tenant-configurable later |
-| Q9 | Django admin: keep **disabled** in Phase 2 (platform console replaces it) | Keep disabled |
+**Before starting**
+- [ ] PR #12 merged; Phase 1 `Approved`; this plan approved; Q10 and Q11 answered
+- [ ] Rebase `docs/phase-02-plan` onto `main` (or merge its PR); branch `feat/phase-02-auth-rbac` from `main`
 
-## 14. Implementation steps (after approval)
+**Backend foundation**
+- [ ] `core.crypto` (AES-GCM key ring, HMAC index), `core.tokens`, `RestrictTableGrants` operation + tests
+- [ ] Settings: `FIELD_ENCRYPTION_KEYS`, `IP_INDEX_KEY`, timeouts, throttle limits, `SECURITY_IP_RETENTION_DAYS`, `SECURITY_NOTIFY_NEW_SIGNIN`, `PASSWORD_BREACH_CHECK_*`. Prod refuses to start without the keys. Dummy values in `.env.example`
+- [ ] Redaction key list extended; leak-test fixtures
 
-1. Branch `feat/phase-02-auth-rbac` from `main` (after PR #12 is merged).
-2. `core`: `RestrictTableGrants` migration operation, field-encryption utility (ADR-031) with key rotation tests.
-3. `audit`: model, immutability migration, `record()` service, redaction, tests.
-4. `identity`: User additions, tokens, password flows, throttling, MFA, sessions + middleware, emails (Celery tasks, en/bn templates), tests.
-5. `rbac`: permission registry + `sync_permissions`, roles, templates (YAML) + `seed_roles`, platform assignments, `has_perm`, DRF permission classes, URL-audit test, tests.
-6. API views/serializers/URLs; OpenAPI regenerate; TS client regenerate.
-7. Frontend: auth flows, account security, platform console, i18n, unit tests, Playwright E2E (Mailpit-driven).
-8. Bootstrap: `manage.py create_platform_admin` (interactive or env-driven, forces activation + MFA on first login). No default credentials anywhere.
-9. Full verification: CI parity locally, clean-volume stack, smoke check, Trivy, gitleaks.
-10. Docs: SECURITY.md (implemented controls), API_STANDARDS (auth endpoints), DATABASE_DESIGN/ERD (new tables), DECISION_LOG, DEVELOPMENT_PROGRESS, this plan's outcome section.
-11. Open a **separate PR** for Phase 2. Never merged without owner approval.
+**audit**
+- [ ] `AuditEvent`, `AuditEventIP`; grants + immutability trigger migration; `record()` with allow-listed metadata; anonymization beat job; `erase_ip_data`
 
-## 15. Acceptance criteria
+**identity**
+- [ ] User fields migration; `AccountToken`, `MFADevice`, `RecoveryCode`, `SessionRecord`, `SeenDevice`
+- [ ] Login/MFA/logout services (Django `authenticate`/`login`/`logout`); throttling/lockout; step-up
+- [ ] Activation, reset, email change; en/bn email templates; Celery platform tasks
+- [ ] Session middleware (idle/absolute, `SessionRecord` upkeep); revocation services
+- [ ] Breached-password validator (off by default); new sign-in notifier
+- [ ] `create_platform_admin` bootstrap command (no default credentials)
 
-1. A platform admin can be bootstrapped, activate via email (Mailpit), set a password, enroll TOTP and log in with MFA. Logout works.
-2. Every mandatory-MFA user is blocked from all non-MFA endpoints until enrolled.
-3. Password reset, activation and email change work end-to-end with single-use expiring tokens; no endpoint reveals whether an email exists.
-4. Throttling and lockout work and are audited.
-5. Users can list/revoke sessions; idle and absolute timeouts are enforced; sessions are revoked where §6.7 requires.
-6. `has_perm` passes the allow/deny matrix. No endpoint lacks a permission class (CI-enforced). Self-escalation and last-super-admin removal are impossible.
-7. All §6.8 events are recorded with redacted metadata. `erp_app` cannot UPDATE/DELETE audit rows (DB-enforced, tested).
-8. MFA secrets are encrypted at rest. Recovery codes and email tokens are stored only as hashes.
-9. All CI jobs green, coverage ≥ 85% (≥ 90% for `identity`/`rbac`/`audit` services), Playwright auth E2E green on desktop + mobile, axe has no serious violations.
-10. Docs updated; separate PR opened; not merged without owner approval.
+**rbac**
+- [ ] `Permission`/`Role`/`RolePermission` (+ trigger)/`PlatformRoleAssignment`
+- [ ] Manifests + `sync_permissions`; role templates YAML + `seed_roles`
+- [ ] `has_perm`/`require_perm`, `PermissionSource` protocol, `PlatformRoleSource`, cache + versioning, object-policy hook
+- [ ] DRF `HasPermission`/`HasAnyPermission`, `StepUpRequired`, `MfaVerified`; URL-audit test
 
-## 16. Risks
+**API + contract**
+- [ ] Views/serializers/URLs per §8; OpenAPI zero warnings; TS client regenerated
+
+**Frontend**
+- [ ] Dependencies (§11); auth screens, account security, platform console, step-up dialog, idle warning
+- [ ] en/bn messages + parity; Vitest; Playwright auth E2E via Mailpit (desktop + mobile, en + bn); axe
+
+**Verification + docs**
+- [ ] All CI jobs green; coverage gates; clean-volume stack + smoke; Trivy; gitleaks; leak tests
+- [ ] Docs: SECURITY, API_STANDARDS, DATABASE_DESIGN, ERD, TECH_STACK (pins), MULTI_TENANT (dual-scope policy), DECISION_LOG, DEVELOPMENT_PROGRESS, plan outcome section
+- [ ] **Separate Phase 2 PR**; never merged without owner approval
+
+## 16. Acceptance criteria
+
+1. **Bootstrap:** a platform admin is created by command, activates via the Mailpit email, sets a password, enrolls TOTP from the server-rendered QR, receives recovery codes once, and logs in with MFA. Logout works.
+2. **Privileged accounts** can't use any endpoint except MFA setup until they enroll, and can't disable MFA. Ordinary accounts are never forced into MFA and are never asked for MFA on ordinary actions.
+3. **Step-up:** every operation listed in §6.6 returns `403 step_up_required` without fresh step-up and succeeds within 10 minutes of it.
+4. **Account flows:** activation, password reset and email change work end-to-end. Tokens are single-use, expiring, hashed, invalidated by newer tokens and rate-limited.
+5. **No enumeration:** no endpoint reveals whether an email exists (status, body, timing band and throttle behaviour are identical).
+6. **Brute force:** the limits in §6.2 hold and are audited.
+7. **Sessions:** the 30-minute idle and 12-hour absolute timeouts are enforced; sessions can be listed and revoked; automatic revocation happens as in §6.7.
+8. **Authorization:** every protected endpoint enforces a server-side permission (CI-enforced). `has_perm` passes the matrix. A Super Admin is denied on tenant targets without a support session. No self-escalation is possible, and the last super admin is protected.
+9. **Pluggability:** a fake tenant permission source plugged into the engine passes the scope-coverage tests without engine changes (ADR-032 condition).
+10. **Audit:** all §6.8 events are recorded. Audit rows are DB-immutable for every role. IPs are encrypted, masked by default, revealed only with permission + step-up (audited), and anonymized after the configured retention.
+11. **No secret leakage:** passwords, tokens, TOTP secrets, MFA codes, recovery codes, session keys and CSRF tokens appear in no log, audit row, Sentry event, email or API response (except the one-time QR and recovery-code responses, which are `no-store`).
+12. **Bilingual UI:** all authentication screens and emails exist in English and Bengali, with key parity tests passing.
+13. **Quality gates:** CI green; coverage ≥ 85% overall and ≥ 90% for identity/rbac/audit services; Playwright auth E2E green; axe has no serious violations; Trivy/gitleaks clean.
+14. **Docs and PR:** docs updated; separate PR opened; not merged without owner approval.
+
+## 17. Risks
 
 | Risk | Mitigation |
 |---|---|
-| Building tenant features before RLS | Explicit Phase 2/3 boundary (ADR-032) |
-| Auth bugs are high impact | Threat-model-driven test list (§10), sudo mode, audit, security review in the PR |
-| Lockout abused to lock out real users (DoS) | Per-email lock is temporary + progressive; account owner notified; IP throttle separate |
-| Key management for field encryption | Key ring with rotation command; production keys via secret manager (Phase 19 / ADR-019) |
-| Email deliverability in production | Provider decision deferred to Phase 14/19; Mailpit in dev; templates provider-agnostic |
+| Auth defects are high impact | Threat-driven tests (§10), step-up, audit, explicit security review section in the PR |
+| Lockout abused as DoS | Temporary + progressive lock; owner notified; IP limits separate from account limits |
+| Key loss makes MFA secrets and IPs unreadable | Key ring with documented rotation and backup procedure; recovery codes and admin MFA reset as fallback; production keys in a secret manager (Phase 19) |
+| Encrypted IPs reduce forensic convenience | Blind index for exact search; reveal with permission |
+| Dual-scope RLS tables are an exception to "unset context → no rows" | Explicit allowlist; platform rows contain no tenant data; policy prototype tested in Phase 2 and enforced in Phase 3 |
+| Email deliverability | Provider decision in Phase 14/19; Mailpit in dev |
 
 ### Change notes
-- 2026-11-05 — Initial plan drafted (awaiting approval).
+- 2026-11-05 — Rev. 1 drafted (awaiting approval).
+- 2026-11-05 — Rev. 2:
+  - owner approvals (ADR-031 to ADR-035; Q2–Q9) incorporated;
+  - ADR-036 (IP privacy) and ADR-037 (scope decisions) added;
+  - pluggable permission sources (§4.4), support-access design (§4.5) and the Phase 3 RLS consistency review (§4.6) added;
+  - privileged-account MFA made data-driven; Django-primitive reuse table (§6.10); IP privacy design (§6.9);
+  - QR-only enrollment (no `otpauth` URI or manual key in responses);
+  - traceability (§14), final checklist (§15) and expanded acceptance criteria (§16);
+  - Q10 and Q11 opened.
