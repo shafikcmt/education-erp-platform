@@ -29,6 +29,13 @@ def django_db_setup(django_db_setup: Any, django_db_blocker: Any) -> Iterator[No
     owner = connections["default"].settings_dict
     owner_user, owner_password = owner["USER"], owner["PASSWORD"]
     with django_db_blocker.unblock():
+        # Mirror the production bootstrap (01-roles.sh): database ACLs are not inherited from
+        # template1, so restrict CONNECT/TEMPORARY on the freshly created test database too.
+        with connections["default"].cursor() as cursor:
+            db = connections["default"].ops.quote_name(owner["NAME"])
+            app = connections["default"].ops.quote_name(settings.TEST_APP_DB_USER)
+            cursor.execute(f"REVOKE CONNECT, TEMPORARY ON DATABASE {db} FROM PUBLIC")
+            cursor.execute(f"GRANT CONNECT ON DATABASE {db} TO {app}")
         _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
     yield
     with django_db_blocker.unblock():
