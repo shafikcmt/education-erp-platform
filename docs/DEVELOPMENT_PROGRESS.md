@@ -7,7 +7,10 @@
 
 - **Current phase:** Phase 1 — Repository foundation & infrastructure
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
-- **Phase 1 status:** Complete. All exit criteria verified (Session 4): CI green on PR #2, review fixes applied, ADR-029/030 accepted. It becomes `Approved` when the owner approves and merges PR #2. **Not merged.**
+- **Phase 1 status:** Complete.
+  - **PR #2 was merged into `main` by the owner (`shafikcmt`) at 2026-11-05 18:42:43 UTC** as merge commit `cb2383e`. Its head was `41b7e55`, with CI 8/8 green.
+  - The Session 4 review fixes (`91b34d3`) were pushed after that merge, so they are carried by the **follow-up PR** from `fix/phase-01-review-hardening` (not merged).
+  - Phase 1 becomes `Approved` when the owner confirms approval and merges the follow-up PR.
 - **Application code:** platform foundation only (`core`, minimal `identity.User`). No business modules.
 
 ## Phase status
@@ -15,7 +18,7 @@
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
-| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) | All checks green; awaiting owner merge approval |
+| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) (merged) + review follow-up PR (open) | Follow-up PR awaiting owner approval |
 | 2 | Authentication, users, roles & permissions | Not started | | |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
@@ -164,4 +167,17 @@ See `DECISION_LOG.md`.
     - Committed-file audit: the only env file is `.env.example` (dummy values); no build artifacts, caches, keys or large binaries (largest tracked file: `pnpm-lock.yaml`, 276 KB).
   - **Playwright** on the fresh stack: **14 passed**.
   - **Celery beat → worker:** beat started 18:57:31, sent `core-heartbeat` at 19:02:31.701 (the 300 s interval), and the worker returned `pong` at 19:02:31.716.
-- **Next recommended task:** owner approves and merges PR #2 (Phase 1 then becomes `Approved`); then the Phase 2 plan (authentication, users, roles & permissions) is prepared for approval.
+- **Merge state discovered at the end of Session 4:**
+  - PR #2 had already been merged by the owner at 18:42:43 UTC, before the review commit.
+  - The review commit was cherry-picked onto a new branch `fix/phase-01-review-hardening` from `main` (`cb2383e`); it applied cleanly.
+  - A follow-up PR was opened for owner approval. Not merged.
+- **Dependabot (active since the merge put `dependabot.yml` on `main`):** 9 PRs were opened (#3–#11). Triage:
+  - **Conflicts with accepted decisions (recommend closing):**
+    - #11 Django 5.2 → 6.1 (ADR-003 LTS);
+    - #5 Redis 7.4 → 8.10 (ADR-030);
+    - #10 Nginx 1.28 → 1.31 (a mainline odd minor, not the stable line).
+    - The follow-up PR adds `ignore` rules so these are not proposed again.
+  - **Reasonable (owner review/merge separately):**
+    - #3, #4, #6, #7, #8: GitHub Actions majors. They address the Node 20 runtime deprecation warning.
+    - #9: Mailpit v1.33.0 (dev-only tool).
+- **Next recommended task:** owner reviews and merges the follow-up PR and closes or merges the Dependabot PRs per the triage above; Phase 1 is then `Approved` and the Phase 2 plan (authentication, users, roles & permissions) is prepared for approval.

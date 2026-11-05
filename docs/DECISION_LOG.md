@@ -293,11 +293,14 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 | TypeScript | 5.9.3 | typescript-eslint supports TS ≥ 6.1 **and** openapi-typescript supports TS ≥ 6 | Phase kickoff review |
 | ESLint | 9.39.5 | `eslint-config-next` and its bundled plugins (react, import, jsx-a11y) declare ESLint 10 | Phase kickoff review |
 | pnpm | 10.34.9 | Planned major bump with lockfile regeneration in a dedicated PR | Dependabot |
-| GitHub Actions `astral-sh/setup-uv@v6`, `pnpm/action-setup@v4` | current majors | GitHub warns they run on the deprecated Node 20 runtime; bump to majors targeting Node 24 when available | Dependabot (`github-actions`) |
+| GitHub Actions `astral-sh/setup-uv@v6`, `pnpm/action-setup@v4` (+ checkout v5, setup-node v5, upload-artifact v4) | current majors | GitHub warns they run on the deprecated Node 20 runtime. Dependabot PRs #3, #4, #6, #7, #8 propose the next majors; review and merge them separately | Owner (Dependabot PRs) |
 | Django | 5.2 LTS | ADR-003 (LTS policy); next LTS line requires a new ADR | — |
+
+**Enforced in `.github/dependabot.yml` (2026-11-05):** `ignore` rules block updates that would break an accepted decision. Blocked: Django ≥5.3 and django-stubs ≥5.3 (ADR-003); TypeScript ≥6 and ESLint ≥10 (this ADR); `@types/node` ≥25 and the `node` image ≥25 (Node 24 LTS); the `python` image ≥3.14 (ADR-003); Redis ≥8 (this ADR); Nginx minor/major bumps, to stay on the stable line (this ADR); pgvector image majors. Lifting a block needs an ADR update first.
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
 - 2026-11-05 — Phase 1: ADR-015 and ADR-021 Accepted (owner approval). Added ADR-029 (Proposed, safe default: SeaweedFS for dev S3) and ADR-030 (Accepted: Phase 1 pins + recorded constraints). No other ADR changed.
 - 2026-11-05 — Owner approved ADR-029 (conditional; all four conditions verified, evidence recorded) and ADR-030 (TypeScript 5.9/ESLint 9 held temporarily; upgrade tracking table added). No other ADR changed.
+- 2026-11-05 — ADR-030: Dependabot `ignore` rules added to enforce accepted version policies; actions-upgrade tracking row updated with the Dependabot PRs.
