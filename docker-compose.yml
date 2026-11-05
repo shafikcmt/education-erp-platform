@@ -1,0 +1,219 @@
+# Education ERP — local development stack (Phase 1).
+#   cp .env.example .env && docker compose up -d --build --wait
+#   open http://localhost:8080   (single origin through Nginx: / -> web, /api -> api)
+#
+# Images are pinned to exact versions (docs/TECH_STACK.md). Production compose/CD: Phase 19.
+name: erp
+
+x-backend: &backend
+  build:
+    context: ./backend
+    target: dev
+  image: erp-backend:dev
+  env_file: .env
+  user: "10001:10001"
+  read_only: true
+  tmpfs: ["/tmp"]
+  volumes:
+    - ./backend:/app:ro
+  restart: unless-stopped
+
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.7-pg17
+    env_file: .env
+    environment:
+      POSTGRES_DB: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${ERP_DB_NAME}"']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  redis:
+    image: redis:7.4.12-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  objectstore:
+    # S3-compatible dev storage (ADR-029). MinIO no longer publishes community images.
+    image: chrislusf/seaweedfs:4.50
+    env_file: .env
+    entrypoint: ["/bin/sh", "/templates/entrypoint.sh"]
+    volumes:
+      - objectdata:/data
+      - ./infra/docker/objectstore:/templates:ro
+    ports:
+      - "127.0.0.1:8333:8333"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status && wget -q -S -O /dev/null http://127.0.0.1:8333/ 2>&1 | grep -q 'HTTP/'",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+  objectstore-init:
+    image: chrislusf/seaweedfs:4.50
+    env_file: .env
+    depends_on:
+      objectstore:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      # Idempotent: create the bucket only if it does not exist yet.
+      - >-
+        if echo "s3.bucket.list" | weed shell -master=objectstore:9333 | grep -qw "$${S3_BUCKET}";
+        then echo "bucket $${S3_BUCKET} already exists";
+        else echo "s3.bucket.create -name $${S3_BUCKET}" | weed shell -master=objectstore:9333;
+        fi
+    restart: "no"
+
+  mailpit:
+    image: axllent/mailpit:v1.28.4
+    ports:
+      - "127.0.0.1:8025:8025"
+    restart: unless-stopped
+
+  migrate:
+    <<: *backend
+    # Migrations run as the owner role; the app never has DDL rights (ADR-009).
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        'DATABASE_URL="$$DATABASE_MIGRATION_URL" python manage.py migrate --noinput',
+      ]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    <<: *backend
+    command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      objectstore-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz', timeout=3).status == 200 else 1)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  worker:
+    <<: *backend
+    command:
+      [
+        "celery",
+        "-A",
+        "config",
+        "worker",
+        "--loglevel=INFO",
+        "--concurrency=2",
+        "-Q",
+        "default,notifications,reports,imports,finance,ai",
+      ]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "celery -A config inspect ping -d celery@$$HOSTNAME --timeout 5 | grep -q pong",
+        ]
+      interval: 20s
+      timeout: 15s
+      retries: 10
+      start_period: 20s
+
+  beat:
+    <<: *backend
+    command:
+      ["celery", "-A", "config", "beat", "--loglevel=INFO", "--schedule=/tmp/celerybeat-schedule"]
+    depends_on:
+      worker:
+        condition: service_healthy
+
+  web:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: runtime
+    image: erp-frontend:dev
+    env_file: .env
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/frontend/.next/cache:uid=1000,gid=1000
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/en').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:1.28.3-alpine
+    user: "101:101"
+    read_only: true
+    tmpfs: ["/tmp"]
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "127.0.0.1:${NGINX_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  objectdata:

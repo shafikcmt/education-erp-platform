@@ -1,0 +1,45 @@
+openapi: 3.0.3
+info:
+  title: Education ERP API
+  version: 1.0.0
+  description: Multi-tenant Education ERP SaaS — REST API v1 (ADR-015).
+paths:
+  /api/v1/system/health/:
+    get:
+      operationId: system_health
+      description: Public, minimal health summary used by the frontend system page.
+      summary: System health summary
+      tags:
+      - system
+      security:
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemHealth'
+          description: ''
+components:
+  schemas:
+    StatusEnum:
+      enum:
+      - ok
+      - degraded
+      type: string
+      description: |-
+        * `ok` - ok
+        * `degraded` - degraded
+    SystemHealth:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        version:
+          type: string
+        environment:
+          type: string
+      required:
+      - environment
+      - status
+      - version

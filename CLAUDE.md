@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-05 (Phase 0 — ADR-009…014 approved)
+- **Last updated:** 2026-11-05 (Phase 1 — foundation implemented, PR awaiting approval)
 
 ---
 
@@ -111,7 +111,7 @@ Module codes are canonical identifiers used in code, entitlements, permissions a
 | `billing` | SaaS plans, subscriptions, add-ons, usage metering, SaaS invoices (platform ↔ tenant) |
 | `customization` | Customization Studio backend: custom fields, forms, workflows, rules, templates, terminology |
 | `audit` | Append-only audit log, data access log, support-access log |
-| `files` | File storage abstraction (S3/MinIO), presigned URLs, virus-scan hook, quotas |
+| `files` | File storage abstraction (S3-compatible API; SeaweedFS in dev — ADR-029), presigned URLs, virus-scan hook, quotas |
 | `notifications_core` | Notification dispatch infrastructure used by all modules |
 
 **Standard ERP modules (entitled by plan or add-on):**
@@ -298,7 +298,7 @@ Details: `docs/AI_ASSISTANT.md`.
 ## 15. Docker Deployment and CI/CD
 
 - Every service runs in Docker. `docker compose` for local development; production uses hardened images and a production compose (or orchestrator later).
-- Services: `nginx`, `web` (Next.js), `api` (Django/Gunicorn+Uvicorn workers), `worker` (Celery), `beat` (Celery beat), `postgres` (17 + pgvector), `redis`, `minio` (dev/self-hosted object storage).
+- Services: `nginx`, `web` (Next.js), `api` (Django/Gunicorn+Uvicorn workers), `worker` (Celery), `beat` (Celery beat), `postgres` (17 + pgvector), `redis`, `objectstore` (S3-compatible dev/self-hosted storage — SeaweedFS, ADR-029), plus one-shot `migrate` (runs as `erp_owner`) and `objectstore-init`, and `mailpit` (dev email). Image versions are pinned (ADR-030).
 - Multi-stage builds, non-root users, pinned base images, health checks, no secrets in images.
 - **GitHub Actions:** on every PR — lint (ruff, ESLint), format check, type check (mypy, tsc), tests (with Postgres+Redis services), migration check, OpenAPI drift check, security scans, Docker build. On merge to `main` — build & push images, deploy to staging. Production deploy — tagged release + manual approval.
 - Details: `docs/DOCKER_DEPLOYMENT.md`.
@@ -342,8 +342,8 @@ Details: `docs/AI_ASSISTANT.md`.
 
 | Phase | Scope |
 |---|---|
-| 0 | Documentation and architecture baseline (complete 2026-11-05, awaiting approval) |
-| 1 | Repository foundation and infrastructure |
+| 0 | Documentation and architecture baseline (approved; merged in PR #1) |
+| 1 | Repository foundation and infrastructure (implemented; PR awaiting owner approval) |
 | 2 | Authentication, users, roles and permissions |
 | 3 | SaaS tenants, institutions and campuses |
 | 4 | Module registry and feature entitlement engine |
@@ -430,3 +430,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 ### Change notes
 - 2026-11-05 — Initial version created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 and ADR-011 (with modification: Django session auth). Updated §2, §10, §11, §12, §16 accordingly. ADR-028 added (Proposed).
+- 2026-11-05 — Phase 1: ADR-015/021 accepted; storage service renamed to `objectstore` (SeaweedFS, ADR-029); phase table updated.

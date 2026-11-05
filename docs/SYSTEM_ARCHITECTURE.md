@@ -24,7 +24,7 @@ flowchart LR
     WEB --> API
     API --> PG[(PostgreSQL 17 + pgvector)]
     API --> REDIS[(Redis)]
-    API --> S3[(S3 / MinIO)]
+    API --> S3[(S3-compatible storage)]
     WORKER[Celery workers] --> PG
     WORKER --> REDIS
     WORKER --> S3
@@ -52,7 +52,7 @@ flowchart LR
 | `beat` (Celery beat) | Scheduled jobs (fee reminders, late fines, usage metering, backups verification) | Single instance |
 | `postgres` | Primary data, JSONB, RLS, pgvector | Vertical; read replicas later |
 | `redis` | Cache, Celery broker/results, rate-limit counters, locks | Managed/HA later |
-| `minio` / S3 | Files, generated documents, exports | Managed S3 in production (decision ADR-019) |
+| `objectstore` / S3 | Files, generated documents, exports (SeaweedFS in dev, ADR-029) | Managed S3 in production (decision ADR-019) |
 
 **Celery queues (proposed):** `default`, `notifications`, `reports`, `imports`, `finance` (low concurrency, strict ordering where needed), `ai`.
 
@@ -137,7 +137,7 @@ Every external provider is accessed through an interface in the platform core, w
 - `PaymentGateway` — initiate payment, verify, refund, webhook verification (candidates: Stripe for SaaS billing globally; SSLCommerz / bKash / Nagad for Bangladesh fee collection — ADR-017).
 - `SmsProvider`, `EmailProvider`, `PushProvider`.
 - `LlmProvider`, `EmbeddingProvider` (ADR-020).
-- `StorageBackend` (S3/MinIO).
+- `StorageBackend` (any S3-compatible service).
 
 Webhooks: signature verification, idempotent processing (event ID stored), replay protection, processed asynchronously.
 
@@ -152,3 +152,4 @@ Webhooks: signature verification, idempotent processing (event ID stored), repla
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).

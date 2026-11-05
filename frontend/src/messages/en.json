@@ -1,0 +1,32 @@
+{
+  "meta": {
+    "title": "Education ERP",
+    "description": "One configurable education management platform for schools, colleges, universities, madrasas, coaching centers and training institutes."
+  },
+  "common": {
+    "appName": "Education ERP",
+    "language": "Language",
+    "skipToContent": "Skip to main content"
+  },
+  "home": {
+    "heading": "Education ERP",
+    "tagline": "One configurable platform for schools, colleges, universities, madrasas, coaching centers and training institutes.",
+    "status": "Platform foundation (Phase 1). Business modules are not available yet.",
+    "systemLink": "View system status"
+  },
+  "system": {
+    "heading": "System status",
+    "api": "API",
+    "status": "Status",
+    "version": "Version",
+    "environment": "Environment",
+    "ok": "Operational",
+    "degraded": "Degraded",
+    "unreachable": "Unreachable",
+    "back": "Back to home"
+  },
+  "locale": {
+    "en": "English",
+    "bn": "বাংলা"
+  }
+}

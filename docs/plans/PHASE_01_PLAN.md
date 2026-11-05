@@ -1,6 +1,6 @@
 # Phase 1 Implementation Plan — Repository Foundation & Infrastructure
 
-- **Status:** Proposed — awaiting owner approval. **No application code may be written until approved.**
+- **Status:** **Approved** by owner 2026-11-05 (with ADR-015, ADR-021 and Q2–Q8 decisions). Implemented on branch `feat/phase-01-foundation`; see §13 for outcome and deviations.
 - **Prepared:** 2026-11-05
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 1
 - **Governing decisions:**
@@ -283,5 +283,27 @@ Results will be reported with the actual command output summaries.
 | CI duration | Path filters, uv/pnpm caching, Docker layer caching |
 | Network-restricted environments blocking image pulls or registries | Document; retry; fall back to local verification and report honestly |
 
+## 13. Implementation outcome and deviations (2026-11-05)
+
+The plan above is kept as approved. The implementation differs from it in these points, each
+recorded in `DECISION_LOG.md`:
+
+| # | Plan said | Implemented | Why | Record |
+|---|---|---|---|---|
+| D1 | `minio` + `minio-init` (`minio/minio`, `minio/mc`) | `objectstore` + `objectstore-init` using SeaweedFS 4.50 (S3 API) | MinIO community images are no longer available (pull "not found"); ADR-003 allows any S3-compatible store; the app uses only the S3 API | ADR-029 (Proposed, safe default) |
+| D2 | Custom `export_openapi` command | drf-spectacular's built-in `manage.py spectacular --validate --fail-on-warn` (wrapped by `make schema` and CI) | Avoids duplicating an existing, maintained command | — |
+| D3 | Redis service in the `backend-test` CI job | Not used | Tests use locmem cache and in-memory Celery; Redis is exercised in `e2e-smoke` (`smoke_check`) | — |
+| D4 | TanStack Query (and optionally zod/react-hook-form) in Phase 1 | Deferred to Phase 2 | No Phase 1 code uses them (dependency policy) | ADR-030 |
+| D5 | TypeScript/ESLint "latest" | TypeScript 5.9.3, ESLint 9.39.5 | Peer constraints of typescript-eslint, openapi-typescript and eslint-config-next plugins | ADR-030 |
+| D6 | `nginx:stable-alpine` | `nginx:1.28.3-alpine` running as uid 101 on :8080 | Exact pin + non-root (unprivileged variant unavailable) | ADR-030 |
+| D7 | `apps/core/tests/test_storage.py` | Storage covered by `test_health.py` (S3 HeadBucket check) and `smoke_check` (real write/read/delete in the stack) | Unit tests use in-memory storage; a real round-trip only makes sense against the running stack | — |
+| D8 | — (addition) | `manage.py smoke_check` and an `/api/` catch-all 404 | Single command proves DB role/cache/storage/Celery in the stack; the error format stays the same with `DEBUG=True` | — |
+| D9 | — (addition) | Production images strip system pip/setuptools and npm/corepack | They carried fixable HIGH CVEs found by Trivy; both images are now Trivy-clean | — |
+
+**Acceptance criteria (§9):** criteria 1–10, 12 and 13 were verified in this environment (see
+`DEVELOPMENT_PROGRESS.md`). Criterion 11 (all CI jobs green on the PR) can only be confirmed by
+GitHub Actions on the PR.
+
 ### Change notes
 - 2026-11-05 — Initial plan drafted (awaiting approval).
+- 2026-11-05 — Status set to Approved; §13 implementation outcome and deviations added.

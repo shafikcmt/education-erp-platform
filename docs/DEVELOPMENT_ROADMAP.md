@@ -25,9 +25,9 @@
 - Monorepo skeleton: `backend/`, `frontend/`, `packages/api-client/`, `infra/`, `.github/`.
 - Django 5.2 project with split settings (base/dev/test/prod), env config, structlog, Sentry init (DSN optional), `/healthz` & `/readyz`, DRF + drf-spectacular, `core` app (`core.ids.new_id()` UUIDv7 abstraction, abstract BaseModel, error handler, pagination, request ID).
 - PostgreSQL roles provisioned per ADR-009 (`erp_owner` for migrations, `erp_app` runtime NOBYPASSRLS, `erp_platform` reserved); the app and tests connect as `erp_app`.
-- Celery app + beat wiring, Redis, MinIO storage config.
+- Celery app + beat wiring, Redis, S3-compatible storage config (SeaweedFS in dev — ADR-029).
 - Next.js 16 app with TypeScript strict, Tailwind, shadcn/ui init, next-intl (en/bn), base layout, lint/format config, Vitest, Playwright skeleton.
-- Docker Compose dev stack (postgres+pgvector, redis, minio, mailpit, api, worker, beat, web); Dockerfiles; `.env.example`; Makefile.
+- Docker Compose dev stack (postgres+pgvector, redis, objectstore, mailpit, migrate, api, worker, beat, web, nginx); Dockerfiles; `.env.example`; Makefile.
 - CI workflow: lint, type check, tests, migrations check, schema/client drift, Docker build, secret scan.
 - Pre-commit hooks (ruff, prettier, gitleaks).
 - Dependency/update automation config (Dependabot).
@@ -156,3 +156,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).

@@ -1,0 +1,14 @@
+# Build context for frontend/Dockerfile is the repository root (pnpm workspace).
+.git
+.github
+.env
+.env.*
+!.env.example
+**/node_modules
+**/.next
+frontend/playwright-report
+frontend/test-results
+backend
+docs
+infra
+*.md

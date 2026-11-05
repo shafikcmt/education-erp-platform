@@ -18,7 +18,7 @@
 | Vector search | pgvector | 0.8+ | Embeddings inside PostgreSQL (no extra DB) |
 | Cache / broker | Redis | 7.x (or Valkey-compatible) | Cache, Celery broker, rate limiting |
 | Background jobs | Celery (+ Celery beat) | 5.x | Async tasks, scheduled jobs |
-| Object storage | S3-compatible / MinIO | — | Files, documents, exports, backups |
+| Object storage | S3-compatible API (SeaweedFS 4.50 in dev — ADR-029; managed S3 in prod) | — | Files, documents, exports, backups |
 | Containers | Docker, Docker Compose | — | Reproducible environments |
 | Reverse proxy | Nginx | stable | TLS termination, static, routing |
 | CI/CD | GitHub Actions | — | Integrated with repository |
@@ -35,7 +35,7 @@
 | Filtering | `django-filter` | |
 | CORS | `django-cors-headers` | |
 | Settings/env | `django-environ` (or `pydantic-settings`) | Pick one in Phase 1 |
-| Storage | `django-storages[s3]` + `boto3` | S3/MinIO |
+| Storage | `django-storages[s3]` + `boto3` | Any S3-compatible endpoint |
 | Logging | `structlog` | JSON logs |
 | Error tracking | `sentry-sdk` | |
 | Password hashing | `argon2-cffi` | Django Argon2 hasher |
@@ -83,3 +83,22 @@
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+
+## 6. Pinned versions in use (Phase 1, ADR-030)
+
+| Component | Version |
+|---|---|
+| Python / Django / DRF | 3.13.18 / 5.2.19 / 3.18.3 |
+| drf-spectacular / django-environ / uuid-utils | 0.30.x / 0.14.x / 1.2.0 |
+| Celery / redis-py / structlog / sentry-sdk | 5.7.x / 8.x / 26.x / 2.74.x |
+| uv | 0.11.32 |
+| Node.js / pnpm | 24.22.2 / 10.34.9 |
+| Next.js / React / next-intl | 16.4.5 / 19.3.1 / 4.14.9 |
+| TypeScript / ESLint | 5.9.3 / 9.39.5 (constraints: ADR-030) |
+| Tailwind CSS / Vitest / Playwright | 4.3.4 / 5.1.0 / 1.64.1 |
+| openapi-typescript / openapi-fetch | 7.13.0 / 0.17.0 |
+| PostgreSQL image | `pgvector/pgvector:0.8.7-pg17` |
+| Redis / Nginx / SeaweedFS / Mailpit | `7.4.12-alpine` / `1.28.3-alpine` / `4.50` / `v1.28.4` |
+
+Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml`.
+- 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).

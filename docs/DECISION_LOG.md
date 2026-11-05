@@ -19,13 +19,13 @@
 | 012 | UUIDv7 primary keys via pinned library behind `core.ids` abstraction | **Accepted** | 2026-11-05 |
 | 013 | Package managers: `uv` (Python), `pnpm` (JS) | **Accepted** | 2026-11-05 |
 | 014 | Repository directory layout (`backend/`, `frontend/`, `packages/api-client/`, `infra/`; `docs/` + `CLAUDE.md` at root) | **Accepted** | 2026-11-05 |
-| 015 | REST + OpenAPI (drf-spectacular) + generated TS client | Proposed | 2026-11-05 |
+| 015 | REST + OpenAPI (drf-spectacular) + generated TS client | **Accepted** | 2026-11-05 |
 | 016 | Declarative rules (JSONLogic-style), no tenant code execution | Proposed | 2026-11-05 |
 | 017 | Payment gateway abstraction; initial gateways | Proposed | 2026-11-05 |
 | 018 | PostgreSQL full-text search first | Proposed | 2026-11-05 |
 | 019 | Hosting provider & data region | Open (needs owner input) | 2026-11-05 |
 | 020 | AI provider abstraction; default provider | Proposed | 2026-11-05 |
-| 021 | Initial languages: en, bn; ar (RTL) ready | Proposed | 2026-11-05 |
+| 021 | Initial languages: en, bn; ar (RTL) ready | **Accepted** | 2026-11-05 |
 | 022 | Real-time: polling/SSE first; no WebSockets initially | Proposed | 2026-11-05 |
 | 023 | Accounting depth: full double-entry GL | Proposed | 2026-11-05 |
 | 024 | Pricing model: active-student tiers + add-ons + usage | Proposed (numbers open) | 2026-11-05 |
@@ -33,6 +33,8 @@
 | 026 | Generic academic unit tree with configurable structure levels | Proposed | 2026-11-05 |
 | 027 | TLS for tenant custom domains | Open | 2026-11-05 |
 | 028 | Mobile / third-party API authentication mechanism (library & token format) | Proposed | 2026-11-05 |
+| 029 | Dev/self-hosted object storage: SeaweedFS (S3 API) instead of MinIO | Proposed (safe default, in use) | 2026-11-05 |
+| 030 | Phase 1 toolchain, library and image pins | **Accepted** (owner-approved items) + noted constraints | 2026-11-05 |
 
 ---
 
@@ -173,7 +175,7 @@
 Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md` §5).
 
 ## ADR-015 — API style
-**Status:** Proposed. REST under `/api/v1`, OpenAPI via drf-spectacular, generated TS types/client (`openapi-typescript`). GraphQL rejected for now (complexity, authorization surface).
+**Status:** **Accepted** — approved by owner 2026-11-05 (with the Phase 1 plan). REST under `/api/v1`, OpenAPI via drf-spectacular, generated TS types/client (`openapi-typescript`). GraphQL rejected for now (complexity, authorization surface).
 
 ## ADR-016 — Rules engine
 **Status:** Proposed. Declarative JSON expression AST (JSONLogic-style) evaluated by a sandboxed, allow-listed evaluator (library or small in-house evaluator — decide in Phase 5 after security review). Tenant-supplied executable code is forbidden.
@@ -191,7 +193,7 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 **Status:** Proposed. Provider abstraction; default chat provider Anthropic Claude (model IDs in configuration); embedding provider TBD; tenant opt-in required. Bengali/Arabic quality to be evaluated in Phase 16.
 
 ## ADR-021 — Languages
-**Status:** Proposed. English + Bengali at launch; RTL-ready layout for Arabic (and Urdu later). Bengali digit display optional per tenant.
+**Status:** **Accepted** — approved by owner 2026-11-05 (with the Phase 1 plan). English + Bengali at launch; RTL-ready layout for Arabic (and Urdu later). Bengali digit display optional per tenant.
 
 ## ADR-022 — Real-time
 **Status:** Proposed. Polling/SSE for job progress and notifications initially; Django Channels/WebSockets only if a feature demonstrably needs it.
@@ -225,6 +227,50 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 
 **Decision timing:** before the first mobile app or public API work (no earlier than Phase 17/18). Not needed for Phases 1–16.
 
+## ADR-029 — Dev/self-hosted object storage: SeaweedFS (S3 API)
+**Status:** Proposed — *safe default, in use since Phase 1* (owner may override; reversal is configuration-only).
+
+**Context:**
+- The approved Phase 1 plan specified MinIO images (`minio/minio`, `minio/mc`). During Phase 1 implementation (2026-11-05), neither image was available: "not found" via the Docker Hub mirror, and quay.io refused the request. This is consistent with MinIO ending distribution of community container images in late 2025.
+- ADR-003 (accepted) mandates "S3-compatible storage or MinIO", so any S3-compatible server satisfies it.
+
+**Decision:**
+- Development and CI use **SeaweedFS** (`chrislusf/seaweedfs:4.50`, Apache-2.0) in single-container `weed server -s3` mode, as compose service `objectstore` with a one-shot `objectstore-init` that creates the bucket.
+- The application talks only to the **standard S3 API** through `django-storages`/`boto3`, configured entirely by environment variables (`S3_ENDPOINT_URL`, `S3_BUCKET`, keys). Swapping to MinIO (self-built), Garage, Ceph RGW or managed S3 is a config change, with no code change.
+- The S3 identity is least-privilege: Read/Write/List/Tagging on the app bucket only, with no admin rights. A test confirmed that creating or writing other buckets is denied.
+
+**Production:** managed S3-compatible storage is still preferred; the decision belongs to ADR-019 (hosting).
+
+**Alternatives considered:**
+- Garage (AGPL-3.0, smaller ecosystem).
+- RustFS (young project).
+- Building MinIO from source (maintenance burden).
+- `bitnami/minio` (not reachable / deprecated catalogue).
+
+## ADR-030 — Phase 1 toolchain, library and image pins
+**Status:** **Accepted** — owner approved the Phase 1 choices on 2026-11-05.
+
+**Decisions (approved):**
+- `uuid-utils` 1.2.x is pinned in `uv.lock`, behind `apps.core.ids.new_id()`; an import-linter contract forbids direct imports elsewhere. Verified on 2026-11-05:
+  - Python 3.13 cp313 wheels exist, and release 1.2.0 is dated 2026-10-26 (maintained);
+  - `uuid_utils.compat.uuid7()` returns a stdlib `uuid.UUID` with version 7;
+  - values are stored in PostgreSQL 17 native `uuid` and are monotonic in-process (tested).
+- `django-environ` with separate `dev`, `test` and `prod` settings modules. `prod` refuses to start with a weak or missing `DJANGO_SECRET_KEY` or empty `DJANGO_ALLOWED_HOSTS` (tested).
+- Minimal custom user model `identity.User` was created before the first migration: UUIDv7 PK, unique email (also a case-insensitive unique index), no username, `PermissionsMixin` for Django-admin platform staff only. No auth flows (Phase 2).
+- Node.js **24.22.2** LTS, pinned in `.nvmrc`, `package.json#engines`, the Docker base `node:24.22.2-alpine` and CI (`node-version-file: .nvmrc`).
+- Nginx is in the default dev stack: official `nginx:1.28.3-alpine`, run as non-root uid 101 on port 8080 with read-only rootfs (`nginxinc/nginx-unprivileged` was not reachable).
+- Redis **7.4.12** (`redis:7.4.12-alpine`).
+- Other images pinned: `pgvector/pgvector:0.8.7-pg17` (PostgreSQL 17.x, pgvector 0.8.7), `python:3.13.18-slim-bookworm`, `axllent/mailpit:v1.28.4`, `chrislusf/seaweedfs:4.50`.
+
+**Constraints discovered (recorded so they are revisited, not forgotten):**
+- **TypeScript 5.9.3**, not 6.x/7.x: typescript-eslint requires `<6.1` and openapi-typescript requires `^5`.
+- **ESLint 9.39.5**, although npm marks it deprecated: plugins bundled by `eslint-config-next` 16.4.5 (react, import, jsx-a11y) do not yet declare ESLint 10 support. Revisit when they do.
+- **pnpm 10.34.9** (mature major already used here; pnpm 12 exists). Revisit with Dependabot.
+- **Django stays on 5.2 LTS** (5.2.19), even though 6.x is released, per ADR-003.
+
+**Deferred (to keep dependencies justified):** TanStack Query, react-hook-form and zod are not installed until a phase uses them (Phase 2 forms).
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
+- 2026-11-05 — Phase 1: ADR-015 and ADR-021 Accepted (owner approval). Added ADR-029 (Proposed, safe default: SeaweedFS for dev S3) and ADR-030 (Accepted: Phase 1 pins + recorded constraints). No other ADR changed.

@@ -3,34 +3,38 @@
 > Phase 1 delivers the **development** Compose stack and baseline CI. Phase 19 delivers **production** deployment and CD.
 > Hosting provider and region are **not decided** (ADR-019).
 
-## 1. Services
+## 1. Services (implemented in Phase 1 — dev stack `docker-compose.yml`)
 
-| Service | Image (proposed) | Purpose | Dev | Prod |
+| Service | Image (pinned) | Purpose | Dev | Prod (Phase 19) |
 |---|---|---|---|---|
-| `nginx` | `nginx:stable-alpine` + config | TLS, routing, headers, limits | optional | yes |
-| `web` | `frontend/Dockerfile` (Node LTS, multi-stage, Next.js standalone output) | UI (SSR); forwards session cookie, holds no credentials | yes | yes |
-| `api` | `backend/Dockerfile` (python:3.13-slim, multi-stage, `uv`) | Django API (Gunicorn + Uvicorn workers) | yes (runserver) | yes |
-| `worker` | same image as `api` | Celery workers (queues: default, notifications, reports, imports, finance, ai) | yes | yes (scaled) |
-| `beat` | same image as `api` | Celery beat (single instance) | yes | yes (1 replica) |
-| `postgres` | `pgvector/pgvector:pg17` | Database | yes | managed DB preferred (with pgvector) or hardened container |
-| `redis` | `redis:7-alpine` | Cache/broker | yes | managed or hardened container |
-| `minio` | `minio/minio` | S3-compatible storage | yes | managed S3 preferred |
-| `mailpit` | `axllent/mailpit` | Dev email capture | yes | no |
+| `nginx` | `nginx:1.28.3-alpine`, non-root uid 101, port 8080, read-only rootfs | Single origin: `/api/`, `/healthz`, `/readyz` → api; `/` → web; security headers, request IDs, rate limit | yes | yes (+TLS) |
+| `web` | `frontend/Dockerfile` target `runtime` (`node:24.22.2-alpine`, Next.js standalone, uid 1000) | UI (SSR); forwards session cookie, holds no credentials | yes | yes |
+| `api` | `backend/Dockerfile` target `dev` (runserver, code bind-mounted read-only) / `runtime` (gunicorn + uvicorn-worker) | Django API, connects as `erp_app` | yes | yes |
+| `worker` | same image as `api` | Celery worker, queues `default,notifications,reports,imports,finance,ai` | yes | yes (scaled) |
+| `beat` | same image as `api` | Celery beat (single instance; schedule file in `/tmp`) | yes | yes (1 replica) |
+| `migrate` | same image as `api` (one-shot) | `manage.py migrate` as **`erp_owner`**; `api`/`worker` start only after it succeeds | yes | yes (deploy step) |
+| `postgres` | `pgvector/pgvector:0.8.7-pg17` | PostgreSQL 17 + pgvector; `infra/docker/postgres/init/01-roles.sh` creates roles/extensions | yes | managed DB preferred (with pgvector) |
+| `redis` | `redis:7.4.12-alpine` (no persistence) | Cache, sessions, Celery broker/results | yes | managed or hardened |
+| `objectstore` | `chrislusf/seaweedfs:4.50` (`weed server -s3`) | S3-compatible storage (ADR-029); least-privilege identity rendered from `.env` | yes | managed S3 preferred |
+| `objectstore-init` | same image (one-shot) | Idempotently creates the bucket | yes | n/a |
+| `mailpit` | `axllent/mailpit:v1.28.4` | Dev email capture (UI :8025) | yes | no |
 
-Image tags are pinned (and digests in production) during Phase 1/19.
+All app containers (`api`, `worker`, `beat`, `migrate`, `web`, `nginx`) run as **non-root** with a **read-only root filesystem** (tmpfs for `/tmp`). Host ports bind to `127.0.0.1` only.
 
-## 2. Repository files (planned)
+## 2. Repository files
 
 ```
-docker-compose.yml               dev stack
-docker-compose.prod.yml          production overrides (Phase 19)
-.env.example                     documented variables, dummy values only
-backend/Dockerfile
-frontend/Dockerfile
-infra/nginx/nginx.conf, conf.d/*.conf
-infra/scripts/                   entrypoints, wait-for, backup/restore helpers
-.github/workflows/ci.yml         PR checks
-.github/workflows/cd.yml         build/push/deploy (Phase 19)
+docker-compose.yml                       dev stack (Phase 1)
+.env.example                             documented variables, dummy values only
+backend/Dockerfile                       targets: dev, runtime
+backend/infra-build-ca.sh                optional build-time CA helper (see §3)
+frontend/Dockerfile                      targets: deps, builder, runtime (context = repo root)
+.dockerignore                            root context (frontend build)
+infra/docker/postgres/init/01-roles.sh   roles + extensions bootstrap (also used by CI)
+infra/docker/objectstore/                SeaweedFS entrypoint + S3 identity template
+infra/nginx/nginx.conf                   single-origin reverse proxy
+.github/workflows/ci.yml                 PR checks (Phase 1)
+docker-compose.prod.yml, cd.yml          production overrides + CD (Phase 19)
 ```
 
 ## 3. Image standards
@@ -40,7 +44,9 @@ infra/scripts/                   entrypoints, wait-for, backup/restore helpers
 - `HEALTHCHECK` for `api` (`/healthz`), `web`, workers (Celery ping).
 - No secrets baked into images; config via env at runtime.
 - Reproducible: lockfiles (`uv.lock`, `pnpm-lock.yaml`) copied before source for layer caching.
-- Images scanned (e.g. Trivy) in CI; build fails on critical vulnerabilities with available fixes.
+- Images scanned with Trivy in CI; the build fails on **fixable HIGH or CRITICAL** vulnerabilities.
+- Production stages remove tooling that is not needed at runtime (system pip/setuptools in the Python image; npm/corepack in the Node image). These carried vendored CVEs, and removing them made both images Trivy-clean in Phase 1.
+- **TLS-intercepting proxies (optional):** both Dockerfiles accept a BuildKit secret `build_ca` (extra CA bundle) that is used only during dependency installation and never written to a layer. Example: `docker buildx build --secret id=build_ca,src=/path/ca.crt ...`. Without the secret the build is unchanged.
 
 ## 4. Environments
 
@@ -57,21 +63,20 @@ infra/scripts/                   entrypoints, wait-for, backup/restore helpers
 
 `.env.example` contains **dummy values only**. Real values never enter git.
 
-## 6. CI pipeline (GitHub Actions, Phase 1 baseline, extended each phase)
+## 6. CI pipeline (GitHub Actions — `.github/workflows/ci.yml`, implemented in Phase 1)
 
-On every pull request:
+On every pull request and on pushes to `main`:
 
 | Job | Steps |
 |---|---|
-| `backend-lint` | `ruff check`, `ruff format --check`, `mypy` |
-| `backend-test` | Postgres 17 + pgvector and Redis service containers → `pytest --cov` (fail under threshold), migrations applied from scratch, `makemigrations --check --dry-run` |
-| `backend-security` | `pip-audit`, ruff `S` rules |
-| `api-schema` | Generate OpenAPI (fail on warnings); regenerate TS client and fail on diff |
-| `frontend-lint` | `pnpm lint`, `prettier --check`, `tsc --noEmit` |
-| `frontend-test` | `vitest run` |
-| `e2e` (from Phase 2+) | Compose stack up → Playwright critical flows |
-| `docker-build` | Build all images (no push); Trivy scan |
-| `secrets` | gitleaks / GitHub secret scanning |
+| `backend-quality` | `uv sync --frozen` → `ruff check` → `ruff format --check` → `mypy` (strict) → `lint-imports` |
+| `backend-test` | PostgreSQL 17 + pgvector service → `01-roles.sh` bootstrap → `makemigrations --check --dry-run` → `pytest --cov --cov-fail-under=85` (DB created as `erp_owner`, tests run as `erp_app`). Redis is not needed: tests use locmem cache and in-memory Celery. |
+| `backend-security` | `pip-audit --strict` on the exported lockfile; ruff `S` rules run in `backend-quality` |
+| `api-contract` | `spectacular --validate --fail-on-warn` → `openapi-typescript` → `git diff --exit-code packages/api-client` |
+| `frontend-quality` | `pnpm install --frozen-lockfile` → Prettier check → ESLint (`--max-warnings=0`) → `tsc --noEmit` → Vitest → `next build` |
+| `e2e-smoke` | `docker compose up -d --build --wait` → `manage.py smoke_check` → Playwright (desktop + mobile Chromium, incl. axe) |
+| `docker-build` | Build production images (`runtime` targets) → Trivy (fail on fixable HIGH/CRITICAL) |
+| `secret-scan` | gitleaks over the full git history |
 
 Branch protection on `main` (owner to configure): required checks green, ≥1 approving review, no force push, linear history (squash merge recommended).
 
@@ -92,7 +97,7 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 ## 9. Backups (operational)
 
 - Postgres: base backups + WAL archiving with pgBackRest or WAL-G (decision Phase 19) to off-site encrypted storage; retention policy (proposed: daily for 30 days, monthly for 12 months — TBD).
-- MinIO/S3: versioning and lifecycle rules; replication for production.
+- Object storage (S3-compatible): versioning and lifecycle rules; replication for production.
 - Restore runbook in `infra/` + quarterly restore drill with recorded results.
 
 ## 10. Observability
@@ -105,3 +110,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Phase 1: services, files, image standards and CI sections updated to the implemented state (SeaweedFS per ADR-029; pins per ADR-030).
