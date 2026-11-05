@@ -35,6 +35,11 @@
 | 028 | Mobile / third-party API authentication mechanism (library & token format) | Proposed | 2026-11-05 |
 | 029 | Dev/self-hosted object storage: SeaweedFS (S3 API) instead of MinIO; production storage configurable | **Accepted** (owner, conditional — conditions verified) | 2026-11-05 |
 | 030 | Phase 1 toolchain, library and image pins; TypeScript 5.9 + ESLint 9 held temporarily | **Accepted** (owner; upgrades tracked) | 2026-11-05 |
+| 031 | Field-level encryption for secrets at rest (`cryptography`, key ring + rotation) | Proposed (Phase 2 plan) | 2026-11-05 |
+| 032 | Membership + tenant RoleAssignment implemented in Phase 3 together with RLS | Proposed (Phase 2 plan) | 2026-11-05 |
+| 033 | Authorization via own `rbac` tables; Django auth groups/permissions only for Django admin | Proposed (Phase 2 plan) | 2026-11-05 |
+| 034 | Email-link tokens: DB-stored, hashed, single-use, purpose-bound, short-lived | Proposed (Phase 2 plan) | 2026-11-05 |
+| 035 | Sudo-mode re-authentication; mandatory MFA for platform roles (P2) and tenant owner/admin (P3) | Proposed (Phase 2 plan) | 2026-11-05 |
 
 ---
 
@@ -298,9 +303,53 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 
 **Enforced in `.github/dependabot.yml` (2026-11-05):** `ignore` rules block updates that would break an accepted decision. Blocked: Django ≥5.3 and django-stubs ≥5.3 (ADR-003); TypeScript ≥6 and ESLint ≥10 (this ADR); `@types/node` ≥25 and the `node` image ≥25 (Node 24 LTS); the `python` image ≥3.14 (ADR-003); Redis ≥8 (this ADR); Nginx minor/major bumps, to stay on the stable line (this ADR); pgvector image majors. Lifting a block needs an ADR update first.
 
+## ADR-031 — Field-level encryption for secrets at rest
+**Status:** Proposed (Phase 2 plan §12).
+
+**Context:** MFA TOTP secrets (Phase 2), and later payment/SMS integration credentials, must not sit in plaintext in the database or in backups.
+
+**Proposal:**
+- Encrypt them with AES-GCM via `cryptography`, using a key ring from `FIELD_ENCRYPTION_KEYS`. The first key encrypts; all keys decrypt.
+- A `reencrypt_fields` command handles rotation.
+- Values are stored as versioned ciphertext bytes, and raw values never reach logs or APIs.
+- Production keys live in a secret manager (KMS choice decided with ADR-019).
+
+## ADR-032 — Phase boundary for tenant membership
+**Status:** Proposed (Phase 2 plan §2, §4).
+
+**Proposal:**
+- `Membership` and tenant `RoleAssignment` are tenant-owned tables, so they are built in **Phase 3** together with `TenantScopedModel`, RLS and `tenant_atomic` (ADR-009). Building them earlier would mean tenant data without RLS.
+- Phase 2 delivers the scope-aware `has_perm` engine, roles, role templates and platform roles, so callers don't change when tenant sources are added.
+
+## ADR-033 — Authorization data model
+**Status:** Proposed (Phase 2 plan §5, §7).
+
+**Proposal:**
+- Application authorization uses the project's `rbac` tables only: `Permission(code)`, `Role`, `RolePermission`, `PlatformRoleAssignment`, and in Phase 3 `RoleAssignment`.
+- Django's `auth.Group`/`auth.Permission` (present via `PermissionsMixin`) are used only for Django admin by platform staff, and never in application permission checks.
+
+## ADR-034 — Email-link tokens
+**Status:** Proposed (Phase 2 plan §6.4).
+
+**Proposal:**
+- Activation, email verification, password reset and email change use random 32-byte tokens.
+- Only the SHA-256 hash is stored, together with purpose, expiry, single-use `used_at` and creation IP.
+- Issuing a new token invalidates older ones of the same purpose.
+- Tokens travel in the URL fragment.
+
+**Why not Django's `PasswordResetTokenGenerator`:** it can't be individually revoked, audited or purpose-scoped.
+
+## ADR-035 — Re-authentication and mandatory MFA
+**Status:** Proposed (Phase 2 plan §6.6).
+
+**Proposal:**
+- **Sudo mode:** sensitive actions require password + MFA re-authentication within the last 10 minutes. These are password/email change, MFA disable/regenerate, platform role grants and admin MFA reset.
+- **Mandatory MFA:** all platform roles from Phase 2; `tenant_owner` and `institution_admin` from Phase 3. Tenants may add more roles, but cannot remove the mandatory ones.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
 - 2026-11-05 — Phase 1: ADR-015 and ADR-021 Accepted (owner approval). Added ADR-029 (Proposed, safe default: SeaweedFS for dev S3) and ADR-030 (Accepted: Phase 1 pins + recorded constraints). No other ADR changed.
 - 2026-11-05 — Owner approved ADR-029 (conditional; all four conditions verified, evidence recorded) and ADR-030 (TypeScript 5.9/ESLint 9 held temporarily; upgrade tracking table added). No other ADR changed.
 - 2026-11-05 — ADR-030: Dependabot `ignore` rules added to enforce accepted version policies; actions-upgrade tracking row updated with the Dependabot PRs.
+- 2026-11-05 — Added ADR-031 to ADR-035 (Proposed) with the Phase 2 plan. No existing ADR changed.

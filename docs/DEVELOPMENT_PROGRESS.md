@@ -19,7 +19,7 @@
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) (merged) + review follow-up PR (open) | Follow-up PR awaiting owner approval |
-| 2 | Authentication, users, roles & permissions | Not started | | |
+| 2 | Authentication, users, roles & permissions | Planned | | Plan `plans/PHASE_02_PLAN.md` awaiting owner approval |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
@@ -43,6 +43,7 @@
 See `DECISION_LOG.md`.
 - **Accepted 2026-11-05:** ADR-009, ADR-010, ADR-011 (with modification), ADR-012, ADR-013, ADR-014, ADR-015, ADR-021, ADR-029 (conditions verified), ADR-030 (TS 5.9 / ESLint 9 held temporarily).
 - **Still Proposed/Open:** ADR-016–020, ADR-022–028.
+- **Requested with the Phase 2 plan:** ADR-031 to ADR-035 and plan questions Q1–Q9.
 
 ## Known gaps / open questions
 
@@ -181,3 +182,22 @@ See `DECISION_LOG.md`.
     - #3, #4, #6, #7, #8: GitHub Actions majors. They address the Node 20 runtime deprecation warning.
     - #9: Mailpit v1.33.0 (dev-only tool).
 - **Next recommended task:** owner reviews and merges the follow-up PR and closes or merges the Dependabot PRs per the triage above; Phase 1 is then `Approved` and the Phase 2 plan (authentication, users, roles & permissions) is prepared for approval.
+
+### 2026-11-05 — Session 5 (Phase 2 planning)
+- **Merge verification:**
+  - `main` is at `cb2383e` (the PR #2 merge). All 28 Phase 1 foundation files checked are present (137 tracked files).
+  - **PR #12 (Phase 1 review follow-up) is still open, not merged** (CI green, mergeable). Its fixes are therefore **not yet on `main`**: prod API-docs and secret-key guards, DB TEMP/CONNECT hardening, ADR-029/030 Accepted, S3 isolation suite, `s3_mirror`, Dependabot ADR guards. The owner's message said the Phase 1 PR was merged; that matches PR #2, not PR #12.
+- **Planning:**
+  - Prepared `docs/plans/PHASE_02_PLAN.md` (Proposed). It covers:
+    - the tenant-aware membership design (built in Phase 3, ADR-032);
+    - the role and permission matrix for Super Admin, Institution Admin, Campus Admin, Teacher, Staff, Student and Parent;
+    - the auth, session, MFA, password-reset, email-verification and audit design;
+    - models, API endpoints, frontend screens, tests, dependencies and acceptance criteria.
+  - Added ADR-031 to ADR-035 (Proposed). The roadmap Phase 2/3 sections were updated to match.
+  - Work is on branch `docs/phase-02-plan`, stacked on PR #12's branch.
+- **No code written.** Tests/lint: not applicable (documentation only).
+- **Next recommended task:**
+  1. Owner merges PR #12 and confirms Phase 1 `Approved`.
+  2. Owner reviews the Phase 2 plan and answers Q1–Q9.
+  3. After approval: implement on `feat/phase-02-auth-rbac` and open a separate PR.
+
