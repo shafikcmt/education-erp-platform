@@ -4,7 +4,7 @@
 
 One codebase that runs Schools, Colleges, Universities, Madrasas, Coaching Centers and Training Institutes — configured per institution type and per tenant, never forked.
 
-> **Status:** Phase 0 — documentation and architecture baseline. No application code yet.
+> **Status:** Phase 1 — repository foundation & infrastructure implemented (PR awaiting approval). No business modules yet.
 > See [`docs/DEVELOPMENT_PROGRESS.md`](docs/DEVELOPMENT_PROGRESS.md) for live status.
 
 ---
@@ -24,23 +24,25 @@ One codebase that runs Schools, Colleges, Universities, Madrasas, Coaching Cente
 | Backend | Python 3.13, Django 5.2 LTS, Django REST Framework |
 | Database | PostgreSQL 17 (JSONB, pgvector) |
 | Async & cache | Redis, Celery |
-| Storage | S3-compatible object storage / MinIO |
+| Storage | S3-compatible object storage (SeaweedFS in dev; managed S3 in production) |
 | Infrastructure | Docker, Docker Compose, Nginx |
 | CI/CD | GitHub Actions |
 | Monitoring | Sentry, structured logging |
 
 Details: [`docs/TECH_STACK.md`](docs/TECH_STACK.md).
 
-## Repository layout (planned)
+## Repository layout
 
 ```
 CLAUDE.md            Permanent instructions for Claude Code sessions
-docs/                Project documentation
-backend/             Django project (created in Phase 1)
-frontend/            Next.js app (created in Phase 1)
-packages/api-client/ Generated TypeScript API client (Phase 1+)
-infra/               Docker, Nginx, scripts (Phase 1)
-.github/workflows/   CI/CD (Phase 1)
+docs/                Project documentation (plans in docs/plans/)
+backend/             Django 5.2 project — config/ (settings dev/test/prod), apps/<module>/
+frontend/            Next.js 16 app — src/app/[locale], i18n (en, bn), generated API client
+packages/api-client/ OpenAPI schema + generated TypeScript types (do not edit by hand)
+infra/               Postgres role bootstrap, Nginx config, object-storage config
+.github/             CI workflow, Dependabot, PR template
+docker-compose.yml   Development stack (12 services, pinned images)
+Makefile             Developer commands (`make help`)
 ```
 
 ## Documentation
@@ -71,7 +73,31 @@ infra/               Docker, Nginx, scripts (Phase 1)
 
 ## Quick start
 
-Not available yet — the development environment (`docker compose up`) is delivered in **Phase 1**. This section will be updated then.
+**Prerequisites:** Docker with Compose v2. For running tools on the host: Python 3.13 + [uv](https://docs.astral.sh/uv/), Node.js 24 LTS (`.nvmrc`) + pnpm via Corepack.
+
+```bash
+cp .env.example .env            # dummy local values only
+docker compose up -d --build --wait
+```
+
+| URL | What |
+|---|---|
+| http://localhost:8080 | App through Nginx (single origin): `/` → Next.js, `/api/` → Django |
+| http://localhost:8080/en/system | System status page (calls the API through the generated client) |
+| http://localhost:8080/api/docs/ | OpenAPI docs (dev only) |
+| http://localhost:8080/healthz, `/readyz` | Liveness / readiness probes |
+| http://localhost:8025 | Mailpit (captured dev email) |
+
+```bash
+make smoke          # DB role, Redis, object storage and Celery round-trip inside the stack
+make test           # backend (pytest on PostgreSQL as erp_app) + frontend (Vitest)
+make lint typecheck # ruff, import contracts, ESLint, Prettier, mypy, tsc
+make e2e            # Playwright against http://localhost:8080
+make schema         # regenerate OpenAPI + TypeScript client after API changes
+```
+
+Backend tests on the host need the compose `postgres` running (port 5432 on localhost).
+For frontend hot reload, run `pnpm --filter @erp/frontend dev` on the host (port 3000).
 
 ## Contributing
 

@@ -1,0 +1,192 @@
+# Education ERP — CI (Phase 1 baseline). Every job must pass before merge (CLAUDE.md §15).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  UV_VERSION: "0.11.32"
+  PYTHON_VERSION: "3.13"
+  PGVECTOR_IMAGE: pgvector/pgvector:0.8.7-pg17
+  TRIVY_IMAGE: aquasec/trivy:0.76.2
+  GITLEAKS_IMAGE: zricethezav/gitleaks:v8.30.1
+
+jobs:
+  # ------------------------------------------------------------------ backend
+  backend-quality:
+    name: backend · lint, format, types, import contracts
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          {
+            version: "${{ env.UV_VERSION }}",
+            enable-cache: true,
+            cache-dependency-glob: backend/uv.lock,
+          }
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy .
+      - run: uv run lint-imports
+
+  backend-test:
+    name: backend · tests (PostgreSQL 17, as erp_app)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.7-pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_ci_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-timeout 5s --health-retries 20
+    env:
+      DATABASE_URL: postgres://erp_app:erp_app_ci_password@localhost:5432/erp
+      DATABASE_MIGRATION_URL: postgres://erp_owner:erp_owner_ci_password@localhost:5432/erp
+    steps:
+      - uses: actions/checkout@v5
+      - name: Bootstrap database roles and extensions (ADR-009)
+        env:
+          PGHOST: localhost
+          PGPASSWORD: postgres_ci_password
+          POSTGRES_USER: postgres
+          ERP_DB_NAME: erp
+          ERP_OWNER_PASSWORD: erp_owner_ci_password
+          ERP_APP_PASSWORD: erp_app_ci_password
+        run: bash infra/docker/postgres/init/01-roles.sh
+      - uses: astral-sh/setup-uv@v6
+        with:
+          {
+            version: "${{ env.UV_VERSION }}",
+            enable-cache: true,
+            cache-dependency-glob: backend/uv.lock,
+          }
+      - working-directory: backend
+        run: uv sync --frozen
+      - name: Migrations are in sync with models
+        working-directory: backend
+        run: uv run python manage.py makemigrations --check --dry-run --settings=config.settings.test
+      - name: pytest with coverage gate
+        working-directory: backend
+        run: uv run pytest --cov --cov-report=term --cov-report=xml --cov-fail-under=85
+
+  backend-security:
+    name: backend · dependency audit
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: backend } }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          {
+            version: "${{ env.UV_VERSION }}",
+            enable-cache: true,
+            cache-dependency-glob: backend/uv.lock,
+          }
+      - run: uv sync --frozen
+      - run: uv export --frozen --no-hashes --format requirements-txt > /tmp/requirements.txt
+      - run: uv run pip-audit -r /tmp/requirements.txt --strict --progress-spinner off
+
+  # ------------------------------------------------------------------ contract
+  api-contract:
+    name: api · OpenAPI schema + generated client drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          {
+            version: "${{ env.UV_VERSION }}",
+            enable-cache: true,
+            cache-dependency-glob: backend/uv.lock,
+          }
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - working-directory: backend
+        run: |
+          uv sync --frozen
+          uv run python manage.py spectacular --settings=config.settings.test \
+            --validate --fail-on-warn --file ../packages/api-client/openapi.yaml
+      - run: pnpm api:generate
+      - name: Committed schema and client match the backend
+        run: git diff --exit-code -- packages/api-client
+
+  # ------------------------------------------------------------------ frontend
+  frontend-quality:
+    name: frontend · lint, format, types, unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm --filter @erp/frontend build
+
+  # ------------------------------------------------------------------ full stack
+  e2e-smoke:
+    name: stack · docker compose up + smoke + Playwright
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - run: cp .env.example .env
+      - name: Build and start the full stack
+        run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Infrastructure smoke check (DB role, cache, storage, Celery)
+        run: docker compose exec -T api python manage.py smoke_check
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @erp/frontend exec playwright install --with-deps chromium
+      - run: pnpm e2e
+        env: { CI: "true", E2E_BASE_URL: "http://localhost:8080" }
+      - name: Service logs on failure
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with: { name: playwright-report, path: frontend/playwright-report, retention-days: 7 }
+
+  # ------------------------------------------------------------------ images
+  docker-build:
+    name: images · production build + Trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker build --target runtime -t erp-backend:ci backend
+      - run: docker build -f frontend/Dockerfile --target runtime -t erp-frontend:ci .
+      - name: Trivy (fail on fixable HIGH/CRITICAL)
+        run: |
+          for image in erp-backend:ci erp-frontend:ci; do
+            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" image \
+              --scanners vuln --severity CRITICAL,HIGH --ignore-unfixed --exit-code 1 "$image"
+          done
+
+  secret-scan:
+    name: security · gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with: { fetch-depth: 0 }
+      - run: docker run --rm -v "$PWD:/repo" "$GITLEAKS_IMAGE" git /repo --no-banner --redact

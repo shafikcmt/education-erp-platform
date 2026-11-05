@@ -1,0 +1,14 @@
+# Generated or owned by other tools
+pnpm-lock.yaml
+packages/api-client/openapi.yaml
+packages/api-client/src/schema.d.ts
+frontend/.next
+frontend/next-env.d.ts
+frontend/playwright-report
+frontend/test-results
+**/node_modules
+backend
+docs
+CLAUDE.md
+README.md
+*.md

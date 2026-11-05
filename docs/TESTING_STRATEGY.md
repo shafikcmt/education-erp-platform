@@ -48,7 +48,7 @@
 - Frontend: `*.test.ts(x)` beside sources; E2E in `frontend/e2e/` organized by role.
 - Flaky tests are fixed or quarantined with an issue reference within the same PR — never silently retried forever.
 
-## 6. Commands (to be created in Phase 1)
+## 6. Commands (implemented in Phase 1 — see `Makefile`)
 
 ```bash
 make test            # backend + frontend unit/integration
@@ -57,7 +57,15 @@ make test-frontend   # vitest
 make e2e             # playwright against compose
 make lint            # ruff + eslint + prettier check
 make typecheck       # mypy + tsc
+make smoke           # manage.py smoke_check inside the running stack
+make schema          # regenerate OpenAPI + TS client
 ```
+
+**Database role in tests (ADR-009):** pytest creates and migrates `test_erp` as `erp_owner`,
+then `backend/conftest.py` switches the connection to `erp_app` for every test.
+`apps/core/tests/test_db_roles.py` fails if tests ever run with a privileged role. It also
+proves the RLS foundation with a throwaway FORCE-RLS table: fail-closed without context,
+transaction-scoped context with no leak, and `WITH CHECK` blocking cross-tenant writes.
 
 ## 7. Reporting
 
@@ -65,3 +73,4 @@ Each phase summary includes the exact commands run and their results (pass/fail 
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Phase 1: commands implemented; test-role mechanics documented.

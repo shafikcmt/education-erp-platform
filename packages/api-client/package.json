@@ -1,0 +1,19 @@
+{
+  "name": "@erp/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript types generated from the Django OpenAPI schema (ADR-015). Do not edit src/schema.d.ts by hand.",
+  "type": "module",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "generate": "openapi-typescript ./openapi.yaml --output ./src/schema.d.ts",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "devDependencies": {
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3"
+  }
+}

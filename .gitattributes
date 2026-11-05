@@ -1,0 +1,10 @@
+* text=auto eol=lf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+# Generated files: collapse in diffs
+packages/api-client/src/schema.d.ts linguist-generated=true
+packages/api-client/openapi.yaml linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
+backend/uv.lock linguist-generated=true

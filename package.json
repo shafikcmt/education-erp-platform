@@ -1,0 +1,23 @@
+{
+  "name": "education-erp-platform",
+  "private": true,
+  "description": "Education ERP monorepo root (pnpm workspace: frontend, packages/*)",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=24.22.0 <25",
+    "pnpm": ">=10.34.0 <11"
+  },
+  "scripts": {
+    "lint": "pnpm -r --if-present lint",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "api:generate": "pnpm --filter @erp/api-client generate",
+    "e2e": "pnpm --filter @erp/frontend e2e"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10",
+    "prettier-plugin-tailwindcss": "0.8.1"
+  }
+}
