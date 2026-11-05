@@ -113,7 +113,7 @@ jobs:
             enable-cache: true,
             cache-dependency-glob: backend/uv.lock,
           }
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -154,7 +154,7 @@ jobs:
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Infrastructure smoke check (DB role, cache, storage, Celery)
         run: docker compose exec -T api python manage.py smoke_check
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
