@@ -15,7 +15,7 @@
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
-| 1 | Repository foundation & infrastructure | In progress | Phase 1 PR (see session log) | Implemented + verified locally; awaiting CI and owner review |
+| 1 | Repository foundation & infrastructure | In progress | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) | Implemented + verified locally; awaiting CI and owner review |
 | 2 | Authentication, users, roles & permissions | Not started | | |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
