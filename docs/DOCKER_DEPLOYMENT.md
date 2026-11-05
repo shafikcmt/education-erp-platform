@@ -8,7 +8,7 @@
 | Service | Image (proposed) | Purpose | Dev | Prod |
 |---|---|---|---|---|
 | `nginx` | `nginx:stable-alpine` + config | TLS, routing, headers, limits | optional | yes |
-| `web` | `frontend/Dockerfile` (Node LTS, multi-stage, Next.js standalone output) | UI + BFF | yes | yes |
+| `web` | `frontend/Dockerfile` (Node LTS, multi-stage, Next.js standalone output) | UI (SSR); forwards session cookie, holds no credentials | yes | yes |
 | `api` | `backend/Dockerfile` (python:3.13-slim, multi-stage, `uv`) | Django API (Gunicorn + Uvicorn workers) | yes (runserver) | yes |
 | `worker` | same image as `api` | Celery workers (queues: default, notifications, reports, imports, finance, ai) | yes | yes (scaled) |
 | `beat` | same image as `api` | Celery beat (single instance) | yes | yes (1 replica) |
@@ -53,7 +53,7 @@ infra/scripts/                   entrypoints, wait-for, backup/restore helpers
 
 ## 5. Configuration (environment variables — names illustrative)
 
-`DJANGO_SETTINGS_MODULE`, `DJANGO_SECRET_KEY`, `DATABASE_URL`, `DATABASE_APP_ROLE`, `REDIS_URL`, `CELERY_BROKER_URL`, `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `ALLOWED_HOSTS`, `PLATFORM_DOMAIN`, `CORS_ALLOWED_ORIGINS`, `EMAIL_*`, `FIELD_ENCRYPTION_KEYS`, `LLM_PROVIDER`, `LLM_API_KEY`, `NEXT_PUBLIC_*` (non-secret only).
+`DJANGO_SETTINGS_MODULE`, `DJANGO_SECRET_KEY`, `DATABASE_URL` (runtime role `erp_app`, NOBYPASSRLS), `DATABASE_MIGRATION_URL` (owner role `erp_owner`, migrations only), `REDIS_URL`, `CELERY_BROKER_URL`, `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `ALLOWED_HOSTS`, `PLATFORM_DOMAIN`, `CORS_ALLOWED_ORIGINS`, `EMAIL_*`, `FIELD_ENCRYPTION_KEYS`, `LLM_PROVIDER`, `LLM_API_KEY`, `NEXT_PUBLIC_*` (non-secret only).
 
 `.env.example` contains **dummy values only**. Real values never enter git.
 
@@ -104,3 +104,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

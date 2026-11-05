@@ -46,7 +46,7 @@ flowchart LR
 | Component | Responsibility | Scaling |
 |---|---|---|
 | `nginx` | TLS termination, routing (`/` → web, `/api` → api), static/media headers, request size limits, basic rate limiting | Stateless |
-| `web` (Next.js) | UI rendering (RSC + client components), BFF route handlers for auth cookies (ADR-011), i18n | Stateless, horizontal |
+| `web` (Next.js) | UI rendering (RSC + client components), i18n. No credential handling: forwards the Django session cookie server-side (ADR-011) | Stateless, horizontal |
 | `api` (Django + DRF, Gunicorn/Uvicorn) | Business logic, authorization, REST API, webhooks | Stateless, horizontal |
 | `worker` (Celery) | Async jobs: notifications, report generation, imports, payroll runs, embeddings, exports | Horizontal, separate queues |
 | `beat` (Celery beat) | Scheduled jobs (fee reminders, late fines, usage metering, backups verification) | Single instance |
@@ -97,11 +97,11 @@ sequenceDiagram
   participant DB as PostgreSQL
   B->>N: HTTPS request (tenant.example.com)
   N->>W: page request
-  W->>A: API call (auth cookie/token, X-Request-ID)
+  W->>A: API call (session cookie forwarded, Host preserved, X-Request-ID)
   A->>A: RequestID + structured logging context
   A->>A: Authenticate user
   A->>A: Resolve tenant (host → tenant) + verify membership
-  A->>DB: BEGIN; SET LOCAL app.tenant_id = ...
+  A->>DB: tenant_atomic: BEGIN; SELECT set_config('app.tenant_id', tenant, true)
   A->>A: Check module entitlement
   A->>A: Check permission + scope
   A->>DB: Service/selector queries (tenant-scoped manager + RLS)
@@ -151,3 +151,4 @@ Webhooks: signature verification, idempotent processing (event ID stored), repla
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

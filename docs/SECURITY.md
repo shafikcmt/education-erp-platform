@@ -25,8 +25,16 @@
 - Password policy: min length 10 (proposed), Django validators, optional breached-password check.
 - MFA: TOTP (Phase 2); WebAuthn/passkeys later. **Mandatory** for `super_admin`, all platform roles, `tenant_owner`, `institution_admin`; tenant-configurable for others (cannot be turned off for mandated roles).
 - Login: rate-limited per IP and per account; progressive delays/lockout with notification; generic error messages.
-- Sessions/tokens (ADR-011 — Proposed): short-lived access token (≈10 min) + rotating refresh token (reuse detection → revoke family), stored in `HttpOnly; Secure; SameSite=Lax` cookies set by the Next.js BFF; never in `localStorage`. Mobile clients later use bearer tokens with the same rotation.
-- Session list & revoke; revoke all on password change; inactivity timeout configurable per tenant.
+- **Browser sessions (ADR-011, accepted with modification):** Django session authentication for the first-party web app.
+  - Session cookie: `HttpOnly; Secure; SameSite=Lax`, **host-only** (no `Domain` attribute, so a cookie for one tenant's host is never sent to another tenant's host).
+  - CSRF cookie: `Secure; SameSite=Lax`, readable by JS only to send `X-CSRFToken`.
+  - CSRF enforced on every unsafe method, including login/logout. `CSRF_TRUSTED_ORIGINS` limited to platform and verified tenant domains.
+  - Web and API are served from the same origin through Nginx, so no CORS is needed for the web app.
+  - Session key rotated on login and privilege change. `cached_db` session backend, so sessions can be listed and revoked.
+  - MFA completes before the session is fully authenticated.
+- **No access/refresh tokens in `localStorage`, `sessionStorage`, IndexedDB or JS-readable cookies — ever.** Next.js does not hold or mint credentials.
+- **Mobile / third-party (future):** a separate OAuth 2.1-compatible token path (Authorization Code + PKCE, client credentials), with short-lived access tokens, rotating refresh tokens with reuse detection, tenant- and scope-bound tokens, revocation and audit. Mechanism to be chosen in ADR-028 (Proposed). It uses the same authorization pipeline.
+- Session list & revoke; revoke all sessions on password change/reset; idle timeout and absolute session lifetime configurable per tenant within platform bounds.
 - Phone OTP login (common in Bangladesh) is a candidate feature; requires SMS cost and abuse analysis (open question).
 - Enterprise SSO (SAML/OIDC) later.
 
@@ -125,3 +133,4 @@ Audit records: never updated or deleted by application code; DB role for app has
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

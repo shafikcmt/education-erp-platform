@@ -17,7 +17,6 @@ frontend/
         (portal)/                     guardian/student portal (simplified mobile-first shell)
         (public)/apply/[cycle]        public admission forms
         (platform)/                   Super Admin console (platform domain only)
-      api/                            BFF route handlers (auth cookie exchange, refresh)
     components/
       ui/                             shadcn/ui generated components (owned source)
       common/                         shared composites (DataTable, PageHeader, EmptyState, MoneyText, DateText…)
@@ -41,7 +40,10 @@ frontend/
 
 ## 3. Auth & tenant context
 
-- BFF route handlers exchange credentials for HttpOnly cookies (ADR-011); the browser never sees raw tokens.
+- **Session auth (ADR-011):** login/logout/MFA forms post directly to the Django API on the same origin (`/api/v1/auth/...`).
+  - Django sets the HttpOnly session cookie. The frontend never reads, stores or forwards tokens in client code, and there are no token-exchange route handlers.
+  - Client-side requests use `credentials: 'include'` and send `X-CSRFToken` on unsafe methods.
+  - Server components call the API on the internal network, forwarding the incoming `Cookie` header and the original `Host`/`X-Forwarded-Host` so tenant resolution still works.
 - `middleware.ts` (or Next.js 16 equivalent `proxy`) resolves locale and redirects unauthenticated users; it does **not** make security decisions — the API does.
 - Tenant branding/config/entitlements/permissions loaded once per session from `/api/v1/me/context/` and provided via context; refreshed on change.
 
@@ -97,3 +99,4 @@ frontend/
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

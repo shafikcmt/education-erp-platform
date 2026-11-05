@@ -43,6 +43,7 @@ entitled_modules(tenant) =
 
 - Resolved into `module_registry_tenantmodule` + cache; recomputed on subscription change/override change.
 - **Enforcement:** DRF permission class `ModuleEntitled("hostel")` on every module view; service functions also assert entitlement (so Celery jobs and AI tools are covered). Error: HTTP 403 `module_not_entitled`.
+- **Institution/campus limits (ADR-010, accepted):** `max_institutions` and `max_campuses` live in plan `limits` (data). Super Admin can override them per tenant (audited). They are hard limits at creation time (`403 limit_exceeded`), and a downgrade never deletes existing campuses.
 - **Limits:** checked at the write that would exceed them (e.g. creating the N+1th campus, enrolling students beyond tier → configurable: hard block vs. soft limit with upgrade prompt and grace — decision per limit, default soft for students, hard for campuses).
 - **Downgrade/expiry:** data is never deleted on downgrade; module becomes read-only or hidden (configurable), export remains possible.
 - **Feature flags** are separate from entitlements (rollout control, not commercial).
@@ -99,3 +100,4 @@ Create/edit plans, prices, add-ons; assign/override plans; grant trials/promos; 
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

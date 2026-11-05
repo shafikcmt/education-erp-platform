@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-05 (Phase 0 — documentation baseline)
+- **Last updated:** 2026-11-05 (Phase 0 — ADR-009…014 approved)
 
 ---
 
@@ -53,7 +53,8 @@ Details: `docs/PROJECT_VISION.md`.
 - Per-tenant settings: locale(s), timezone, currency, academic calendar, branding (logo, colors), terminology, numbering formats.
 - Data residency, export (tenant data portability) and deletion (offboarding) must be supported.
 - Self-service onboarding wizard + Super Admin-assisted onboarding.
-- Usage limits per plan (students, campuses, storage, SMS credits, AI usage) enforced server-side.
+- **Subscription is owned at tenant level** (one subscription per tenant). Institution and campus counts are limited by configurable plan limits (`max_institutions`, `max_campuses`) with audited Super Admin overrides (ADR-010, accepted).
+- Usage limits per plan (students, institutions, campuses, storage, SMS credits, AI usage) enforced server-side.
 
 Details: `docs/MULTI_TENANT_ARCHITECTURE.md`, `docs/REQUIREMENTS.md`.
 
@@ -215,7 +216,9 @@ Details: `docs/SECURITY.md#rbac`.
 1. Every tenant-owned table has a non-null `tenant_id` and inherits the shared `TenantScopedModel` base.
 2. The tenant context is resolved **server-side** per request (domain + authenticated membership). Client-supplied tenant IDs are never trusted on their own.
 3. All tenant-owned queries go through a tenant-aware manager that **fails closed** (raises) when no tenant context is set. Unscoped access is only possible through an explicit, audited `platform_scope()` context used by platform code.
-4. Defense-in-depth: PostgreSQL **Row-Level Security** policies keyed on a per-transaction setting (`app.tenant_id`) — proposed in ADR-009.
+4. Defense-in-depth: PostgreSQL **Row-Level Security** (`ENABLE` + `FORCE`) on every tenant table, with a policy keyed on the **transaction-scoped** setting `app.tenant_id`. If the setting is unset, no rows are visible (fail closed). Accepted in ADR-009.
+   - The tenant is set with `set_config('app.tenant_id', …, true)` at the start of **every** tenant transaction, through the single helper `core.db.tenant_atomic(tenant)`. Session-level `SET` is forbidden.
+   - The runtime DB role `erp_app` is non-superuser, non-owner and `NOBYPASSRLS`. Migrations run as `erp_owner`. Tests also run as `erp_app`.
 5. Celery tasks carry `tenant_id` explicitly and re-establish tenant context; no task runs tenant code without it.
 6. Files are stored under tenant-prefixed keys and served only through authorized presigned URLs.
 7. Caches keys are tenant-prefixed. Search indexes and AI embeddings are tenant-filtered.
@@ -236,8 +239,8 @@ Details: `docs/MULTI_TENANT_ARCHITECTURE.md`, `docs/SECURITY.md`.
 
 - **PostgreSQL 17** is the only primary datastore. Use JSONB for flexible/custom data and **pgvector** for AI embeddings.
 - **MongoDB (or any other primary DB) must not be introduced** without a documented technical justification accepted in `DECISION_LOG.md`.
-- Tenancy model (proposed ADR-009): shared database, shared schema, `tenant_id` column on all tenant data + RLS.
-- Base model conventions: UUID primary keys (proposed UUIDv7, ADR-012), `tenant_id`, `created_at`, `updated_at`, `created_by`, `updated_by`; soft-archive for master data; **financial records are immutable** (corrections by reversal entries).
+- Tenancy model (ADR-009, accepted): shared database, shared schema, `tenant_id` column on all tenant data + RLS with transaction-scoped tenant context.
+- Base model conventions: UUIDv7 primary keys (ADR-012, accepted) generated only via `core.ids.new_id()` (pinned library behind one abstraction; no direct library imports), `tenant_id`, `created_at`, `updated_at`, `created_by`, `updated_by`; soft-archive for master data; **financial records are immutable** (corrections by reversal entries).
 - Money: `NUMERIC(18,2)` (Django `DecimalField`) + ISO-4217 currency code. **Never use floats for money.**
 - All financial operations run inside `transaction.atomic()` with row locking (`select_for_update`) where balances change, and idempotency keys for payment endpoints.
 - Custom field values: `extra JSONB` column validated against tenant field definitions; GIN-indexed where queried.
@@ -251,6 +254,10 @@ Details: `docs/DATABASE_DESIGN.md`, `docs/ERD.md`.
 ## 12. API and Frontend Architecture
 
 **API (Django REST Framework):**
+- **Authentication (ADR-011, accepted with modification):**
+  - The first-party browser app uses **Django session authentication**: HttpOnly + Secure + SameSite=Lax host-only session cookie, CSRF protection on all unsafe methods, and same-origin web + API behind Nginx.
+  - Next.js never holds or mints credentials. **No tokens in localStorage/sessionStorage, ever.**
+  - Mobile apps and third-party APIs will use a separate OAuth/JWT-compatible token path (mechanism: ADR-028, proposed) that goes through the same authorization pipeline.
 - REST, versioned under `/api/v1/`. OpenAPI 3 schema generated by `drf-spectacular`; TypeScript client/types generated from it for the frontend.
 - Layering inside each module: `models → selectors (reads) → services (writes/business logic, transactions) → serializers → views/viewsets → urls`. Business logic lives in services, **not** in views or serializers.
 - Standard errors (RFC 9457 Problem Details style), cursor/page pagination, filtering, ordering, `Idempotency-Key` for payment/money endpoints, rate limiting, request IDs.
@@ -300,7 +307,7 @@ Details: `docs/AI_ASSISTANT.md`.
 
 ## 16. Coding Standards and GitHub Workflow
 
-**Repository layout (monorepo, proposed ADR-014):**
+**Repository layout (monorepo, ADR-014, accepted):**
 ```
 /CLAUDE.md                 permanent instructions (this file)
 /README.md
@@ -310,13 +317,14 @@ Details: `docs/AI_ASSISTANT.md`.
   apps/<module>/           one Django app per module (models, selectors, services, api, permissions, manifest, tests)
 /frontend/                 Next.js 16 app (TypeScript, Tailwind, shadcn/ui)
 /packages/api-client/      generated TypeScript types/client from OpenAPI
-/infra/                    docker, nginx, compose, scripts
-/.github/workflows/        CI/CD
+/infra/                    docker, nginx, scripts
+/.github/                  workflows/ (CI/CD), dependabot.yml, pull_request_template.md
+/docker-compose.yml, /.env.example, /Makefile, /package.json, /pnpm-workspace.yaml   root tooling
 ```
 
-**Python:** ruff (lint+format), mypy with django-stubs (strict on new code), type hints everywhere, services are plain functions with explicit arguments (`tenant`, `actor`), no business logic in views/serializers/signals, no N+1 queries (use `select_related`/`prefetch_related`), dependencies managed with `uv` (proposed ADR-013).
+**Python:** ruff (lint+format), mypy with django-stubs (strict on new code), type hints everywhere, services are plain functions with explicit arguments (`tenant`, `actor`), no business logic in views/serializers/signals, no N+1 queries (use `select_related`/`prefetch_related`), dependencies managed with `uv` (`pyproject.toml` + committed `uv.lock`, `uv sync --frozen` in CI/Docker; ADR-013, accepted).
 
-**TypeScript:** `strict: true`, ESLint + Prettier, no `any` without justification, server components by default, client components only when interactive, `pnpm` (proposed ADR-013).
+**TypeScript:** `strict: true`, ESLint + Prettier, no `any` without justification, server components by default, client components only when interactive, `pnpm` workspace at repo root with committed `pnpm-lock.yaml`, `--frozen-lockfile` in CI/Docker (ADR-013, accepted).
 
 **General:** small focused changes; no duplicated code — extract shared utilities; no unnecessary dependencies (each new dependency justified in the PR); meaningful names; comments explain *why*; feature flags for unfinished features; i18n for every user-facing string.
 
@@ -400,6 +408,7 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 | `docs/DEVELOPMENT_ROADMAP.md` | Phases, deliverables, exit criteria |
 | `docs/DEVELOPMENT_PROGRESS.md` | Live progress tracker |
 | `docs/DECISION_LOG.md` | Architecture Decision Records |
+| `docs/plans/PHASE_XX_PLAN.md` | Per-phase implementation plans (status Proposed → Approved) |
 
 ---
 
@@ -420,3 +429,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 
 ### Change notes
 - 2026-11-05 — Initial version created (Phase 0).
+- 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 and ADR-011 (with modification: Django session auth). Updated §2, §10, §11, §12, §16 accordingly. ADR-028 added (Proposed).

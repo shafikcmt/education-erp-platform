@@ -72,8 +72,11 @@ Errors: 400 validation, 401 unauthenticated, 403 forbidden (permission / `module
 
 ## 7. Authentication & headers
 
-- Browser: cookie-based tokens via Next.js BFF (ADR-011 proposed); CSRF protection for unsafe methods.
-- Programmatic/mobile (later): `Authorization: Bearer <token>`; tenant API keys for enterprise integrations (scoped permissions, rotatable, audited).
+- **Browser (ADR-011, accepted):** Django session cookie (`HttpOnly; Secure; SameSite=Lax`, host-only) via DRF `SessionAuthentication`.
+  - Unsafe methods require the `X-CSRFToken` header (value taken from the CSRF cookie); the frontend sends `credentials: 'include'`.
+  - Endpoints: `POST /api/v1/auth/login/`, `POST /api/v1/auth/mfa/verify/`, `POST /api/v1/auth/logout/`, `GET /api/v1/auth/csrf/` (Phase 2).
+- **Programmatic/mobile (future, ADR-028 Proposed):** `Authorization: Bearer <token>` issued through a separate OAuth 2.1-compatible path. Tenant API keys for enterprise integrations (scoped permissions, rotatable, audited).
+- Authentication classes are pluggable; every authentication method feeds the **same** authorization pipeline.
 - `X-Request-ID` accepted/generated and echoed; included in logs and error bodies.
 - `Accept-Language` for localization; tenant default otherwise.
 - `X-Tenant` only for non-host-based clients and only alongside a token whose membership is verified.
@@ -110,3 +113,4 @@ plus a scoped queryset from selectors (`selectors.visible_students(actor=request
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

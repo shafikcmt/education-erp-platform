@@ -13,9 +13,10 @@ Platform
 
 - A tenant may own several institutions (e.g. an education group running a school, a college and a madrasa).
 - **All tenant-owned rows carry `tenant_id`.** Institution- and campus-level rows additionally carry `institution_id` / `campus_id` where applicable.
-- Billing, entitlements and usage limits are per **tenant**; configuration can be overridden per institution and campus.
+- Billing, entitlements and usage limits are per **tenant** (one subscription per tenant; ADR-010 accepted). Configuration can be overridden per institution and campus.
+- Institution and campus counts are capped by configurable plan limits `max_institutions` / `max_campuses`. Super Admin overrides are audited. Limits are enforced server-side at creation (`403 limit_exceeded`), and a downgrade never deletes existing campuses.
 
-## 2. Tenancy model (ADR-009 — Proposed, recommended)
+## 2. Tenancy model (ADR-009 — **Accepted** 2026-11-05)
 
 **Shared database, shared schema, `tenant_id` discriminator column + PostgreSQL Row-Level Security (RLS) as defense-in-depth.**
 
@@ -42,7 +43,7 @@ The resolved tenant is stored in a request-scoped context (`contextvars`) — `c
 |---|---|
 | 1. Middleware | `TenantMiddleware` resolves tenant, verifies membership, sets context; rejects mismatches (403) |
 | 2. ORM | `TenantScopedModel` base with default manager `TenantManager` that automatically filters by `current_tenant()` and **raises `TenantContextMissing`** if no tenant is set. `save()` sets/validates `tenant_id` and refuses to write a row whose `tenant_id` differs from context. |
-| 3. Database (RLS) | For every tenant table: `ENABLE ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY` + policy `USING (tenant_id = current_setting('app.tenant_id')::uuid)`. API connects as a non-owner role. `SET LOCAL app.tenant_id` executed at the start of each request transaction. |
+| 3. Database (RLS) | For every tenant table: `ENABLE ROW LEVEL SECURITY` + `FORCE ROW LEVEL SECURITY` + policy `USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid) WITH CHECK (same)`. Unset context → NULL → no rows (fail closed). The app connects as `erp_app` (non-superuser, non-owner, `NOBYPASSRLS`); migrations run as `erp_owner`. |
 | 4. Services | Service functions take `tenant` (and `actor`) explicitly; cross-entity references validated to belong to same tenant (e.g. invoice's student must be same tenant). |
 | 5. Serializers | Related-object fields use tenant-scoped querysets (no IDs from other tenants accepted). |
 | 6. Celery | Tasks take `tenant_id` argument; a base task class sets tenant context + RLS setting before running; tasks without tenant must be declared platform tasks. |
@@ -53,7 +54,19 @@ The resolved tenant is stored in a request-scoped context (`contextvars`) — `c
 
 **Platform scope:** platform code that legitimately needs cross-tenant access (billing runs, metering, migrations, Super Admin aggregates) uses an explicit `with platform_scope(reason=...)` context, which connects with a role permitted to bypass RLS (`BYPASSRLS` limited role) and writes an audit entry. Use is restricted by code review and lint rule.
 
-> RLS + connection pooling: `SET LOCAL` is transaction-scoped, which is compatible with PgBouncer transaction pooling. Requests must run inside a transaction when touching tenant data (ATOMIC_REQUESTS or explicit per-view atomic — decided in Phase 3).
+### 4.1 Transaction-scoped tenant context (ADR-009, accepted)
+
+- **Single entry point:** `core.db.tenant_atomic(tenant)` opens `transaction.atomic()` and immediately runs `SELECT set_config('app.tenant_id', %s, true)`. The value lives only until COMMIT/ROLLBACK.
+- **Forbidden:** session-level `SET app.tenant_id`, or `set_config(..., false)`. Either would leak tenant context across pooled connections.
+- **Where it is used:**
+  - Tenant-scoped API requests: wrapped by middleware or a view wrapper.
+  - Celery tenant tasks: through the tenant-aware base task.
+  - Management commands and data migrations that touch tenant data.
+  - Nested `atomic()` blocks (savepoints) inherit the transaction's setting.
+- **Guard:** a `connection.execute_wrapper` raises `TenantContextNotApplied` if SQL runs while a tenant context is active but `app.tenant_id` was not applied in the current transaction. Exact mechanics are specified in the Phase 3 plan.
+- **Platform scope:** `platform_scope(reason)` uses the separate `erp_platform` role (`BYPASSRLS`) and writes an audit event.
+- **Pooling:** compatible with PgBouncer transaction pooling.
+- **Tests:** RLS tests connect as `erp_app`. Superusers and `BYPASSRLS` roles skip RLS, so tests run with them would prove nothing.
 
 ## 5. Unique constraints and identifiers
 
@@ -92,5 +105,13 @@ For every tenant-owned resource:
 
 A shared pytest fixture/helper set (`tests/isolation/`) is built in Phase 3 and reused by every later module.
 
+Platform-level CI checks (ADR-009):
+- (a) every table with a `tenant_id` column has RLS enabled + forced + a policy;
+- (b) every concrete model holding tenant data inherits `TenantScopedModel`;
+- (c) the test database user is `erp_app`, not a superuser.
+
+A failure blocks merge.
+
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

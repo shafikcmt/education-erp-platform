@@ -29,7 +29,9 @@
 | Purpose | Library | Notes |
 |---|---|---|
 | OpenAPI schema | `drf-spectacular` | Source of truth for the TS client |
-| Auth tokens | `djangorestframework-simplejwt` | Only if ADR-011 (JWT via BFF) is accepted |
+| Browser auth | Django sessions + DRF `SessionAuthentication` (built in) | ADR-011 accepted. `cached_db` session backend (Redis + PostgreSQL) |
+| Mobile/third-party auth (future) | `django-oauth-toolkit` or `djangorestframework-simplejwt` | ADR-028 Proposed. **Not** installed until decided |
+| UUIDv7 | `uuid-utils` (stdlib-compatible API), fallback `uuid6` | ADR-012 accepted. Pinned. Used only inside `core.ids` |
 | Filtering | `django-filter` | |
 | CORS | `django-cors-headers` | |
 | Settings/env | `django-environ` (or `pydantic-settings`) | Pick one in Phase 1 |
@@ -44,7 +46,7 @@
 | Lint/format | `ruff` | Replaces flake8/isort/black |
 | Type checking | `mypy` + `django-stubs` + `djangorestframework-stubs` | |
 | Security scan | `pip-audit`, `bandit` (via ruff `S` rules) | |
-| Package manager | `uv` | ADR-013 |
+| Package manager | `uv` | ADR-013 (accepted) |
 
 ## 3. Frontend libraries (proposed)
 
@@ -61,7 +63,7 @@
 | Unit/component tests | Vitest + Testing Library |
 | E2E | Playwright |
 | Lint/format | ESLint (flat config) + Prettier |
-| Package manager | pnpm (ADR-013) |
+| Package manager | pnpm workspace (ADR-013, accepted) |
 
 ## 4. Explicitly not used (without accepted ADR)
 
@@ -80,3 +82,4 @@
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

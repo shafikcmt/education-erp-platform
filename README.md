@@ -67,6 +67,7 @@ infra/               Docker, Nginx, scripts (Phase 1)
 | Roadmap | [`docs/DEVELOPMENT_ROADMAP.md`](docs/DEVELOPMENT_ROADMAP.md) |
 | Progress | [`docs/DEVELOPMENT_PROGRESS.md`](docs/DEVELOPMENT_PROGRESS.md) |
 | Decision log | [`docs/DECISION_LOG.md`](docs/DECISION_LOG.md) |
+| Phase 1 plan | [`docs/plans/PHASE_01_PLAN.md`](docs/plans/PHASE_01_PLAN.md) |
 
 ## Quick start
 

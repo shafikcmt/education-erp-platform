@@ -8,7 +8,7 @@
 | Topic | Convention |
 |---|---|
 | Naming | `snake_case`; table names `<app>_<model>` (Django default) |
-| Primary keys | UUID (proposed UUIDv7 for index locality — ADR-012) |
+| Primary keys | UUIDv7 (ADR-012, accepted), native `uuid` type, generated only by `core.ids.new_id()` |
 | Tenant column | `tenant_id UUID NOT NULL` + index on every tenant-owned table; usually leading column of composite indexes |
 | Timestamps | `created_at`, `updated_at` (`timestamptz`, UTC) |
 | Actors | `created_by_id`, `updated_by_id` (nullable FK to user) |
@@ -27,7 +27,7 @@
 ### Base abstract models (Phase 1/3)
 
 ```python
-class BaseModel(models.Model):        # id, created_at, updated_at
+class BaseModel(models.Model):        # id = UUIDField(primary_key=True, default=core.ids.new_id, editable=False), created_at, updated_at
 class TenantScopedModel(BaseModel):   # tenant FK, TenantManager (fail closed), created_by, updated_by
 class InstitutionScopedModel(TenantScopedModel):  # + institution FK
 class CampusScopedModel(InstitutionScopedModel):  # + campus FK (nullable where "all campuses" is valid)
@@ -67,7 +67,7 @@ Object-level scopes (e.g. teacher → own sections; guardian → own children) a
 | `module_registry_module` | code (unique), name, category (platform/standard/extension), current_version, is_sellable, dependencies JSONB |
 | `module_registry_featureflag` | key, default_enabled, rules JSONB |
 | `module_registry_tenantmodule` | tenant_id, module_code, source (plan/addon/override/trial), enabled, valid_from, valid_until, settings JSONB |
-| `billing_plan` | code, name, is_public, limits JSONB, included_modules (M2M via `billing_planmodule`) |
+| `billing_plan` | code, name, is_public, limits JSONB (incl. `max_institutions`, `max_campuses`, `max_active_students`, …; ADR-010), included_modules (M2M via `billing_planmodule`) |
 | `billing_price` | plan_or_addon, currency, interval (month/year), amount NUMERIC, metric (flat/per_student_tier), tiers JSONB, active_from/to |
 | `billing_addon` | code, module_code, name |
 | `billing_subscription` | tenant_id, plan_code, status, current_period_start/end, trial_ends_at, gateway, gateway_ref |
@@ -182,7 +182,7 @@ Outlined in `MODULE_CATALOG.md`; detailed schemas are defined in the plan of the
 
 1. One migration set per PR; reviewed for locking impact (avoid long `ACCESS EXCLUSIVE` locks on big tables — add columns nullable, backfill in batches, then constrain).
 2. Expand → migrate → contract for renames/removals across releases.
-3. RLS policies created by migrations for every new tenant table (helper operation `EnableTenantRLS("app_model")`), verified by a test that lists tenant tables without policies.
+3. RLS policies created by migrations for every new tenant table (helper operation `EnableTenantRLS("app_model")`: ENABLE + FORCE + `NULLIF(current_setting('app.tenant_id', true), '')::uuid` policy with `WITH CHECK`), verified by a CI test that lists tenant tables without policies (ADR-009). Migrations run as `erp_owner`; grants to `erp_app` are applied by the same helper.
 4. Data migrations must be idempotent and tenant-aware.
 5. No destructive migration without explicit owner approval noted in the PR.
 
@@ -192,3 +192,4 @@ Outlined in `MODULE_CATALOG.md`; detailed schemas are defined in the plan of the
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

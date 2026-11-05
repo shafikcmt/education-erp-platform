@@ -20,10 +20,11 @@
 **Exit:** owner reviews and approves/adjusts proposed ADRs.
 
 ## Phase 1 — Repository foundation & infrastructure
-**Depends on:** Phase 0 approval; ADR-012, ADR-013, ADR-014 decided.
+**Depends on:** Phase 0 approval (ADR-012, ADR-013, ADR-014 **Accepted** 2026-11-05). ADR-015 (REST + OpenAPI + generated client) and ADR-021 (en/bn i18n) are still Proposed, but Phase 1 scaffolds them, so their approval is requested together with the Phase 1 plan.
 **Deliverables:**
 - Monorepo skeleton: `backend/`, `frontend/`, `packages/api-client/`, `infra/`, `.github/`.
-- Django 5.2 project with split settings (base/dev/test/prod), env config, structlog, Sentry init (DSN optional), `/healthz` & `/readyz`, DRF + drf-spectacular, `core` app (BaseModel, error handler, pagination, request ID).
+- Django 5.2 project with split settings (base/dev/test/prod), env config, structlog, Sentry init (DSN optional), `/healthz` & `/readyz`, DRF + drf-spectacular, `core` app (`core.ids.new_id()` UUIDv7 abstraction, abstract BaseModel, error handler, pagination, request ID).
+- PostgreSQL roles provisioned per ADR-009 (`erp_owner` for migrations, `erp_app` runtime NOBYPASSRLS, `erp_platform` reserved); the app and tests connect as `erp_app`.
 - Celery app + beat wiring, Redis, MinIO storage config.
 - Next.js 16 app with TypeScript strict, Tailwind, shadcn/ui init, next-intl (en/bn), base layout, lint/format config, Vitest, Playwright skeleton.
 - Docker Compose dev stack (postgres+pgvector, redis, minio, mailpit, api, worker, beat, web); Dockerfiles; `.env.example`; Makefile.
@@ -33,14 +34,14 @@
 **Exit:** `docker compose up` gives healthy stack; CI green on a sample test; README quick start updated.
 
 ## Phase 2 — Authentication, users, roles & permissions
-**Depends on:** Phase 1; ADR-011 decided.
-**Deliverables:** `identity` (custom User model — must exist before first migration of other apps; email/phone login, password reset, invitations, MFA TOTP, sessions, login history, throttling), `rbac` (permission registry from manifests, roles, role templates, assignments with scope fields, `has_perm` service, DRF permission classes), `audit` (base append-only events), BFF auth routes + login/MFA/forgot-password UI, `/api/v1/me/`.
+**Depends on:** Phase 1; ADR-011 **Accepted** (Django session auth).
+**Deliverables:** `identity` (custom User model — must exist before first migration of other apps; email/phone login, password reset, invitations, MFA TOTP, sessions, login history, throttling), `rbac` (permission registry from manifests, roles, role templates, assignments with scope fields, `has_perm` service, DRF permission classes), `audit` (base append-only events), session auth endpoints (CSRF, login, MFA verify, logout; host-only HttpOnly/Secure/SameSite cookies, `cached_db` sessions, key rotation, revoke-all) + login/MFA/forgot-password UI, `/api/v1/me/`. No token auth (ADR-028 pending).
 **Note:** tenant-scoped assignment wiring completes in Phase 3.
 **Exit:** auth flows E2E tested; permission evaluation unit-tested; security review of auth.
 
 ## Phase 3 — SaaS tenants, institutions & campuses
-**Depends on:** Phase 2; ADR-009, ADR-010 decided.
-**Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, Membership wiring), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies + DB roles, `platform_scope()`, Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
+**Depends on:** Phase 2; ADR-009, ADR-010 **Accepted**.
+**Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, Membership wiring), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies, `core.db.tenant_atomic()` (transaction-scoped `set_config`) + execute-wrapper guard, `platform_scope()` (via `erp_platform` role), Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, configurable `max_institutions`/`max_campuses` limit enforcement (ADR-010), Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
 **Exit:** isolation suite green; RLS verified with raw SQL tests; security review.
 
 ## Phase 4 — Module registry & feature entitlement engine
@@ -154,3 +155,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).

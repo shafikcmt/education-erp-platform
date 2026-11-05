@@ -13,12 +13,12 @@
 | 006 | Strict server-side tenant isolation | Accepted (owner mandate) | 2026-11-05 |
 | 007 | Financial operations in DB transactions | Accepted (owner mandate) | 2026-11-05 |
 | 008 | AI and custom modules never bypass authorization | Accepted (owner mandate) | 2026-11-05 |
-| 009 | Tenancy model: shared schema + `tenant_id` + RLS | Proposed | 2026-11-05 |
-| 010 | Tenant hierarchy Tenant → Institution → Campus | Proposed | 2026-11-05 |
-| 011 | Web auth: JWT in HttpOnly cookies via Next.js BFF | Proposed | 2026-11-05 |
-| 012 | UUID (v7) primary keys | Proposed | 2026-11-05 |
-| 013 | Package managers: `uv` (Python), `pnpm` (JS) | Proposed | 2026-11-05 |
-| 014 | Repository directory layout | Proposed | 2026-11-05 |
+| 009 | Tenancy model: shared schema + `tenant_id` + RLS, transaction-scoped tenant context | **Accepted** | 2026-11-05 |
+| 010 | Tenant hierarchy Tenant → Institution → Campus; tenant-level subscription; configurable campus limits | **Accepted** | 2026-11-05 |
+| 011 | Web auth: Django session auth (HttpOnly/Secure/SameSite cookies + CSRF); separate token path for mobile/third-party | **Accepted (with owner modification)** | 2026-11-05 |
+| 012 | UUIDv7 primary keys via pinned library behind `core.ids` abstraction | **Accepted** | 2026-11-05 |
+| 013 | Package managers: `uv` (Python), `pnpm` (JS) | **Accepted** | 2026-11-05 |
+| 014 | Repository directory layout (`backend/`, `frontend/`, `packages/api-client/`, `infra/`; `docs/` + `CLAUDE.md` at root) | **Accepted** | 2026-11-05 |
 | 015 | REST + OpenAPI (drf-spectacular) + generated TS client | Proposed | 2026-11-05 |
 | 016 | Declarative rules (JSONLogic-style), no tenant code execution | Proposed | 2026-11-05 |
 | 017 | Payment gateway abstraction; initial gateways | Proposed | 2026-11-05 |
@@ -32,6 +32,7 @@
 | 025 | Fees always post to the ledger; `accounting` entitlement gates GL features | Proposed | 2026-11-05 |
 | 026 | Generic academic unit tree with configurable structure levels | Proposed | 2026-11-05 |
 | 027 | TLS for tenant custom domains | Open | 2026-11-05 |
+| 028 | Mobile / third-party API authentication mechanism (library & token format) | Proposed | 2026-11-05 |
 
 ---
 
@@ -60,22 +61,116 @@
 **Status:** Accepted (owner mandate). AI tools and custom modules run the full authorization pipeline as the requesting user.
 
 ## ADR-009 — Tenancy model
-**Status:** Proposed. **Options:** (A) shared schema + `tenant_id` + RLS; (B) schema-per-tenant; (C) database-per-tenant. **Recommendation:** A as default; C available later for enterprise via DB routing with the same code. **Why:** single migration path, scales to thousands of tenants, lower cost, simpler analytics/pgvector; RLS gives defense-in-depth against missing filters. **Trade-offs:** relies on disciplined base classes + RLS; per-tenant restore requires logical export tooling. Details: `MULTI_TENANT_ARCHITECTURE.md` §2.
+**Status:** **Accepted** — approved by owner 2026-11-05.
+**Original proposal (retained for history):** Options were (A) shared schema + `tenant_id` + RLS; (B) schema-per-tenant; (C) database-per-tenant. Recommended A as default, with C available later for enterprise via DB routing using the same code. Reasons: one migration path, scales to thousands of tenants, lower cost, simpler analytics/pgvector, RLS as defense-in-depth. Trade-offs: depends on disciplined base classes + RLS; per-tenant restore needs logical export tooling.
+
+**Decision:**
+1. **One shared PostgreSQL database and schema.** Every tenant-owned table has `tenant_id UUID NOT NULL` (FK → `tenancy_tenant`, indexed, normally the leading column of composite indexes), and its model inherits `TenantScopedModel`.
+2. **Application-layer enforcement (primary).** `TenantManager` filters by the current tenant context and **raises** if no context is set. Saves reject a `tenant_id` that differs from the context. Platform-wide access is possible only through the explicit, audited `platform_scope(reason=...)`.
+3. **Row-Level Security (defense-in-depth).** Every tenant table gets `ENABLE ROW LEVEL SECURITY` **and** `FORCE ROW LEVEL SECURITY`, plus one policy:
+   `USING (tenant_id = NULLIF(current_setting('app.tenant_id', true), '')::uuid) WITH CHECK (same expression)`.
+   If the setting is missing or empty the expression evaluates to NULL, so **no rows are visible or writable (fail closed)**.
+4. **Transaction-scoped tenant context.** The tenant is set with `SELECT set_config('app.tenant_id', <uuid>, true)` (`is_local = true`, equivalent to `SET LOCAL`) as the first statement of **every** transaction that touches tenant data, and is discarded automatically at COMMIT/ROLLBACK. Session-level `SET` is forbidden because it would leak across pooled connections. Concretely:
+   - One helper, `core.db.tenant_atomic(tenant)`, opens `transaction.atomic()` and sets the value. It is the only sanctioned way to open a tenant transaction.
+   - Tenant-scoped API requests run inside `tenant_atomic` (via middleware/view wrapper). Celery tenant tasks use the same helper through the tenant-aware base task. Management commands that touch tenant data must use it too.
+   - A guard installed with `connection.execute_wrapper` detects a query issued while a tenant context is active but `app.tenant_id` has not been set in the current transaction, and raises `TenantContextNotApplied`. Detailed mechanics are finalized in the Phase 3 plan.
+   - Compatible with PgBouncer **transaction** pooling. Session pooling is not required.
+5. **Database roles.**
+   - `erp_owner` owns the schema and runs migrations.
+   - `erp_app` is the runtime role: not a superuser, not the table owner, `NOBYPASSRLS`, with only the DML grants it needs. Audit tables are INSERT/SELECT only.
+   - `erp_platform` is a restricted `BYPASSRLS` role used only by `platform_scope()` code paths.
+   - Superusers and `BYPASSRLS` roles skip RLS, so **tests and the app must connect as `erp_app`**; otherwise RLS tests prove nothing.
+6. **Automated cross-tenant isolation tests (mandatory, CI-blocking).** Every module provides the suite in `MULTI_TENANT_ARCHITECTURE.md` §8. On top of that, a platform-level CI check fails if any table that has a `tenant_id` column lacks RLS enabled + forced + a policy, or if any concrete model with tenant data does not inherit `TenantScopedModel`.
+7. **Database-per-tenant (option C)** remains a future enterprise option. It needs a new ADR and uses the same code.
+
+**Consequences:** All later phases build on these primitives (delivered in Phase 3; DB roles are provisioned from Phase 1). Raw SQL must run inside `tenant_atomic` or `platform_scope`.
 
 ## ADR-010 — Tenant hierarchy
-**Status:** Proposed. `Tenant → Institution → Campus`; a tenant (customer/contract) may own multiple institutions of different types; billing per tenant. **Alternative:** tenant = institution (simpler, but cannot model education groups under one contract). **Recommendation:** accept the three-level hierarchy.
+**Status:** **Accepted** — approved by owner 2026-11-05.
+**Decision:**
+- Hierarchy is `Platform → Tenant → Institution → Campus`.
+- A tenant (customer/contract) can own **multiple institutions**, which may be of different institution types. Each institution has **one or more campuses**; exactly one campus per institution is flagged `is_main`.
+- **Subscription ownership is at tenant level:** one active subscription per tenant; entitlements and usage are metered per tenant.
+- **Campus and institution limits are configurable.** Plans carry `limits.max_institutions` and `limits.max_campuses` (data, not code). Super Admin can override them per tenant (audited). They are enforced server-side in the tenancy service at create time; exceeding a limit returns `403 limit_exceeded`. Downgrades never delete existing campuses; creating new ones is blocked until the tenant is within the limit.
+- Configuration can be overridden at tenant, institution and campus scope (resolution order in `CUSTOMIZATION_ENGINE.md` §2).
+
+**Alternative rejected:** tenant = institution. It is simpler, but it cannot model education groups under one contract.
 
 ## ADR-011 — Web authentication
-**Status:** Proposed. **Recommendation:** SimpleJWT short-lived access + rotating refresh tokens stored in HttpOnly/Secure/SameSite cookies, issued through Next.js BFF route handlers; bearer tokens for future mobile apps. **Alternative:** Django session cookies (simplest, server-side revocation built in) with Next.js on same parent domain. **Trade-off:** sessions are simpler and revocable; JWT eases mobile/API clients. Both are acceptable; owner/architect to confirm before Phase 2. *Either option keeps tokens out of JS-readable storage.*
+**Status:** **Accepted with owner modification** — approved 2026-11-05.
+**Original proposal (not adopted for the browser app):** SimpleJWT access + rotating refresh tokens in HttpOnly cookies, issued through Next.js BFF route handlers.
+
+**Decision:**
+1. **First-party browser app uses Django-managed session authentication** (`django.contrib.sessions` + DRF `SessionAuthentication`).
+2. **Cookies:**
+   - Session cookie: `HttpOnly`, `Secure` (all non-local environments), `SameSite=Lax`, **host-only** (no `Domain` attribute), so a session on one tenant's subdomain or custom domain is never sent to another tenant's host. Cookie name configurable (`__Host-` prefix in production when compatible).
+   - CSRF cookie: `Secure`, `SameSite=Lax`. It stays JS-readable so the frontend can send `X-CSRFToken`; it is an anti-forgery token, not a credential.
+3. **CSRF protection** is enforced on all unsafe methods, including login/logout. `CSRF_TRUSTED_ORIGINS` is limited to platform domains and verified tenant domains.
+4. **Same-origin topology:** Nginx serves the Next.js app and the Django API on the same host (`/` → web, `/api/` → api), so cookies are first-party and browser CORS is not needed for the web app.
+   - Next.js server components call the API over the internal network, forwarding the incoming `Cookie` header and preserving `Host`/`X-Forwarded-Host` for tenant resolution.
+   - **Next.js never holds, mints or stores credentials.** There are no BFF token-exchange handlers.
+5. **Session hygiene:**
+   - Session key rotated on login and on privilege change (`cycle_key`).
+   - All sessions invalidated on password change/reset.
+   - Idle timeout and absolute lifetime are configurable per tenant within platform bounds.
+   - Sessions stored with the `cached_db` backend (Redis cache + PostgreSQL), so they can be listed and revoked by user.
+   - MFA is a second step before the session becomes fully authenticated.
+6. **No access or refresh tokens in `localStorage`, `sessionStorage`, IndexedDB or JS-readable cookies — ever.**
+7. **Future mobile apps and third-party APIs** get a **separate** authentication path. It must be designed now so it can be added without changing authorization:
+   - Authentication classes are pluggable; the authorization pipeline (`CLAUDE.md` §10) is identical for every authentication method.
+   - Endpoints are separated, e.g. `/api/v1/oauth/…` or `/api/v1/auth/token/…`.
+   - Requirements: OAuth 2.1-compatible flows (Authorization Code + PKCE for mobile/third-party, client credentials for server integrations), short-lived access tokens, rotating refresh tokens with reuse detection, scoped tokens bound to tenant + permissions, revocation, and audit.
+   - Library and token format (opaque vs JWT) are **not chosen yet** → **ADR-028 (Proposed)**.
+
+**Consequences:**
+- `djangorestframework-simplejwt` is **not** a Phase 1/2 dependency.
+- Phase 2 delivers session login/logout/MFA/CSRF endpoints.
+- The frontend sends `credentials: 'include'` + `X-CSRFToken`.
 
 ## ADR-012 — Primary keys
-**Status:** Proposed. **Recommendation:** UUIDv7 generated in Python (PostgreSQL 17 has no native `uuidv7()`; Python 3.13 stdlib lacks `uuid7`) via a small vetted dependency, stored as native `uuid`. **Why:** non-enumerable IDs across tenants, good index locality. **Alternative:** UUIDv4 (no dependency, worse locality) or bigint + public UUID (more complexity).
+**Status:** **Accepted** — approved by owner 2026-11-05.
+**Context:** PostgreSQL 17 has no native `uuidv7()`, and the Python 3.13 standard library has no `uuid.uuid7()` (added in 3.14).
+
+**Decision:**
+- All primary keys are **UUIDv7** values (RFC 9562), stored in PostgreSQL's native `uuid` type and generated **in the application**.
+- Generation uses a **maintained, version-pinned** library compatible with Python 3.13. Candidate: `uuid-utils` via its stdlib-compatible API (`uuid_utils.compat.uuid7()`, which returns `uuid.UUID`); fallback: `uuid6`. The final choice is confirmed in Phase 1 after checking current maintenance status, then pinned in `uv.lock`.
+- **Encapsulation:** all code calls `core.ids.new_id() -> uuid.UUID` (and models use `core.models.UUIDv7PrimaryKey` / `BaseModel.id = UUIDField(primary_key=True, default=new_id, editable=False)`). **No module imports the UUID library directly**; this is enforced by a lint/import-linter rule. Switching to stdlib `uuid.uuid7()` after a future Python upgrade then becomes a one-file change.
+- `new_id()` must return a standard `uuid.UUID` (version 7) and be monotonic within a process. Unit tests verify version bits, ordering and type.
+- UUIDv7 embeds the creation timestamp. That is acceptable: IDs are identifiers, not secrets, and are never used for authorization.
+
+**Alternatives rejected:** UUIDv4 (poor index locality); bigint + public UUID (extra complexity).
 
 ## ADR-013 — Package managers
-**Status:** Proposed. `uv` for Python (fast, lockfile), `pnpm` for JS (efficient, strict). Alternatives: pip-tools/Poetry; npm.
+**Status:** **Accepted** — approved by owner 2026-11-05.
+
+**Decision — Python (`uv`):**
+- `backend/pyproject.toml` + committed `backend/uv.lock`.
+- Python version pinned in `backend/.python-version` (`3.13`).
+- Dependency groups for dev/test tooling.
+- CI and Docker install with `uv sync --frozen` (fail if the lockfile is stale).
+
+**Decision — JavaScript (`pnpm`):**
+- A pnpm workspace at the repository root (`pnpm-workspace.yaml` with `frontend` and `packages/*`).
+- Committed `pnpm-lock.yaml`.
+- pnpm version pinned through the root `package.json` `packageManager` field (activated with Corepack).
+- CI and Docker use `pnpm install --frozen-lockfile`.
+
+**Not used:** pip, Poetry, pip-tools, npm or yarn for project dependencies.
 
 ## ADR-014 — Directory layout
-**Status:** Proposed. `backend/` (Django, apps under `backend/apps/<module>`), `frontend/` (Next.js), `packages/api-client/`, `infra/`, `docs/`, `.github/`. See `CLAUDE.md` §16.
+**Status:** **Accepted** — approved by owner 2026-11-05.
+
+**Decision:**
+```
+/CLAUDE.md  /README.md  /docs/                (root; documentation stays at root)
+/backend/      Django project: config/, apps/<module>/, tests/, pyproject.toml, uv.lock
+/frontend/     Next.js app
+/packages/api-client/   generated TypeScript types/client from the OpenAPI schema
+/infra/        docker/, nginx/, scripts/
+/.github/      workflows/, dependabot.yml, pull_request_template.md
+/docker-compose.yml  /.env.example  /Makefile  /package.json  /pnpm-workspace.yaml   (root tooling)
+```
+Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md` §5).
 
 ## ADR-015 — API style
 **Status:** Proposed. REST under `/api/v1`, OpenAPI via drf-spectacular, generated TS types/client (`openapi-typescript`). GraphQL rejected for now (complexity, authorization surface).
@@ -116,5 +211,20 @@
 ## ADR-027 — TLS for custom domains
 **Status:** Open. Options: Caddy on-demand TLS in front of Nginx, managed edge/CDN with custom hostnames, or certbot automation. Decide in Phase 18.
 
+## ADR-028 — Mobile / third-party API authentication mechanism
+**Status:** Proposed (created 2026-11-05 as a follow-up of ADR-011).
+
+**Context:** ADR-011 requires a separate, OAuth/JWT-compatible authentication path for future mobile apps and third-party APIs, without changing the authorization pipeline.
+
+**Options:**
+- (A) `django-oauth-toolkit` — OAuth 2 provider, Authorization Code + PKCE, client credentials, opaque tokens stored in DB, revocation built in.
+- (B) SimpleJWT — JWT access + rotating refresh, with blacklist for revocation.
+- (C) Both: OAuth flows issuing JWT access tokens.
+
+**Leaning:** (A), because opaque, revocable, scoped tokens fit multi-tenant revocation needs.
+
+**Decision timing:** before the first mobile app or public API work (no earlier than Phase 17/18). Not needed for Phases 1–16.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
+- 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
