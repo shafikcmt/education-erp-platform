@@ -28,7 +28,7 @@ jobs:
     defaults: { run: { working-directory: backend } }
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           {
             version: "${{ env.UV_VERSION }}",
@@ -67,7 +67,7 @@ jobs:
           ERP_OWNER_PASSWORD: erp_owner_ci_password
           ERP_APP_PASSWORD: erp_app_ci_password
         run: bash infra/docker/postgres/init/01-roles.sh
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           {
             version: "${{ env.UV_VERSION }}",
@@ -89,7 +89,7 @@ jobs:
     defaults: { run: { working-directory: backend } }
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           {
             version: "${{ env.UV_VERSION }}",
@@ -106,7 +106,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           {
             version: "${{ env.UV_VERSION }}",
