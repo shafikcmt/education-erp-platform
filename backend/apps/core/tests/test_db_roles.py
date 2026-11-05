@@ -41,6 +41,36 @@ def test_runtime_role_cannot_create_objects():
             cursor.execute("CREATE TABLE should_not_exist (id int)")
 
 
+def test_runtime_role_cannot_create_temporary_tables():
+    with pytest.raises(DatabaseError, match="permission denied"), transaction.atomic():
+        with connection.cursor() as cursor:
+            cursor.execute("CREATE TEMPORARY TABLE should_not_exist (id int)")
+
+
+def test_public_cannot_connect_or_create_temp_on_the_database():
+    assert not _scalar("SELECT has_database_privilege('public', current_database(), 'CONNECT')")
+    assert not _scalar("SELECT has_database_privilege('public', current_database(), 'TEMPORARY')")
+
+
+@pytest.mark.parametrize(
+    "ddl",
+    [
+        "ALTER TABLE identity_user ADD COLUMN x int",
+        "DROP TABLE identity_user",
+        "ALTER TABLE identity_user DISABLE ROW LEVEL SECURITY",
+        "CREATE INDEX should_not_exist ON identity_user (email)",
+    ],
+)
+def test_runtime_role_cannot_change_application_schema(ddl):
+    """Only erp_owner (migrations) may change the schema; erp_app is DML-only."""
+    with (
+        pytest.raises(DatabaseError, match=r"must be owner|permission denied"),
+        transaction.atomic(),
+    ):
+        with connection.cursor() as cursor:
+            cursor.execute(ddl)
+
+
 def test_runtime_role_cannot_assume_owner_role():
     with pytest.raises(DatabaseError), transaction.atomic(), connection.cursor() as cursor:
         cursor.execute("SET ROLE erp_owner")

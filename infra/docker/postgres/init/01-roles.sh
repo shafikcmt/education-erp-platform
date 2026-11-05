@@ -76,4 +76,12 @@ SQL
 # template1 first, so test databases inherit extensions, schema ownership and grants.
 configure_db template1
 configure_db "$ERP_DB_NAME"
+
+# Database-level least privilege (not inherited from templates, so applied to the app DB):
+# only our roles may connect, and nobody may create TEMP tables by default.
+echo "[bootstrap] restricting database-level privileges on ${ERP_DB_NAME}"
+psql_super --dbname postgres -v db="$ERP_DB_NAME" <<'SQL'
+SELECT format('REVOKE CONNECT, TEMPORARY ON DATABASE %I FROM PUBLIC', :'db')\gexec
+SELECT format('GRANT CONNECT ON DATABASE %I TO erp_owner, erp_app', :'db')\gexec
+SQL
 echo "[bootstrap] done"

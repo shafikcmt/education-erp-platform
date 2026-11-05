@@ -41,7 +41,7 @@ frontend/            Next.js 16 app — src/app/[locale], i18n (en, bn), generat
 packages/api-client/ OpenAPI schema + generated TypeScript types (do not edit by hand)
 infra/               Postgres role bootstrap, Nginx config, object-storage config
 .github/             CI workflow, Dependabot, PR template
-docker-compose.yml   Development stack (12 services, pinned images)
+docker-compose.yml   Development stack (11 services: 9 long-running + 2 one-shot, pinned images)
 Makefile             Developer commands (`make help`)
 ```
 
@@ -90,6 +90,7 @@ docker compose up -d --build --wait
 
 ```bash
 make smoke          # DB role, Redis, object storage and Celery round-trip inside the stack
+make s3-check       # S3 compatibility + bucket isolation suite against the object store
 make test           # backend (pytest on PostgreSQL as erp_app) + frontend (Vitest)
 make lint typecheck # ruff, import contracts, ESLint, Prettier, mypy, tsc
 make e2e            # Playwright against http://localhost:8080

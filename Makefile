@@ -4,7 +4,7 @@ COMPOSE := docker compose
 BACKEND := cd backend &&
 .DEFAULT_GOAL := help
 
-.PHONY: help env up down logs ps migrate smoke shell \
+.PHONY: help env up down logs ps migrate smoke s3-check storage-backup shell \
         install test test-backend test-frontend e2e lint lint-backend lint-frontend \
         typecheck format schema check
 
@@ -31,6 +31,16 @@ migrate: ## Run migrations (as the owner role)
 
 smoke: ## End-to-end infrastructure check inside the running stack
 	$(COMPOSE) exec -T api python manage.py smoke_check
+
+s3-check: ## S3 compatibility + bucket-isolation suite against the running object store (ADR-029)
+	$(COMPOSE) exec -T objectstore sh -c 'echo "s3.bucket.list" | weed shell -master=objectstore:9333' \
+	  | grep -qw erp-isolation-probe || $(COMPOSE) exec -T objectstore sh -c \
+	  'echo "s3.bucket.create -name erp-isolation-probe" | weed shell -master=objectstore:9333'
+	$(COMPOSE) exec -T -e S3_INTEGRATION=1 -e S3_ISOLATION_PROBE_BUCKET=erp-isolation-probe \
+	  api python -m pytest -p no:cacheprovider -m integration apps/core/tests/test_s3_integration.py
+
+storage-backup: ## Back up the app bucket to a directory inside the api container (DIR=...)
+	$(COMPOSE) exec -T api python manage.py s3_mirror --to-dir $${DIR:-/tmp/objstore-backup}
 
 shell: ## Django shell in the api container
 	$(COMPOSE) exec api python manage.py shell

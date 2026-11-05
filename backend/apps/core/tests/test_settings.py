@@ -2,6 +2,7 @@
 
 import json
 import os
+import secrets
 import subprocess
 import sys
 from pathlib import Path
@@ -13,7 +14,7 @@ BACKEND_DIR = Path(__file__).resolve().parents[3]
 
 PROD_ENV = {
     "DJANGO_SETTINGS_MODULE": "config.settings.prod",
-    "DJANGO_SECRET_KEY": "p" * 64,
+    "DJANGO_SECRET_KEY": secrets.token_urlsafe(64),  # fresh random key per test run
     "DJANGO_ALLOWED_HOSTS": "app.example.com",
     "DATABASE_URL": "postgres://erp_app:x@db:5432/erp",
     "REDIS_URL": "redis://redis:6379/0",
@@ -108,6 +109,8 @@ def test_prod_storage_is_private_with_presigned_urls(prod):
         {"DJANGO_SECRET_KEY": None},
         {"DJANGO_SECRET_KEY": "dev-insecure-change-me-local-only-0000000000000000000000"},
         {"DJANGO_SECRET_KEY": "short"},
+        {"DJANGO_SECRET_KEY": "p" * 64},  # long but low-entropy
+        {"DJANGO_SECRET_KEY": "django-insecure-" + "a1b2c3d4e5" * 5},
         {"DJANGO_ALLOWED_HOSTS": None},
     ],
 )
@@ -115,6 +118,28 @@ def test_prod_refuses_to_start_with_unsafe_configuration(overrides):
     result = _run(overrides)
     assert result.returncode != 0
     assert "ImproperlyConfigured" in result.stderr
+
+
+def test_prod_ignores_attempts_to_enable_debug_or_public_api_docs():
+    result = _run({"DJANGO_DEBUG": "true", "API_DOCS_ENABLED": "true"})
+    assert result.returncode == 0, result.stderr
+    values = json.loads(result.stdout.strip().splitlines()[-1])
+    assert values["DEBUG"] is False
+    assert values["API_DOCS_ENABLED"] is False
+
+
+def test_prod_passes_django_deployment_checklist():
+    env = {k: v for k, v in os.environ.items() if not k.startswith(("DJANGO_", "DATABASE_"))}
+    env.update(PROD_ENV)
+    result = subprocess.run(
+        [sys.executable, "manage.py", "check", "--deploy", "--fail-level", "WARNING"],
+        cwd=BACKEND_DIR,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
 
 
 def test_base_and_dev_keep_argon2_first():

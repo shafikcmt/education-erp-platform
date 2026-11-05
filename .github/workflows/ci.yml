@@ -154,6 +154,12 @@ jobs:
         run: docker compose up -d --build --wait --wait-timeout 300
       - name: Infrastructure smoke check (DB role, cache, storage, Celery)
         run: docker compose exec -T api python manage.py smoke_check
+      - name: Object storage S3 compatibility + bucket isolation (ADR-029)
+        run: |
+          docker compose exec -T objectstore sh -c \
+            'echo "s3.bucket.create -name erp-isolation-probe" | weed shell -master=objectstore:9333'
+          docker compose exec -T -e S3_INTEGRATION=1 -e S3_ISOLATION_PROBE_BUCKET=erp-isolation-probe \
+            api python -m pytest -p no:cacheprovider -m integration apps/core/tests/test_s3_integration.py
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }

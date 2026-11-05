@@ -82,6 +82,15 @@
 - Static analysis: ruff security rules (`S`), Bandit-equivalent; ESLint security plugins as appropriate; CodeQL (GitHub) recommended.
 - Secret scanning: GitHub secret scanning + pre-commit hook (e.g. gitleaks).
 - Admin: Django admin restricted to platform staff, MFA, separate path, IP allow-list in production (optional).
+- **Production settings guards (implemented in Phase 1, tested):**
+  - `config.settings.prod` refuses to start without `DJANGO_ALLOWED_HOSTS`.
+  - It also refuses a `DJANGO_SECRET_KEY` that is shorter than 50 characters, has fewer than 5 distinct characters, or uses a `dev-`/`test-`/`change-me`/`django-insecure-` prefix.
+  - `DEBUG` and the OpenAPI docs/schema are **forced off**, whatever the environment says. They stay off until platform-staff-only access exists.
+  - Django's `check --deploy --fail-level WARNING` passes. Only `security.W021` (HSTS preload) is silenced, deliberately.
+- **Database least privilege (implemented in Phase 1, tested):**
+  - `erp_app` is NOSUPERUSER, NOBYPASSRLS, NOINHERIT with no memberships, and DML-only (no TRUNCATE/DDL); it cannot alter or drop tables or run migrations.
+  - `PUBLIC` loses `CONNECT` and `TEMPORARY` on the app database; only `erp_owner` and `erp_app` may connect.
+  - Passwords are stored as SCRAM-SHA-256.
 
 ## 6. Audit logging
 
@@ -134,3 +143,4 @@ Audit records: never updated or deleted by application code; DB role for app has
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Phase 1 review: production guards and database least-privilege controls documented as implemented.

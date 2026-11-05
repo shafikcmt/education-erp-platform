@@ -300,6 +300,16 @@ recorded in `DECISION_LOG.md`:
 | D8 | — (addition) | `manage.py smoke_check` and an `/api/` catch-all 404 | Single command proves DB role/cache/storage/Celery in the stack; the error format stays the same with `DEBUG=True` | — |
 | D9 | — (addition) | Production images strip system pip/setuptools and npm/corepack | They carried fixable HIGH CVEs found by Trivy; both images are now Trivy-clean | — |
 
+**Additions from the owner-requested Phase 1 review (2026-11-05):**
+
+| # | Change | Why |
+|---|---|---|
+| D10 | `manage.py s3_mirror` (backup/restore/migration with SHA-256 verification) + unit tests | ADR-029 approval condition: backup/restore and provider portability |
+| D11 | `apps/core/tests/test_s3_integration.py` (opt-in) in CI `e2e-smoke` and `make s3-check` | ADR-029 conditions: S3 compatibility and bucket isolation, verified continuously |
+| D12 | Bootstrap revokes `CONNECT`/`TEMPORARY` from `PUBLIC`; tests for TEMP-table denial and DDL denial; smoke check verifies TEMP/CREATE are off | Least-privilege gaps found during the role review |
+| D13 | Prod forces API docs off, strengthens the secret-key guard (Django W009 criteria), passes `check --deploy` | Production-configuration review found env could enable public docs, and the key guard missed low-entropy keys |
+| D14 | Correction: the stack has **11** services (9 long-running + 2 one-shot), not 12 as first reported | Counting error in the original Phase 1 report |
+
 **Acceptance criteria (§9):** criteria 1–10, 12 and 13 were verified in this environment (see
 `DEVELOPMENT_PROGRESS.md`). Criterion 11 (all CI jobs green on the PR) can only be confirmed by
 GitHub Actions on the PR.
@@ -307,3 +317,4 @@ GitHub Actions on the PR.
 ### Change notes
 - 2026-11-05 — Initial plan drafted (awaiting approval).
 - 2026-11-05 — Status set to Approved; §13 implementation outcome and deviations added.
+- 2026-11-05 — §13: review additions D10–D14 recorded.
