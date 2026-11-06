@@ -118,3 +118,9 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1: services, files, image standards and CI sections updated to the implemented state (SeaweedFS per ADR-029; pins per ADR-030).
 - 2026-11-05 — Phase 1 review: S3 integration step in CI; `s3_mirror` backup/restore/migration documented; service count stated explicitly (11).
+- 2026-11-06 — Phase 2:
+  - `migrate` now also runs `seed_roles` (permission registry + system roles, as `erp_app`).
+  - Nginx overwrites `X-Real-IP`; the API trusts only that header for client IPs (`CLIENT_IP_HEADER`).
+  - New variables: `FIELD_ENCRYPTION_KEYS`, `IP_INDEX_KEY` (mandatory in production; real keys only), `FRONTEND_BASE_URL`, `MFA_ISSUER`, `SECURITY_IP_RETENTION_DAYS`, `SECURITY_NOTIFY_NEW_SIGNIN`, `SECURITY_LOGIN_IP_LIMIT`, `PASSWORD_BREACH_CHECK_*`.
+  - Celery beat runs `audit.anonymize_expired_ips` and `identity.housekeeping` daily; security emails use the `notifications` queue.
+  - CI stack job bootstraps the E2E Super Admin with `create_platform_admin` before Playwright.

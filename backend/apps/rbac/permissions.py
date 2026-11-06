@@ -69,3 +69,37 @@ def HasPermission(codes: str | dict[str, str]) -> type[PermissionCheck]:  # noqa
     )
     name = "HasPermission_" + "_".join(sorted(set(mapping.values()))).replace(".", "_")
     return type(name, (PermissionCheck,), {"codes": mapping})
+
+
+class AnyPermissionCheck(PermissionCheck):
+    """Allows the request when the actor holds **any** of ``any_of`` (flags of the granted code
+    still apply). Used for read views shared by several roles."""
+
+    any_of: tuple[str, ...] = ()
+
+    @classmethod
+    def code_for(cls, method: str) -> str | None:
+        return cls.any_of[0] if cls.any_of else None
+
+    def has_permission(self, request: Request, view: Any) -> bool:
+        user = request.user
+        if not (user and user.is_authenticated):
+            raise NotAuthenticated()
+        enforce_mfa_gate(request, view)
+        target = getattr(request, "scope_target", PLATFORM)
+        for code in self.any_of:
+            if has_perm(user, code, target=target):
+                info = permission_info(code)
+                if info.requires_mfa and not state.mfa_verified(request):
+                    raise errors.MfaRequired()
+                if info.requires_step_up and not state.step_up_fresh(request):
+                    raise errors.StepUpRequired()
+                return True
+        return False
+
+
+def HasAnyPermission(*codes: str) -> type[AnyPermissionCheck]:  # noqa: N802
+    if not codes:
+        raise ValueError("HasAnyPermission needs at least one permission code")
+    name = "HasAnyPermission_" + "_".join(sorted(codes)).replace(".", "_")
+    return type(name, (AnyPermissionCheck,), {"any_of": tuple(codes)})

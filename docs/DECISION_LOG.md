@@ -425,3 +425,4 @@ Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a
 
 - 2026-11-05 — Owner approved ADR-031, ADR-032, ADR-034 and ADR-035, and ADR-033 with conditions. Added ADR-036 (IP privacy, Q7) and ADR-037 (Q2–Q9 scope decisions) as Accepted. No other ADR changed.
 - 2026-11-06 — Added ADR-038 (manual MFA key, Q10 strict conditions; amends ADR-037 Q5 line) and ADR-039 (`@hookform/resolvers`, Q11), both Accepted. ADR-037 index row annotated. No other ADR changed.
+- 2026-11-06 — Phase 2 implemented (PR #15) within ADR-031 to ADR-039. No ADR added or changed; implementation deviations from the plan text are recorded in `plans/PHASE_02_PLAN.md` §18.

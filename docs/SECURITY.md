@@ -160,9 +160,36 @@ Audit records: never updated or deleted by application code; DB role for app has
 - [ ] Migrations reviewed (locks, RLS policy added for new tenant tables)
 - [ ] New dependencies justified and scanned
 
+## 11. Phase 2 implementation map and operating procedures
+
+| Control | Where |
+|---|---|
+| Field encryption / blind index | `apps/core/crypto.py`, `apps/core/ip_privacy.py` |
+| Equal-work authentication backend | `apps/identity/backends.py` |
+| Throttles, progressive delay, lock | `apps/identity/throttling.py`, `services/auth.py` |
+| MFA, manual key, recovery codes | `apps/identity/services/mfa.py` |
+| Sessions, timeouts, revocation | `apps/identity/middleware.py`, `services/sessions.py` |
+| Permission engine and DRF classes | `apps/rbac/engine.py`, `sources.py`, `permissions.py` |
+| Append-only audit | `apps/audit/migrations/0002_append_only.py`, `apps/audit/services.py` |
+| Every API view authorized | `backend/tests/test_url_authorization_audit.py` |
+| No secret leakage | `backend/tests/test_no_secret_leakage.py` |
+
+**Bootstrap the first Super Admin** (no default credentials):
+`docker compose exec api python manage.py create_platform_admin --email owner@your-domain`.
+The activation link arrives by email; the owner sets a password and must enrol MFA before using the console.
+
+**Rotate the field-encryption key (ADR-031):** generate a key (`python -c "from apps.core.crypto import generate_key; print(generate_key())"`), put `newid:<key>` **first** in `FIELD_ENCRYPTION_KEYS` while keeping the old entries, deploy, run `manage.py rotate_field_encryption`, verify sign-in with MFA, then remove the old key.
+
+**Rotate `IP_INDEX_KEY` (ADR-036):** set the new key, deploy, run `manage.py rebuild_ip_index`.
+
+**Erase a person's IP data (data-subject request):** `manage.py erase_ip_data --user <uuid> [--before YYYY-MM-DD]`. It deletes the person's audit IP rows and clears the IP fields of their session records; the audit events stay, and the erasure itself is audited.
+
+**Key loss:** MFA secrets and stored IPs become unreadable. Users recover with recovery codes or an admin MFA reset; keys must therefore be backed up in the secret manager (Phase 19).
+
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1 review: production guards and database least-privilege controls documented as implemented.
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
 - 2026-11-06 — Manual MFA key exception (ADR-038) documented.
+- 2026-11-06 — Phase 2 implemented: implementation map and operating procedures added (§11).

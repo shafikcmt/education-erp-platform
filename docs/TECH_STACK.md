@@ -100,6 +100,8 @@
 | TypeScript / ESLint | 5.9.3 / 9.39.5 (constraints: ADR-030) |
 | Tailwind CSS / Vitest / Playwright | 4.3.4 / 5.1.0 / 1.64.1 |
 | openapi-typescript / openapi-fetch | 7.13.0 / 0.17.0 |
+| pyotp / cryptography / segno (Phase 2) | 2.10.0 / 50.0.2 / 1.6.6 |
+| TanStack Query / react-hook-form / zod / @hookform/resolvers (Phase 2) | 5.106.1 / 7.91.0 / 4.6.7 / 7.0.3 |
 | PostgreSQL image | `pgvector/pgvector:0.8.7-pg17` |
 | Redis / Nginx / SeaweedFS / Mailpit | `7.4.12-alpine` / `1.28.3-alpine` / `4.50` / `v1.28.4` |
 
@@ -107,3 +109,4 @@ Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml
 - 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).
 - 2026-11-05 — Phase 2 owner-approved libraries recorded with version ranges (installed at implementation).
 - 2026-11-06 — `@hookform/resolvers` 7.0.x approved and recorded (ADR-039).
+- 2026-11-06 — Phase 2 libraries installed at the approved pins. `server-only` and PyYAML were deliberately not added (not approved).

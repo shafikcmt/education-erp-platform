@@ -87,13 +87,20 @@ docker compose up -d --build --wait
 | http://localhost:8080/api/docs/ | OpenAPI docs (dev only) |
 | http://localhost:8080/healthz, `/readyz` | Liveness / readiness probes |
 | http://localhost:8025 | Mailpit (captured dev email) |
+| http://localhost:8080/en/login | Sign-in (English; `/bn/login` for Bengali) |
+
+Create the first platform Super Admin (no default credentials; the activation link arrives in Mailpit, and MFA enrollment is required on first sign-in):
+
+```bash
+docker compose exec api python manage.py create_platform_admin --email owner@example.test
+```
 
 ```bash
 make smoke          # DB role, Redis, object storage and Celery round-trip inside the stack
 make s3-check       # S3 compatibility + bucket isolation suite against the object store
 make test           # backend (pytest on PostgreSQL as erp_app) + frontend (Vitest)
 make lint typecheck # ruff, import contracts, ESLint, Prettier, mypy, tsc
-make e2e            # Playwright against http://localhost:8080
+make e2e            # Playwright against a fresh stack (bootstraps the E2E admin)
 make schema         # regenerate OpenAPI + TypeScript client after API changes
 ```
 

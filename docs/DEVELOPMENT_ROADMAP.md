@@ -175,3 +175,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-05 — Phase 2 section updated to match the proposed Phase 2 plan; Membership/RoleAssignment/invitations moved to Phase 3 (ADR-032, proposed).
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037) reflected; support sessions + dual-scope RLS noted for Phase 3; phone login added to Phase 14.
 - 2026-11-06 — Phase 2 dependency line updated (ADR-038/039; plan rev. 3).
+- 2026-11-06 — Phase 1 approved; Phase 2 implemented (PR #15, awaiting owner approval). Scope unchanged.
