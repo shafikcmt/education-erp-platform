@@ -57,7 +57,8 @@ test-backend: ## pytest (needs postgres from `make up`), with coverage gate
 test-frontend: ## Vitest
 	pnpm -r test
 
-e2e: ## Playwright against the running stack (http://localhost:8080)
+e2e: ## Playwright against a FRESH running stack (http://localhost:8080; `make down` + `make up` first)
+	$(COMPOSE) exec -T api python manage.py create_platform_admin --email e2e-admin@example.test
 	pnpm --filter @erp/frontend e2e
 
 lint: lint-backend lint-frontend ## All linters and format checks

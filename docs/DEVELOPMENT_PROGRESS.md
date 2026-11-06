@@ -5,7 +5,8 @@
 
 ## Current state
 
-- **Current phase:** Phase 1 — Repository foundation & infrastructure
+- **Current phase:** Phase 2 — Authentication, users, roles & permissions (implemented; PR #15 awaiting owner review)
+- **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
 - **Phase 1 status:** Complete.
   - **PR #2 was merged into `main` by the owner (`shafikcmt`) at 2026-11-05 18:42:43 UTC** as merge commit `cb2383e`. Its head was `41b7e55`, with CI 8/8 green.
@@ -18,8 +19,8 @@
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
-| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Awaiting owner's final `Approved` |
-| 2 | Authentication, users, roles & permissions | Planned | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, docs only) | Plan rev. 3 awaiting final owner approval |
+| 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
+| 2 | Authentication, users, roles & permissions | Complete | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes) | Plan approved 2026-11-06; security review fixed (ADR-040); awaiting owner's final security review — not merged |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
@@ -45,7 +46,8 @@ See `DECISION_LOG.md`.
 - **Still Proposed/Open:** ADR-016–020, ADR-022–028.
 - **Accepted 2026-11-05 (Phase 2 planning):** ADR-031, ADR-032, ADR-033 (with conditions), ADR-034, ADR-035, ADR-036 (IP privacy, Q7), ADR-037 (Q2–Q9).
 - **Accepted 2026-11-06:** ADR-038 (manual MFA key with strict conditions, Q10), ADR-039 (`@hookform/resolvers`, Q11).
-- **Open:** owner's final approval of Phase 1 and of the Phase 2 plan (rev. 3, PR #13).
+- **Resolved 2026-11-06:** Phase 1 approved; Phase 2 plan rev. 3 approved; PR #13 merged.
+- **Open:** owner review of the Phase 2 implementation (PR #15).
 
 ## Known gaps / open questions
 
@@ -59,7 +61,19 @@ See `DECISION_LOG.md`.
 - Branch protection for `main` must be configured by the repository owner in GitHub settings (require the CI jobs listed in `DOCKER_DEPLOYMENT.md` §6).
 - ESLint is held at 9.x (deprecated upstream) and TypeScript at 5.9; both are owner-approved as temporary, with upgrade triggers tracked in ADR-030.
 - GitHub Actions warns that `astral-sh/setup-uv@v6` and `pnpm/action-setup@v4` run on the deprecated Node 20 runtime; bump them when Node 24 majors are available (ADR-030 tracking; Dependabot watches actions).
-- `erp_app` still has DML on `django_migrations` (all tables get DML via default privileges). Runtime never needs to write it; restrict it with the Phase 3 RLS/grant migration helper.
+- ~~`erp_app` still has DML on `django_migrations`~~ — **resolved in Phase 2** (`core.0002`: SELECT only).
+- **Phase 2 follow-ups:**
+  - Bengali UI and email copy should be reviewed by a native-speaking editor before launch (written for natural wording, not yet reviewed).
+  - Email deliverability/provider is undecided (Mailpit in dev; provider in Phase 14/19).
+  - The E2E bootstrap admin (`create_platform_admin`) needs fresh volumes for a rerun (`make down` with `-v`, then `make up`).
+  - The per-IP login limit (default 20 / 5 min) may be too low for institutions behind one NAT address; it is tunable (`SECURITY_LOGIN_IP_LIMIT`) and is revisited with tenant hosts in Phase 3.
+  - Breached-password checking is implemented but off by default; enabling it needs outbound access to `api.pwnedpasswords.com` (ADR-037).
+  - Production key management (secret manager, key backup and rotation runbook) depends on ADR-019 (Phase 19).
+  - **Audit tamper evidence (ADR-040):** the owner role can still disable the audit trigger by DDL; protection rests on owner-credential isolation. Off-site/hash-chained audit storage: Phase 18.
+  - **Phase 19 must keep the owner/runtime secret separation** (compose allow-lists and the startup guard exist; the production deployment is not built yet).
+  - The MFA and login locks live in Redis: a cache flush clears active locks (counters restart).
+  - CODEOWNERS is in place; the owner must enable "Require review from Code Owners" in branch protection.
+  - Six Dependabot PRs (#3, #4, #7, #8, #9, #14) wait for a rebase onto the post-Phase-2 `main` and a fresh CI run (see Session 9).
 - The dev Postgres image trusts local connections *inside its own container* (`pg_hba` image default). Network connections require SCRAM. Production uses a managed or hardened database (Phase 19).
 - `beat` has no Docker healthcheck. Its dispatch was verified from logs in Session 4 (heartbeat sent and consumed); add a meaningful healthcheck in Phase 19.
 - `s3_mirror` buffers one object at a time in memory, which is fine for dev/CI. Production-scale backup tooling and schedule: Phase 19.
@@ -251,3 +265,29 @@ See `DECISION_LOG.md`.
 - **No application code; no implementation branch created.**
 - **Next recommended task:** owner gives final approval of Phase 1 and the Phase 2 plan, and merges PR #13. Then implement on `feat/phase-02-auth-rbac`.
 
+### 2026-11-06 — Session 8 (Phase 2 implementation)
+- **Owner approvals:** Phase 1 `Approved`; Phase 2 plan rev. 3 approved; implementation authorized (merge PR #13 first; never merge the implementation PR without approval).
+- **PR #13** verified (open, `clean`, 8/8 checks green, 11 documentation files only) and **squash-merged pinned to head `20432ee`** → `main` `7d860b0`; the merged tree is identical to the reviewed head. Branch `feat/phase-02-auth-rbac` created from it.
+- **Implemented** everything in plan §15 (details and 14 recorded deviations in `plans/PHASE_02_PLAN.md` §18):
+  - migrations: `core.0002`, `identity.0002`, `rbac.0001`/`0002`, `audit.0001`/`0002` (all additive; no tenant-owned tables);
+  - 38 API views under `/api/v1/auth/`, `/me/`, `/platform/`; OpenAPI with zero warnings; TS client regenerated;
+  - frontend: login, MFA, forced enrollment (QR + one-time manual key + recovery codes), forgot/reset, activate, verify email, account security, platform users/roles/audit, step-up dialog, idle warning — en + bn;
+  - dependencies installed exactly as approved: pyotp 2.10.0, cryptography 50.0.2, segno 1.6.6, @tanstack/react-query 5.106.1, react-hook-form 7.91.0, zod 4.6.7, @hookform/resolvers 7.0.3.
+- **Verification (local, actual results):**
+  - backend: ruff, ruff format, mypy strict (135 files), import-linter (2 contracts kept); pytest **237 passed, 9 skipped**, coverage **95%**;
+  - `spectacular --validate --fail-on-warn`: 0 warnings; gitleaks (working tree and git history): no leaks;
+  - frontend: ESLint, Prettier, `tsc`, Vitest **28 passed**;
+  - clean-volume `docker compose up --wait`: all services healthy; `smoke_check` OK; Playwright **21 passed** (setup + desktop + mobile).
+- **CI on PR #15:** first run failed only on gitleaks (a dummy test password in history) → pinned in `.gitleaksignore`, test now uses a derived constant.
+- **Next recommended task:** owner reviews PR #15 (security review notes in the PR) and decides on merge; then plan Phase 3 (tenants, institutions, campuses, memberships, RLS, support sessions).
+
+### 2026-11-06 — Session 9 (independent security review and fixes)
+- **Review** of PR #15 at `a77ed9b`: 3 high, 4 medium, 6 low and 2 informational findings, confirmed with temporary probe tests and live PostgreSQL checks (owner role could disable the audit trigger; runtime containers held owner credentials).
+- **Owner authorized all fixes** (L5 approved as a feature). Implemented on `feat/phase-02-auth-rbac` (ADR-040; plan §18.1):
+  - backend: per-account MFA lock, network-scoped login lock, privileged-target rule in services, token invalidation, fingerprint retention, expired-session housekeeping, service-level permission checks, random cache version, IP side-table triggers (`audit.0003`), recovery-code step-up, `__Host-csrftoken`, audit rollback guard, owner-credential startup guard;
+  - infrastructure: compose environment allow-lists (no `env_file`), `infra/scripts/check_runtime_secrets.py`, CI checks on config and running containers, CODEOWNERS;
+  - frontend: nonce-based CSP via the Next.js proxy (pages render per request), zod jitless, step-up dialog with recovery codes, new en/bn messages;
+  - architecture: 3 new import-linter contracts.
+- **Verification (actual results):** backend 286 passed / 9 skipped, coverage 95%; ruff, mypy (139 files), import-linter (5 contracts kept); OpenAPI regenerated, no drift; frontend ESLint, Prettier, `tsc`, Vitest 32 passed, production build; clean-volume stack healthy, `smoke_check` OK, runtime containers hold no owner credentials; Playwright **31 passed** with zero CSP violations; gitleaks (git history and tree) clean; Trivy clean on both runtime images.
+- **Dependabot review:** #3 (setup-uv 7), #4 (setup-node 7), #7 (upload-artifact 7), #8 (checkout 7), #14 (pnpm/action-setup 6) are within ADR-030 (they address the Node 20 runner deprecation) and #9 (Mailpit 1.33.0, dev only) needs the ADR-030 pin table updated. All were green on the pre-Phase-2 `main` only; rebase and re-run CI after PR #15 merges, then merge one at a time with owner approval. None was merged.
+- **Next recommended task:** owner's final security review of PR #15 and merge decision; then Dependabot rebases; then the Phase 3 plan.

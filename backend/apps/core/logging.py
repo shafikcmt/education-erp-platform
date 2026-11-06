@@ -30,16 +30,33 @@ SENSITIVE_KEYS = frozenset(
         "apikey",
         "otp",
         "mfa_code",
+        "code",
+        "recovery_code",
+        "recovery_codes",
+        "manual_key",
+        "qr_svg",
+        "session_key",
         "national_id",
     }
+)
+# Any key containing one of these markers is redacted too (Phase 2 plan §6.8).
+SENSITIVE_MARKERS = (
+    "password",
+    "secret",
+    "token",
+    "otp",
+    "recovery",
+    "session",
+    "csrf",
+    "authorization",
+    "cookie",
+    "manual_key",
 )
 
 
 def _is_sensitive(key: str) -> bool:
     lowered = key.lower()
-    return lowered in SENSITIVE_KEYS or any(
-        marker in lowered for marker in ("password", "secret", "token")
-    )
+    return lowered in SENSITIVE_KEYS or any(marker in lowered for marker in SENSITIVE_MARKERS)
 
 
 def _redact(value: Any) -> Any:

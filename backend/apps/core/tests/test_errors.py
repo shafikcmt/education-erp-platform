@@ -69,7 +69,10 @@ def test_validation_error_is_problem_details_with_field_errors(client):
 
 @pytest.mark.urls(__name__)
 def test_default_permission_is_deny_for_anonymous(client):
-    _assert_problem(client.get("/api/v1/_test/protected/"), 403, "not_authenticated")
+    # Phase 2: the session authentication class issues a challenge, so anonymous is 401.
+    response = client.get("/api/v1/_test/protected/")
+    _assert_problem(response, 401, "not_authenticated")
+    assert response["WWW-Authenticate"].startswith("Session")
 
 
 @pytest.mark.urls(__name__)

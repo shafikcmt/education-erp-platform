@@ -1,0 +1,6 @@
+# Reviewed gitleaks false positives (one exact finding per line: commit:file:rule:line).
+# Add an entry only after confirming the value is synthetic test data, never a real secret.
+#
+# Dummy wrong password in a step-up throttling test (Phase 2, PR #15); replaced by a constant
+# in a later commit, but the finding stays in branch history.
+df16dad73f84b6817e76d2107b51f7d69bd604fb:backend/apps/identity/tests/test_mfa.py:generic-api-key:235

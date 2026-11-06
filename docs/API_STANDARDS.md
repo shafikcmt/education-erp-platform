@@ -53,6 +53,12 @@ Errors: 400 validation, 401 unauthenticated, 403 forbidden (permission / `module
 ```
 
 - `code` is stable and machine-readable (`validation_error`, `permission_denied`, `module_not_entitled`, `limit_exceeded`, `not_found`, `conflict`, `business_rule_violation`, `rate_limited`, `tenant_suspended`).
+  - Phase 2 adds: `not_authenticated` (401, `WWW-Authenticate: Session`), `invalid_credentials`, `invalid_mfa_code`, `mfa_challenge_expired`, `mfa_required`, `mfa_enrollment_required`, `mfa_required_for_account`, `mfa_already_enrolled`, `step_up_required`, `manual_key_already_shown` (410), `invalid_token`, and guard-rail codes `privilege_escalation`, `last_super_admin`, `system_role_read_only`, `role_in_use`, `cannot_deactivate_self`, `already_activated`.
+  - `rate_limited` bodies carry `retry_after` (seconds) and a `Retry-After` header.
+  - Security review (ADR-040) adds: `mfa_locked` (429, `retry_after`), `insufficient_privilege` (403, acting on a more privileged account), `cannot_reset_own_mfa` (409).
+  - `POST /auth/step-up/` accepts `recovery_code` instead of `code` (single use).
+- API responses carry `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`.
+- All `/api/` responses carry `Cache-Control: no-store` unless a view sets its own policy.
 - Messages localized by `Accept-Language`; never include stack traces, SQL or other tenants' data.
 
 ## 5. Pagination, filtering, sorting, search
@@ -121,3 +127,5 @@ plus a scoped queryset from selectors (`selectors.visible_students(actor=request
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
+- 2026-11-06 — Phase 2 implemented: authentication error codes, 401 challenge and `no-store` documented.
+- 2026-11-06 — ADR-040 error codes, step-up `recovery_code` and the API CSP documented.

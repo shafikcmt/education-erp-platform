@@ -1,16 +1,56 @@
-# Education ERP — local development stack (Phase 1).
+# Education ERP — local development stack (Phase 1; least-privilege env since Phase 2).
 #   cp .env.example .env && docker compose up -d --build --wait
 #   open http://localhost:8080   (single origin through Nginx: / -> web, /api -> api)
 #
 # Images are pinned to exact versions (docs/TECH_STACK.md). Production compose/CD: Phase 19.
 name: erp
 
+# Least-privilege environment (security review H3): no service gets the whole .env file.
+# Runtime containers (api, worker, beat) receive ONLY the runtime role's DATABASE_URL; the
+# owner URL goes to `migrate` alone and the bootstrap passwords to `postgres` alone.
+# Enforced by infra/scripts/check_runtime_secrets.py (CI) and by the Django settings guard.
+x-backend-env: &backend_env
+  DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE}
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY}
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-true}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS}
+  CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS}
+  APP_ENVIRONMENT: ${APP_ENVIRONMENT:-local}
+  APP_VERSION: ${APP_VERSION:-0.1.0}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  LOG_FORMAT: ${LOG_FORMAT:-console}
+  API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
+  DATABASE_URL: ${DATABASE_URL}
+  REDIS_URL: ${REDIS_URL}
+  CELERY_BROKER_URL: ${CELERY_BROKER_URL}
+  CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
+  S3_ENDPOINT_URL: ${S3_ENDPOINT_URL}
+  S3_BUCKET: ${S3_BUCKET}
+  S3_REGION: ${S3_REGION:-us-east-1}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+  EMAIL_BACKEND: ${EMAIL_BACKEND}
+  EMAIL_HOST: ${EMAIL_HOST}
+  EMAIL_PORT: ${EMAIL_PORT}
+  DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.0}
+  FIELD_ENCRYPTION_KEYS: ${FIELD_ENCRYPTION_KEYS}
+  IP_INDEX_KEY: ${IP_INDEX_KEY}
+  FRONTEND_BASE_URL: ${FRONTEND_BASE_URL:-http://localhost:8080}
+  MFA_ISSUER: ${MFA_ISSUER:-Education ERP}
+  SECURITY_IP_RETENTION_DAYS: ${SECURITY_IP_RETENTION_DAYS:-365}
+  SECURITY_NOTIFY_NEW_SIGNIN: ${SECURITY_NOTIFY_NEW_SIGNIN:-platform_staff}
+  SECURITY_LOGIN_IP_LIMIT: ${SECURITY_LOGIN_IP_LIMIT:-20}
+  PASSWORD_BREACH_CHECK_ENABLED: ${PASSWORD_BREACH_CHECK_ENABLED:-false}
+  PASSWORD_BREACH_CHECK_FAIL_CLOSED: ${PASSWORD_BREACH_CHECK_FAIL_CLOSED:-false}
+
 x-backend: &backend
   build:
     context: ./backend
     target: dev
   image: erp-backend:dev
-  env_file: .env
+  environment: *backend_env
   user: "10001:10001"
   read_only: true
   tmpfs: ["/tmp"]
@@ -21,9 +61,14 @@ x-backend: &backend
 services:
   postgres:
     image: pgvector/pgvector:0.8.7-pg17
-    env_file: .env
+    # Bootstrap-only secrets: superuser + role passwords live here and nowhere else.
     environment:
       POSTGRES_DB: postgres
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      ERP_DB_NAME: ${ERP_DB_NAME}
+      ERP_OWNER_PASSWORD: ${ERP_OWNER_PASSWORD}
+      ERP_APP_PASSWORD: ${ERP_APP_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/docker/postgres/init:/docker-entrypoint-initdb.d:ro
@@ -51,7 +96,10 @@ services:
   objectstore:
     # S3-compatible dev storage (ADR-029). MinIO no longer publishes community images.
     image: chrislusf/seaweedfs:4.50
-    env_file: .env
+    environment: &objectstore_env
+      S3_BUCKET: ${S3_BUCKET}
+      S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
+      S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
     entrypoint: ["/bin/sh", "/templates/entrypoint.sh"]
     volumes:
       - objectdata:/data
@@ -71,7 +119,7 @@ services:
 
   objectstore-init:
     image: chrislusf/seaweedfs:4.50
-    env_file: .env
+    environment: *objectstore_env
     depends_on:
       objectstore:
         condition: service_healthy
@@ -93,12 +141,19 @@ services:
 
   migrate:
     <<: *backend
-    # Migrations run as the owner role; the app never has DDL rights (ADR-009).
+    # Migrations run as the owner role; the app never has DDL rights (ADR-009). Then the
+    # permission registry and system roles are synced as the runtime role (DML only).
+    # The ONLY service with the owner URL; ERP_PROCESS_ROLE=migrate lets the settings guard
+    # accept it. Also used for owner-only ops commands (key rotation, IP index rebuild).
+    environment:
+      <<: *backend_env
+      DATABASE_MIGRATION_URL: ${DATABASE_MIGRATION_URL}
+      ERP_PROCESS_ROLE: migrate
     entrypoint:
       [
         "/bin/sh",
         "-c",
-        'DATABASE_URL="$$DATABASE_MIGRATION_URL" python manage.py migrate --noinput',
+        'DATABASE_URL="$$DATABASE_MIGRATION_URL" python manage.py migrate --noinput && python manage.py seed_roles',
       ]
     depends_on:
       postgres:
@@ -171,7 +226,9 @@ services:
       dockerfile: frontend/Dockerfile
       target: runtime
     image: erp-frontend:dev
-    env_file: .env
+    environment:
+      API_INTERNAL_URL: ${API_INTERNAL_URL}
+      NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
     read_only: true
     tmpfs:
       - /tmp

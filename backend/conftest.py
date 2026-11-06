@@ -8,12 +8,15 @@ later phases would silently pass under a privileged role.
 
 import os
 from collections.abc import Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import environ
 import pytest
 from django.conf import settings
 from django.db import connections
+
+if TYPE_CHECKING:
+    from tests.helpers import Api, Person
 
 
 def _switch_default_connection(user: str, password: str) -> None:
@@ -37,6 +40,12 @@ def django_db_setup(django_db_setup: Any, django_db_blocker: Any) -> Iterator[No
             cursor.execute(f"REVOKE CONNECT, TEMPORARY ON DATABASE {db} FROM PUBLIC")
             cursor.execute(f"GRANT CONNECT ON DATABASE {db} TO {app}")
         _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
+        # Permission registry + system roles, as the compose ``migrate`` service does (as erp_app,
+        # which has DML rights on these tables).
+        from apps.rbac.seeding import seed_roles, sync_permissions
+
+        sync_permissions()
+        seed_roles()
     yield
     with django_db_blocker.unblock():
         # Teardown (DROP DATABASE) needs the owner again.
@@ -58,3 +67,39 @@ def owner_dsn() -> dict[str, Any]:
         "user": owner["USER"],
         "password": owner["PASSWORD"],
     }
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache() -> Iterator[None]:
+    """Throttle counters and permission caches must not leak between tests."""
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
+@pytest.fixture
+def api() -> "Api":
+    from tests.helpers import Api
+
+    return Api()
+
+
+@pytest.fixture
+def admin(db: Any) -> "Person":
+    """An active Super Admin with MFA enrolled."""
+    from tests.helpers import make_user
+
+    return make_user("admin@example.com", roles=("super_admin",), mfa=True)
+
+
+@pytest.fixture
+def admin_api(admin: "Person") -> "Api":
+    """API client logged in as ``admin`` (MFA verified) and in fresh step-up mode."""
+    from tests.helpers import Api
+
+    client = Api()
+    client.login(admin, expect="authenticated")
+    client.step_up(admin)
+    return client

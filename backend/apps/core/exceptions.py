@@ -34,6 +34,23 @@ _CODE_BY_EXCEPTION: list[tuple[type[Exception], str, str]] = [
 ]
 
 
+class ProblemError(drf_exceptions.APIException):
+    """API error with a stable Problem Details ``code`` (docs/API_STANDARDS.md §4).
+
+    Subclasses set ``status_code``, ``problem_code``, ``title`` and ``default_detail``.
+    ``extra`` adds documented, non-sensitive fields to the body (e.g. ``retry_after``).
+    """
+
+    status_code: int = status.HTTP_400_BAD_REQUEST
+    problem_code = "error"
+    title = "Request failed"
+    default_detail = "The request could not be completed."
+
+    def __init__(self, detail: str | None = None, *, extra: dict[str, Any] | None = None) -> None:
+        super().__init__(detail)
+        self.extra = extra or {}
+
+
 def problem(
     *,
     status_code: int,
@@ -93,10 +110,13 @@ def problem_details_exception_handler(exc: Exception, context: dict[str, Any]) -
 
     if isinstance(exc, drf_exceptions.APIException):
         code, title = "error", "Request failed"
-        for exc_type, mapped_code, mapped_title in _CODE_BY_EXCEPTION:
-            if isinstance(exc, exc_type):
-                code, title = mapped_code, mapped_title
-                break
+        if isinstance(exc, ProblemError):
+            code, title = exc.problem_code, exc.title
+        else:
+            for exc_type, mapped_code, mapped_title in _CODE_BY_EXCEPTION:
+                if isinstance(exc, exc_type):
+                    code, title = mapped_code, mapped_title
+                    break
         errors = None
         if isinstance(exc, drf_exceptions.ValidationError):
             errors = _flatten_validation_errors(exc.detail)
@@ -110,6 +130,7 @@ def problem_details_exception_handler(exc: Exception, context: dict[str, Any]) -
             detail=detail,
             request_id=request_id,
             errors=errors,
+            extra=exc.extra if isinstance(exc, ProblemError) else None,
         )
         headers: dict[str, str] = {}
         if getattr(exc, "auth_header", None):

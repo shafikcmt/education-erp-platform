@@ -1,0 +1,7 @@
+{% autoescape off %}Confirm that you want to use this address for your Education ERP account by opening this link within 24 hours:
+
+{{ action_url }}
+
+If you did not ask for this, ignore this email.
+
+— Education ERP{% endautoescape %}

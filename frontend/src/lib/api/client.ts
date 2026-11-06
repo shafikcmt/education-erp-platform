@@ -1,10 +1,22 @@
 import type { paths } from "@erp/api-client";
 import createClient, { type Client, type Middleware } from "openapi-fetch";
 
-/** Django's CSRF cookie (ADR-011). It is an anti-forgery token, not a credential. */
-export const CSRF_COOKIE_NAME = "csrftoken";
+/**
+ * Django's CSRF cookie (ADR-011). It is an anti-forgery token, not a credential.
+ * Production uses the `__Host-` prefix (Secure, Path=/, no Domain; review L6); local HTTP
+ * development uses the plain name because browsers reject `__Host-` cookies without HTTPS.
+ */
+export const CSRF_COOKIE_NAMES = ["__Host-csrftoken", "csrftoken"] as const;
 export const CSRF_HEADER_NAME = "X-CSRFToken";
 const SAFE_METHODS = new Set(["GET", "HEAD", "OPTIONS", "TRACE"]);
+
+export function readCsrfToken(cookieString: string): string | undefined {
+  for (const name of CSRF_COOKIE_NAMES) {
+    const value = readCookie(cookieString, name);
+    if (value) return value;
+  }
+  return undefined;
+}
 
 export function readCookie(cookieString: string, name: string): string | undefined {
   for (const part of cookieString.split(";")) {
@@ -19,7 +31,7 @@ export function csrfMiddleware(getCookies: () => string): Middleware {
   return {
     onRequest({ request }) {
       if (SAFE_METHODS.has(request.method.toUpperCase())) return request;
-      const token = readCookie(getCookies(), CSRF_COOKIE_NAME);
+      const token = readCsrfToken(getCookies());
       if (token) request.headers.set(CSRF_HEADER_NAME, token);
       return request;
     },

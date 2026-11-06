@@ -1,0 +1,6 @@
+{% autoescape off %}Someone signed in to your Education ERP account asked to change its email address on {{ sent_at }}.
+The change happens only after the new address is confirmed.
+
+If this wasn't you, review your account security: {{ security_url }}
+
+— Education ERP{% endautoescape %}

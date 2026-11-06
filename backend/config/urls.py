@@ -16,6 +16,9 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("healthz", healthz, name="healthz"),
     path("readyz", readyz, name="readyz"),
     path("api/v1/", include("apps.core.urls")),
+    path("api/v1/", include("apps.identity.urls")),
+    path("api/v1/", include("apps.rbac.urls")),
+    path("api/v1/", include("apps.audit.urls")),
 ]
 
 if settings.API_DOCS_ENABLED:

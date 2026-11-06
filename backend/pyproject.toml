@@ -19,6 +19,9 @@ dependencies = [
     "uvicorn-worker>=0.3,<0.5",           # ASGI worker for gunicorn
     "argon2-cffi>=23.1,<26",              # Argon2 password hashing
     "uuid-utils>=1.2,<1.3",               # UUIDv7 (ADR-012) — used ONLY in apps.core.ids
+    "pyotp>=2.10,<3",                     # TOTP RFC 6238 (Phase 2, owner-approved)
+    "cryptography>=50.0.2,<51",           # AES-GCM field encryption + HMAC (ADR-031/036)
+    "segno>=1.6.6,<2",                    # server-side SVG QR codes (Phase 2, ADR-037 Q5)
 ]
 
 [dependency-groups]
@@ -54,9 +57,12 @@ ignore = ["RUF012"]
 [tool.ruff.lint.per-file-ignores]
 # Tests: asserts and fake secrets are expected; multi-step `pytest.raises` blocks are needed
 # for transactional DB assertions (set tenant context, then attempt the forbidden write).
-"**/tests/**" = ["S101", "S105", "S106", "S311", "PT012", "PT018", "SIM117"]
+# S608: the RLS prototype builds DDL/DML from a fixed tuple of throwaway table names.
+"**/tests/**" = ["S101", "S105", "S106", "S311", "S608", "PT012", "PT018", "SIM117"]
 "conftest.py" = ["S101"]
 "config/settings/*.py" = ["F405", "F403"]
+# API error classes are named after their stable Problem Details codes (invalid_credentials, ...).
+"apps/identity/errors.py" = ["N818"]
 
 # ---------------------------------------------------------------- mypy
 [tool.mypy]
@@ -113,4 +119,32 @@ ignore_imports = ["apps.core.ids -> uuid_utils"]
 name = "core is the foundation: it must not import other apps"
 type = "forbidden"
 source_modules = ["apps.core"]
+forbidden_modules = ["apps.identity", "apps.rbac", "apps.audit"]
+
+# Review I2: rbac and identity call each other only through their API/service edges. The
+# permission engine, its data and the identity data model must never form an import cycle.
+[[tool.importlinter.contracts]]
+name = "rbac core (engine, sources, models, registry, seeding) is independent of identity"
+type = "forbidden"
+source_modules = [
+    "apps.rbac.engine",
+    "apps.rbac.sources",
+    "apps.rbac.models",
+    "apps.rbac.registry",
+    "apps.rbac.seeding",
+    "apps.rbac.role_templates",
+    "apps.rbac.signals",
+]
+forbidden_modules = ["apps.identity"]
+
+[[tool.importlinter.contracts]]
+name = "identity data model does not import rbac or audit"
+type = "forbidden"
+source_modules = ["apps.identity.models", "apps.identity.managers"]
+forbidden_modules = ["apps.rbac", "apps.audit"]
+
+[[tool.importlinter.contracts]]
+name = "audit log core does not import identity"
+type = "forbidden"
+source_modules = ["apps.audit.models", "apps.audit.services", "apps.audit.events"]
 forbidden_modules = ["apps.identity"]

@@ -1,6 +1,6 @@
 # Phase 2 Implementation Plan — Authentication, Users, Roles & Permissions
 
-- **Status:** Proposed (revision 3). Owner decisions of 2026-11-05 and 2026-11-06 are incorporated, and ADR-031 to ADR-039 are Accepted. **Awaiting final owner approval of this plan. No application code until approved.**
+- **Status:** **Approved** (revision 3) by the owner on 2026-11-06, together with Phase 1 (merged in PR #13, squash commit `7d860b0`). **Implemented** on `feat/phase-02-auth-rbac`, [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15); see §18 "Implementation outcome". Not merged without owner approval.
 - **Prepared:** 2026-11-05 (rev. 1); revised 2026-11-05 (rev. 2: approvals, owner conditions, additional requirements, Phase 3 consistency review); revised 2026-11-06 (rev. 3: Q10 manual MFA key with strict conditions, Q11 `@hookform/resolvers`, PR #12 merged)
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 2
 - **Governing decisions (Accepted):**
@@ -594,8 +594,8 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 - [x] PR #12 merged (`d80f576`, 2026-11-06)
 - [x] Q10 and Q11 answered (ADR-038, ADR-039)
 - [x] `docs/phase-02-plan` rebased onto `main`; PR #13 retargeted to `main`
-- [ ] Owner's final approval of Phase 1 (`Approved`) and of this plan; PR #13 merged by the owner
-- [ ] Branch `feat/phase-02-auth-rbac` from `main` (only after the above)
+- [x] Owner's final approval of Phase 1 (`Approved`) and of this plan (2026-11-06); PR #13 merged (squash `7d860b0`, owner-authorized)
+- [x] Branch `feat/phase-02-auth-rbac` from `main` (only after the above)
 
 **Backend foundation**
 - [ ] `core.crypto` (AES-GCM key ring, HMAC index), `core.tokens`, `RestrictTableGrants` operation + tests
@@ -672,3 +672,63 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
   - traceability (§14), final checklist (§15) and expanded acceptance criteria (§16);
   - Q10 and Q11 opened.
 - 2026-11-06 — Rev. 3: Q10 approved with strict conditions (manual MFA key; ADR-038; §6.6, §8, §9, §10, §15, §16) and Q11 approved (`@hookform/resolvers`; ADR-039; §9, §11); PR #12 merged (`d80f576`); prerequisites updated; no open questions remain.
+
+## 18. Implementation outcome (2026-11-06, PR #15)
+
+**Status:** implemented and verified locally; awaiting owner review. Every item of the §15 checklist was built:
+
+| Area | Delivered |
+|---|---|
+| Foundation | `core.crypto` (AES-GCM key ring, purpose-bound AAD, HMAC blind index), `core.tokens`, `core.ip_privacy`, `core.net`, `RestrictTableGrants` + `immutable_table_sql`; `django_migrations` SELECT-only for `erp_app`; prod refuses missing, dev/test-named or low-entropy keys; wider redaction; Sentry `before_send` scrubber (`include_local_variables=False`); `Cache-Control: no-store` on all API responses |
+| audit | `AuditEvent` (SELECT/INSERT grant + trigger rejecting UPDATE/DELETE/TRUNCATE for every role), `AuditEventIP` (encrypted, blind-indexed, deletable), allow-listed metadata per event, daily anonymisation task, reveal (audited), exact-IP search |
+| rbac | `Permission`/`Role`/`RolePermission` (+ tenant-sync and role-tenant-immutable triggers)/`PlatformRoleAssignment`; module manifests + `sync_permissions`/`seed_roles` (22 system roles, en/bn names); `has_perm`/`require_perm` with pluggable sources, `ScopeTarget`/`ScopeGrant` coverage rules, versioned cache, object-policy hook; `HasPermission`/`HasAnyPermission`; guard rails |
+| identity | user lifecycle fields; `AccountToken`, `MFADevice`, `RecoveryCode`, `SessionRecord`, `SeenDevice`; login with equal-work backend, throttles/progressive delay/lock with owner notice; MFA challenge; TOTP with replay protection; QR-only setup; one-time manual key (ADR-038); recovery codes; step-up; session middleware (30 min idle / 12 h absolute, revocation); activation, reset, password and email change; en/bn emails sealed through Celery; breached-password validator (off); new sign-in notices; `create_platform_admin`, `erase_ip_data`, `rotate_field_encryption`, `rebuild_ip_index` |
+| API | all §8 endpoints (38 views), Problem Details codes, OpenAPI with zero warnings, regenerated TS client |
+| Frontend | §9 screens in en/bn with typed message keys; app shell with server-side `/me/` check, permission-driven navigation, step-up dialog, idle warning; platform console |
+| Tests | backend 237 passed / 9 skipped (S3 integration, run in the CI stack job), coverage 95% (identity/rbac/audit services 92–98%); URL authorization audit; secret-leak scan; dual-scope RLS prototype; Vitest 28; Playwright 21 (bootstrap via Mailpit, desktop en + mobile bn lifecycle, axe) |
+
+**Deviations from the plan text (none changes an accepted decision):**
+
+| # | Plan said | Implemented | Why |
+|---|---|---|---|
+| D1 | Role templates YAML | Python data (`apps/rbac/role_templates.py`) | YAML needs PyYAML, which is not an approved dependency |
+| D2 | Sources: platform (+ Phase 3 tenant/support) | Also `SelfServiceSource`: every active user holds the five own-account codes in any scope | Own profile/sessions/MFA must work for users without roles; grants nothing beyond the user's own records |
+| D3 | Privileged = any `requires_mfa` permission | …or any platform role assignment | ADR-035 makes all platform roles MFA-mandatory, including `platform_billing`, which has no Phase 2 permission yet |
+| D4 | `SessionRecord.session_key_hash` | Plus `session_key_encrypted` (ADR-031) | Revocation can delete the Django session itself; the middleware also rejects revoked records, so revocation never depends on it |
+| D5 | ADR-031 names `reencrypt_fields` | `rotate_field_encryption` (plan §6.9 name) | Same function; plan name used |
+| D6 | ADR-034: token stores creation IP | Creation IP is in the audit event's encrypted IP side table | Keeps one IP store with one retention/erasure path (ADR-036) |
+| D7 | Anonymised audit IP rows "deleted" | Retention job clears ciphertext + index and keeps the prefix row; `erase_ip_data` deletes rows | Plan §6.9 asks to keep the prefix for abuse statistics |
+| D8 | `identity.mfa.manage_own` flagged step-up | Step-up enforced per endpoint (disable, regenerate, manual key) | A flag would force step-up before a QR enrollment can even start |
+| D9 | Per-IP login limit 20 / 5 min | Same default, env-tunable `SECURITY_LOGIN_IP_LIMIT` | Many users behind one NAT address (school labs); E2E proved the limit works |
+| D10 | Notice for new (UA family, IP) pairs | The very first sign-in after activation is not reported | Avoids a guaranteed false alarm on every new account |
+| D11 | — | `.gitleaksignore` with one pinned finding | Dummy test password already in branch history; no force-push |
+| D12 | App shell redirects to login | Redirect has no `next` parameter | Next.js 16 layouts have no reliable request path; login lands on `/dashboard` |
+| D13 | Phase 1 returned 403 for anonymous | 401 with `WWW-Authenticate: Session` | API_STANDARDS §3 (401 unauthenticated); Phase 1 test updated |
+| D14 | — | Audit list shows platform rows only (`tenant_id IS NULL`) | Tenant events (Phase 3) are never mixed into the platform console |
+
+**Remaining for the owner:** review and merge PR #15; confirm the IP retention period with legal review before production (ADR-036).
+
+### 18.1 Independent security review and fixes (2026-11-06, ADR-040)
+
+The owner authorized fixing every finding of the review of `a77ed9b`. Each has a regression test that reproduces the original weakness (`backend/tests/test_security_review_fixes.py` unless noted).
+
+| # | Finding | Fix | Evidence |
+|---|---|---|---|
+| H1 | MFA guesses unlimited across re-logins | Per-account MFA failure limit (10 / 15 min → 15-minute lock) shared by login and step-up; audited; notice ≤ 1/day; admin reset clears | Lock after 10 guesses across 3 IPs and re-logins; correct code refused while locked |
+| H2 | Support/custom roles could act on Super Admins | `assert_can_act_on` in services: permission + superset of target's permissions; Super Admin only by Super Admin | Support and custom roles refused (403 `insufficient_privilege`); Super Admin allowed; services refuse without the view |
+| H3 | Runtime containers held owner credentials; owner can disable the audit trigger | Per-service env allow-lists (no `env_file`); Django startup guard; CI checker (config + running containers); boundary documented | Checker fails the old compose file, passes the new; live: api/worker/beat/web hold none; runtime start with owner URL refused |
+| M1 | Any attacker could lock any user | Lock per (email, network); capped global delay (30 s); notice ≤ 1/day | User on another network signs in; attacker's network stays locked |
+| M2 | Old email links survived security changes | Invalidate all unused tokens on password change/reset, email change, MFA reset, deactivation | Stale reset link rejected after each event |
+| M3 | No CSP | Per-request nonce CSP via the Next.js proxy; API `default-src 'none'` | `frontend/e2e/csp.spec.ts` through Nginx; full E2E with zero violations |
+| M4 | Device fingerprints (IP-derived) outlived retention and erasure | ≤ 90 days; daily purge; `erase_ip_data` deletes them | Purged at 91 days, not at 89; erased on request |
+| L1 | Expired sessions looked active | Housekeeping closes sessions past 12 h and drops keys | Closed at 12 h + 1 min |
+| L2 | Two services relied on view checks | `require_perm` in `admin_revoke_sessions` and `reveal_ip` | Direct service calls refused |
+| L3 | Resettable cache version | Random version token | Eviction yields a new token; fresh permissions served |
+| L4 | IP evidence rewritable by the app role | DB triggers: add only with the event (same transaction), clear never rewrite; owner-only rotation | DB-level tests as `erp_app` and owner; rotation verified on a scratch DB |
+| L5 | (approved) recovery code for step-up | Single-use, atomic, audited (`purpose=step_up`) | Reuse refused; password still required |
+| L6 | CSRF cookie without `__Host-` | `__Host-csrftoken` in production; frontend reads both names | Prod settings test; Vitest |
+| I1 | Audit rollback unguarded | `audit.0003` refuses reversal unless allowed outside production | Unit test of the guard |
+| I2 | Phase 3 host policy; rbac↔identity cycle risk | Documented in MULTI_TENANT_ARCHITECTURE; 3 new import-linter contracts; CODEOWNERS | `lint-imports`: 5 contracts kept |
+
+**Remaining risks:** the table owner can still alter audit tables by DDL (mitigated by credential isolation; tamper-evident off-site storage in Phase 18); `style-src` allows inline styles (CSS only); the MFA lock lives in Redis, so a cache flush clears active locks; production secret separation must be carried into the Phase 19 deployment.
+

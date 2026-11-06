@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-05 (Phase 1 — foundation implemented and reviewed; ADR-029/030 accepted; PR awaiting merge approval)
+- **Last updated:** 2026-11-06 (Phase 1 approved; Phase 2 implemented in PR #15, awaiting owner review)
 
 ---
 
@@ -343,8 +343,8 @@ Details: `docs/AI_ASSISTANT.md`.
 | Phase | Scope |
 |---|---|
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
-| 1 | Repository foundation and infrastructure (implemented; PR awaiting owner approval) |
-| 2 | Authentication, users, roles and permissions |
+| 1 | Repository foundation and infrastructure (approved 2026-11-06) |
+| 2 | Authentication, users, roles and permissions (implemented; PR #15 awaiting owner approval) |
 | 3 | SaaS tenants, institutions and campuses |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
@@ -433,3 +433,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-05 — Phase 1: ADR-015/021 accepted; storage service renamed to `objectstore` (SeaweedFS, ADR-029); phase table updated.
 - 2026-11-05 — Phase 1 review: ADR-029 (SeaweedFS, conditions verified) and ADR-030 (TS 5.9 / ESLint 9 held temporarily) accepted.
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037): `staff_member` role code; privileged-account MFA + step-up; IP privacy; platform roles have no implicit tenant-data access.
+- 2026-11-06 — Phase 1 approved; Phase 2 plan approved and implemented (PR #15). Phase table updated; no rule changed.

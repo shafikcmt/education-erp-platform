@@ -1,0 +1,7 @@
+# Repository owner review is required for CI/CD, secret-scanning exceptions and security
+# configuration (security review 2026-11-06). Enable "Require review from Code Owners" in the
+# branch protection rule for `main` for this file to be enforced.
+/.github/            @shafikcmt
+/.gitleaksignore     @shafikcmt
+/infra/scripts/check_runtime_secrets.py  @shafikcmt
+/docker-compose.yml  @shafikcmt

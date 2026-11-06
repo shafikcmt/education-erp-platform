@@ -35,3 +35,4 @@ frontend/blob-report/
 
 # --- local docker overrides ---
 docker-compose.override.yml
+frontend/e2e/.state/

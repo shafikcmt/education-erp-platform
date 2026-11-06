@@ -130,3 +130,4 @@ A failure blocks merge.
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
+- 2026-11-06 — Phase 3 prerequisite (security review I2): `apps.rbac.middleware.ScopeTargetMiddleware` currently treats **every** host as the platform host. It must be replaced by host-based tenant resolution **before** any tenant host is added to `ALLOWED_HOSTS`; session and CSRF cookies stay host-only (no `Domain`) for tenant subdomains (ADR-040).

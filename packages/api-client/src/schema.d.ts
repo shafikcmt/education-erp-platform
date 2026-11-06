@@ -4,6 +4,818 @@
  */
 
 export interface paths {
+    "/api/v1/auth/activate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate an account and set the first password
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_activate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/activation/resend/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend the activation email (always 202)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_activation_resend_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/csrf/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Set the CSRF cookie
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["auth_csrf_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/email/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm an email change
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_email_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/login/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in with email and password
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_login_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_logout_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete sign-in with a TOTP or recovery code
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_mfa_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request a password reset email (always 202)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_password_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Set a new password with a reset token (signs out everywhere)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_password_reset_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/step-up/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Re-authenticate for sensitive actions (10 minutes)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["auth_step_up_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current user, permissions and session
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["me_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update own profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["me_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/me/email/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Request an email change (step-up; verification link to the new address)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_email_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Own MFA status
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["me_mfa_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/recovery-codes/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Regenerate recovery codes (step-up; old codes stop working)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_mfa_recovery_codes_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/totp/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Turn off MFA (step-up; not for privileged accounts)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["me_mfa_totp_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/totp/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm enrollment with a code; returns recovery codes once
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_mfa_totp_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/totp/setup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start TOTP enrollment (QR SVG only; replaces a pending enrollment)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_mfa_totp_setup_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/totp/setup/{device_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Cancel a pending enrollment
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["me_mfa_totp_setup_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/mfa/totp/setup/{device_id}/manual-key/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal the setup key once (fresh step-up; ADR-038)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_mfa_totp_setup_manual_key_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/password/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change password (step-up; signs out other sessions)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_password_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/sessions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Own active sessions (masked IPs)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["me_sessions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/sessions/{session_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke one of your sessions
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["me_sessions_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/sessions/revoke-others/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out all other sessions
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["me_sessions_revoke_others_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/audit-events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform audit events (cursor pagination)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_audit_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/audit-events/{event_id}/reveal-ip/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal an event's IP (step-up; audited)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_audit_events_reveal_ip_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/permissions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Permission catalog
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_permissions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Platform roles and tenant role templates
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_roles_list"];
+        put?: never;
+        /**
+         * Create a platform role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_roles_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/roles/{role_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Role detail
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_roles_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete a custom platform role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["platform_roles_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a custom platform role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["platform_roles_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/users/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List platform users
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_users_list"];
+        put?: never;
+        /**
+         * Create a user and send the activation email
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * User detail
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_users_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a user's profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["platform_users_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/activation/resend/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend the activation email
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_activation_resend_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/deactivate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deactivate a user (step-up; signs them out)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_deactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/mfa/reset/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset a user's MFA (step-up + reason)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_mfa_reset_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/platform-roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A user's platform roles
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_users_platform_roles_list"];
+        put?: never;
+        /**
+         * Grant a platform role (step-up; audited)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_platform_roles_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/platform-roles/{assignment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a platform role (step-up; audited)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["platform_users_platform_roles_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/reactivate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reactivate a user (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_reactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/users/{user_id}/sessions/revoke/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign a user out everywhere (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_users_sessions_revoke_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/health/": {
         parameters: {
             query?: never;
@@ -28,16 +840,312 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Accepted: {
+            detail: string;
+        };
+        /**
+         * @description * `user` - User
+         *     * `system` - System
+         *     * `support` - Support session
+         *     * `ai` - AI assistant
+         * @enum {string}
+         */
+        ActorTypeEnum: "user" | "system" | "support" | "ai";
+        Assignment: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly role: string;
+            readonly role_code: string;
+            /** Format: uuid */
+            readonly granted_by: string | null;
+            /** Format: date-time */
+            readonly granted_at: string;
+            readonly reason: string;
+        };
+        AuditEvent: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: date-time */
+            readonly occurred_at: string;
+            /** Format: uuid */
+            readonly actor_user_id: string | null;
+            readonly actor_type: components["schemas"]["ActorTypeEnum"];
+            /** Format: uuid */
+            readonly support_session_id: string | null;
+            readonly action: string;
+            readonly outcome: components["schemas"]["OutcomeEnum"];
+            readonly target_type: string;
+            readonly target_id: string;
+            readonly metadata: unknown;
+            readonly user_agent_summary: string;
+            readonly request_id: string;
+            readonly ip_masked: string;
+        };
+        AuditEventPage: {
+            /** Format: uri */
+            next: string | null;
+            /** Format: uri */
+            previous: string | null;
+            results: components["schemas"]["AuditEvent"][];
+        };
+        Csrf: {
+            detail: string;
+        };
+        EmailChangeRequest: {
+            /** Format: email */
+            new_email: string;
+        };
+        EmailRequestRequest: {
+            email: string;
+        };
+        GrantRequest: {
+            /** Format: uuid */
+            role: string;
+            reason: string;
+        };
+        /**
+         * @description * `platform` - Platform role
+         *     * `template` - Tenant role template
+         *     * `tenant` - Tenant role
+         * @enum {string}
+         */
+        KindEnum: "platform" | "template" | "tenant";
+        /**
+         * @description * `en` - English
+         *     * `bn` - বাংলা
+         * @enum {string}
+         */
+        LocaleEnum: "en" | "bn";
+        LoginRequest: {
+            email: string;
+            password: string;
+        };
+        LoginResult: {
+            status: components["schemas"]["LoginResultStatusEnum"];
+        };
+        /**
+         * @description * `authenticated` - authenticated
+         *     * `mfa_required` - mfa_required
+         *     * `mfa_enrollment_required` - mfa_enrollment_required
+         * @enum {string}
+         */
+        LoginResultStatusEnum: "authenticated" | "mfa_required" | "mfa_enrollment_required";
+        ManualKey: {
+            /** @description Shown once (ADR-038); then 410. */
+            manual_key: string;
+        };
+        Me: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            display_name: string;
+            locale: string;
+            /** Format: date-time */
+            email_verified_at: string | null;
+            mfa_enabled: boolean;
+            mfa_required: boolean;
+            mfa_enrollment_required: boolean;
+            is_platform_staff: boolean;
+            permissions: string[];
+            session: components["schemas"]["SessionInfo"];
+        };
+        MfaConfirmRequest: {
+            /** Format: uuid */
+            device_id: string;
+            code: string;
+        };
+        MfaSetup: {
+            /** Format: uuid */
+            device_id: string;
+            /** @description data:image/svg+xml URI of the enrollment QR code */
+            qr_svg: string;
+            /** Format: date-time */
+            expires_at: string;
+        };
+        MfaStatus: {
+            enabled: boolean;
+            is_required: boolean;
+            /** Format: date-time */
+            confirmed_at: string | null;
+            recovery_codes_remaining: number;
+        };
+        MfaVerifyRequest: {
+            code?: string;
+            recovery_code?: string;
+        };
+        /**
+         * @description * `success` - Success
+         *     * `failure` - Failure
+         *     * `denied` - Denied
+         * @enum {string}
+         */
+        OutcomeEnum: "success" | "failure" | "denied";
+        PasswordChangeRequest: {
+            current_password: string;
+            new_password: string;
+        };
+        PatchedMeUpdateRequest: {
+            display_name?: string;
+            locale?: components["schemas"]["LocaleEnum"];
+        };
+        PatchedPlatformUserUpdateRequest: {
+            display_name?: string;
+            locale?: components["schemas"]["LocaleEnum"];
+        };
+        PatchedRoleUpdateRequest: {
+            name?: string;
+            description?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            permissions?: string[];
+        };
+        Permission: {
+            readonly code: string;
+            readonly module_code: string;
+            readonly description: string;
+            readonly is_sensitive: boolean;
+            readonly requires_mfa: boolean;
+            readonly requires_step_up: boolean;
+        };
+        PlatformUser: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly display_name: string;
+            readonly locale: components["schemas"]["LocaleEnum"];
+            readonly is_active: boolean;
+            /** Format: date-time */
+            readonly activated_at: string | null;
+            /** Format: date-time */
+            readonly email_verified_at: string | null;
+            /** Format: date-time */
+            readonly deactivated_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly platform_roles: string[];
+        };
+        PlatformUserCreateRequest: {
+            /** Format: email */
+            email: string;
+            display_name?: string;
+            /** @default en */
+            locale: components["schemas"]["LocaleEnum"];
+        };
+        PlatformUserPage: {
+            count: number;
+            /** Format: uri */
+            next: string | null;
+            /** Format: uri */
+            previous: string | null;
+            results: components["schemas"]["PlatformUser"][];
+        };
+        /** @description Adds MFA state and session counts: only with ``identity.user.view_sensitive``. */
+        PlatformUserSensitive: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            readonly display_name: string;
+            readonly locale: components["schemas"]["LocaleEnum"];
+            readonly is_active: boolean;
+            /** Format: date-time */
+            readonly activated_at: string | null;
+            /** Format: date-time */
+            readonly email_verified_at: string | null;
+            /** Format: date-time */
+            readonly deactivated_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            readonly platform_roles: string[];
+            readonly mfa_enabled: boolean;
+            readonly active_sessions: number;
+        };
+        ReasonRequest: {
+            reason: string;
+        };
+        RecoveryCodes: {
+            recovery_codes: string[];
+        };
+        RevealedIp: {
+            ip: string;
+        };
+        RevokedCount: {
+            revoked: number;
+        };
+        Role: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly description: string;
+            readonly kind: components["schemas"]["KindEnum"];
+            readonly institution_types: string[];
+            readonly is_system: boolean;
+            readonly permissions: string[];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        RoleCreateRequest: {
+            code: string;
+            name: string;
+            description?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            permissions: string[];
+        };
+        Session: {
+            /** Format: uuid */
+            readonly id: string;
+            host: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            last_seen_at: string;
+            user_agent_summary?: string;
+            readonly ip_masked: string;
+            readonly mfa_verified: boolean;
+            readonly current: boolean;
+        };
+        SessionInfo: {
+            mfa_verified: boolean;
+            idle_expires_at: number | null;
+            absolute_expires_at: number | null;
+            step_up_expires_at: number | null;
+            idle_timeout_seconds: number;
+        };
+        StepUpRequest: {
+            password: string;
+            code?: string;
+            recovery_code?: string;
+        };
+        StepUpResult: {
+            step_up_expires_at: number;
+        };
+        SystemHealth: {
+            status: components["schemas"]["SystemHealthStatusEnum"];
+            version: string;
+            environment: string;
+        };
         /**
          * @description * `ok` - ok
          *     * `degraded` - degraded
          * @enum {string}
          */
-        StatusEnum: "ok" | "degraded";
-        SystemHealth: {
-            status: components["schemas"]["StatusEnum"];
-            version: string;
-            environment: string;
+        SystemHealthStatusEnum: "ok" | "degraded";
+        TokenPasswordRequest: {
+            token: string;
+            password: string;
+        };
+        TokenRequest: {
+            token: string;
         };
     };
     responses: never;
@@ -48,6 +1156,955 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    auth_activate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_activation_resend_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequestRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Accepted"];
+                };
+            };
+        };
+    };
+    auth_csrf_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Csrf"];
+                };
+            };
+        };
+    };
+    auth_email_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_login_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+        };
+    };
+    auth_logout_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_mfa_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["MfaVerifyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginResult"];
+                };
+            };
+        };
+    };
+    auth_password_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequestRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Accepted"];
+                };
+            };
+        };
+    };
+    auth_password_reset_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    auth_step_up_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StepUpRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StepUpResult"];
+                };
+            };
+        };
+    };
+    me_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    me_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMeUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+        };
+    };
+    me_email_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailChangeRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Accepted"];
+                };
+            };
+        };
+    };
+    me_mfa_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaStatus"];
+                };
+            };
+        };
+    };
+    me_mfa_recovery_codes_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+        };
+    };
+    me_mfa_totp_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_mfa_totp_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MfaConfirmRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodes"];
+                };
+            };
+        };
+    };
+    me_mfa_totp_setup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MfaSetup"];
+                };
+            };
+        };
+    };
+    me_mfa_totp_setup_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_mfa_totp_setup_manual_key_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                device_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ManualKey"];
+                };
+            };
+        };
+    };
+    me_password_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_sessions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Session"][];
+                };
+            };
+        };
+    };
+    me_sessions_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    me_sessions_revoke_others_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokedCount"];
+                };
+            };
+        };
+    };
+    platform_audit_events_list: {
+        parameters: {
+            query?: {
+                action?: string;
+                actor_user_id?: string;
+                cursor?: string;
+                /** @description Exact IP (needs view_ip) */
+                ip?: string;
+                occurred_after?: string;
+                occurred_before?: string;
+                outcome?: string;
+                page_size?: number;
+                target_id?: string;
+                target_type?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventPage"];
+                };
+            };
+        };
+    };
+    platform_audit_events_reveal_ip_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealedIp"];
+                };
+            };
+        };
+    };
+    platform_permissions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Permission"][];
+                };
+            };
+        };
+    };
+    platform_roles_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"][];
+                };
+            };
+        };
+    };
+    platform_roles_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    platform_roles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    platform_roles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    platform_roles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRoleUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    platform_users_list: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                /** @description Email contains */
+                search?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUserPage"];
+                };
+            };
+        };
+    };
+    platform_users_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlatformUserCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUser"];
+                };
+            };
+        };
+    };
+    platform_users_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUserSensitive"];
+                };
+            };
+        };
+    };
+    platform_users_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPlatformUserUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUserSensitive"];
+                };
+            };
+        };
+    };
+    platform_users_activation_resend_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Accepted"];
+                };
+            };
+        };
+    };
+    platform_users_deactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUser"];
+                };
+            };
+        };
+    };
+    platform_users_mfa_reset_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReasonRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    platform_users_platform_roles_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assignment"][];
+                };
+            };
+        };
+    };
+    platform_users_platform_roles_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Assignment"];
+                };
+            };
+        };
+    };
+    platform_users_platform_roles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    platform_users_reactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformUser"];
+                };
+            };
+        };
+    };
+    platform_users_sessions_revoke_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevokedCount"];
+                };
+            };
+        };
+    };
     system_health: {
         parameters: {
             query?: never;

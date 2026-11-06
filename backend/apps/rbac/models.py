@@ -1,0 +1,116 @@
+"""Business authorization data (ADR-033): permissions, roles, role permissions, platform roles.
+
+* ``Role`` and ``RolePermission`` are **dual-scope** tables (plan §4.6): ``tenant_id`` is NULL
+  for platform roles and system templates, and holds the tenant for Phase 3 tenant roles.
+  ``RolePermission.tenant_id`` is kept equal to its role's ``tenant_id`` by a trigger, so Phase 3
+  RLS needs no backfill.
+* ``Permission`` and ``PlatformRoleAssignment`` are platform tables (no tenant data).
+* Django's ``auth.Permission``/``auth.Group`` are never used for application checks.
+"""
+
+from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
+from django.db import models
+
+from apps.core.models import BaseModel
+
+
+class Permission(BaseModel):
+    code = models.CharField(max_length=100, unique=True)
+    module_code = models.CharField(max_length=50)
+    description = models.CharField(max_length=255)
+    is_sensitive = models.BooleanField(default=False)
+    requires_mfa = models.BooleanField(default=False)
+    requires_step_up = models.BooleanField(default=False)
+    deprecated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "rbac_permission"
+        ordering = ("code",)
+
+    def __str__(self) -> str:
+        return self.code
+
+
+class RoleKind(models.TextChoices):
+    PLATFORM = "platform", "Platform role"
+    TEMPLATE = "template", "Tenant role template"
+    TENANT = "tenant", "Tenant role"
+
+
+class Role(BaseModel):
+    tenant_id = models.UUIDField(null=True, blank=True)
+    code = models.CharField(max_length=64)
+    name = models.CharField(max_length=120)
+    name_i18n = models.JSONField(default=dict, blank=True)
+    description = models.CharField(max_length=255, blank=True, default="")
+    kind = models.CharField(max_length=16, choices=RoleKind.choices)
+    institution_types = ArrayField(models.CharField(max_length=32), default=list, blank=True)
+    is_system = models.BooleanField(default=False)
+    permissions: "models.ManyToManyField[Permission, RolePermission]" = models.ManyToManyField(
+        Permission, through="RolePermission", related_name="roles"
+    )
+
+    class Meta:
+        db_table = "rbac_role"
+        ordering = ("kind", "code")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant_id", "code"],
+                name="rbac_role_tenant_code_unique",
+                nulls_distinct=False,
+            ),
+            models.CheckConstraint(
+                condition=models.Q(kind="tenant", tenant_id__isnull=False)
+                | models.Q(kind__in=["platform", "template"], tenant_id__isnull=True),
+                name="rbac_role_kind_tenant_consistent",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.code
+
+
+class RolePermission(BaseModel):
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name="role_permissions")
+    permission = models.ForeignKey(
+        Permission, on_delete=models.PROTECT, related_name="role_permissions"
+    )
+    # Mirrors role.tenant_id (set by trigger rbac_rolepermission_tenant_sync).
+    tenant_id = models.UUIDField(null=True, blank=True, editable=False)
+
+    class Meta:
+        db_table = "rbac_rolepermission"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["role", "permission"], name="rbac_rolepermission_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.role_id}:{self.permission_id}"
+
+
+class PlatformRoleAssignment(BaseModel):
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="platform_roles"
+    )
+    role = models.ForeignKey(Role, on_delete=models.PROTECT, related_name="platform_assignments")
+    granted_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+    )
+    granted_at = models.DateTimeField()
+    reason = models.CharField(max_length=255, blank=True, default="")
+
+    class Meta:
+        db_table = "rbac_platformroleassignment"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "role"], name="rbac_platformrole_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.user_id}:{self.role_id}"

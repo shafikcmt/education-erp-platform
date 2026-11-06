@@ -1,5 +1,6 @@
 """Security baseline of the production settings module (evaluated in a clean subprocess)."""
 
+import base64
 import json
 import os
 import secrets
@@ -24,6 +25,9 @@ PROD_ENV = {
     "S3_ENDPOINT_URL": "https://s3.example.com",
     "S3_ACCESS_KEY_ID": "k",
     "S3_SECRET_ACCESS_KEY": "s",
+    # Fresh random keys per run (ADR-031/036); prod refuses missing or dev/test keys.
+    "FIELD_ENCRYPTION_KEYS": "prod1:" + base64.urlsafe_b64encode(secrets.token_bytes(32)).decode(),
+    "IP_INDEX_KEY": base64.urlsafe_b64encode(secrets.token_bytes(32)).decode(),
 }
 
 PROBE = """
@@ -34,7 +38,8 @@ print(json.dumps({k: getattr(s, k) for k in [
   "DEBUG","SECURE_SSL_REDIRECT","SECURE_HSTS_SECONDS","SECURE_HSTS_INCLUDE_SUBDOMAINS",
   "SESSION_COOKIE_SECURE","SESSION_COOKIE_HTTPONLY","SESSION_COOKIE_SAMESITE",
   "SESSION_COOKIE_DOMAIN","SESSION_COOKIE_NAME","SESSION_ENGINE","CSRF_COOKIE_SECURE",
-  "CSRF_COOKIE_SAMESITE","CSRF_COOKIE_DOMAIN","X_FRAME_OPTIONS","SECURE_CONTENT_TYPE_NOSNIFF",
+  "CSRF_COOKIE_SAMESITE","CSRF_COOKIE_DOMAIN","CSRF_COOKIE_NAME","CSRF_COOKIE_PATH",
+  "SESSION_COOKIE_PATH","X_FRAME_OPTIONS","SECURE_CONTENT_TYPE_NOSNIFF",
   "PASSWORD_HASHERS","API_DOCS_ENABLED","AUTH_USER_MODEL","SECURE_PROXY_SSL_HEADER"]}
   | {"DRF_AUTH": s.REST_FRAMEWORK["DEFAULT_AUTHENTICATION_CLASSES"],
      "DRF_PERMS": s.REST_FRAMEWORK["DEFAULT_PERMISSION_CLASSES"],
@@ -43,7 +48,11 @@ print(json.dumps({k: getattr(s, k) for k in [
 
 
 def _run(env_overrides: dict[str, str | None]) -> subprocess.CompletedProcess[str]:
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("DJANGO_", "DATABASE_"))}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("DJANGO_", "DATABASE_", "ERP_", "POSTGRES_"))
+    }
     env.update(PROD_ENV)
     for key, value in env_overrides.items():
         if value is None:
@@ -93,7 +102,7 @@ def test_prod_headers_hashing_and_api_defaults(prod):
     assert prod["PASSWORD_HASHERS"][0].endswith("Argon2PasswordHasher")
     assert prod["API_DOCS_ENABLED"] is False
     assert prod["AUTH_USER_MODEL"] == "identity.User"
-    assert prod["DRF_AUTH"] == ["rest_framework.authentication.SessionAuthentication"]
+    assert prod["DRF_AUTH"] == ["apps.identity.authentication.SessionAuthentication"]
     assert prod["DRF_PERMS"] == ["rest_framework.permissions.IsAuthenticated"]
 
 
@@ -112,6 +121,12 @@ def test_prod_storage_is_private_with_presigned_urls(prod):
         {"DJANGO_SECRET_KEY": "p" * 64},  # long but low-entropy
         {"DJANGO_SECRET_KEY": "django-insecure-" + "a1b2c3d4e5" * 5},
         {"DJANGO_ALLOWED_HOSTS": None},
+        {"FIELD_ENCRYPTION_KEYS": None},
+        {"IP_INDEX_KEY": None},
+        {"FIELD_ENCRYPTION_KEYS": "dev1:" + base64.urlsafe_b64encode(b"x" * 32).decode()},
+        {"FIELD_ENCRYPTION_KEYS": "test1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
+        {"FIELD_ENCRYPTION_KEYS": "prod1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
+        {"IP_INDEX_KEY": base64.urlsafe_b64encode(b"i" * 32).decode()},
     ],
 )
 def test_prod_refuses_to_start_with_unsafe_configuration(overrides):
@@ -129,7 +144,11 @@ def test_prod_ignores_attempts_to_enable_debug_or_public_api_docs():
 
 
 def test_prod_passes_django_deployment_checklist():
-    env = {k: v for k, v in os.environ.items() if not k.startswith(("DJANGO_", "DATABASE_"))}
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.startswith(("DJANGO_", "DATABASE_", "ERP_", "POSTGRES_"))
+    }
     env.update(PROD_ENV)
     result = subprocess.run(
         [sys.executable, "manage.py", "check", "--deploy", "--fail-level", "WARNING"],
@@ -148,3 +167,39 @@ def test_base_and_dev_keep_argon2_first():
     assert base.PASSWORD_HASHERS[0].endswith("Argon2PasswordHasher")
     # test settings deliberately use a fast hasher; confirm we are not running prod by mistake
     assert settings.PASSWORD_HASHERS == ["django.contrib.auth.hashers.MD5PasswordHasher"]
+
+
+def test_prod_csrf_cookie_uses_host_prefix(prod):
+    """Review L6: Secure + Path=/ + no Domain, so sibling subdomains can't plant it."""
+    assert prod["CSRF_COOKIE_NAME"] == "__Host-csrftoken"
+    assert prod["CSRF_COOKIE_SECURE"] is True
+    assert prod["CSRF_COOKIE_PATH"] == "/" and prod["CSRF_COOKIE_DOMAIN"] is None
+    assert prod["SESSION_COOKIE_PATH"] == "/" and prod["SESSION_COOKIE_DOMAIN"] is None
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"DATABASE_MIGRATION_URL": "postgres://erp_owner:x@db:5432/erp"},
+        {"ERP_OWNER_PASSWORD": "owner-secret"},
+        {"POSTGRES_PASSWORD": "superuser-secret"},
+        {"DATABASE_URL": "postgres://erp_owner:x@db:5432/erp"},
+        {"DATABASE_URL": "postgres://postgres:x@db:5432/erp"},
+    ],
+)
+def test_prod_runtime_refuses_owner_credentials(overrides):
+    """Review H3: a runtime process holding owner/superuser credentials refuses to start."""
+    result = _run(overrides)
+    assert result.returncode != 0
+    assert "ImproperlyConfigured" in result.stderr
+
+
+def test_prod_migrate_process_may_hold_owner_credentials():
+    result = _run(
+        {
+            "DATABASE_MIGRATION_URL": "postgres://erp_owner:x@db:5432/erp",
+            "DATABASE_URL": "postgres://erp_owner:x@db:5432/erp",
+            "ERP_PROCESS_ROLE": "migrate",
+        }
+    )
+    assert result.returncode == 0, result.stderr
