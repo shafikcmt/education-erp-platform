@@ -20,6 +20,7 @@ from tests.helpers import PASSWORD, Api, make_user
 pytestmark = pytest.mark.django_db
 
 SETUP = "/api/v1/me/mfa/totp/setup/"
+WRONG_PASSWORD = PASSWORD[::-1]  # synthetic: guaranteed to differ from the real test password
 CONFIRM = "/api/v1/me/mfa/totp/confirm/"
 
 
@@ -232,7 +233,7 @@ def test_step_up_failures_are_limited():
     api = Api()
     api.login(person)
     for _ in range(5):
-        assert api.post("/api/v1/auth/step-up/", {"password": "wrong-pass-123"}).status_code == 401
+        assert api.post("/api/v1/auth/step-up/", {"password": WRONG_PASSWORD}).status_code == 401
     locked = api.post("/api/v1/auth/step-up/", {"password": PASSWORD})
     assert locked.status_code == 429
 
