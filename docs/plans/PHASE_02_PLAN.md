@@ -685,7 +685,7 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 | identity | user lifecycle fields; `AccountToken`, `MFADevice`, `RecoveryCode`, `SessionRecord`, `SeenDevice`; login with equal-work backend, throttles/progressive delay/lock with owner notice; MFA challenge; TOTP with replay protection; QR-only setup; one-time manual key (ADR-038); recovery codes; step-up; session middleware (30 min idle / 12 h absolute, revocation); activation, reset, password and email change; en/bn emails sealed through Celery; breached-password validator (off); new sign-in notices; `create_platform_admin`, `erase_ip_data`, `rotate_field_encryption`, `rebuild_ip_index` |
 | API | all §8 endpoints (38 views), Problem Details codes, OpenAPI with zero warnings, regenerated TS client |
 | Frontend | §9 screens in en/bn with typed message keys; app shell with server-side `/me/` check, permission-driven navigation, step-up dialog, idle warning; platform console |
-| Tests | backend 239 passed / 9 skipped (S3 integration, run in the CI stack job), coverage 95% (identity/rbac/audit services 91–98%); URL authorization audit; secret-leak scan; dual-scope RLS prototype; Vitest 28; Playwright 21 (bootstrap via Mailpit, desktop en + mobile bn lifecycle, axe) |
+| Tests | backend 237 passed / 9 skipped (S3 integration, run in the CI stack job), coverage 95% (identity/rbac/audit services 92–98%); URL authorization audit; secret-leak scan; dual-scope RLS prototype; Vitest 28; Playwright 21 (bootstrap via Mailpit, desktop en + mobile bn lifecycle, axe) |
 
 **Deviations from the plan text (none changes an accepted decision):**
 

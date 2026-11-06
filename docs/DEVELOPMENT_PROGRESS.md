@@ -269,7 +269,7 @@ See `DECISION_LOG.md`.
   - frontend: login, MFA, forced enrollment (QR + one-time manual key + recovery codes), forgot/reset, activate, verify email, account security, platform users/roles/audit, step-up dialog, idle warning — en + bn;
   - dependencies installed exactly as approved: pyotp 2.10.0, cryptography 50.0.2, segno 1.6.6, @tanstack/react-query 5.106.1, react-hook-form 7.91.0, zod 4.6.7, @hookform/resolvers 7.0.3.
 - **Verification (local, actual results):**
-  - backend: ruff, ruff format, mypy strict (135 files), import-linter (2 contracts kept); pytest **239 passed, 9 skipped**, coverage **95%**;
+  - backend: ruff, ruff format, mypy strict (135 files), import-linter (2 contracts kept); pytest **237 passed, 9 skipped**, coverage **95%**;
   - `spectacular --validate --fail-on-warn`: 0 warnings; gitleaks (working tree and git history): no leaks;
   - frontend: ESLint, Prettier, `tsc`, Vitest **28 passed**;
   - clean-volume `docker compose up --wait`: all services healthy; `smoke_check` OK; Playwright **21 passed** (setup + desktop + mobile).
