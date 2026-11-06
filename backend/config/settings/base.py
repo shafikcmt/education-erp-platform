@@ -258,6 +258,7 @@ CELERY_TASK_SOFT_TIME_LIMIT = 14 * 60
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_QUEUES_ALL = ("default", "notifications", "reports", "imports", "finance", "ai")
+CELERY_TASK_ROUTES = {"identity.deliver_security_email": {"queue": "notifications"}}
 CELERY_BEAT_SCHEDULE = {
     "core-heartbeat": {"task": "core.ping", "schedule": 300.0, "options": {"queue": "default"}},
     # ADR-036 retention: anonymise security-event IPs older than SECURITY_IP_RETENTION_DAYS.

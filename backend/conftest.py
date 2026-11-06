@@ -8,12 +8,15 @@ later phases would silently pass under a privileged role.
 
 import os
 from collections.abc import Iterator
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import environ
 import pytest
 from django.conf import settings
 from django.db import connections
+
+if TYPE_CHECKING:
+    from tests.helpers import Api, Person
 
 
 def _switch_default_connection(user: str, password: str) -> None:
@@ -74,3 +77,29 @@ def _clear_cache() -> Iterator[None]:
     cache.clear()
     yield
     cache.clear()
+
+
+@pytest.fixture
+def api() -> "Api":
+    from tests.helpers import Api
+
+    return Api()
+
+
+@pytest.fixture
+def admin(db: Any) -> "Person":
+    """An active Super Admin with MFA enrolled."""
+    from tests.helpers import make_user
+
+    return make_user("admin@example.com", roles=("super_admin",), mfa=True)
+
+
+@pytest.fixture
+def admin_api(admin: "Person") -> "Api":
+    """API client logged in as ``admin`` (MFA verified) and in fresh step-up mode."""
+    from tests.helpers import Api
+
+    client = Api()
+    client.login(admin, expect="authenticated")
+    client.step_up(admin)
+    return client

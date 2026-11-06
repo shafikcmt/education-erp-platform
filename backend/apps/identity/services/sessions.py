@@ -160,6 +160,18 @@ def revoke_user_sessions(
     return count
 
 
+def revoke_one(user: User, record: SessionRecord, *, actor: User, request: HttpRequest) -> None:
+    if revoke_records(SessionRecord.objects.filter(pk=record.pk, user=user), reason="revoked"):
+        audit(
+            "identity.session.revoked",
+            actor=actor,
+            request=request,
+            target_type="identity.user",
+            target_id=user.pk,
+            metadata={"reason": "revoked_by_user", "count": 1},
+        )
+
+
 def end_session(request: HttpRequest, *, reason: str) -> None:
     """Revoke the current session's record and log out (Django ``logout`` flushes the session)."""
     record_id = _record_id(request)

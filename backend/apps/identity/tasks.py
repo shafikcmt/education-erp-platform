@@ -5,7 +5,7 @@ from celery import shared_task
 from apps.identity.services import notifications
 
 
-@shared_task(name="identity.deliver_security_email", queue="notifications")
+@shared_task(name="identity.deliver_security_email")
 def deliver_security_email(sealed_hex: str) -> None:
     """Open the sealed payload, render the en/bn templates and send (never logs content)."""
     notifications.deliver(sealed_hex)

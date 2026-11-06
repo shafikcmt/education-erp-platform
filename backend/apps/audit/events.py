@@ -48,10 +48,10 @@ EVENTS: dict[str, frozenset[str]] = {
     "identity.session.expired_absolute": _NONE,
     "identity.signin.new_device_notified": _NONE,
     # rbac
-    "rbac.role.created": frozenset({"code"}),
-    "rbac.role.updated": frozenset({"code", "fields"}),
-    "rbac.role.deleted": frozenset({"code"}),
-    "rbac.role.permissions_changed": frozenset({"code", "added", "removed"}),
+    "rbac.role.created": frozenset({"role_code"}),
+    "rbac.role.updated": frozenset({"role_code", "fields"}),
+    "rbac.role.deleted": frozenset({"role_code"}),
+    "rbac.role.permissions_changed": frozenset({"role_code", "added", "removed"}),
     "rbac.platform_role.granted": frozenset({"role_code"}),
     "rbac.platform_role.revoked": frozenset({"role_code"}),
     # audit / authorization

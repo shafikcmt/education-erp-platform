@@ -119,7 +119,7 @@ def create_role(
         request=request,
         target_type="rbac.role",
         target_id=role.pk,
-        metadata={"code": code},
+        metadata={"role_code": code},
     )
     return role
 
@@ -147,7 +147,7 @@ def update_role(
             request=request,
             target_type="rbac.role",
             target_id=role.pk,
-            metadata={"code": role.code, "fields": fields},
+            metadata={"role_code": role.code, "fields": fields},
         )
     if "permissions" in changes:
         perms = _resolve_permissions(changes["permissions"])
@@ -160,7 +160,7 @@ def update_role(
                 request=request,
                 target_type="rbac.role",
                 target_id=role.pk,
-                metadata={"code": role.code, "added": added, "removed": removed},
+                metadata={"role_code": role.code, "added": added, "removed": removed},
             )
     return role
 
@@ -180,7 +180,7 @@ def delete_role(*, actor: User, role: Role, request: HttpRequest | None = None) 
         request=request,
         target_type="rbac.role",
         target_id=pk,
-        metadata={"code": code},
+        metadata={"role_code": code},
     )
 
 

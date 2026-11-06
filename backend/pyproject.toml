@@ -57,7 +57,8 @@ ignore = ["RUF012"]
 [tool.ruff.lint.per-file-ignores]
 # Tests: asserts and fake secrets are expected; multi-step `pytest.raises` blocks are needed
 # for transactional DB assertions (set tenant context, then attempt the forbidden write).
-"**/tests/**" = ["S101", "S105", "S106", "S311", "PT012", "PT018", "SIM117"]
+# S608: the RLS prototype builds DDL/DML from a fixed tuple of throwaway table names.
+"**/tests/**" = ["S101", "S105", "S106", "S311", "S608", "PT012", "PT018", "SIM117"]
 "conftest.py" = ["S101"]
 "config/settings/*.py" = ["F405", "F403"]
 # API error classes are named after their stable Problem Details codes (invalid_credentials, ...).

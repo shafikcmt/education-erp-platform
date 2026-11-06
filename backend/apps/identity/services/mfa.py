@@ -185,28 +185,31 @@ def reveal_manual_key(user: User, device_id: uuid.UUID | str, *, request: HttpRe
         raise errors.StepUpRequired()
     with transaction.atomic():
         device = _pending(user, device_id)
-        if device.manual_key_revealed_at is not None:
+        already_shown = device.manual_key_revealed_at is not None
+        if not already_shown:
+            device.manual_key_revealed_at = timezone.now()
+            device.save(update_fields=["manual_key_revealed_at", "updated_at"])
             audit(
                 "identity.mfa.manual_key_revealed",
                 actor=user,
                 request=request,
-                outcome="denied",
                 target_type="identity.mfadevice",
                 target_id=device.pk,
-                metadata={"device_id": str(device.pk), "reason": "already_shown"},
+                metadata={"device_id": str(device.pk)},
             )
-            raise errors.ManualKeyAlreadyShown()
-        device.manual_key_revealed_at = timezone.now()
-        device.save(update_fields=["manual_key_revealed_at", "updated_at"])
+            secret = device_secret(device)
+    if already_shown:
+        # Outside the transaction, so the denied attempt stays in the audit log.
         audit(
             "identity.mfa.manual_key_revealed",
             actor=user,
             request=request,
+            outcome="denied",
             target_type="identity.mfadevice",
             target_id=device.pk,
-            metadata={"device_id": str(device.pk)},
+            metadata={"device_id": str(device.pk), "reason": "already_shown"},
         )
-        secret = device_secret(device)
+        raise errors.ManualKeyAlreadyShown()
     return " ".join(secret[i : i + 4] for i in range(0, len(secret), 4))
 
 

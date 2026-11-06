@@ -89,7 +89,7 @@ class InvalidToken(ProblemError):
 
 
 class GuardRail(ProblemError):
-    status_code = status.HTTP_409_CONFLICT
+    status_code: int = status.HTTP_409_CONFLICT
     title = "Not allowed"
 
     def __init__(self, code: str, detail: str) -> None:

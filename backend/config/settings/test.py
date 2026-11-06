@@ -27,7 +27,9 @@ os.environ.setdefault(
     "test2:VGVzdEtleTItdGVzdC1vbmx5LW5vdC1hLXNlY3JldCE,"
     "test1:VGVzdEtleTEtdGVzdC1vbmx5LW5vdC1hLXNlY3JldCE",
 )
-os.environ.setdefault("IP_INDEX_KEY", "dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHQ")  # dummy, low entropy
+os.environ.setdefault(
+    "IP_INDEX_KEY", "dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHQ"
+)  # dummy, low entropy
 
 from apps.core.logging import build_logging_config
 
