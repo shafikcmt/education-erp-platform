@@ -6,7 +6,7 @@ import { createHmac } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 
-import { type APIRequestContext, expect, request } from "@playwright/test";
+import { type APIRequestContext, expect, type Page, request } from "@playwright/test";
 
 export const MAILPIT_URL = process.env.MAILPIT_URL ?? "http://localhost:8025";
 export const BASE_URL = process.env.E2E_BASE_URL ?? "http://localhost:8080";
@@ -147,4 +147,20 @@ export async function adminApi(): Promise<{
     return response.json();
   };
   return { api, post };
+}
+
+// ---------------------------------------------------------------- CSP (security review M3)
+/** Record every CSP violation the page reports; call before the first navigation. */
+export async function trackCspViolations(page: Page): Promise<() => Promise<string[]>> {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __cspViolations?: string[] };
+    w.__cspViolations = [];
+    document.addEventListener("securitypolicyviolation", (e) => {
+      w.__cspViolations!.push(`${e.violatedDirective} ${e.blockedURI}`);
+    });
+  });
+  return () =>
+    page.evaluate(
+      () => (window as unknown as { __cspViolations?: string[] }).__cspViolations ?? [],
+    );
 }

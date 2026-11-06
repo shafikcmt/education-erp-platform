@@ -68,4 +68,8 @@ class ApiNoStoreMiddleware:
         if request.path.startswith("/api/") and not response.has_header("Cache-Control"):
             response["Cache-Control"] = "no-store"
             response["Pragma"] = "no-cache"
+        # JSON API responses never render active content (review M3); the dev-only Swagger UI
+        # under /api/docs/ is exempt.
+        if request.path.startswith("/api/v") and not response.has_header("Content-Security-Policy"):
+            response["Content-Security-Policy"] = "default-src 'none'; frame-ancestors 'none'"
         return response

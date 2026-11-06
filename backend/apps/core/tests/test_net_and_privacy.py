@@ -94,4 +94,5 @@ def test_sentry_scrubber_drops_bodies_cookies_and_secret_keys():
 def test_api_responses_are_not_cacheable(client):
     response = client.get("/api/v1/system/health/")
     assert response["Cache-Control"] == "no-store"
+    assert response["Content-Security-Policy"] == "default-src 'none'; frame-ancestors 'none'"
     assert client.get("/healthz").get("Cache-Control") is None

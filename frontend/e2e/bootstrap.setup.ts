@@ -1,7 +1,15 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, type Page, test } from "@playwright/test";
 
-import { ADMIN_EMAIL, linkFrom, saveAdmin, strongPassword, totp, waitForMail } from "./support";
+import {
+  ADMIN_EMAIL,
+  linkFrom,
+  saveAdmin,
+  strongPassword,
+  totp,
+  trackCspViolations,
+  waitForMail,
+} from "./support";
 
 /**
  * Acceptance criterion 1 (plan §16): the Super Admin created by `create_platform_admin` activates
@@ -22,6 +30,7 @@ test("bootstrap admin: activation → forced MFA → manual key once → recover
 }) => {
   test.setTimeout(180_000);
   const password = strongPassword();
+  const cspViolations = await trackCspViolations(page);
 
   // Activation link from Mailpit (token in the URL fragment).
   const activationMail = await waitForMail(ADMIN_EMAIL, /activate/i);
@@ -92,4 +101,6 @@ test("bootstrap admin: activation → forced MFA → manual key once → recover
   await page.getByRole("button", { name: "Verify" }).click();
   await expect(page).toHaveURL(/\/en\/dashboard$/);
   saveAdmin({ email: ADMIN_EMAIL, password, secret: key, recoveryCodes: codes.slice(1) });
+  // The whole flow (QR data URI, dialogs, forms) ran under the strict CSP (review M3).
+  expect(await cspViolations()).toEqual([]);
 });

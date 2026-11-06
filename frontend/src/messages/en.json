@@ -157,7 +157,10 @@
     "system_role_read_only": "System roles can't be changed.",
     "role_in_use": "Revoke this role from all users first.",
     "cannot_deactivate_self": "You can't deactivate your own account.",
-    "already_activated": "This account is already activated."
+    "already_activated": "This account is already activated.",
+    "mfa_locked": "Too many incorrect codes. Two-factor verification is locked for {seconds} seconds.",
+    "insufficient_privilege": "You can't do this to an account with more privileges than yours.",
+    "cannot_reset_own_mfa": "Reset your own two-factor authentication from your account security page."
   },
   "dashboard": {
     "title": "Welcome, {name}",

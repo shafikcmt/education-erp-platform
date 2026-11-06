@@ -1,7 +1,14 @@
 import AxeBuilder from "@axe-core/playwright";
 import { type Browser, expect, type Page, test } from "@playwright/test";
 
-import { adminApi, linkFrom, strongPassword, uniqueEmail, waitForMail } from "./support";
+import {
+  adminApi,
+  linkFrom,
+  strongPassword,
+  trackCspViolations,
+  uniqueEmail,
+  waitForMail,
+} from "./support";
 
 /**
  * Plan §10 frontend E2E, per project (desktop + mobile) and per locale (en + bn):
@@ -91,6 +98,7 @@ test("account lifecycle and security", async ({ page, browser }, testInfo) => {
 
   // Activation (email is in the user's language).
   const mail = await waitForMail(email, locale === "bn" ? /চালু/ : /Activate/);
+  const cspViolations = await trackCspViolations(page);
   await page.clock.install();
   await page.goto(linkFrom(mail, "activate"));
   await a11y(page);
@@ -145,6 +153,7 @@ test("account lifecycle and security", async ({ page, browser }, testInfo) => {
   await page.getByRole("button", { name: L.setPassword }).click();
   await expect(page.getByText(L.resetDone)).toBeVisible();
   await signIn(page, locale, email, password);
+  expect(await cspViolations()).toEqual([]);
 });
 
 test("unknown and wrong-password sign-ins look identical", async ({ page }) => {

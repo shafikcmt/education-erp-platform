@@ -42,14 +42,20 @@ export function StepUpProvider({
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const resolver = useRef<((ok: boolean) => void) | null>(null);
+  // L5: a single-use recovery code can replace the authenticator code (users without their phone).
+  const [useRecovery, setUseRecovery] = useState(false);
+  const codeSchema = useRecovery
+    ? z
+        .string()
+        .trim()
+        .regex(/^[A-Za-z2-7\s-]{16,24}$/, { error: t("validation.recoveryFormat") })
+    : z
+        .string()
+        .trim()
+        .regex(/^\d{6}$/, { error: t("validation.codeFormat") });
   const schema = z.object({
     password: z.string().min(1, { error: t("validation.required") }),
-    code: mfaEnabled
-      ? z
-          .string()
-          .trim()
-          .regex(/^\d{6}$/, { error: t("validation.codeFormat") })
-      : z.string().optional(),
+    code: mfaEnabled ? codeSchema : z.string().optional(),
   });
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
@@ -59,6 +65,7 @@ export function StepUpProvider({
 
   const requestStepUp = useCallback(() => {
     form.reset({ password: "", code: "" });
+    setUseRecovery(false);
     setFailure(null);
     setOpen(true);
     return new Promise<boolean>((resolve) => {
@@ -91,7 +98,14 @@ export function StepUpProvider({
     try {
       await unwrap(
         api().POST("/api/v1/auth/step-up/", {
-          body: { password: values.password, ...(mfaEnabled ? { code: values.code } : {}) },
+          body: {
+            password: values.password,
+            ...(!mfaEnabled
+              ? {}
+              : useRecovery
+                ? { recovery_code: values.code }
+                : { code: values.code }),
+          },
         }),
       );
       await queryClient.invalidateQueries({ queryKey: ME_KEY });
@@ -130,21 +144,35 @@ export function StepUpProvider({
               )}
             </Field>
             {mfaEnabled ? (
-              <Field
-                id="step-up-code"
-                label={t("auth.mfa.code")}
-                error={form.formState.errors.code?.message}
-              >
-                {(aria) => (
-                  <Input
-                    inputMode="numeric"
-                    autoComplete="one-time-code"
-                    maxLength={6}
-                    {...aria}
-                    {...form.register("code")}
-                  />
-                )}
-              </Field>
+              <>
+                <Field
+                  id="step-up-code"
+                  label={useRecovery ? t("auth.mfa.recoveryCode") : t("auth.mfa.code")}
+                  error={form.formState.errors.code?.message}
+                >
+                  {(aria) => (
+                    <Input
+                      key={useRecovery ? "recovery" : "totp"}
+                      inputMode={useRecovery ? "text" : "numeric"}
+                      autoComplete={useRecovery ? "off" : "one-time-code"}
+                      maxLength={useRecovery ? 24 : 6}
+                      {...aria}
+                      {...form.register("code")}
+                    />
+                  )}
+                </Field>
+                <Button
+                  type="button"
+                  variant="link"
+                  className="justify-self-start px-0"
+                  onClick={() => {
+                    setUseRecovery((r) => !r);
+                    form.setValue("code", "");
+                  }}
+                >
+                  {useRecovery ? t("auth.mfa.useCode") : t("auth.mfa.useRecovery")}
+                </Button>
+              </>
             ) : null}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => finish(false)}>

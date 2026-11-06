@@ -4,6 +4,7 @@ import "../globals.css";
 
 import type { Metadata, Viewport } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { hasLocale, NextIntlClientProvider } from "next-intl";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import type { ReactNode } from "react";
@@ -14,10 +15,6 @@ import { routing } from "@/i18n/routing";
 import { Providers } from "./providers";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
-
-export function generateStaticParams() {
-  return routing.locales.map((locale) => ({ locale }));
-}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
@@ -35,6 +32,8 @@ export const viewport: Viewport = {
 };
 
 export default async function LocaleLayout({ children, params }: Props) {
+  // Every page is rendered per request so it carries this request's CSP nonce (review M3).
+  await connection();
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
   setRequestLocale(locale);
