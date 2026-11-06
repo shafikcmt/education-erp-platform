@@ -51,3 +51,21 @@ class RequestIDMiddleware:
                 duration_ms=round((time.perf_counter() - started) * 1000, 2),
             )
         return response
+
+
+class ApiNoStoreMiddleware:
+    """API responses are per-user and may carry one-time secrets: never cache them.
+
+    Sets ``Cache-Control: no-store`` (and ``Pragma: no-cache``) on ``/api/`` responses that
+    don't set their own policy (Phase 2 plan §6.6).
+    """
+
+    def __init__(self, get_response: Callable[[HttpRequest], HttpResponse]) -> None:
+        self.get_response = get_response
+
+    def __call__(self, request: HttpRequest) -> HttpResponse:
+        response = self.get_response(request)
+        if request.path.startswith("/api/") and not response.has_header("Cache-Control"):
+            response["Cache-Control"] = "no-store"
+            response["Pragma"] = "no-cache"
+        return response

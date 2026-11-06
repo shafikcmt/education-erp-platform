@@ -35,6 +35,8 @@ INSTALLED_APPS = [
     # project apps (module codes, CLAUDE.md §5)
     "apps.core",
     "apps.identity",
+    "apps.rbac",
+    "apps.audit",
 ]
 
 MIDDLEWARE = [
@@ -44,6 +46,11 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    # Phase 2: idle/absolute timeouts + SessionRecord upkeep (plan §6.7), then the
+    # authorization scope (platform host only in Phase 2; tenant hosts in Phase 3, §4.3).
+    "apps.identity.middleware.SessionSecurityMiddleware",
+    "apps.rbac.middleware.ScopeTargetMiddleware",
+    "apps.core.middleware.ApiNoStoreMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
@@ -103,6 +110,8 @@ CSRF_HEADER_NAME = "HTTP_X_CSRFTOKEN"
 
 # --------------------------------------------------------------------------- auth
 AUTH_USER_MODEL = "identity.User"
+# Django's ModelBackend, hardened for unactivated accounts and equal timing (plan §6.1).
+AUTHENTICATION_BACKENDS = ["apps.identity.backends.EmailBackend"]
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.Argon2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -116,7 +125,59 @@ AUTH_PASSWORD_VALIDATORS = [
     },
     {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {
+        "NAME": "apps.identity.validators.MaximumLengthValidator",
+        "OPTIONS": {"max_length": 128},
+    },
+    # ADR-037 (Q4): optional HIBP k-anonymity check; a no-op unless enabled below.
+    {"NAME": "apps.identity.validators.BreachedPasswordValidator"},
 ]
+PASSWORD_BREACH_CHECK_ENABLED: bool = env.bool("PASSWORD_BREACH_CHECK_ENABLED", default=False)
+PASSWORD_BREACH_CHECK_FAIL_CLOSED: bool = env.bool(
+    "PASSWORD_BREACH_CHECK_FAIL_CLOSED", default=False
+)
+# Outbound host to allow-list when the check is enabled: api.pwnedpasswords.com
+PASSWORD_BREACH_CHECK_URL: str = "https://api.pwnedpasswords.com/range/"  # noqa: S105 - URL
+
+# --------------------------------------------------------------------------- secrets at rest
+# ADR-031 key ring ("key_id:urlsafe-base64-32-bytes", first key encrypts) and the separate
+# ADR-036 HMAC key for IP blind indexes / throttle keys. Never committed; prod refuses dummies.
+FIELD_ENCRYPTION_KEYS: list[str] = env.list("FIELD_ENCRYPTION_KEYS", default=[])
+IP_INDEX_KEY: str = env.str("IP_INDEX_KEY", default="")
+DATABASE_APP_ROLE: str = env.str("DATABASE_APP_ROLE", default="erp_app")
+
+# ------------------------------------------------------------------- Phase 2 security policy
+# Header the reverse proxy overwrites with the client address (Nginx: X-Real-IP).
+CLIENT_IP_HEADER: str = env.str("CLIENT_IP_HEADER", default="")
+FRONTEND_BASE_URL: str = env.str("FRONTEND_BASE_URL", default="http://localhost:8080")
+SESSION_IDLE_TIMEOUT_SECONDS: int = env.int("SESSION_IDLE_TIMEOUT_SECONDS", default=30 * 60)
+SESSION_ABSOLUTE_TIMEOUT_SECONDS: int = env.int(
+    "SESSION_ABSOLUTE_TIMEOUT_SECONDS", default=12 * 60 * 60
+)
+STEP_UP_TTL_SECONDS = 10 * 60
+MFA_PENDING_TTL_SECONDS = 5 * 60
+MFA_ENROLLMENT_TTL_SECONDS = 10 * 60
+MFA_ISSUER: str = env.str("MFA_ISSUER", default="Education ERP")
+# Brute-force limits (plan §6.2): (max events, window seconds).
+SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
+    "login_ip": (20, 5 * 60),
+    "login_email_failures": (5, 15 * 60),
+    "mfa_attempts": (5, MFA_PENDING_TTL_SECONDS),
+    "email_flow_email": (3, 60 * 60),
+    "email_flow_ip": (10, 60 * 60),
+    "step_up": (5, 15 * 60),
+}
+SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
+SECURITY_IP_RETENTION_DAYS: int = env.int("SECURITY_IP_RETENTION_DAYS", default=365)
+# platform_staff | privileged | all | off  (ADR-037, plan §6.11)
+SECURITY_NOTIFY_NEW_SIGNIN: str = env.str("SECURITY_NOTIFY_NEW_SIGNIN", default="platform_staff")
+SECURITY_SEEN_DEVICE_DAYS = 90
+# Pluggable authorization sources (plan §4.4); Phase 3 appends the tenant sources.
+RBAC_PERMISSION_SOURCES: list[str] = [
+    "apps.rbac.sources.SelfServiceSource",
+    "apps.rbac.sources.PlatformRoleSource",
+]
+RBAC_CACHE_TTL_SECONDS = 300
 
 # --------------------------------------------------------------------------- security headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -161,7 +222,7 @@ STORAGES: dict[str, dict[str, Any]] = {
 
 # --------------------------------------------------------------------------- DRF / OpenAPI
 REST_FRAMEWORK: dict[str, Any] = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ["rest_framework.authentication.SessionAuthentication"],
+    "DEFAULT_AUTHENTICATION_CLASSES": ["apps.identity.authentication.SessionAuthentication"],
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],  # default deny
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
@@ -199,6 +260,17 @@ CELERY_TASK_DEFAULT_QUEUE = "default"
 CELERY_QUEUES_ALL = ("default", "notifications", "reports", "imports", "finance", "ai")
 CELERY_BEAT_SCHEDULE = {
     "core-heartbeat": {"task": "core.ping", "schedule": 300.0, "options": {"queue": "default"}},
+    # ADR-036 retention: anonymise security-event IPs older than SECURITY_IP_RETENTION_DAYS.
+    "audit-anonymize-ips": {
+        "task": "audit.anonymize_expired_ips",
+        "schedule": 24 * 3600.0,
+        "options": {"queue": "default"},
+    },
+    "identity-housekeeping": {
+        "task": "identity.housekeeping",
+        "schedule": 24 * 3600.0,
+        "options": {"queue": "default"},
+    },
 }
 
 # --------------------------------------------------------------------------- email

@@ -1,5 +1,6 @@
 """Security baseline of the production settings module (evaluated in a clean subprocess)."""
 
+import base64
 import json
 import os
 import secrets
@@ -24,6 +25,9 @@ PROD_ENV = {
     "S3_ENDPOINT_URL": "https://s3.example.com",
     "S3_ACCESS_KEY_ID": "k",
     "S3_SECRET_ACCESS_KEY": "s",
+    # Fresh random keys per run (ADR-031/036); prod refuses missing or dev/test keys.
+    "FIELD_ENCRYPTION_KEYS": "prod1:" + base64.urlsafe_b64encode(secrets.token_bytes(32)).decode(),
+    "IP_INDEX_KEY": base64.urlsafe_b64encode(secrets.token_bytes(32)).decode(),
 }
 
 PROBE = """
@@ -93,7 +97,7 @@ def test_prod_headers_hashing_and_api_defaults(prod):
     assert prod["PASSWORD_HASHERS"][0].endswith("Argon2PasswordHasher")
     assert prod["API_DOCS_ENABLED"] is False
     assert prod["AUTH_USER_MODEL"] == "identity.User"
-    assert prod["DRF_AUTH"] == ["rest_framework.authentication.SessionAuthentication"]
+    assert prod["DRF_AUTH"] == ["apps.identity.authentication.SessionAuthentication"]
     assert prod["DRF_PERMS"] == ["rest_framework.permissions.IsAuthenticated"]
 
 
@@ -112,6 +116,12 @@ def test_prod_storage_is_private_with_presigned_urls(prod):
         {"DJANGO_SECRET_KEY": "p" * 64},  # long but low-entropy
         {"DJANGO_SECRET_KEY": "django-insecure-" + "a1b2c3d4e5" * 5},
         {"DJANGO_ALLOWED_HOSTS": None},
+        {"FIELD_ENCRYPTION_KEYS": None},
+        {"IP_INDEX_KEY": None},
+        {"FIELD_ENCRYPTION_KEYS": "dev1:" + base64.urlsafe_b64encode(b"x" * 32).decode()},
+        {"FIELD_ENCRYPTION_KEYS": "test1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
+        {"FIELD_ENCRYPTION_KEYS": "prod1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
+        {"IP_INDEX_KEY": base64.urlsafe_b64encode(b"i" * 32).decode()},
     ],
 )
 def test_prod_refuses_to_start_with_unsafe_configuration(overrides):

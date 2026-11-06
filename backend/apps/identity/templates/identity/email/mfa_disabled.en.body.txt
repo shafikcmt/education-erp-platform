@@ -1,0 +1,5 @@
+{% autoescape off %}Two-factor authentication was turned off for your Education ERP account on {{ sent_at }}.
+
+If this wasn't you, reset your password ({{ forgot_url }}) and turn it back on ({{ security_url }}).
+
+— Education ERP{% endautoescape %}

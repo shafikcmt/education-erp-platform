@@ -37,6 +37,12 @@ def django_db_setup(django_db_setup: Any, django_db_blocker: Any) -> Iterator[No
             cursor.execute(f"REVOKE CONNECT, TEMPORARY ON DATABASE {db} FROM PUBLIC")
             cursor.execute(f"GRANT CONNECT ON DATABASE {db} TO {app}")
         _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
+        # Permission registry + system roles, as the compose ``migrate`` service does (as erp_app,
+        # which has DML rights on these tables).
+        from apps.rbac.seeding import seed_roles, sync_permissions
+
+        sync_permissions()
+        seed_roles()
     yield
     with django_db_blocker.unblock():
         # Teardown (DROP DATABASE) needs the owner again.
@@ -58,3 +64,13 @@ def owner_dsn() -> dict[str, Any]:
         "user": owner["USER"],
         "password": owner["PASSWORD"],
     }
+
+
+@pytest.fixture(autouse=True)
+def _clear_cache() -> Iterator[None]:
+    """Throttle counters and permission caches must not leak between tests."""
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()

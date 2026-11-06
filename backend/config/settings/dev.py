@@ -14,3 +14,6 @@ SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=False)
 CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=False)
 
 API_DOCS_ENABLED = env.bool("API_DOCS_ENABLED", default=True)
+
+# Behind the dev Nginx, which overwrites X-Real-IP with the client address.
+CLIENT_IP_HEADER = env.str("CLIENT_IP_HEADER", default="HTTP_X_REAL_IP")

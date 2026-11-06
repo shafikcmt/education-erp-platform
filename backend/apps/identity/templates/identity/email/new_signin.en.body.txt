@@ -1,0 +1,5 @@
+{% autoescape off %}Your Education ERP account was signed in to from a new device on {{ sent_at }}: {{ device }}.
+
+If this was you, no action is needed. If not, review your sessions ({{ security_url }}) and reset your password ({{ forgot_url }}).
+
+— Education ERP{% endautoescape %}

@@ -1,0 +1,5 @@
+{% autoescape off %}There were several unsuccessful attempts to sign in to your Education ERP account, so sign-in is locked for 15 minutes (as of {{ sent_at }}).
+
+If this wasn't you, consider resetting your password: {{ forgot_url }}
+
+— Education ERP{% endautoescape %}

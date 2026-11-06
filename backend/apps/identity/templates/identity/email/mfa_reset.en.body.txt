@@ -1,0 +1,6 @@
+{% autoescape off %}An administrator reset two-factor authentication on your Education ERP account on {{ sent_at }}, and you were signed out everywhere.
+You will be asked to set it up again the next time you sign in.
+
+If you did not ask for this, contact your administrator immediately.
+
+— Education ERP{% endautoescape %}

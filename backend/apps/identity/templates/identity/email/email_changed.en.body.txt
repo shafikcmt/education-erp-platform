@@ -1,0 +1,5 @@
+{% autoescape off %}The email address of your Education ERP account was changed on {{ sent_at }}. This address will no longer receive account emails.
+
+If this wasn't you, contact your administrator immediately.
+
+— Education ERP{% endautoescape %}

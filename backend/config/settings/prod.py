@@ -3,7 +3,7 @@
 from django.core.exceptions import ImproperlyConfigured
 
 from .base import *
-from .base import ALLOWED_HOSTS, SECRET_KEY, env
+from .base import ALLOWED_HOSTS, FIELD_ENCRYPTION_KEYS, IP_INDEX_KEY, SECRET_KEY, env
 
 DEBUG = False
 
@@ -16,6 +16,23 @@ if (
     or SECRET_KEY.startswith(("dev-", "test-", "change-me", "django-insecure-"))
 ):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY must be a strong, unique production secret.")
+
+# Secrets at rest (ADR-031/036): real keys from the secret manager are mandatory. Dummy
+# development/test key ids and keys are refused, and the HMAC key must differ from them.
+_DUMMY_KEY_ID_PREFIXES = ("dev", "test", "example", "change")
+if not FIELD_ENCRYPTION_KEYS or not IP_INDEX_KEY:
+    raise ImproperlyConfigured("FIELD_ENCRYPTION_KEYS and IP_INDEX_KEY must be set in production.")
+for _entry in FIELD_ENCRYPTION_KEYS:
+    if _entry.split(":", 1)[0].lower().startswith(_DUMMY_KEY_ID_PREFIXES):
+        raise ImproperlyConfigured("FIELD_ENCRYPTION_KEYS contains a development/test key.")
+if any(_entry.split(":", 1)[-1] == IP_INDEX_KEY for _entry in FIELD_ENCRYPTION_KEYS):
+    raise ImproperlyConfigured("IP_INDEX_KEY must be separate from the encryption keys.")
+for _key in (IP_INDEX_KEY, *(_e.split(":", 1)[-1] for _e in FIELD_ENCRYPTION_KEYS)):
+    if len(set(_key)) < 16:  # e.g. the low-entropy dummy keys of .env.example / tests
+        raise ImproperlyConfigured("Encryption and index keys must be random (low entropy).")
+
+# Behind Nginx, which overwrites X-Real-IP with the client address.
+CLIENT_IP_HEADER = env.str("CLIENT_IP_HEADER", default="HTTP_X_REAL_IP")
 
 # Transport security (TLS terminates at Nginx).
 SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)

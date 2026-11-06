@@ -21,6 +21,13 @@ os.environ.setdefault("S3_BUCKET", "erp-test")
 os.environ.setdefault("S3_ENDPOINT_URL", "http://localhost:8333")
 os.environ.setdefault("S3_ACCESS_KEY_ID", "test-access-key")
 os.environ.setdefault("S3_SECRET_ACCESS_KEY", "test-secret-key")
+# Test-only keys (ADR-031/036). Two keys so rotation paths are exercised.
+os.environ.setdefault(
+    "FIELD_ENCRYPTION_KEYS",
+    "test2:VGVzdEtleTItdGVzdC1vbmx5LW5vdC1hLXNlY3JldCE,"
+    "test1:VGVzdEtleTEtdGVzdC1vbmx5LW5vdC1hLXNlY3JldCE",
+)
+os.environ.setdefault("IP_INDEX_KEY", "dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHQ")  # dummy, low entropy
 
 from apps.core.logging import build_logging_config
 

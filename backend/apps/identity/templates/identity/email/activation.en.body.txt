@@ -1,0 +1,10 @@
+{% autoescape off %}Hello{% if display_name %} {{ display_name }}{% endif %},
+
+An administrator created an Education ERP account for this email address.
+To activate it and choose your password, open this link within 72 hours:
+
+{{ action_url }}
+
+If you did not expect this email, you can ignore it. The link works only once.
+
+— Education ERP{% endautoescape %}
