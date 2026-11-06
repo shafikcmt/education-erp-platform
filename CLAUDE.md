@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-05 (Phase 1 — foundation implemented, PR awaiting approval)
+- **Last updated:** 2026-11-05 (Phase 1 — foundation implemented and reviewed; ADR-029/030 accepted; PR awaiting merge approval)
 
 ---
 
@@ -431,3 +431,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-05 — Initial version created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 and ADR-011 (with modification: Django session auth). Updated §2, §10, §11, §12, §16 accordingly. ADR-028 added (Proposed).
 - 2026-11-05 — Phase 1: ADR-015/021 accepted; storage service renamed to `objectstore` (SeaweedFS, ADR-029); phase table updated.
+- 2026-11-05 — Phase 1 review: ADR-029 (SeaweedFS, conditions verified) and ADR-030 (TS 5.9 / ESLint 9 held temporarily) accepted.

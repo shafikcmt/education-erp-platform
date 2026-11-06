@@ -1,3 +1,6 @@
+# Dependabot keeps dependencies current WITHIN accepted decisions (docs/DECISION_LOG.md).
+# `ignore` rules encode ADR version policies so Dependabot never proposes an update that
+# would silently break one. Changing a policy needs a new/updated ADR, then edit this file.
 version: 2
 updates:
   - package-ecosystem: uv
@@ -7,6 +10,14 @@ updates:
     groups:
       python-dev-tools:
         dependency-type: development
+    ignore:
+      # ADR-003: Django 5.2 LTS line only; a new LTS line needs a new ADR.
+      - dependency-name: "django"
+        versions: [">=5.3"]
+      # django-stubs must track the Django line in use.
+      - dependency-name: "django-stubs"
+        versions: [">=5.3"]
+
   - package-ecosystem: npm
     directory: /
     schedule: { interval: weekly }
@@ -14,12 +25,42 @@ updates:
     groups:
       frontend-tooling:
         patterns: ["eslint*", "@types/*", "vitest", "@vitest/*", "prettier*", "typescript"]
+    ignore:
+      # ADR-030: held temporarily for tooling compatibility (upgrade triggers tracked there).
+      - dependency-name: "typescript"
+        versions: [">=6"]
+      - dependency-name: "eslint"
+        versions: [">=10"]
+      # ADR-030: Node 24 LTS -> keep Node type definitions on the 24.x line.
+      - dependency-name: "@types/node"
+        versions: [">=25"]
+
   - package-ecosystem: docker
     directories: [/backend, /frontend]
     schedule: { interval: weekly }
+    ignore:
+      # ADR-003: Python 3.13.
+      - dependency-name: "python"
+        versions: [">=3.14"]
+      # ADR-030: Node.js 24 LTS line.
+      - dependency-name: "node"
+        versions: [">=25"]
+
   - package-ecosystem: docker-compose
     directory: /
     schedule: { interval: weekly }
+    ignore:
+      # ADR-030: Redis 7.4 line (owner decision); a new major needs owner approval.
+      - dependency-name: "redis"
+        versions: [">=8"]
+      # ADR-030: stay on the current Nginx *stable* line. Odd minors (e.g. 1.31) are
+      # mainline; move to the next stable line deliberately, not via automated minors.
+      - dependency-name: "nginx"
+        update-types: ["version-update:semver-minor", "version-update:semver-major"]
+      # ADR-003/009: PostgreSQL 17; keep pgvector bumps on the -pg17 variant.
+      - dependency-name: "pgvector/pgvector"
+        update-types: ["version-update:semver-major"]
+
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }

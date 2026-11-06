@@ -29,7 +29,9 @@ def check_database_role() -> dict[str, Any]:
     with connection.cursor() as cursor:
         cursor.execute(
             "SELECT current_user, r.rolsuper, r.rolbypassrls, "
-            "has_schema_privilege(current_user, 'public', 'CREATE') "
+            "has_schema_privilege(current_user, 'public', 'CREATE'), "
+            "has_database_privilege(current_user, current_database(), 'TEMPORARY'), "
+            "has_database_privilege(current_user, current_database(), 'CREATE') "
             "FROM pg_roles r WHERE r.rolname = current_user"
         )
         row = cursor.fetchone()
@@ -37,14 +39,21 @@ def check_database_role() -> dict[str, Any]:
         extensions = {r[0] for r in cursor.fetchall()}
     if row is None:
         raise CommandError("could not read the current database role")
-    user, is_super, bypass_rls, can_create = row
+    user, is_super, bypass_rls, can_create, can_temp, can_create_schema = row
     missing = REQUIRED_EXTENSIONS - extensions
-    if is_super or bypass_rls or can_create or missing:
+    if is_super or bypass_rls or can_create or can_temp or can_create_schema or missing:
         raise CommandError(
             f"database role check failed: user={user} superuser={is_super} "
-            f"bypassrls={bypass_rls} create_in_public={can_create} missing_ext={sorted(missing)}"
+            f"bypassrls={bypass_rls} create_in_public={can_create} temp={can_temp} "
+            f"create_schema={can_create_schema} missing_ext={sorted(missing)}"
         )
-    return {"user": user, "superuser": is_super, "bypassrls": bypass_rls}
+    return {
+        "user": user,
+        "superuser": is_super,
+        "bypassrls": bypass_rls,
+        "temporary": can_temp,
+        "create_schema": can_create_schema,
+    }
 
 
 def check_cache_roundtrip() -> dict[str, Any]:

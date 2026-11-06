@@ -19,7 +19,7 @@
 | `objectstore-init` | same image (one-shot) | Idempotently creates the bucket | yes | n/a |
 | `mailpit` | `axllent/mailpit:v1.28.4` | Dev email capture (UI :8025) | yes | no |
 
-All app containers (`api`, `worker`, `beat`, `migrate`, `web`, `nginx`) run as **non-root** with a **read-only root filesystem** (tmpfs for `/tmp`). Host ports bind to `127.0.0.1` only.
+**11 services: 9 long-running + 2 one-shot (`migrate`, `objectstore-init`).** All app containers (`api`, `worker`, `beat`, `migrate`, `web`, `nginx`) run as **non-root** with a **read-only root filesystem** (tmpfs for `/tmp`). Host ports bind to `127.0.0.1` only.
 
 ## 2. Repository files
 
@@ -74,7 +74,7 @@ On every pull request and on pushes to `main`:
 | `backend-security` | `pip-audit --strict` on the exported lockfile; ruff `S` rules run in `backend-quality` |
 | `api-contract` | `spectacular --validate --fail-on-warn` → `openapi-typescript` → `git diff --exit-code packages/api-client` |
 | `frontend-quality` | `pnpm install --frozen-lockfile` → Prettier check → ESLint (`--max-warnings=0`) → `tsc --noEmit` → Vitest → `next build` |
-| `e2e-smoke` | `docker compose up -d --build --wait` → `manage.py smoke_check` → Playwright (desktop + mobile Chromium, incl. axe) |
+| `e2e-smoke` | `docker compose up -d --build --wait` → `manage.py smoke_check` → S3 compatibility + bucket-isolation suite (`S3_INTEGRATION=1`, ADR-029) → Playwright (desktop + mobile Chromium, incl. axe) |
 | `docker-build` | Build production images (`runtime` targets) → Trivy (fail on fixable HIGH/CRITICAL) |
 | `secret-scan` | gitleaks over the full git history |
 
@@ -98,6 +98,12 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 
 - Postgres: base backups + WAL archiving with pgBackRest or WAL-G (decision Phase 19) to off-site encrypted storage; retention policy (proposed: daily for 30 days, monthly for 12 months — TBD).
 - Object storage (S3-compatible): versioning and lifecycle rules; replication for production.
+- **Provider-agnostic object backup/restore/migration (implemented in Phase 1):** `manage.py s3_mirror`.
+  - `--to-dir DIR`: backup to a directory, with a `manifest.json` of SHA-256 hashes, sizes and content types.
+  - `--from-dir DIR`: restore into the app bucket. Every object is verified, and a corrupted backup is rejected.
+  - `--to-endpoint/--to-bucket/--to-access-key-env/--to-secret-key-env`: migrate to another S3-compatible provider. Credentials are passed by environment-variable *name*, never on the command line.
+  - **Restore order:** provision the empty bucket first (`objectstore-init` or the provider's IaC/console); the app identity cannot create buckets.
+  - Verified 2026-11-05: the volume was destroyed, then restored byte-identical; migration SeaweedFS → RustFS. Production schedule, retention and the off-site target are set in Phase 19.
 - Restore runbook in `infra/` + quarterly restore drill with recorded results.
 
 ## 10. Observability
@@ -111,3 +117,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1: services, files, image standards and CI sections updated to the implemented state (SeaweedFS per ADR-029; pins per ADR-030).
+- 2026-11-05 — Phase 1 review: S3 integration step in CI; `s3_mirror` backup/restore/migration documented; service count stated explicitly (11).
