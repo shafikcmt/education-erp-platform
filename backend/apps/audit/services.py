@@ -101,7 +101,11 @@ def record(
 
 
 def reveal_ip(event: AuditEvent, *, actor: AbstractBaseUser, request: HttpRequest) -> str:
-    """Decrypt an event's IP and audit the reveal. Authorization is checked by the caller."""
+    """Decrypt an event's IP and audit the reveal. ``audit.event.view_ip`` is re-checked here
+    (L2); the API view additionally enforces MFA and step-up."""
+    from apps.rbac.engine import require_perm
+
+    require_perm(actor, "audit.event.view_ip", use_cache=False)
     side = AuditEventIP.objects.filter(event=event).first()
     value = open_ip(side.ip_encrypted) if side else ""
     record(

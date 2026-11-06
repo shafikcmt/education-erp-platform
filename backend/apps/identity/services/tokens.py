@@ -43,6 +43,27 @@ def issue(user: User, purpose: TokenPurpose, payload: dict[str, Any] | None = No
     return raw
 
 
+def invalidate_all(user: User, *, reason: str, request: Any = None, actor: Any = None) -> int:
+    """Invalidate every unused email-link token of ``user`` (review M2): called after password
+    change/reset, email change, MFA reset and deactivation, so older links can't be replayed."""
+    from apps.audit.services import record as audit
+
+    count = AccountToken.objects.filter(
+        user=user, used_at__isnull=True, invalidated_at__isnull=True
+    ).update(invalidated_at=timezone.now())
+    if count:
+        audit(
+            "identity.token.invalidated",
+            actor=actor,
+            actor_user_id=None if actor else user.pk,
+            request=request,
+            target_type="identity.user",
+            target_id=user.pk,
+            metadata={"reason": reason, "count": count},
+        )
+    return int(count)
+
+
 def consume(raw: str, purpose: TokenPurpose) -> AccountToken:
     """Validate and mark the token used. Must run inside the caller's transaction."""
     token = (

@@ -64,6 +64,18 @@ class Bucket:
 
 
 # ------------------------------------------------------------------ login lock + progressive delay
+# M1 (review 2026-11-06): a hard lock applies only to one (email, network) pair, so attackers on
+# other networks cannot lock the real user out. Globally, per email, only a capped progressive
+# delay applies, which still slows distributed password guessing.
+
+
+def network_subject(email_subject: str, ip: str) -> str:
+    """Throttle subject for one email from one network (IPv4 /24, IPv6 /48)."""
+    from apps.core.net import ip_prefix
+
+    return crypto.blind_index(f"{email_subject}|{ip_prefix(ip) or 'unknown'}", purpose=_PURPOSE)
+
+
 def _lock_key(subject: str) -> str:
     return f"lock:login:{subject}"
 
@@ -72,36 +84,72 @@ def _delay_key(subject: str) -> str:
     return f"delay:login:{subject}"
 
 
-def login_blocked_for(subject: str) -> int:
-    """Seconds until the email subject may try again (lock or progressive delay), else 0."""
+def _wait(key: str) -> int:
+    until = cache.get(key)
     now = int(time.time())
-    for key in (_lock_key(subject), _delay_key(subject)):
-        until = cache.get(key)
-        if until is not None and int(until) > now:
-            return int(until) - now
-    return 0
+    return int(until) - now if until is not None and int(until) > now else 0
 
 
-def register_login_failure(subject: str) -> bool:
-    """Record a failed login for an email subject. Return ``True`` when it triggers a lock.
+def login_blocked_for(email_subject: str, net_subject: str) -> int:
+    """Seconds until this email may try again from this network (lock or global delay)."""
+    return max(_wait(_lock_key(net_subject)), _wait(_delay_key(email_subject)))
 
-    From the 3rd failure the next attempt must wait 2, 4, ... seconds; the 5th failure in 15 min
-    locks the subject for ``SECURITY_LOGIN_LOCK_SECONDS``. Identical for unknown emails.
+
+def register_login_failure(email_subject: str, net_subject: str) -> bool:
+    """Record a failed login. Return ``True`` when it locks this (email, network) pair.
+
+    * per (email, network): the 5th failure in 15 min locks that pair for 15 min;
+    * per email, from any network: from the 3rd failure the next attempt waits 2, 4, 8 ...
+      seconds, capped at ``SECURITY_LOGIN_MAX_DELAY_SECONDS`` (no hard lock).
+    Identical for unknown emails (no enumeration).
     """
-    bucket = Bucket.named("login_email_failures")
-    failures = bucket.hit(subject)
     now = int(time.time())
-    if failures >= bucket.limit:
+    global_failures = Bucket.named("login_email_failures").hit(email_subject)
+    if global_failures >= 3:
+        delay = min(2 ** (global_failures - 2), settings.SECURITY_LOGIN_MAX_DELAY_SECONDS)
+        cache.set(_delay_key(email_subject), now + delay, timeout=delay)
+    net_bucket = Bucket.named("login_email_net_failures")
+    if net_bucket.hit(net_subject) >= net_bucket.limit:
         lock = settings.SECURITY_LOGIN_LOCK_SECONDS
-        cache.set(_lock_key(subject), now + lock, timeout=lock)
-        bucket.reset(subject)
+        cache.set(_lock_key(net_subject), now + lock, timeout=lock)
+        net_bucket.reset(net_subject)
         return True
-    if failures >= 3:
-        delay = 2 ** (failures - 2)
-        cache.set(_delay_key(subject), now + delay, timeout=delay)
     return False
 
 
-def clear_login_failures(subject: str) -> None:
-    Bucket.named("login_email_failures").reset(subject)
-    cache.delete_many([_delay_key(subject)])
+def clear_login_failures(email_subject: str, net_subject: str | None = None) -> None:
+    Bucket.named("login_email_failures").reset(email_subject)
+    cache.delete(_delay_key(email_subject))
+    if net_subject is not None:
+        Bucket.named("login_email_net_failures").reset(net_subject)
+
+
+# ------------------------------------------------------------------ per-account MFA lock (H1)
+# Counted per USER, not per session, so signing in again with the password never resets it.
+
+
+def _mfa_subject(user_id: object) -> str:
+    return crypto.blind_index(f"mfa:{user_id}", purpose=_PURPOSE)
+
+
+def mfa_blocked_for(user_id: object) -> int:
+    return _wait(f"lock:mfa:{_mfa_subject(user_id)}")
+
+
+def register_mfa_failure(user_id: object) -> bool:
+    """Count a failed TOTP/recovery code (login or step-up). ``True`` when it locks MFA."""
+    subject = _mfa_subject(user_id)
+    bucket = Bucket.named("mfa_user_failures")
+    if bucket.hit(subject) >= bucket.limit:
+        lock = settings.SECURITY_MFA_LOCK_SECONDS
+        cache.set(f"lock:mfa:{subject}", int(time.time()) + lock, timeout=lock)
+        bucket.reset(subject)
+        return True
+    return False
+
+
+def clear_mfa_lock(user_id: object) -> None:
+    """Used by an administrator's MFA reset (the recovery path besides waiting)."""
+    subject = _mfa_subject(user_id)
+    Bucket.named("mfa_user_failures").reset(subject)
+    cache.delete(f"lock:mfa:{subject}")

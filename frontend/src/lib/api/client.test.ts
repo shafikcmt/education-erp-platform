@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { CSRF_HEADER_NAME, createApiClient, readCookie } from "./client";
+import { CSRF_HEADER_NAME, createApiClient, readCookie, readCsrfToken } from "./client";
 
 function mockFetch() {
   return vi.fn<typeof fetch>(async () =>
@@ -17,6 +17,14 @@ describe("readCookie", () => {
   it("reads a named cookie and decodes it", () => {
     expect(readCookie("a=1; csrftoken=abc%3D%3D; b=2", "csrftoken")).toBe("abc==");
     expect(readCookie("a=1", "csrftoken")).toBeUndefined();
+  });
+});
+
+describe("readCsrfToken", () => {
+  it("prefers the production __Host- cookie and falls back to the dev name", () => {
+    expect(readCsrfToken("__Host-csrftoken=prod; csrftoken=dev")).toBe("prod");
+    expect(readCsrfToken("csrftoken=dev")).toBe("dev");
+    expect(readCsrfToken("other=1")).toBeUndefined();
   });
 });
 

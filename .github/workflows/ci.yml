@@ -150,8 +150,17 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: cp .env.example .env
+      - name: Owner/superuser DB credentials never reach runtime services (security review H3)
+        run: docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py
       - name: Build and start the full stack
         run: docker compose up -d --build --wait --wait-timeout 300
+      - name: Running containers hold no owner/superuser credentials (security review H3)
+        run: |
+          for svc in api worker beat web; do
+            docker compose exec -T "$svc" sh -c \
+              'test -z "${DATABASE_MIGRATION_URL:-}${ERP_OWNER_PASSWORD:-}${POSTGRES_PASSWORD:-}"' \
+              || { echo "owner credentials leaked into $svc"; exit 1; }
+          done
       - name: Infrastructure smoke check (DB role, cache, storage, Celery)
         run: docker compose exec -T api python manage.py smoke_check
       - name: Object storage S3 compatibility + bucket isolation (ADR-029)

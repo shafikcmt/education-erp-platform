@@ -35,6 +35,7 @@ TEMPLATES = frozenset(
         "new_signin",
         "mfa_reset",
         "mfa_disabled",
+        "mfa_locked",
     }
 )
 
@@ -73,6 +74,19 @@ def send_security_email(
     from apps.identity.tasks import deliver_security_email
 
     deliver_security_email.delay(sealed.hex())
+
+
+def send_security_notice_once(template: str, *, user: User, key: str) -> bool:
+    """Send at most one ``template`` notice per user per day (lock notices can be triggered
+    by attackers, so they must not become a spam channel). Returns whether it was sent."""
+    from django.core.cache import cache
+
+    if not cache.add(
+        f"notice:{key}:{user.pk}", 1, timeout=settings.SECURITY_NOTICE_INTERVAL_SECONDS
+    ):
+        return False
+    send_security_email(template, to=user.email, user=user)
+    return True
 
 
 def deliver(sealed_hex: str) -> None:

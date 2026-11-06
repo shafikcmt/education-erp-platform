@@ -11,6 +11,7 @@ from django.db import connection, transaction
 from django.db.utils import ProgrammingError
 from django.test import RequestFactory
 from django.utils import timezone
+from freezegun import freeze_time
 
 from apps.audit.models import AuditEvent, AuditEventIP
 from apps.audit.services import (
@@ -91,11 +92,11 @@ def test_trigger_blocks_mutation_even_for_the_owner(owner_dsn):
 def test_ip_side_table_is_anonymised_after_retention_and_erasable():
     actor = uuid.uuid4()
     old = record("identity.logout", request=_request(), actor_user_id=actor)
-    new = record("identity.logout", request=_request("198.51.100.4"), actor_user_id=actor)
-    AuditEventIP.objects.filter(event=old).update(
-        created_at=timezone.now() - timedelta(days=settings.SECURITY_IP_RETENTION_DAYS + 1)
-    )
-    assert anonymize_expired_ips() == 1
+    # Rows can't be back-dated (L4 trigger), so the job runs "in the future" instead.
+    later = timezone.now() + timedelta(days=settings.SECURITY_IP_RETENTION_DAYS, hours=1)
+    with freeze_time(later - timedelta(hours=2)):
+        new = record("identity.logout", request=_request("198.51.100.4"), actor_user_id=actor)
+    assert anonymize_expired_ips(now=later) == 1
     side = AuditEventIP.objects.get(event=old)
     assert side.ip_encrypted is None and side.ip_index is None
     assert side.ip_prefix == "203.0.113.0/24" and side.anonymized_at is not None

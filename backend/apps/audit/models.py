@@ -41,6 +41,9 @@ class AuditEvent(models.Model):
     metadata = models.JSONField(default=dict, blank=True)
     user_agent_summary = models.CharField(max_length=80, blank=True, default="")
     request_id = models.CharField(max_length=128, blank=True, default="")
+    # Set by a database trigger to the writing transaction's start time (never by the app);
+    # lets the IP side table accept rows only for events written in the same transaction (L4).
+    recorded_tx_at = models.DateTimeField(null=True, blank=True, editable=False)
 
     class Meta:
         db_table = "audit_auditevent"

@@ -1124,6 +1124,7 @@ export interface components {
         StepUpRequest: {
             password: string;
             code?: string;
+            recovery_code?: string;
         };
         StepUpResult: {
             step_up_expires_at: number;

@@ -145,6 +145,9 @@ PASSWORD_BREACH_CHECK_URL: str = "https://api.pwnedpasswords.com/range/"  # noqa
 FIELD_ENCRYPTION_KEYS: list[str] = env.list("FIELD_ENCRYPTION_KEYS", default=[])
 IP_INDEX_KEY: str = env.str("IP_INDEX_KEY", default="")
 DATABASE_APP_ROLE: str = env.str("DATABASE_APP_ROLE", default="erp_app")
+# I1: reversing the audit-protection migrations is refused unless explicitly allowed, and is
+# never allowed in production or staging.
+ERP_ALLOW_AUDIT_ROLLBACK: bool = env.bool("ERP_ALLOW_AUDIT_ROLLBACK", default=False)
 
 # ------------------------------------------------------------------- Phase 2 security policy
 # Header the reverse proxy overwrites with the client address (Nginx: X-Real-IP).
@@ -162,13 +165,18 @@ MFA_ISSUER: str = env.str("MFA_ISSUER", default="Education ERP")
 # The per-IP login limit is tunable: many users behind one NAT address (e.g. a school lab).
 SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
     "login_ip": (env.int("SECURITY_LOGIN_IP_LIMIT", default=20), 5 * 60),
-    "login_email_failures": (5, 15 * 60),
+    "login_email_failures": (5, 15 * 60),  # global per email: progressive delay only
+    "login_email_net_failures": (5, 15 * 60),  # per (email, network): temporary lock
+    "mfa_user_failures": (10, 15 * 60),  # per account, across sessions (H1)
     "mfa_attempts": (5, MFA_PENDING_TTL_SECONDS),
     "email_flow_email": (3, 60 * 60),
     "email_flow_ip": (10, 60 * 60),
     "step_up": (5, 15 * 60),
 }
 SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
+SECURITY_LOGIN_MAX_DELAY_SECONDS = 30
+SECURITY_MFA_LOCK_SECONDS = 15 * 60
+SECURITY_NOTICE_INTERVAL_SECONDS = 24 * 60 * 60  # at most one lock notice per user per day
 SECURITY_IP_RETENTION_DAYS: int = env.int("SECURITY_IP_RETENTION_DAYS", default=365)
 # platform_staff | privileged | all | off  (ADR-037, plan §6.11)
 SECURITY_NOTIFY_NEW_SIGNIN: str = env.str("SECURITY_NOTIFY_NEW_SIGNIN", default="platform_staff")

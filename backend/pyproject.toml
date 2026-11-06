@@ -119,4 +119,32 @@ ignore_imports = ["apps.core.ids -> uuid_utils"]
 name = "core is the foundation: it must not import other apps"
 type = "forbidden"
 source_modules = ["apps.core"]
+forbidden_modules = ["apps.identity", "apps.rbac", "apps.audit"]
+
+# Review I2: rbac and identity call each other only through their API/service edges. The
+# permission engine, its data and the identity data model must never form an import cycle.
+[[tool.importlinter.contracts]]
+name = "rbac core (engine, sources, models, registry, seeding) is independent of identity"
+type = "forbidden"
+source_modules = [
+    "apps.rbac.engine",
+    "apps.rbac.sources",
+    "apps.rbac.models",
+    "apps.rbac.registry",
+    "apps.rbac.seeding",
+    "apps.rbac.role_templates",
+    "apps.rbac.signals",
+]
+forbidden_modules = ["apps.identity"]
+
+[[tool.importlinter.contracts]]
+name = "identity data model does not import rbac or audit"
+type = "forbidden"
+source_modules = ["apps.identity.models", "apps.identity.managers"]
+forbidden_modules = ["apps.rbac", "apps.audit"]
+
+[[tool.importlinter.contracts]]
+name = "audit log core does not import identity"
+type = "forbidden"
+source_modules = ["apps.audit.models", "apps.audit.services", "apps.audit.events"]
 forbidden_modules = ["apps.identity"]

@@ -1,0 +1,5 @@
+{% autoescape off %}Someone entered several incorrect verification codes for your Education ERP account, so two-factor verification is locked for 15 minutes (as of {{ sent_at }}).
+
+This usually means someone knows your password. Reset it now: {{ forgot_url }}
+
+— Education ERP{% endautoescape %}

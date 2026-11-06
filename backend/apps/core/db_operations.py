@@ -98,3 +98,25 @@ DROP TRIGGER IF EXISTS {table}_immutable_rows ON {table};
 DROP FUNCTION IF EXISTS {fn}();
 """
     return forward, reverse
+
+
+def current_db_role() -> str:
+    from django.db import connection
+
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_user")
+        row = cursor.fetchone()
+    return str(row[0]) if row else ""
+
+
+def require_owner_role(command: str) -> None:
+    """Maintenance commands that rewrite protected evidence (key rotation, index rebuild) must
+    run as the owner role from the ops/migrate container, never as the runtime role (L4)."""
+    from django.core.management.base import CommandError
+
+    if current_db_role() == app_role():
+        raise CommandError(
+            f"{command} must run as the database owner role, e.g. "
+            "`docker compose run --rm --entrypoint sh migrate -c "
+            f"'DATABASE_URL=$DATABASE_MIGRATION_URL python manage.py {command}'`."
+        )

@@ -173,7 +173,7 @@ def test_recovery_codes_are_hashed_and_single_use():
     reuse.post("/api/v1/auth/login/", {"email": person.user.email, "password": PASSWORD})
     assert reuse.post("/api/v1/auth/mfa/verify/", {"recovery_code": codes[0]}).status_code == 401
     used = AuditEvent.objects.get(action="identity.mfa.recovery_code_used")
-    assert used.metadata == {"remaining": 9}
+    assert used.metadata == {"remaining": 9, "purpose": "login"}
 
 
 def test_regenerate_requires_step_up_and_invalidates_old_codes():

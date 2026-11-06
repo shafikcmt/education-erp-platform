@@ -1,7 +1,8 @@
 """Erase a person's stored IP data on request (ADR-036; procedure in docs/SECURITY.md).
 
-Deletes the encrypted IP rows of every audit event the user performed and clears the IP
-fields (including the prefix) of their session records. The audit events themselves stay
+Deletes the encrypted IP rows of every audit event the user performed, clears the IP fields
+(including the prefix) of their session records and deletes their IP-derived device
+fingerprints. The audit events themselves stay
 (immutable); the erasure run is audited.
 """
 
@@ -15,7 +16,7 @@ from django.utils import timezone
 
 from apps.audit.services import erase_ips_for_actor, record
 from apps.identity.models import User
-from apps.identity.services.maintenance import erase_session_ips
+from apps.identity.services.maintenance import erase_seen_devices, erase_session_ips
 
 
 class Command(BaseCommand):
@@ -38,10 +39,17 @@ class Command(BaseCommand):
         with transaction.atomic():
             audit_rows = erase_ips_for_actor(user_id, before=before)
             session_rows = erase_session_ips(user_id, before=before)
+            device_rows = erase_seen_devices(user_id, before=before)
             record(
                 "audit.ip.erased",
                 target_type="identity.user",
                 target_id=user_id,
-                metadata={"subject_user_id": str(user_id), "count": audit_rows + session_rows},
+                metadata={
+                    "subject_user_id": str(user_id),
+                    "count": audit_rows + session_rows + device_rows,
+                },
             )
-        self.stdout.write(f"erased: {audit_rows} audit IP rows, {session_rows} session records")
+        self.stdout.write(
+            f"erased: {audit_rows} audit IP rows, {session_rows} session records, "
+            f"{device_rows} device fingerprints"
+        )

@@ -10,6 +10,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 
 from apps.audit.models import AuditEventIP
+from apps.core.db_operations import require_owner_role
 from apps.core.ip_privacy import ip_search_index, open_ip
 from apps.identity.models import SessionRecord
 
@@ -18,6 +19,7 @@ class Command(BaseCommand):
     help = "Rebuild IP blind indexes with the current IP_INDEX_KEY."
 
     def handle(self, *args: Any, **options: Any) -> None:
+        require_owner_role("rebuild_ip_index")
         updated = 0
         with transaction.atomic():
             for model in (AuditEventIP, SessionRecord):

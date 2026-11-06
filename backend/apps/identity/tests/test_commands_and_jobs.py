@@ -1,6 +1,5 @@
 """Bootstrap, erasure, key rotation, housekeeping, sealed email tasks, new sign-in notices."""
 
-import base64
 import json
 from datetime import timedelta
 from io import StringIO
@@ -14,7 +13,7 @@ from django.utils import timezone
 from apps.audit.models import AuditEvent, AuditEventIP
 from apps.audit.services import record
 from apps.core import crypto
-from apps.identity.models import AccountToken, MFADevice, SessionRecord, User
+from apps.identity.models import AccountToken, SessionRecord, User
 from apps.identity.services import notifications
 from apps.identity.services.maintenance import run_housekeeping
 from apps.rbac.models import PlatformRoleAssignment
@@ -56,27 +55,11 @@ def test_erase_ip_data_command():
         call_command("erase_ip_data", "--user", "nope")
 
 
-def test_rotate_field_encryption_and_rebuild_index():
-    person = make_user(mfa=True)
-    api = Api(remote_addr="203.0.113.45")
-    api.login(person)
-    new_key = "rot1:" + base64.urlsafe_b64encode(b"r" * 32).decode()
-    from django.conf import settings
-
-    ring = [new_key, *settings.FIELD_ENCRYPTION_KEYS]
-    with override_settings(FIELD_ENCRYPTION_KEYS=ring):
-        call_command("rotate_field_encryption", stdout=StringIO())
-        device = MFADevice.objects.get(user=person.user)
-        assert crypto.key_id_of(bytes(device.secret_encrypted)) == "rot1"
-        session = SessionRecord.objects.get(user=person.user)
-        assert crypto.key_id_of(bytes(session.ip_encrypted or b"")) == "rot1"
-        assert api.get("/api/v1/me/").status_code == 200  # still decryptable
-    new_index_key = base64.urlsafe_b64encode(b"n" * 32).decode()
-    with override_settings(FIELD_ENCRYPTION_KEYS=ring, IP_INDEX_KEY=new_index_key):
-        call_command("rebuild_ip_index", stdout=StringIO())
-        from apps.audit.services import events_from_ip
-
-        assert events_from_ip("203.0.113.45")
+@pytest.mark.parametrize("command", ["rotate_field_encryption", "rebuild_ip_index"])
+def test_key_maintenance_refuses_to_run_as_the_runtime_role(command):
+    """L4: only the owner role (ops container) may rewrite protected ciphertext/indexes."""
+    with pytest.raises(CommandError, match="owner role"):
+        call_command(command, stdout=StringIO())
 
 
 def test_housekeeping_anonymises_old_session_ips_and_purges_tokens():
@@ -90,7 +73,12 @@ def test_housekeeping_anonymises_old_session_ips_and_purges_tokens():
         expires_at=timezone.now() - timedelta(days=8),
     )
     result = run_housekeeping()
-    assert result == {"session_ips_anonymized": 1, "tokens_purged": 1}
+    assert result == {
+        "session_ips_anonymized": 1,
+        "tokens_purged": 1,
+        "seen_devices_purged": 0,
+        "sessions_closed": 1,  # 400 days old: past the 12-hour absolute lifetime (L1)
+    }
     row = SessionRecord.objects.get(user=person.user)
     assert row.ip_encrypted is None and row.ip_prefix == "198.51.100.0/24"
 
@@ -100,7 +88,12 @@ def test_celery_tasks_run():
     from apps.identity.tasks import housekeeping
 
     assert anonymize_expired_ips.delay().get() == 0
-    assert housekeeping.delay().get() == {"session_ips_anonymized": 0, "tokens_purged": 0}
+    assert housekeeping.delay().get() == {
+        "session_ips_anonymized": 0,
+        "tokens_purged": 0,
+        "seen_devices_purged": 0,
+        "sessions_closed": 0,
+    }
 
 
 def test_email_task_payload_is_sealed(monkeypatch):

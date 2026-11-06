@@ -298,10 +298,14 @@ def disable_mfa(user: User, *, request: HttpRequest, required: bool) -> None:
 
 
 def admin_reset_mfa(actor: User, user: User, *, reason: str, request: HttpRequest) -> None:
-    """``identity.mfa.reset`` + step-up + reason (checked by the API and here)."""
-    from apps.rbac.engine import require_perm
+    """``identity.mfa.reset`` + step-up + reason; never on a more privileged account (H2)."""
+    from apps.identity.services import tokens
+    from apps.identity.throttling import clear_mfa_lock
+    from apps.rbac.services import GuardRailViolation, assert_can_act_on
 
-    require_perm(actor, "identity.mfa.reset", use_cache=False)
+    if actor.pk == user.pk:
+        raise GuardRailViolation("cannot_reset_own_mfa", "Use your account security page.")
+    assert_can_act_on(actor, user, "identity.mfa.reset")
     with transaction.atomic():
         MFADevice.objects.filter(user=user).delete()
         RecoveryCode.objects.filter(user=user).delete()
@@ -314,4 +318,6 @@ def admin_reset_mfa(actor: User, user: User, *, reason: str, request: HttpReques
             metadata={"reason": reason.strip()[:200]},
         )
         sessions.revoke_user_sessions(user, reason="mfa_reset", actor=actor, request=request)
+        tokens.invalidate_all(user, reason="mfa_reset", request=request, actor=actor)
+    clear_mfa_lock(user.pk)
     send_security_email("mfa_reset", to=user.email, user=user)

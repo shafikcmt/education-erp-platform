@@ -15,6 +15,7 @@ Rules:
 
 from __future__ import annotations
 
+import secrets
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -91,20 +92,19 @@ _VERSION_KEY = "perm:version"
 _CATALOG_KEY = "perm:catalog"
 
 
-def cache_version() -> int:
+def cache_version() -> str:
+    """Random version token (L3). A counter could restart at a value whose cached entries are
+    still alive after a Redis eviction; a fresh random token can never match old entries."""
     version = cache.get(_VERSION_KEY)
     if version is None:
-        cache.add(_VERSION_KEY, 1, timeout=None)
-        version = cache.get(_VERSION_KEY, 1)
-    return int(version)
+        cache.add(_VERSION_KEY, secrets.token_hex(16), timeout=None)
+        version = cache.get(_VERSION_KEY)
+    return str(version)
 
 
 def bump_cache_version() -> None:
     """Invalidate every cached permission set (any role/permission/assignment change)."""
-    try:
-        cache.incr(_VERSION_KEY)
-    except ValueError:
-        cache.add(_VERSION_KEY, 2, timeout=None)
+    cache.set(_VERSION_KEY, secrets.token_hex(16), timeout=None)
 
 
 def catalog(*, use_cache: bool = True) -> dict[str, PermissionInfo]:
@@ -217,6 +217,18 @@ def require_perm(
     """Service-layer guard (defense in depth): raise ``PermissionDenied`` unless allowed."""
     if not has_perm(actor, code, target=target, obj=obj, use_cache=use_cache):
         raise PermissionDenied(code)
+
+
+def assigned_permissions(actor: AbstractBaseUser, target: ScopeTarget = PLATFORM) -> frozenset[str]:
+    """Everything the user's assignments grant, **ignoring** ``is_active`` and the cache.
+
+    Used to compare privileges between an actor and a target account (H2), where a deactivated
+    Super Admin must still count as a Super Admin."""
+    granted: set[str] = set()
+    for source in sources():
+        granted |= source.grants(actor, target)
+    known = catalog(use_cache=False)
+    return frozenset(code for code in granted if code in known)
 
 
 def user_requires_mfa(actor: AbstractBaseUser, *, use_cache: bool = True) -> bool:

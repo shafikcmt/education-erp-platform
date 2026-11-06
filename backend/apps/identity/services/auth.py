@@ -11,7 +11,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import StrEnum
-from typing import TYPE_CHECKING
 
 from django.conf import settings
 from django.contrib.auth import authenticate
@@ -26,11 +25,8 @@ from apps.identity import errors, throttling
 from apps.identity import session_state as state
 from apps.identity.models import SeenDevice, User
 from apps.identity.services import mfa, sessions
-from apps.identity.services.notifications import send_security_email
+from apps.identity.services.notifications import send_security_email, send_security_notice_once
 from apps.rbac.engine import user_requires_mfa
-
-if TYPE_CHECKING:
-    pass
 
 
 class LoginStatus(StrEnum):
@@ -62,7 +58,8 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
         )
         raise errors.RateLimited(ip_bucket.retry_after(ip_subject))
     email_subject = _email_subject(email)
-    wait = throttling.login_blocked_for(email_subject)
+    net_subject = throttling.network_subject(email_subject, client_ip(request))
+    wait = throttling.login_blocked_for(email_subject, net_subject)
     if wait:
         audit(
             "identity.login.throttled",
@@ -74,7 +71,7 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
 
     user = authenticate(request, username=email, password=password)
     if user is None:
-        locked = throttling.register_login_failure(email_subject)
+        locked = throttling.register_login_failure(email_subject, net_subject)
         audit(
             "identity.login.failed",
             request=request,
@@ -85,7 +82,7 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
             _on_lock(request, email)
         raise errors.InvalidCredentials()
     assert isinstance(user, User)  # noqa: S101 - EmailBackend returns identity.User
-    throttling.clear_login_failures(email_subject)
+    throttling.clear_login_failures(email_subject, net_subject)
 
     if mfa.has_mfa(user):
         request.session.cycle_key()
@@ -110,7 +107,27 @@ def _on_lock(request: HttpRequest, email: str) -> None:
     )
     user = User.objects.filter(email__iexact=email.strip()).first()
     if user is not None and user.can_sign_in:
-        send_security_email("lockout_notice", to=user.email, user=user)
+        send_security_notice_once("lockout_notice", user=user, key="login_lock")
+
+
+def _check_mfa_lock(request: HttpRequest, user: User) -> None:
+    wait = throttling.mfa_blocked_for(user.pk)
+    if wait:
+        raise errors.MfaLocked(wait)
+
+
+def _mfa_failed(request: HttpRequest, user: User, *, where: str) -> None:
+    """Count a wrong TOTP/recovery code against the ACCOUNT (H1); lock + notify at the limit."""
+    if throttling.register_mfa_failure(user.pk):
+        audit(
+            "identity.mfa.locked",
+            actor_user_id=user.pk,
+            request=request,
+            outcome="denied",
+            metadata={"reason": where},
+        )
+        send_security_notice_once("mfa_locked", user=user, key="mfa_lock")
+        raise errors.MfaLocked(throttling.mfa_blocked_for(user.pk))
 
 
 def verify_mfa(request: HttpRequest, *, code: str = "", recovery_code: str = "") -> User:
@@ -126,6 +143,7 @@ def verify_mfa(request: HttpRequest, *, code: str = "", recovery_code: str = "")
     if user is None or device is None or not user.can_sign_in:
         request.session.pop(state.PENDING_AUTH, None)
         raise errors.MfaChallengeExpired()
+    _check_mfa_lock(request, user)
 
     if recovery_code:
         remaining = mfa.use_recovery_code(user, recovery_code)
@@ -143,6 +161,11 @@ def verify_mfa(request: HttpRequest, *, code: str = "", recovery_code: str = "")
             outcome="failure",
             metadata={"reason": "recovery_code" if recovery_code else "totp"},
         )
+        try:
+            _mfa_failed(request, user, where="login")
+        except errors.MfaLocked:
+            request.session.pop(state.PENDING_AUTH, None)
+            raise
         if pending["attempts"] >= limit:
             request.session.pop(state.PENDING_AUTH, None)
             raise errors.MfaChallengeExpired()
@@ -152,7 +175,7 @@ def verify_mfa(request: HttpRequest, *, code: str = "", recovery_code: str = "")
             "identity.mfa.recovery_code_used",
             actor=user,
             request=request,
-            metadata={"remaining": remaining},
+            metadata={"remaining": remaining, "purpose": "login"},
         )
     _complete_login(
         request, user, mfa_verified=True, method="recovery_code" if recovery_code else "totp"
@@ -208,8 +231,12 @@ def _note_device(request: HttpRequest, user: User) -> None:
 
 
 # ------------------------------------------------------------------ step-up and logout
-def step_up(request: HttpRequest, user: User, *, password: str, code: str = "") -> None:
-    """Re-authenticate (password + current MFA code if enrolled) for 10 minutes (ADR-035)."""
+def step_up(
+    request: HttpRequest, user: User, *, password: str, code: str = "", recovery_code: str = ""
+) -> None:
+    """Re-authenticate for 10 minutes (ADR-035): password, plus, when MFA is enrolled, a current
+    TOTP code or a single-use recovery code (L5). Wrong codes count against the account's MFA
+    lock (H1); wrong passwords against the per-session step-up limit."""
     bucket = throttling.Bucket.named("step_up")
     subject = throttling.subject_key("step_up", str(user.pk))
     if bucket.exceeded(subject):
@@ -222,23 +249,43 @@ def step_up(request: HttpRequest, user: User, *, password: str, code: str = "") 
         )
         raise errors.RateLimited(bucket.retry_after(subject))
     device = mfa.confirmed_device(user)
-    reason = ""
     if not user.check_password(password):
-        reason = "password"
-    elif device is not None and not mfa.verify_totp(device, code):
-        reason = "mfa"
-    if reason:
         bucket.hit(subject)
         audit(
             "identity.step_up.failed",
             actor=user,
             request=request,
             outcome="failure",
-            metadata={"reason": reason},
+            metadata={"reason": "password"},
         )
         raise errors.InvalidCredentials("The password or verification code is incorrect.")
+    remaining: int | None = None
+    if device is not None:
+        _check_mfa_lock(request, user)
+        if recovery_code:
+            remaining = mfa.use_recovery_code(user, recovery_code)
+            ok = remaining is not None
+        else:
+            ok = mfa.verify_totp(device, code)
+        if not ok:
+            audit(
+                "identity.step_up.failed",
+                actor=user,
+                request=request,
+                outcome="failure",
+                metadata={"reason": "mfa"},
+            )
+            _mfa_failed(request, user, where="step_up")
+            raise errors.InvalidCredentials("The password or verification code is incorrect.")
     bucket.reset(subject)
     sessions.mark_step_up(request)
+    if remaining is not None:
+        audit(
+            "identity.mfa.recovery_code_used",
+            actor=user,
+            request=request,
+            metadata={"remaining": remaining, "purpose": "step_up"},
+        )
     audit("identity.step_up.succeeded", actor=user, request=request)
 
 

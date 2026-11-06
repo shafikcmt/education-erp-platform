@@ -15,7 +15,7 @@ from rest_framework.views import APIView
 from apps.identity import errors
 from apps.identity.authentication import SessionAuthentication
 
-_FORBIDDEN_GUARD_RAILS = {"privilege_escalation"}
+_FORBIDDEN_GUARD_RAILS = {"privilege_escalation", "insufficient_privilege"}
 
 
 class CsrfProtectedView(APIView):

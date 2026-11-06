@@ -102,6 +102,7 @@ class StepUpView(CsrfProtectedView):
             user,
             password=data.validated_data["password"],
             code=data.validated_data.get("code", ""),
+            recovery_code=data.validated_data.get("recovery_code", ""),
         )
         return Response({"step_up_expires_at": state.step_up_expires_at(request._request)})
 

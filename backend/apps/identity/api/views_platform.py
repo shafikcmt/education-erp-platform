@@ -138,9 +138,10 @@ class ReactivateUserView(_UserAction):
         responses=s.PlatformUserSerializer,
     )
     def post(self, request: Request, user_id: str) -> Response:
-        user = accounts.reactivate(
-            actor=_actor(request), user=self.target(user_id), request=request._request
-        )
+        with service_errors():
+            user = accounts.reactivate(
+                actor=_actor(request), user=self.target(user_id), request=request._request
+            )
         return Response(s.PlatformUserSerializer(self.target(str(user.pk))).data)
 
 
@@ -154,12 +155,10 @@ class RevokeUserSessionsView(_UserAction):
         responses=s.RevokedCountSerializer,
     )
     def post(self, request: Request, user_id: str) -> Response:
-        count = sessions.revoke_user_sessions(
-            self.target(user_id),
-            reason="revoked_by_admin",
-            actor=_actor(request),
-            request=request._request,
-        )
+        with service_errors():
+            count = sessions.admin_revoke_sessions(
+                _actor(request), self.target(user_id), request=request._request
+            )
         return Response({"revoked": count})
 
 
@@ -175,12 +174,13 @@ class ResetUserMfaView(_UserAction):
     def post(self, request: Request, user_id: str) -> Response:
         data = s.ReasonSerializer(data=request.data)
         data.is_valid(raise_exception=True)
-        mfa.admin_reset_mfa(
-            _actor(request),
-            self.target(user_id),
-            reason=data.validated_data["reason"],
-            request=request._request,
-        )
+        with service_errors():
+            mfa.admin_reset_mfa(
+                _actor(request),
+                self.target(user_id),
+                reason=data.validated_data["reason"],
+                request=request._request,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

@@ -48,6 +48,14 @@ class MfaVerifySerializer(serializers.Serializer[None]):
 class StepUpSerializer(serializers.Serializer[None]):
     password = _password()
     code = serializers.CharField(max_length=12, required=False, allow_blank=True, write_only=True)
+    recovery_code = serializers.CharField(
+        max_length=32, required=False, allow_blank=True, write_only=True
+    )
+
+    def validate(self, attrs: dict[str, str]) -> dict[str, str]:
+        if attrs.get("code") and attrs.get("recovery_code"):
+            raise serializers.ValidationError("Provide a code or a recovery code, not both.")
+        return attrs
 
 
 class StepUpResultSerializer(serializers.Serializer[None]):

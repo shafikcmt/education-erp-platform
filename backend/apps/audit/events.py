@@ -23,7 +23,8 @@ EVENTS: dict[str, frozenset[str]] = {
     "identity.mfa.challenge_failed": frozenset({"reason"}),
     "identity.mfa.disabled": _NONE,
     "identity.mfa.reset": frozenset({"reason"}),
-    "identity.mfa.recovery_code_used": frozenset({"remaining"}),
+    "identity.mfa.recovery_code_used": frozenset({"remaining", "purpose"}),
+    "identity.mfa.locked": frozenset({"reason"}),
     "identity.mfa.recovery_codes_regenerated": frozenset({"count"}),
     # step-up
     "identity.step_up.succeeded": _NONE,
@@ -44,6 +45,7 @@ EVENTS: dict[str, frozenset[str]] = {
     "identity.account.reactivated": _NONE,
     # sessions
     "identity.session.revoked": frozenset({"reason", "count"}),
+    "identity.token.invalidated": frozenset({"reason", "count"}),
     "identity.session.expired_idle": _NONE,
     "identity.session.expired_absolute": _NONE,
     "identity.signin.new_device_notified": _NONE,

@@ -160,6 +160,15 @@ def revoke_user_sessions(
     return count
 
 
+def admin_revoke_sessions(actor: User, user: User, *, request: HttpRequest) -> int:
+    """Admin "sign out everywhere": permission re-checked here (L2) and never on a more
+    privileged account (H2)."""
+    from apps.rbac.services import assert_can_act_on
+
+    assert_can_act_on(actor, user, "identity.session.revoke_any")
+    return revoke_user_sessions(user, reason="revoked_by_admin", actor=actor, request=request)
+
+
 def revoke_one(user: User, record: SessionRecord, *, actor: User, request: HttpRequest) -> None:
     if revoke_records(SessionRecord.objects.filter(pk=record.pk, user=user), reason="revoked"):
         audit(

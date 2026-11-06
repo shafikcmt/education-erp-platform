@@ -1825,6 +1825,10 @@ components:
           type: string
           writeOnly: true
           maxLength: 12
+        recovery_code:
+          type: string
+          writeOnly: true
+          maxLength: 32
       required:
       - password
     StepUpResult:

@@ -191,6 +191,7 @@ def confirm_password_reset(request: HttpRequest, raw_token: str, password: str) 
                 target_id=user.pk,
             )
             sessions.revoke_user_sessions(user, reason="password_reset", request=request)
+            tokens.invalidate_all(user, reason="password_reset", request=request)
     except tokens.TokenError as exc:
         _reject_token(request, TokenPurpose.PASSWORD_RESET, exc)
     throttling.clear_login_failures(throttling.subject_key("email", user.email))
@@ -215,6 +216,7 @@ def change_password(
         sessions.revoke_user_sessions(
             user, reason="password_changed", keep=request, actor=user, request=request
         )
+        tokens.invalidate_all(user, reason="password_changed", request=request, actor=user)
     # Keep THIS session valid (Django ties sessions to the password hash) and rotate its key.
     request.session[HASH_SESSION_KEY] = user.get_session_auth_hash()
     sessions.rotate(request)
@@ -267,6 +269,7 @@ def verify_email_change(request: HttpRequest, raw_token: str) -> User:
             )
             keep = request if getattr(request.user, "pk", None) == user.pk else None
             sessions.revoke_user_sessions(user, reason="email_changed", keep=keep, request=request)
+            tokens.invalidate_all(user, reason="email_changed", request=request)
     except tokens.TokenError as exc:
         _reject_token(request, TokenPurpose.EMAIL_CHANGE, exc)
     send_security_email("email_changed", to=old_email, user=user)
@@ -313,11 +316,15 @@ def admin_update_user(
 
 @transaction.atomic
 def deactivate(*, actor: User, user: User, request: HttpRequest) -> User:
-    from apps.rbac.services import GuardRailViolation, assert_not_last_super_admin
+    from apps.rbac.services import (
+        GuardRailViolation,
+        assert_can_act_on,
+        assert_not_last_super_admin,
+    )
 
-    require_perm(actor, "identity.user.deactivate", use_cache=False)
     if actor.pk == user.pk:
         raise GuardRailViolation("cannot_deactivate_self", "You cannot deactivate yourself.")
+    assert_can_act_on(actor, user, "identity.user.deactivate")
     assert_not_last_super_admin(user)
     user = User.objects.select_for_update().get(pk=user.pk)
     if user.is_active:
@@ -332,12 +339,15 @@ def deactivate(*, actor: User, user: User, request: HttpRequest) -> User:
             target_id=user.pk,
         )
         sessions.revoke_user_sessions(user, reason="deactivated", actor=actor, request=request)
+        tokens.invalidate_all(user, reason="deactivated", request=request, actor=actor)
     return user
 
 
 @transaction.atomic
 def reactivate(*, actor: User, user: User, request: HttpRequest) -> User:
-    require_perm(actor, "identity.user.deactivate", use_cache=False)
+    from apps.rbac.services import assert_can_act_on
+
+    assert_can_act_on(actor, user, "identity.user.deactivate")
     user = User.objects.select_for_update().get(pk=user.pk)
     if not user.is_active:
         user.is_active = True

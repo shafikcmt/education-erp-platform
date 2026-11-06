@@ -3,7 +3,7 @@
 import type { paths } from "@erp/api-client";
 import type { Client } from "openapi-fetch";
 
-import { CSRF_COOKIE_NAME, createApiClient, readCookie } from "./client";
+import { createApiClient, readCsrfToken } from "./client";
 
 let client: Client<paths> | undefined;
 
@@ -15,6 +15,6 @@ export function api(): Client<paths> {
 
 /** Make sure the CSRF cookie exists before the first unsafe request of an anonymous visitor. */
 export async function ensureCsrf(): Promise<void> {
-  if (typeof document !== "undefined" && readCookie(document.cookie, CSRF_COOKIE_NAME)) return;
+  if (typeof document !== "undefined" && readCsrfToken(document.cookie)) return;
   await api().GET("/api/v1/auth/csrf/");
 }

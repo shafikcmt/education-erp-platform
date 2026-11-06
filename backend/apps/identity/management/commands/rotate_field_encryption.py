@@ -2,7 +2,8 @@
 
 Procedure: put the new key FIRST in ``FIELD_ENCRYPTION_KEYS`` (keep the old ones), deploy, run
 this command, verify, then remove the old key. Idempotent; values already under the primary key
-are skipped. Plaintext never leaves the process and is never printed.
+are skipped. Plaintext never leaves the process and is never printed. Runs as the owner role
+(ops/migrate container): the runtime role may not rewrite audit IP evidence (review L4).
 """
 
 from typing import Any
@@ -12,6 +13,7 @@ from django.db import transaction
 
 from apps.audit.models import AuditEventIP
 from apps.core import crypto
+from apps.core.db_operations import require_owner_role
 from apps.core.ip_privacy import IP_PURPOSE
 from apps.identity.models import MFADevice, SessionRecord
 from apps.identity.services.sessions import _KEY_PURPOSE as SESSION_KEY_PURPOSE
@@ -30,6 +32,7 @@ class Command(BaseCommand):
     help = "Re-encrypt MFA secrets, session keys and IPs with the primary key."
 
     def handle(self, *args: Any, **options: Any) -> None:
+        require_owner_role("rotate_field_encryption")
         primary = crypto.key_ring().primary_id
         counts = {"mfa": 0, "session": 0, "audit_ip": 0}
         with transaction.atomic():

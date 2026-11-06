@@ -39,6 +39,14 @@ class RateLimited(ProblemError):
         self.wait = retry_after
 
 
+class MfaLocked(RateLimited):
+    """Too many wrong MFA codes for this account (login and step-up share the limit)."""
+
+    problem_code = "mfa_locked"
+    title = "Two-factor verification locked"
+    default_detail = "Too many incorrect codes. Try again later or contact an administrator."
+
+
 class StepUpRequired(ProblemError):
     status_code = status.HTTP_403_FORBIDDEN
     problem_code = "step_up_required"

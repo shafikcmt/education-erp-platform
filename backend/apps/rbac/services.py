@@ -75,6 +75,27 @@ def assert_not_last_super_admin(user: User) -> None:
         )
 
 
+def assert_can_act_on(actor: User, target: User, code: str) -> None:
+    """Privileged-target protection (review H2), enforced in services, not only in views.
+
+    The actor must hold ``code`` (checked without the cache) **and** at least every permission
+    the target account holds; only a Super Admin may act on another Super Admin.
+    """
+    from apps.rbac.engine import assigned_permissions
+
+    require_perm(actor, code, use_cache=False)
+    if is_super_admin(target) and not is_super_admin(actor):
+        raise GuardRailViolation(
+            "insufficient_privilege", "Only a Super Admin can do this to a Super Admin."
+        )
+    missing = assigned_permissions(target) - effective_permissions(actor, use_cache=False)
+    if missing:
+        raise GuardRailViolation(
+            "insufficient_privilege",
+            "You cannot do this to an account with more privileges than yours.",
+        )
+
+
 def _set_permissions(role: Role, permissions: list[Permission]) -> tuple[list[str], list[str]]:
     current = {rp.permission.code: rp for rp in role.role_permissions.select_related("permission")}
     wanted = {p.code: p for p in permissions}

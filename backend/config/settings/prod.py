@@ -1,9 +1,13 @@
 """Production settings. Secrets and hosts MUST come from the environment (no defaults)."""
 
+import os
+
 from django.core.exceptions import ImproperlyConfigured
 
+from apps.core.config_guards import assert_runtime_has_no_owner_credentials
+
 from .base import *
-from .base import ALLOWED_HOSTS, FIELD_ENCRYPTION_KEYS, IP_INDEX_KEY, SECRET_KEY, env
+from .base import ALLOWED_HOSTS, DATABASES, FIELD_ENCRYPTION_KEYS, IP_INDEX_KEY, SECRET_KEY, env
 
 DEBUG = False
 
@@ -48,7 +52,21 @@ SILENCED_SYSTEM_CHECKS = ["security.W021"]
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_NAME = "__Host-sessionid"
+# Review L6: `__Host-` forces Secure + Path=/ + no Domain, so a sibling (tenant) subdomain can
+# never plant or overwrite the CSRF cookie. The frontend reads either name.
+CSRF_COOKIE_NAME = "__Host-csrftoken"
+SESSION_COOKIE_PATH = "/"
+CSRF_COOKIE_PATH = "/"
+SESSION_COOKIE_DOMAIN = None
+CSRF_COOKIE_DOMAIN = None
 
 # The OpenAPI schema/docs must not be public in production (docs/SECURITY.md). It stays off
 # regardless of the environment until platform-staff-only access exists (Phase 2/3).
 API_DOCS_ENABLED = False
+
+# Security review H3: runtime processes must not hold owner/superuser DB credentials.
+assert_runtime_has_no_owner_credentials(
+    os.environ,
+    database_user=str(DATABASES["default"].get("USER", "")),
+    owner_roles={env.str("DATABASE_OWNER_ROLE", default="erp_owner"), "postgres"},
+)
