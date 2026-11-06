@@ -11,6 +11,8 @@ import type { ReactNode } from "react";
 import { getDirection } from "@/i18n/direction";
 import { routing } from "@/i18n/routing";
 
+import { Providers } from "./providers";
+
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
 export function generateStaticParams() {
@@ -47,7 +49,9 @@ export default async function LocaleLayout({ children, params }: Props) {
         >
           {t("skipToContent")}
         </a>
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <Providers>{children}</Providers>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

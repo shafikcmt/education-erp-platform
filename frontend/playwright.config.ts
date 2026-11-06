@@ -1,7 +1,9 @@
 import { defineConfig, devices } from "@playwright/test";
 
 /**
- * E2E smoke tests run against the full docker compose stack through Nginx (single origin).
+ * E2E tests run against the full docker compose stack through Nginx (single origin). Before the
+ * run, create the bootstrap admin: `docker compose exec -T api python manage.py
+ * create_platform_admin --email e2e-admin@example.test` (fresh volumes; see Makefile `e2e`).
  * PLAYWRIGHT_CHROMIUM_EXECUTABLE lets environments with a preinstalled Chromium reuse it.
  */
 const baseURL = process.env.E2E_BASE_URL ?? "http://localhost:8080";
@@ -19,7 +21,13 @@ export default defineConfig({
     launchOptions: executablePath ? { executablePath } : {},
   },
   projects: [
-    { name: "desktop-chromium", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile-chromium", use: { ...devices["Pixel 7"] } },
+    // Activates the bootstrap Super Admin (created by `manage.py create_platform_admin`) once.
+    { name: "setup", testMatch: /bootstrap\.setup\.ts/, use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "desktop-chromium",
+      use: { ...devices["Desktop Chrome"] },
+      dependencies: ["setup"],
+    },
+    { name: "mobile-chromium", use: { ...devices["Pixel 7"] }, dependencies: ["setup"] },
   ],
 });

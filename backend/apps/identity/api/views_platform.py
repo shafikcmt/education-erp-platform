@@ -48,9 +48,14 @@ class PlatformUsersView(CsrfProtectedView):
 
     @extend_schema(
         tags=TAGS,
+        operation_id="platform_users_list",
         summary="List platform users",
-        parameters=[OpenApiParameter("search", OpenApiTypes.STR, description="Email contains")],
-        responses=s.PlatformUserSerializer(many=True),
+        parameters=[
+            OpenApiParameter("search", OpenApiTypes.STR, description="Email contains"),
+            OpenApiParameter("page", OpenApiTypes.INT),
+            OpenApiParameter("page_size", OpenApiTypes.INT),
+        ],
+        responses=s.PlatformUserPageSerializer,
     )
     def get(self, request: Request) -> Response:
         users = users_queryset()

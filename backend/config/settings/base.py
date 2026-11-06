@@ -159,8 +159,9 @@ MFA_PENDING_TTL_SECONDS = 5 * 60
 MFA_ENROLLMENT_TTL_SECONDS = 10 * 60
 MFA_ISSUER: str = env.str("MFA_ISSUER", default="Education ERP")
 # Brute-force limits (plan §6.2): (max events, window seconds).
+# The per-IP login limit is tunable: many users behind one NAT address (e.g. a school lab).
 SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
-    "login_ip": (20, 5 * 60),
+    "login_ip": (env.int("SECURITY_LOGIN_IP_LIMIT", default=20), 5 * 60),
     "login_email_failures": (5, 15 * 60),
     "mfa_attempts": (5, MFA_PENDING_TTL_SECONDS),
     "email_flow_email": (3, 60 * 60),

@@ -215,6 +215,13 @@ class PlatformUserSensitiveSerializer(PlatformUserSerializer):
         return obj.session_records.filter(revoked_at__isnull=True).count()
 
 
+class PlatformUserPageSerializer(serializers.Serializer[None]):
+    count = serializers.IntegerField()
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = PlatformUserSerializer(many=True)
+
+
 class PlatformUserCreateSerializer(serializers.Serializer[None]):
     email = serializers.EmailField(max_length=254)
     display_name = serializers.CharField(max_length=150, required=False, allow_blank=True)

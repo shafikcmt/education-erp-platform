@@ -882,6 +882,13 @@ export interface components {
             readonly request_id: string;
             readonly ip_masked: string;
         };
+        AuditEventPage: {
+            /** Format: uri */
+            next: string | null;
+            /** Format: uri */
+            previous: string | null;
+            results: components["schemas"]["AuditEvent"][];
+        };
         Csrf: {
             detail: string;
         };
@@ -1027,6 +1034,14 @@ export interface components {
             display_name?: string;
             /** @default en */
             locale: components["schemas"]["LocaleEnum"];
+        };
+        PlatformUserPage: {
+            count: number;
+            /** Format: uri */
+            next: string | null;
+            /** Format: uri */
+            previous: string | null;
+            results: components["schemas"]["PlatformUser"][];
         };
         /** @description Adds MFA state and session counts: only with ``identity.user.view_sensitive``. */
         PlatformUserSensitive: {
@@ -1647,11 +1662,13 @@ export interface operations {
             query?: {
                 action?: string;
                 actor_user_id?: string;
+                cursor?: string;
                 /** @description Exact IP (needs view_ip) */
                 ip?: string;
                 occurred_after?: string;
                 occurred_before?: string;
                 outcome?: string;
+                page_size?: number;
                 target_id?: string;
                 target_type?: string;
             };
@@ -1666,7 +1683,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["AuditEvent"][];
+                    "application/json": components["schemas"]["AuditEventPage"];
                 };
             };
         };
@@ -1822,6 +1839,8 @@ export interface operations {
     platform_users_list: {
         parameters: {
             query?: {
+                page?: number;
+                page_size?: number;
                 /** @description Email contains */
                 search?: string;
             };
@@ -1836,7 +1855,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PlatformUser"][];
+                    "application/json": components["schemas"]["PlatformUserPage"];
                 };
             };
         };

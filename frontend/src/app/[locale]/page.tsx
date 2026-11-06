@@ -26,12 +26,15 @@ export default function HomePage({ params }: { params: Promise<{ locale: string 
         <p className="bg-muted text-muted-foreground w-fit rounded-md border px-3 py-2 text-sm">
           {t("home.status")}
         </p>
-        <div>
+        <div className="flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <Link href="/system">
-              {t("home.systemLink")}
+            <Link href="/login">
+              {t("home.signIn")}
               <ArrowRight aria-hidden="true" className="rtl:rotate-180" />
             </Link>
+          </Button>
+          <Button asChild size="lg" variant="outline">
+            <Link href="/system">{t("home.systemLink")}</Link>
           </Button>
         </div>
       </main>

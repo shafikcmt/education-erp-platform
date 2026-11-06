@@ -519,6 +519,10 @@ paths:
           type: string
           format: uuid
       - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: query
         name: ip
         schema:
           type: string
@@ -538,6 +542,10 @@ paths:
         schema:
           type: string
       - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
         name: target_id
         schema:
           type: string
@@ -554,9 +562,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AuditEvent'
+                $ref: '#/components/schemas/AuditEventPage'
           description: ''
   /api/v1/platform/audit-events/{event_id}/reveal-ip/:
     post:
@@ -725,6 +731,14 @@ paths:
       summary: List platform users
       parameters:
       - in: query
+        name: page
+        schema:
+          type: integer
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
         name: search
         schema:
           type: string
@@ -738,9 +752,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PlatformUser'
+                $ref: '#/components/schemas/PlatformUserPage'
           description: ''
     post:
       operationId: platform_users_create
@@ -1152,6 +1164,25 @@ components:
       - target_id
       - target_type
       - user_agent_summary
+    AuditEventPage:
+      type: object
+      properties:
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditEvent'
+      required:
+      - next
+      - previous
+      - results
     Csrf:
       type: object
       properties:
@@ -1517,6 +1548,28 @@ components:
           default: en
       required:
       - email
+    PlatformUserPage:
+      type: object
+      properties:
+        count:
+          type: integer
+        next:
+          type: string
+          format: uri
+          nullable: true
+        previous:
+          type: string
+          format: uri
+          nullable: true
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PlatformUser'
+      required:
+      - count
+      - next
+      - previous
+      - results
     PlatformUserSensitive:
       type: object
       description: 'Adds MFA state and session counts: only with ``identity.user.view_sensitive``.'

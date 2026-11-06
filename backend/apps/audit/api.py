@@ -56,6 +56,12 @@ class AuditEventSerializer(serializers.ModelSerializer[AuditEvent]):
         return mask_prefix(side.ip_prefix) if side is not None else ""
 
 
+class AuditEventPageSerializer(serializers.Serializer[None]):
+    next = serializers.URLField(allow_null=True)
+    previous = serializers.URLField(allow_null=True)
+    results = AuditEventSerializer(many=True)
+
+
 class RevealedIpSerializer(serializers.Serializer[None]):
     ip = serializers.CharField()
 
@@ -76,6 +82,7 @@ class AuditEventsView(CsrfProtectedView):
 
     @extend_schema(
         tags=TAGS,
+        operation_id="platform_audit_events_list",
         summary="Platform audit events (cursor pagination)",
         parameters=[
             OpenApiParameter("action", OpenApiTypes.STR),
@@ -86,8 +93,10 @@ class AuditEventsView(CsrfProtectedView):
             OpenApiParameter("occurred_after", OpenApiTypes.DATETIME),
             OpenApiParameter("occurred_before", OpenApiTypes.DATETIME),
             OpenApiParameter("ip", OpenApiTypes.STR, description="Exact IP (needs view_ip)"),
+            OpenApiParameter("cursor", OpenApiTypes.STR),
+            OpenApiParameter("page_size", OpenApiTypes.INT),
         ],
-        responses=AuditEventSerializer(many=True),
+        responses=AuditEventPageSerializer,
     )
     def get(self, request: Request) -> Response:
         # Platform scope only: tenant events (Phase 3) are never listed here.
