@@ -34,7 +34,7 @@
 **Exit:** `docker compose up` gives healthy stack; CI green on a sample test; README quick start updated.
 
 ## Phase 2 — Authentication, users, roles & permissions
-**Depends on:** Phase 1 `Approved` (incl. review follow-up PR #12 merged); ADR-011 and ADR-031 to ADR-037 **Accepted**. Detailed plan: `docs/plans/PHASE_02_PLAN.md` (rev. 2, **Proposed**, awaiting final owner approval).
+**Depends on:** Phase 1 `Approved` (incl. review follow-up PR #12 merged); ADR-011 and ADR-031 to ADR-039 **Accepted**. Detailed plan: `docs/plans/PHASE_02_PLAN.md` (rev. 3, **Proposed**, awaiting final owner approval; PR #13).
 **Deliverables (per plan):**
 - **`identity`:**
   - email + password session login with two-step MFA (TOTP + recovery codes; secrets encrypted per ADR-031);
@@ -174,3 +174,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).
 - 2026-11-05 — Phase 2 section updated to match the proposed Phase 2 plan; Membership/RoleAssignment/invitations moved to Phase 3 (ADR-032, proposed).
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037) reflected; support sessions + dual-scope RLS noted for Phase 3; phone login added to Phase 14.
+- 2026-11-06 — Phase 2 dependency line updated (ADR-038/039; plan rev. 3).

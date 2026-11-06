@@ -41,7 +41,9 @@
 | 034 | Email-link tokens: random, hashed, single-use, purpose-bound, expiring, invalidated, rate-limited | **Accepted** | 2026-11-05 |
 | 035 | Step-up re-authentication for sensitive operations; MFA mandatory for privileged accounts only | **Accepted** | 2026-11-05 |
 | 036 | Security-event IP addresses: encrypted at rest, restricted access, configurable retention + anonymization | **Accepted (owner, Q7 with privacy conditions)** | 2026-11-05 |
-| 037 | Phase 2 scope decisions: phone/SMS login → Phase 14; no public registration; breach check optional/off; server-side QR; 30 min idle / 12 h absolute; new sign-in notices; Django admin disabled | **Accepted** | 2026-11-05 |
+| 037 | Phase 2 scope decisions: phone/SMS login → Phase 14; no public registration; breach check optional/off; server-side QR; 30 min idle / 12 h absolute; new sign-in notices; Django admin disabled | **Accepted** (Q5 line amended by ADR-038) | 2026-11-05 |
+| 038 | Manual MFA key entry during initial enrollment only, after re-authentication, shown once (accessibility exception to ADR-037 Q5) | **Accepted (owner, strict conditions)** | 2026-11-06 |
+| 039 | `@hookform/resolvers` with its official Zod integration (Phase 2 frontend forms) | **Accepted** | 2026-11-06 |
 
 ---
 
@@ -386,10 +388,32 @@ The reuse list is in Phase 2 plan §6.10.
 | Phone / SMS-code login | Moves to Phase 14 (needs an SMS provider) |
 | Registration | No public registration in Phase 2; accounts are created only through authorized administrative workflows |
 | Breached-password check | Disabled by default; optional, configurable integration kept |
-| MFA QR code | Generated server-side; the raw MFA secret is never in API responses or logs |
+| MFA QR code | Generated server-side; the raw MFA secret is never in API responses or logs. *Amended by ADR-038 (2026-11-06): one-time manual-key display during initial enrollment after re-authentication.* |
 | Sessions | 30-minute idle timeout; 12-hour absolute lifetime |
 | New sign-in notices | Sent to platform staff according to configured security policy; no sensitive data in email |
 | Django admin | Disabled in production; all administration through application interfaces and audited APIs |
+
+## ADR-038 — Manual MFA key entry (accessibility exception)
+**Status:** **Accepted** — owner approval of Phase 2 plan Q10 "with strict security conditions", 2026-11-06. It **amends ADR-037** ("the raw MFA secret is never in API responses or logs") for this single, tightly controlled case. Every other part of ADR-037 is unchanged.
+
+**Context:** users who can't scan a QR code (screen-reader users, setting up on the same phone, broken camera) need to type the key into their authenticator app.
+
+**Decision (owner conditions):**
+1. The key may be displayed **only during initial MFA enrollment**, for an unconfirmed device within its enrollment window.
+2. It is shown **only after successful re-authentication**: a fresh step-up, where the login itself does not count. Step-up is allowed inside the restricted enrollment session.
+3. It is shown **once**. Later requests get `410`. It is **never exposed through logs, analytics, emails, audit metadata or any later API response**.
+4. If the user loses it before enrollment is completed, they **must restart MFA setup**, which generates a new secret and invalidates the pending one.
+5. The MFA secret is **stored encrypted at rest** (ADR-031).
+
+Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a).
+
+## ADR-039 — `@hookform/resolvers`
+**Status:** **Accepted** — owner approval of Phase 2 plan Q11, 2026-11-06.
+
+**Decision:**
+- Add `@hookform/resolvers` (MIT) and use its **official Zod integration** (`zodResolver` from `@hookform/resolvers/zod`) with react-hook-form.
+- Pin a maintained, compatible version, recorded in `TECH_STACK.md`: 7.0.3, with peers `zod ^3.25 || ^4` and `react-hook-form ^7.55`, both compatible with the pinned zod 4.6 and react-hook-form 7.91.
+- **Why:** it avoids an in-house adapter (duplicated, less tested code).
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
@@ -400,3 +424,4 @@ The reuse list is in Phase 2 plan §6.10.
 - 2026-11-05 — Added ADR-031 to ADR-035 (Proposed) with the Phase 2 plan. No existing ADR changed.
 
 - 2026-11-05 — Owner approved ADR-031, ADR-032, ADR-034 and ADR-035, and ADR-033 with conditions. Added ADR-036 (IP privacy, Q7) and ADR-037 (Q2–Q9 scope decisions) as Accepted. No other ADR changed.
+- 2026-11-06 — Added ADR-038 (manual MFA key, Q10 strict conditions; amends ADR-037 Q5 line) and ADR-039 (`@hookform/resolvers`, Q11), both Accepted. ADR-037 index row annotated. No other ADR changed.

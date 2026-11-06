@@ -1,12 +1,12 @@
 # Phase 2 Implementation Plan — Authentication, Users, Roles & Permissions
 
-- **Status:** Proposed (revision 2). Owner decisions of 2026-11-05 are incorporated and ADR-031 to ADR-037 are Accepted. **Awaiting final owner approval of this plan. No application code until approved.**
-- **Prepared:** 2026-11-05 (rev. 1); revised 2026-11-05 (rev. 2: approvals, owner conditions, additional requirements, Phase 3 consistency review)
+- **Status:** Proposed (revision 3). Owner decisions of 2026-11-05 and 2026-11-06 are incorporated, and ADR-031 to ADR-039 are Accepted. **Awaiting final owner approval of this plan. No application code until approved.**
+- **Prepared:** 2026-11-05 (rev. 1); revised 2026-11-05 (rev. 2: approvals, owner conditions, additional requirements, Phase 3 consistency review); revised 2026-11-06 (rev. 3: Q10 manual MFA key with strict conditions, Q11 `@hookform/resolvers`, PR #12 merged)
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 2
 - **Governing decisions (Accepted):**
   - ADR-009 (tenancy/RLS), ADR-010 (hierarchy), ADR-011 (session auth), ADR-012 (UUIDv7), ADR-015 (REST/OpenAPI), ADR-021 (en/bn), ADR-030 (pins).
-  - **ADR-031** (field encryption), **ADR-032** (membership in Phase 3), **ADR-033** (custom business RBAC + reuse of Django security primitives), **ADR-034** (email-link tokens), **ADR-035** (step-up + privileged-account MFA), **ADR-036** (IP privacy), **ADR-037** (Q2–Q9 scope decisions).
-- **Still open:** Q10 and Q11 (§13).
+  - **ADR-031** (field encryption), **ADR-032** (membership in Phase 3), **ADR-033** (custom business RBAC + reuse of Django security primitives), **ADR-034** (email-link tokens), **ADR-035** (step-up + privileged-account MFA), **ADR-036** (IP privacy), **ADR-037** (Q2–Q9 scope decisions), **ADR-038** (manual MFA key exception, Q10), **ADR-039** (`@hookform/resolvers`, Q11).
+- **Still open:** none. All questions are answered (§13); only final plan approval remains.
 
 ---
 
@@ -47,10 +47,10 @@ Phase 2 serves **only the platform host** (`admin.<platform-domain>`; `localhost
 | Item | State |
 |---|---|
 | Phase 1 foundation on `main` (PR #2) | ✅ Merged 2026-11-05 18:42:43 UTC |
-| **Phase 1 review follow-up PR #12** (prod guards, DB hardening, ADR-029/030, S3 suite, Dependabot guards) | ⏳ **Open, CI green, not merged.** It must be merged before implementation starts. This plan's branch is stacked on it |
+| **Phase 1 review follow-up PR #12** (prod guards, DB hardening, ADR-029/030, S3 suite, Dependabot guards) | ✅ **Merged** 2026-11-06 by squash, commit `d80f576554937f95c214b08a8f5d7c883ec721a9` (owner-authorized; 8/8 CI green). This plan's PR #13 is rebased onto `main` |
 | Phase 1 marked `Approved` | ⏳ Owner |
-| ADR-031 to ADR-037 | ✅ Accepted 2026-11-05 |
-| Q10, Q11 (§13) | ⏳ Owner |
+| ADR-031 to ADR-037 | ✅ Accepted 2026-11-05; ADR-038/039 Accepted 2026-11-06 |
+| Q10, Q11 (§13) | ✅ Approved 2026-11-06 (ADR-038, ADR-039) |
 | Final approval of this plan (rev. 2) | ⏳ Owner |
 | Dependabot PRs #5, #10, #11 closed (they conflict with ADR-003/030) | ⏳ Owner (recommended) |
 
@@ -230,7 +230,7 @@ sequenceDiagram
     A-->>B: 200 {status:"mfa_required"}
     B->>A: POST /auth/mfa/verify/ {code}
   else MFA required but not enrolled
-    A-->>B: 200 {status:"mfa_enrollment_required"}  (restricted session: MFA setup + logout only)
+    A-->>B: 200 {status:"mfa_enrollment_required"}  (restricted session: MFA setup, step-up, logout only)
   end
   A->>A: django.contrib.auth.login() (cycle_key) → SessionRecord → audit
   A-->>B: 200 {status:"authenticated"}  (HttpOnly/Secure/SameSite=Lax host-only cookie)
@@ -290,11 +290,28 @@ All locks and throttle events are audited.
 
 **Secret encrypted at rest (ADR-031).**
 
-**Raw secret never exposed (ADR-037 / Q5):**
-- `POST /me/mfa/totp/setup/` returns **only a server-rendered SVG QR code** (via `segno`) and a device ID.
-- **No** `otpauth://` URI, **no** manual-entry key and **no** secret field in any API response.
-- The response carries `Cache-Control: no-store`, and its body is excluded from all logging.
-- The QR image inevitably encodes the secret, because the authenticator app needs it. It is shown only during unconfirmed enrollment, which expires after 10 minutes. (A manual-entry option for users who can't scan is **Q10**.)
+**Raw secret exposure is minimized (ADR-037 / Q5, amended by ADR-038 / Q10):**
+- `POST /me/mfa/totp/setup/` returns **only a server-rendered SVG QR code** (via `segno`) and a device ID. There is no `otpauth://` URI and no secret field.
+- The QR image inevitably encodes the secret, because the authenticator app needs it. It is shown only during unconfirmed enrollment, which expires after 10 minutes.
+- Responses carry `Cache-Control: no-store`, and response bodies are never logged.
+
+**Manual-entry key, an accessibility alternative to scanning (ADR-038, owner's strict conditions):**
+1. **When:** only during **initial enrollment**, for an **unconfirmed** device inside its 10-minute enrollment window. It is never available for a confirmed device or after enrollment completes.
+2. **Re-authentication first:** `POST /me/mfa/totp/setup/{device_id}/manual-key/` requires a **fresh step-up** (password re-entered within the last 10 minutes; the login itself does not count). Without it the response is `403 step_up_required`. In the restricted *enrollment-required* session (§6.1), `POST /auth/step-up/` is permitted (password-only, because no MFA exists yet), alongside the MFA-setup endpoints and logout.
+3. **Shown once:** the first successful call returns the base32 key, grouped for readability (e.g. `ABCD EFGH …`), and marks the device `manual_key_revealed_at`. **Every later call returns `410 manual_key_already_shown`**, and no other endpoint ever returns it.
+4. **Lost before confirming → restart:** the user must restart setup (`DELETE` the pending device or start a new setup). That generates a **new secret**, invalidates the old pending device, and allows one new reveal.
+5. **Never exposed elsewhere:**
+   - not in logs (structlog redaction plus no response-body logging);
+   - not in Sentry (`send_default_pii=False`, and a `before_send` scrubber drops MFA payloads);
+   - not in analytics (the app has none; the CSP blocks third-party scripts);
+   - not in emails or audit metadata;
+   - not in any later API response (including `GET /me/mfa/`).
+6. **Frontend handling:**
+   - the key stays only in component state for the reveal mutation, outside the TanStack Query cache;
+   - it is cleared on unmount, never written to any browser storage, and never put in a URL;
+   - a "copy" button uses the clipboard API, with a warning to clear the clipboard afterwards.
+7. **Audit:** `identity.mfa.manual_key_revealed` (actor, device ID, outcome; **no key material**). It is rate-limited with the step-up limits.
+8. **Storage:** the secret is stored encrypted at rest (ADR-031), as for QR enrollment.
 
 **Confirmation:** `POST /me/mfa/totp/confirm/` with a valid code activates the device and returns **10 recovery codes** once.
 - Each code is 16 base32 characters (80 bits).
@@ -442,7 +459,9 @@ Keys: `FIELD_ENCRYPTION_KEYS` (ADR-031 key ring) and `IP_INDEX_KEY` (separate HM
 | `POST /me/password/` | user | step-up |
 | `POST /me/email/` | user | step-up |
 | `GET /me/mfa/` | user | `identity.mfa.manage_own` |
-| `POST /me/mfa/totp/setup/` | user | Returns **QR SVG only**; `no-store` |
+| `POST /me/mfa/totp/setup/` | user | Returns **QR SVG only**; `no-store`; replaces any pending (unconfirmed) device |
+| `POST /me/mfa/totp/setup/{device_id}/manual-key/` | user | **Fresh step-up**; unconfirmed device only; returns the key **once** (then `410`); `no-store`; audited (ADR-038) |
+| `DELETE /me/mfa/totp/setup/{device_id}/` | user | Cancel/restart a pending enrollment (destroys the pending secret) |
 | `POST /me/mfa/totp/confirm/` | user | Returns recovery codes once; `no-store` |
 | `DELETE /me/mfa/totp/` | user | step-up; blocked if MFA required |
 | `POST /me/mfa/recovery-codes/` | user | step-up; regenerate |
@@ -467,7 +486,7 @@ Keys: `FIELD_ENCRYPTION_KEYS` (ADR-031 key ring) and `IP_INDEX_KEY` (separate HM
 |---|---|
 | `/[locale]/login` | Email + password; generic errors; throttle message with retry time |
 | `/[locale]/login/mfa` | TOTP code or "use a recovery code" |
-| `/[locale]/login/mfa-setup` | Forced enrollment: QR (server SVG), confirm code, recovery codes shown once with copy/download and an acknowledgement checkbox |
+| `/[locale]/login/mfa-setup` | Forced enrollment: QR (server SVG); **"Can't scan? Enter the key manually"** → step-up dialog → key shown once with a warning and copy button (ADR-038); confirm code; recovery codes shown once with copy/download and an acknowledgement checkbox |
 | `/[locale]/forgot-password` | Request reset (identical confirmation for all inputs) |
 | `/[locale]/reset-password` | Reads `#token`; new password with validation feedback |
 | `/[locale]/activate` | Reads `#token`; set first password → MFA setup if required |
@@ -478,7 +497,7 @@ Keys: `FIELD_ENCRYPTION_KEYS` (ADR-031 key ring) and `IP_INDEX_KEY` (separate HM
 | `/[locale]/platform/audit` | Audit log with filters; IP reveal (permission + step-up) |
 | App shell | Server-side `/me/` check; redirect to login; permission-driven navigation; step-up dialog; idle-timeout warning before expiry |
 
-- **Tech:** TanStack Query; react-hook-form + zod (+ resolver, Q11); generated API client; shadcn/ui.
+- **Tech:** TanStack Query; react-hook-form + zod via the official `@hookform/resolvers/zod` integration (ADR-039); generated API client; shadcn/ui.
 - **i18n:**
   - every string lives in `en.json` and `bn.json` (parity test);
   - emails come in `en` and `bn` (Django templates, chosen by user locale);
@@ -495,7 +514,7 @@ Keys: `FIELD_ENCRYPTION_KEYS` (ADR-031 key ring) and `IP_INDEX_KEY` (separate HM
 | Enumeration (req. 7) | Login (unknown, wrong password, inactive, unactivated) → identical status, body and timing band. Reset/resend → identical `202`. Throttle responses identical for existing and non-existing accounts |
 | Brute force (req. 8) | Per-IP and per-email limits; progressive delay and lock; MFA attempt limit; step-up attempt limit; locks audited; Redis keys contain no plaintext IP or email |
 | Sessions (req. 8) | Idle 30 min and absolute 12 h (time-frozen); list/revoke own; revoke-others; admin revoke-any with step-up; automatic revocation on reset/deactivation/MFA reset; `cycle_key` on login/MFA/privilege change |
-| MFA / step-up | Enrollment; replay rejected; ±1 window; recovery code single use and hashed; enrollment gate for privileged users; cannot disable when required; step-up required and expires after 10 min; **no API response contains the TOTP secret or an `otpauth://` URI** |
+| MFA / step-up | Enrollment; replay rejected; ±1 window; recovery code single use and hashed; enrollment gate for privileged users; cannot disable when required; step-up required and expires after 10 min; **no API response contains an `otpauth://` URI**; the TOTP secret appears **only** in the single manual-key response. **Manual key (ADR-038):** without fresh step-up → `403`; first call returns the key; second call → `410`; confirmed device → never; restart issues a new secret and invalidates the old one; the key is absent from logs, Sentry payloads, audit rows, emails and `GET /me/mfa/` |
 | Tokens (ADR-034) | 256-bit randomness; hash-only storage; single use; expiry; purpose binding; new token invalidates old; rate limited |
 | Secrets at rest (ADR-031/036) | Raw DB values of MFA secrets and IPs differ from the plaintext; decryption round-trip; key-ring rotation; blind-index search; anonymization job; `erase_ip_data` |
 | No secrets in logs (req. 9) | For each flow, capture structlog, audit rows (incl. metadata), Sentry events (stubbed) and outgoing emails, and assert that the password, raw token, TOTP secret, MFA code, recovery codes, session key and CSRF token never appear |
@@ -518,7 +537,7 @@ Coverage: ≥ 85% overall; **≥ 90%** for `identity`, `rbac` and `audit` servic
 | `@tanstack/react-query` | `5.106.1` | MIT | Server state |
 | `react-hook-form` | `7.91.0` | MIT | Forms |
 | `zod` | `4.6.7` | MIT | Validation |
-| `@hookform/resolvers` | `7.0.3` | MIT | **Q11:** glue between react-hook-form and zod; not explicitly approved yet |
+| `@hookform/resolvers` | `7.0.3` | MIT | **Approved (Q11, ADR-039).** Official react-hook-form ↔ zod integration (`@hookform/resolvers/zod`); peer ranges `zod ^3.25 \|\| ^4`, `react-hook-form ^7.55`, compatible with the pinned versions |
 
 Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lock.yaml`. Not added: `django-axes`, `django-otp`, JWT/OAuth libraries (ADR-028 pending), any GeoIP database.
 
@@ -533,6 +552,8 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 | ADR-035 | Step-up for sensitive operations; MFA for privileged accounts (data-driven), not for every action |
 | ADR-036 | Encrypted IPs, restricted access, configurable retention and anonymization (legal review pending) |
 | ADR-037 | Q2–Q9 scope decisions |
+| ADR-038 | Manual MFA key entry during initial enrollment, with strict conditions (amends ADR-037's Q5 line for this case only) |
+| ADR-039 | `@hookform/resolvers` (official Zod integration) approved |
 
 ## 13. Owner answers and open questions
 
@@ -547,8 +568,8 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 | Q7 | IP storage | **Approved with privacy conditions:** encrypted, restricted, retention + anonymization, legal review pending (§6.9, ADR-036) |
 | Q8 | New sign-in notices | **Approved:** platform staff by policy; no sensitive data (§6.11) |
 | Q9 | Django admin | **Approved:** disabled; application interfaces and audited APIs only |
-| **Q10** | **Manual-entry key for TOTP enrollment** (users who can't scan a QR code, e.g. screen-reader users or setting up on the same phone). Showing it would put the raw secret in an API response, which the Q5 condition forbids | **Open.** Default in this plan: **not provided**. Alternative, only if you approve an exception: an explicit "can't scan?" action that returns the key once (step-up, `no-store`, audited) |
-| **Q11** | `@hookform/resolvers` (official react-hook-form ↔ zod adapter, MIT) | **Open.** Recommend approving. The alternative is a small in-house adapter (duplicated, less tested code) |
+| Q10 | Manual-entry key for TOTP enrollment | **Approved with strict conditions (2026-11-06, ADR-038):** only during initial enrollment, after successful re-authentication, shown once; never in logs, analytics, emails or later responses; restart setup if lost; secret encrypted at rest (§6.6) |
+| Q11 | `@hookform/resolvers` | **Approved (2026-11-06, ADR-039):** use its official Zod integration; pinned and documented in `TECH_STACK.md` |
 
 ## 14. Owner additional requirements: traceability
 
@@ -570,8 +591,11 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 ## 15. Final implementation checklist (after approval; on `feat/phase-02-auth-rbac` from updated `main`)
 
 **Before starting**
-- [ ] PR #12 merged; Phase 1 `Approved`; this plan approved; Q10 and Q11 answered
-- [ ] Rebase `docs/phase-02-plan` onto `main` (or merge its PR); branch `feat/phase-02-auth-rbac` from `main`
+- [x] PR #12 merged (`d80f576`, 2026-11-06)
+- [x] Q10 and Q11 answered (ADR-038, ADR-039)
+- [x] `docs/phase-02-plan` rebased onto `main`; PR #13 retargeted to `main`
+- [ ] Owner's final approval of Phase 1 (`Approved`) and of this plan; PR #13 merged by the owner
+- [ ] Branch `feat/phase-02-auth-rbac` from `main` (only after the above)
 
 **Backend foundation**
 - [ ] `core.crypto` (AES-GCM key ring, HMAC index), `core.tokens`, `RestrictTableGrants` operation + tests
@@ -584,6 +608,7 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 **identity**
 - [ ] User fields migration; `AccountToken`, `MFADevice`, `RecoveryCode`, `SessionRecord`, `SeenDevice`
 - [ ] Login/MFA/logout services (Django `authenticate`/`login`/`logout`); throttling/lockout; step-up
+- [ ] TOTP enrollment: QR setup, one-time manual-key reveal with fresh step-up + `410` afterwards + restart flow (ADR-038), confirmation, recovery codes; Sentry `before_send` MFA scrubber
 - [ ] Activation, reset, email change; en/bn email templates; Celery platform tasks
 - [ ] Session middleware (idle/absolute, `SessionRecord` upkeep); revocation services
 - [ ] Breached-password validator (off by default); new sign-in notifier
@@ -619,7 +644,8 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 8. **Authorization:** every protected endpoint enforces a server-side permission (CI-enforced). `has_perm` passes the matrix. A Super Admin is denied on tenant targets without a support session. No self-escalation is possible, and the last super admin is protected.
 9. **Pluggability:** a fake tenant permission source plugged into the engine passes the scope-coverage tests without engine changes (ADR-032 condition).
 10. **Audit:** all §6.8 events are recorded. Audit rows are DB-immutable for every role. IPs are encrypted, masked by default, revealed only with permission + step-up (audited), and anonymized after the configured retention.
-11. **No secret leakage:** passwords, tokens, TOTP secrets, MFA codes, recovery codes, session keys and CSRF tokens appear in no log, audit row, Sentry event, email or API response (except the one-time QR and recovery-code responses, which are `no-store`).
+11. **No secret leakage:** passwords, tokens, TOTP secrets, MFA codes, recovery codes, session keys and CSRF tokens appear in no log, audit row, Sentry event, email or API response. The only exceptions are the one-time QR, the one-time manual-key response (fresh step-up, unconfirmed device, then `410`) and the one-time recovery-code response, all `no-store`.
+11a. **Manual MFA key (ADR-038):** available only during initial enrollment, after fresh re-authentication, exactly once; losing it requires restarting setup, which issues a new secret.
 12. **Bilingual UI:** all authentication screens and emails exist in English and Bengali, with key parity tests passing.
 13. **Quality gates:** CI green; coverage ≥ 85% overall and ≥ 90% for identity/rbac/audit services; Playwright auth E2E green; axe has no serious violations; Trivy/gitleaks clean.
 14. **Docs and PR:** docs updated; separate PR opened; not merged without owner approval.
@@ -645,3 +671,4 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
   - QR-only enrollment (no `otpauth` URI or manual key in responses);
   - traceability (§14), final checklist (§15) and expanded acceptance criteria (§16);
   - Q10 and Q11 opened.
+- 2026-11-06 — Rev. 3: Q10 approved with strict conditions (manual MFA key; ADR-038; §6.6, §8, §9, §10, §15, §16) and Q11 approved (`@hookform/resolvers`; ADR-039; §9, §11); PR #12 merged (`d80f576`); prerequisites updated; no open questions remain.

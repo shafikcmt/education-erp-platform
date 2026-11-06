@@ -26,7 +26,9 @@
 - MFA: TOTP + single-use recovery codes (Phase 2); WebAuthn/passkeys later.
   - **Mandatory for privileged accounts** (ADR-035), defined by data: a user must have MFA if any effective permission has `requires_mfa`. This covers all platform roles, `tenant_owner`, `institution_admin`, and roles that manage roles/assignments or approve financial operations.
   - Ordinary accounts are not forced and are not asked for MFA on ordinary actions. Tenants may require it for more roles but cannot turn off the mandated ones.
-  - TOTP secrets are encrypted at rest (ADR-031) and **never returned by any API**: enrollment shows a server-rendered QR only (ADR-037). Recovery codes are stored only as hashes.
+  - TOTP secrets are encrypted at rest (ADR-031). Enrollment shows a server-rendered QR (ADR-037).
+  - As an accessibility alternative, the **manual-entry key** can be shown **once**, only during initial enrollment and only after fresh re-authentication. It never appears in logs, analytics, emails or later responses; if it is lost before confirmation, setup restarts with a new secret (ADR-038).
+  - Recovery codes are stored only as hashes.
 - **Step-up re-authentication** (password + MFA, valid 10 minutes) is required for sensitive operations: password/email change, MFA changes, role grants, deactivation, admin MFA reset, revoking others' sessions, IP reveal, and future permissions flagged `requires_step_up` (ADR-035).
 - Login: rate-limited per IP and per account; progressive delays/lockout with notification; generic error messages.
 - **Browser sessions (ADR-011, accepted with modification):** Django session authentication for the first-party web app.
@@ -163,3 +165,4 @@ Audit records: never updated or deleted by application code; DB role for app has
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1 review: production guards and database least-privilege controls documented as implemented.
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
+- 2026-11-06 — Manual MFA key exception (ADR-038) documented.

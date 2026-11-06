@@ -18,8 +18,8 @@
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
-| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) (merged) + review follow-up PR (open) | Follow-up PR awaiting owner approval |
-| 2 | Authentication, users, roles & permissions | Planned | | Plan rev. 2 (`plans/PHASE_02_PLAN.md`) awaiting final owner approval; blocked on PR #12 merge |
+| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Awaiting owner's final `Approved` |
+| 2 | Authentication, users, roles & permissions | Planned | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, docs only) | Plan rev. 3 awaiting final owner approval |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
@@ -44,7 +44,8 @@ See `DECISION_LOG.md`.
 - **Accepted 2026-11-05:** ADR-009, ADR-010, ADR-011 (with modification), ADR-012, ADR-013, ADR-014, ADR-015, ADR-021, ADR-029 (conditions verified), ADR-030 (TS 5.9 / ESLint 9 held temporarily).
 - **Still Proposed/Open:** ADR-016–020, ADR-022–028.
 - **Accepted 2026-11-05 (Phase 2 planning):** ADR-031, ADR-032, ADR-033 (with conditions), ADR-034, ADR-035, ADR-036 (IP privacy, Q7), ADR-037 (Q2–Q9).
-- **Open with the Phase 2 plan rev. 2:** Q10 (TOTP manual-entry key, default not provided), Q11 (`@hookform/resolvers`), and final plan approval.
+- **Accepted 2026-11-06:** ADR-038 (manual MFA key with strict conditions, Q10), ADR-039 (`@hookform/resolvers`, Q11).
+- **Open:** owner's final approval of Phase 1 and of the Phase 2 plan (rev. 3, PR #13).
 
 ## Known gaps / open questions
 
@@ -225,4 +226,28 @@ See `DECISION_LOG.md`.
   1. Owner merges PR #12 and confirms Phase 1 `Approved`.
   2. Owner answers Q10 and Q11 and gives final approval of plan rev. 2.
   3. Rebase the docs branch onto `main`, then implement on `feat/phase-02-auth-rbac` with a separate PR.
+
+### 2026-11-06 — Session 7 (PR #12 merge, Phase 2 plan rev. 3)
+- **PR #12 merged by Claude under owner authorization**, after verifying every condition:
+  1. open and mergeable (`clean`), with its base still `main` at `cb2383e`;
+  2. 8/8 CI check runs `success` on head `9f6d7c4`;
+  3. 0 reviews, 0 review threads, 0 comments, no requested reviewers;
+  4. final diff reviewed: 19 files, no deletions, renames, env files or artifacts, and every security change tightens controls;
+  5. squash-merged, pinned to the reviewed head SHA, with no force-push or bypass;
+  6. **merge commit `d80f576554937f95c214b08a8f5d7c883ec721a9`**, whose tree is byte-identical to the reviewed head.
+- **PR #13:**
+  - GitHub did not retarget it automatically, because the base branch still exists.
+  - After the squash merge, the docs branch still carried the original PR #12 commits, so I rebased only the 2 documentation commits onto `main` (my own branch, `--force-with-lease`) and retargeted PR #13 to `main`.
+  - The diff is now 11 documentation files only.
+- **Q10 approved with strict conditions → ADR-038**, amending ADR-037's Q5 line for this case only. Manual MFA key:
+  - only during initial enrollment, after fresh step-up, shown once (then `410`);
+  - restart setup (new secret) if lost;
+  - never in logs, analytics, emails, audit or later responses;
+  - secret encrypted at rest;
+  - step-up allowed in the restricted enrollment session.
+- **Q11 approved → ADR-039:** `@hookform/resolvers` 7.0.x with its official Zod integration, recorded in `TECH_STACK.md`.
+- **Plan rev. 3:** §6.6, §8 (2 new endpoints), §9, §10, §11, §13, §15 and §16 updated. No open questions remain.
+- **Phase 3 consistency:** unaffected. `MFADevice` stays a platform (user-owned) table, and the reveal endpoint is a platform/self-service endpoint.
+- **No application code; no implementation branch created.**
+- **Next recommended task:** owner gives final approval of Phase 1 and the Phase 2 plan, and merges PR #13. Then implement on `feat/phase-02-auth-rbac`.
 

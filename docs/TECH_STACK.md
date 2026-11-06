@@ -56,7 +56,7 @@
 | Purpose | Library |
 |---|---|
 | Server state | TanStack Query `5.106.x` (owner-approved; installed in Phase 2) |
-| Forms | react-hook-form `7.91.x` + zod `4.6.x` (owner-approved; installed in Phase 2); `@hookform/resolvers` pending owner decision (Phase 2 plan Q11) |
+| Forms | react-hook-form `7.91.x` + zod `4.6.x` + `@hookform/resolvers` `7.0.x` (official Zod integration, `zodResolver`; ADR-039). All owner-approved; installed in Phase 2 |
 | API types | `openapi-typescript` (+ `openapi-fetch`) generated from DRF schema |
 | i18n | `next-intl` |
 | Tables | TanStack Table |
@@ -106,3 +106,4 @@
 Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml`.
 - 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).
 - 2026-11-05 — Phase 2 owner-approved libraries recorded with version ranges (installed at implementation).
+- 2026-11-06 — `@hookform/resolvers` 7.0.x approved and recorded (ADR-039).
