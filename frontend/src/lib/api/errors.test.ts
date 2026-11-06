@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { ApiError} from "./errors";
+import type { ApiError } from "./errors";
 import { isApiError, unwrap } from "./errors";
 
 const response = (status: number) => new Response(null, { status });
