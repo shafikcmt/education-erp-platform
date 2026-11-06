@@ -22,15 +22,17 @@
 
 | ID | Requirement | Pri | Phase |
 |---|---|---|---|
-| IAM-01 | Email/phone + password login; one user account may belong to multiple tenants | M | 2 |
-| IAM-02 | Password reset, invitation, email/phone verification | M | 2 |
-| IAM-03 | MFA (TOTP) — mandatory for platform roles and tenant owners/admins | M | 2 |
+| IAM-01 | Email + password login; one user account may belong to multiple tenants/institutions with different roles (memberships built in Phase 3). Phone/SMS login moved to Phase 14 (ADR-037) | M | 2 (email), 3 (memberships), 14 (phone) |
+| IAM-02 | Password reset, activation, email verification (no public registration, ADR-037); tenant invitations | M | 2 (reset/activation/verification), 3 (invitations) |
+| IAM-03 | MFA (TOTP + recovery codes), mandatory for privileged accounts (ADR-035); step-up for sensitive operations | M | 2 |
 | IAM-04 | Permission codes `<module>.<resource>.<action>`; roles = permission bundles | M | 2 |
 | IAM-05 | Role assignments scoped to tenant / institution / campus (and own-records for students/guardians/teachers) | M | 2–3 |
 | IAM-06 | System role templates per institution type; tenants can clone/customize roles | M | 2, 5 |
-| IAM-07 | Session management: list/revoke sessions, inactivity timeout, login history | S | 2 |
+| IAM-07 | Session management: list/revoke sessions; 30 min idle and 12 h absolute timeouts; sign-in history via audit; new sign-in notices | M | 2 |
 | IAM-08 | Enterprise SSO (SAML/OIDC) | C | 17/18 |
-| IAM-09 | Brute-force protection and rate limiting on auth endpoints | M | 2 |
+| IAM-09 | Brute-force protection and rate limiting on auth endpoints; no user enumeration | M | 2 |
+| IAM-10 | Platform staff have no implicit tenant-data access; audited, time-limited support sessions | M | 2 (enforced), 3 (support sessions) |
+| IAM-11 | Security-event IPs encrypted, access-restricted, retained per policy and anonymized (ADR-036) | M | 2 |
 
 ## 3. Module Registry & Entitlements
 
@@ -195,3 +197,4 @@ Numeric NFR targets marked *proposed* require owner approval (see `DECISION_LOG.
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.

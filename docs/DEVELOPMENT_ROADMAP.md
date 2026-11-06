@@ -34,14 +34,28 @@
 **Exit:** `docker compose up` gives healthy stack; CI green on a sample test; README quick start updated.
 
 ## Phase 2 — Authentication, users, roles & permissions
-**Depends on:** Phase 1; ADR-011 **Accepted** (Django session auth).
-**Deliverables:** `identity` (custom User model — must exist before first migration of other apps; email/phone login, password reset, invitations, MFA TOTP, sessions, login history, throttling), `rbac` (permission registry from manifests, roles, role templates, assignments with scope fields, `has_perm` service, DRF permission classes), `audit` (base append-only events), session auth endpoints (CSRF, login, MFA verify, logout; host-only HttpOnly/Secure/SameSite cookies, `cached_db` sessions, key rotation, revoke-all) + login/MFA/forgot-password UI, `/api/v1/me/`. No token auth (ADR-028 pending).
-**Note:** tenant-scoped assignment wiring completes in Phase 3.
-**Exit:** auth flows E2E tested; permission evaluation unit-tested; security review of auth.
+**Depends on:** Phase 1 `Approved` (incl. review follow-up PR #12 merged); ADR-011 and ADR-031 to ADR-039 **Accepted**. Detailed plan: `docs/plans/PHASE_02_PLAN.md` (rev. 3, **Proposed**, awaiting final owner approval; PR #13).
+**Deliverables (per plan):**
+- **`identity`:**
+  - email + password session login with two-step MFA (TOTP + recovery codes; secrets encrypted per ADR-031);
+  - activation (email verification + first password), password change/reset and email change, using hashed single-use tokens (ADR-034);
+  - Redis-based throttling/lockout with no account enumeration;
+  - `SessionRecord` with list/revoke and idle/absolute timeouts;
+  - sudo-mode re-authentication (ADR-035);
+  - en/bn emails via Celery.
+- **`rbac`:** permission registry from manifests (`sync_permissions`), roles, system role templates for all CLAUDE.md §9 roles (data), platform roles + assignments, scope-aware `has_perm`, DRF permission classes, CI URL-permission audit, no self-escalation, last-super-admin protection.
+- **`audit`:** append-only `AuditEvent` (DB-enforced: no UPDATE/DELETE for `erp_app` + trigger); all auth/RBAC events. Reusable `RestrictTableGrants` migration helper (also makes `django_migrations` SELECT-only for `erp_app`).
+- **API:** `/api/v1/auth/*`, `/api/v1/me/*`, `/api/v1/platform/*` (users, roles, permissions, platform roles, audit).
+- **Frontend:** login, MFA challenge/setup, forgot/reset password, activation, email verification, account security, platform console (users, roles, audit).
+- **Bootstrap:** `create_platform_admin` (no default credentials).
+
+**Moved to Phase 3 (ADR-032, accepted):** `Membership`, tenant `RoleAssignment` and tenant invitations. These are tenant-owned tables and must be built together with RLS and `tenant_atomic`. Their design is in the Phase 2 plan §4.
+**Deferred (ADR-037, accepted):** phone-number login / SMS OTP → Phase 14 (needs an SMS provider). Plan rev. 2 adds step-up, data-driven privileged-account MFA, encrypted IP handling (ADR-036) and a pluggable permission-source engine.
+**Exit:** acceptance criteria in plan §15 (auth E2E incl. MFA and reset via Mailpit; authz allow/deny matrix; audit immutability DB-tested; CI green; coverage ≥ 85% overall and ≥ 90% for identity/rbac/audit services).
 
 ## Phase 3 — SaaS tenants, institutions & campuses
 **Depends on:** Phase 2; ADR-009, ADR-010 **Accepted**.
-**Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, Membership wiring), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies, `core.db.tenant_atomic()` (transaction-scoped `set_config`) + execute-wrapper guard, `platform_scope()` (via `erp_platform` role), Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, configurable `max_institutions`/`max_campuses` limit enforcement (ADR-010), Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
+**Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, **Membership** and tenant **RoleAssignment** on the Phase 2 plan §4 design, tenant **invitations** using the Phase 2 `core.tokens` utility, audited time-limited **support sessions** (Phase 2 plan §4.5) and dual-scope RLS policies for `rbac_role`/`rbac_rolepermission`/`audit_auditevent` (§4.6) — ADR-032 accepted), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies, `core.db.tenant_atomic()` (transaction-scoped `set_config`) + execute-wrapper guard, `platform_scope()` (via `erp_platform` role), Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, configurable `max_institutions`/`max_campuses` limit enforcement (ADR-010), Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
 **Exit:** isolation suite green; RLS verified with raw SQL tests; security review.
 
 ## Phase 4 — Module registry & feature entitlement engine
@@ -97,6 +111,7 @@
 
 ## Phase 14 — Notifications & communication
 **Depends on:** Phase 5 (notifications_core), feature modules emitting events.
+**Includes (ADR-037):** phone-number / SMS-code authentication moved from Phase 2.
 **Deliverables:** `communication` (notices, targeting, SMS/email/push/in-app providers behind abstraction, templates, scheduling, delivery logs, SMS credit metering, preferences/quiet hours), wiring of events (absence, results, fee due, payment received, out-pass, workflow tasks).
 **Exit:** provider fakes in tests; metering accurate under concurrency.
 
@@ -157,3 +172,6 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Phase 1: updated for the implemented foundation (S3-compatible SeaweedFS dev storage per ADR-029, pinned toolchain per ADR-030).
+- 2026-11-05 — Phase 2 section updated to match the proposed Phase 2 plan; Membership/RoleAssignment/invitations moved to Phase 3 (ADR-032, proposed).
+- 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037) reflected; support sessions + dual-scope RLS noted for Phase 3; phone login added to Phase 14.
+- 2026-11-06 — Phase 2 dependency line updated (ADR-038/039; plan rev. 3).

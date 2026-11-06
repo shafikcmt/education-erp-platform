@@ -49,14 +49,14 @@ class CampusScopedModel(InstitutionScopedModel):  # + campus FK (nullable where 
 
 | Table | Key columns |
 |---|---|
-| `identity_user` | id, email (unique, citext), phone (unique nullable), password (argon2), is_platform_staff, mfa_enabled, locale, last_login |
-| `identity_membership` | id, tenant_id, user_id, status (invited/active/suspended), invited_by, joined_at — `UNIQUE (tenant_id, user_id)` |
-| `identity_mfadevice`, `identity_session`, `identity_loginevent` | MFA, active sessions, login history |
+| `identity_user` | id (UUIDv7), email (unique + case-insensitive unique index), password (Argon2, Django), is_active, is_staff, email_verified_at, activated_at, last_password_change_at, deactivated_at, locale, display_name, last_login (phone: Phase 14) |
+| `tenancy_membership` (Phase 3, RLS) | id, tenant_id, user_id, status (invited/active/suspended/left), invited_by, joined_at, last_seen_at — `UNIQUE (tenant_id, user_id)` (ADR-032) |
+| `identity_mfadevice`, `identity_recoverycode`, `identity_accounttoken`, `identity_sessionrecord`, `identity_seendevice` | Phase 2: encrypted TOTP secret (ADR-031); hashed recovery codes; hashed single-use tokens (ADR-034); per-user session index with encrypted IP (ADR-036); new sign-in detection. Login history = audit events |
 | `rbac_permission` | code (`module.resource.action`, PK or unique), module_code, description — seeded from manifests |
-| `rbac_role` | id, tenant_id (NULL = platform/system template), code, name, is_system, institution_type (nullable, for templates) |
+| `rbac_role` | id, tenant_id (NULL = platform role/system template; dual-scope RLS in Phase 3), code, name, name_i18n, kind (platform/template/tenant), institution_types[], is_system |
 | `rbac_rolepermission` | role_id, permission_code |
 | `rbac_roleassignment` | id, tenant_id, membership_id, role_id, scope_type (tenant/institution/campus), institution_id, campus_id, valid_from, valid_until |
-| `rbac_platformroleassignment` | user_id, platform_role |
+| `rbac_platformroleassignment` | user_id, role_id (kind = platform), granted_by, granted_at, reason |
 
 Object-level scopes (e.g. teacher → own sections; guardian → own children) are computed by selectors from domain relations, not stored as role assignments.
 
@@ -167,7 +167,8 @@ Outlined in `MODULE_CATALOG.md`; detailed schemas are defined in the plan of the
 
 | Table | Key columns |
 |---|---|
-| `audit_event` | id, occurred_at, tenant_id (nullable for platform), actor_user_id, actor_type (user/system/support/ai), support_session_id, action, resource_type, resource_id, changes JSONB (redacted), ip, user_agent, request_id — append-only, monthly partitions |
+| `audit_auditevent` | id, occurred_at, tenant_id (nullable; dual-scope RLS in Phase 3), actor_user_id, actor_type (user/system/support/ai), support_session_id, action, outcome, target_type, target_id, metadata JSONB (allow-listed + redacted), user_agent_summary, request_id. Append-only, DB-enforced (grants + trigger); partitioning in Phase 18 |
+| `audit_auditeventip` | event_id, ip_encrypted, ip_index (HMAC), ip_prefix, created_at. Deletable for retention/anonymization (ADR-036) |
 | `files_file` | tenant_id, storage_key, original_name, content_type, size, checksum, uploaded_by, scan_status, retention_class |
 
 ## 3. Indexing guidelines
@@ -193,3 +194,4 @@ Outlined in `MODULE_CATALOG.md`; detailed schemas are defined in the plan of the
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.

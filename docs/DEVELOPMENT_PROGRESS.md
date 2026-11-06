@@ -18,8 +18,8 @@
 | Phase | Name | Status | PR(s) | Notes |
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
-| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2) (merged) + review follow-up PR (open) | Follow-up PR awaiting owner approval |
-| 2 | Authentication, users, roles & permissions | Not started | | |
+| 1 | Repository foundation & infrastructure | Complete | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Awaiting owner's final `Approved` |
+| 2 | Authentication, users, roles & permissions | Planned | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, docs only) | Plan rev. 3 awaiting final owner approval |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
@@ -43,6 +43,9 @@
 See `DECISION_LOG.md`.
 - **Accepted 2026-11-05:** ADR-009, ADR-010, ADR-011 (with modification), ADR-012, ADR-013, ADR-014, ADR-015, ADR-021, ADR-029 (conditions verified), ADR-030 (TS 5.9 / ESLint 9 held temporarily).
 - **Still Proposed/Open:** ADR-016–020, ADR-022–028.
+- **Accepted 2026-11-05 (Phase 2 planning):** ADR-031, ADR-032, ADR-033 (with conditions), ADR-034, ADR-035, ADR-036 (IP privacy, Q7), ADR-037 (Q2–Q9).
+- **Accepted 2026-11-06:** ADR-038 (manual MFA key with strict conditions, Q10), ADR-039 (`@hookform/resolvers`, Q11).
+- **Open:** owner's final approval of Phase 1 and of the Phase 2 plan (rev. 3, PR #13).
 
 ## Known gaps / open questions
 
@@ -50,6 +53,7 @@ See `DECISION_LOG.md`.
 - Payment gateways for SaaS billing and fee collection (ADR-017).
 - Hosting provider, region, data residency (ADR-019).
 - Legal/compliance review for minors' data, retention periods, VAT/tax invoicing.
+- **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
 - Institution-type preset content (especially madrasa variants and hostel profile defaults) needs validation with real institutions.
 - Branch protection for `main` must be configured by the repository owner in GitHub settings (require the CI jobs listed in `DOCKER_DEPLOYMENT.md` §6).
@@ -181,3 +185,69 @@ See `DECISION_LOG.md`.
     - #3, #4, #6, #7, #8: GitHub Actions majors. They address the Node 20 runtime deprecation warning.
     - #9: Mailpit v1.33.0 (dev-only tool).
 - **Next recommended task:** owner reviews and merges the follow-up PR and closes or merges the Dependabot PRs per the triage above; Phase 1 is then `Approved` and the Phase 2 plan (authentication, users, roles & permissions) is prepared for approval.
+
+### 2026-11-05 — Session 5 (Phase 2 planning)
+- **Merge verification:**
+  - `main` is at `cb2383e` (the PR #2 merge). All 28 Phase 1 foundation files checked are present (137 tracked files).
+  - **PR #12 (Phase 1 review follow-up) is still open, not merged** (CI green, mergeable). Its fixes are therefore **not yet on `main`**: prod API-docs and secret-key guards, DB TEMP/CONNECT hardening, ADR-029/030 Accepted, S3 isolation suite, `s3_mirror`, Dependabot ADR guards. The owner's message said the Phase 1 PR was merged; that matches PR #2, not PR #12.
+- **Planning:**
+  - Prepared `docs/plans/PHASE_02_PLAN.md` (Proposed). It covers:
+    - the tenant-aware membership design (built in Phase 3, ADR-032);
+    - the role and permission matrix for Super Admin, Institution Admin, Campus Admin, Teacher, Staff, Student and Parent;
+    - the auth, session, MFA, password-reset, email-verification and audit design;
+    - models, API endpoints, frontend screens, tests, dependencies and acceptance criteria.
+  - Added ADR-031 to ADR-035 (Proposed). The roadmap Phase 2/3 sections were updated to match.
+  - Work is on branch `docs/phase-02-plan`, stacked on PR #12's branch.
+- **No code written.** Tests/lint: not applicable (documentation only).
+- **Next recommended task:**
+  1. Owner merges PR #12 and confirms Phase 1 `Approved`.
+  2. Owner reviews the Phase 2 plan and answers Q1–Q9.
+  3. After approval: implement on `feat/phase-02-auth-rbac` and open a separate PR.
+
+### 2026-11-05 — Session 6 (Phase 2 plan revision 2)
+- **Owner approvals recorded in `DECISION_LOG.md`:**
+  - ADR-031, ADR-032, ADR-034 and ADR-035 Accepted; ADR-033 Accepted with conditions.
+  - New Accepted ADR-036 (encrypted, access-restricted, retention-limited security IPs; Q7 conditions).
+  - New Accepted ADR-037 (Q2–Q9: phone login → Phase 14, no public registration, breach check optional/off, server-side QR, 30 min / 12 h sessions, new sign-in notices, Django admin disabled).
+  - Approved libraries recorded with version ranges in `TECH_STACK.md`: pyotp 2.10, cryptography 50.0.2, segno 1.6.6 (low release cadence noted), TanStack Query 5.106, react-hook-form 7.91, zod 4.6.
+- **`plans/PHASE_02_PLAN.md` rev. 2:**
+  - pluggable permission sources (§4.4); support-access design (§4.5); Phase 3 RLS consistency review (§4.6);
+  - data-driven privileged-account MFA; reuse of Django security primitives (§6.10); IP privacy design (§6.9);
+  - traceability of the owner's 10 additional requirements (§14); final implementation checklist (§15); acceptance criteria (§16).
+- **Conflicts found and resolved in rev. 2:**
+  - Rev. 1 returned an `otpauth://` URI, which contains the raw secret and so violates Q5. Rev. 2 makes enrollment QR-only, and the manual-entry key is open as Q10.
+  - IP retention (ADR-036) is incompatible with an immutable audit table holding IPs. Audit IPs move to a separate, deletable encrypted side table.
+  - Platform rows with `tenant_id NULL` would be blocked by the standard RLS policy in Phase 3. A dual-scope policy is defined for `rbac_role`, `rbac_rolepermission` and `audit_auditevent`.
+  - `RolePermission` gains a nullable `tenant_id` in Phase 2, so Phase 3 needs no backfill.
+- **Related docs aligned:** `CLAUDE.md` (`staff_member` role; privileged MFA; no implicit tenant access), `SECURITY.md`, `MULTI_TENANT_ARCHITECTURE.md` (support sessions, dual-scope tables), `REQUIREMENTS.md` (IAM-01/02/03/07/09; new IAM-10, IAM-11), `DATABASE_DESIGN.md`, `API_STANDARDS.md`, `DEVELOPMENT_ROADMAP.md` (Phase 2/3/14), `TECH_STACK.md`.
+- **PR #12 is still open (not merged)**, so Phase 2 implementation remains blocked. The documentation branch `docs/phase-02-plan` stays stacked on PR #12's branch and is rebased onto `main` after PR #12 merges.
+- **No application code written.** Tests/lint: not applicable (documentation only).
+- **Next recommended task:**
+  1. Owner merges PR #12 and confirms Phase 1 `Approved`.
+  2. Owner answers Q10 and Q11 and gives final approval of plan rev. 2.
+  3. Rebase the docs branch onto `main`, then implement on `feat/phase-02-auth-rbac` with a separate PR.
+
+### 2026-11-06 — Session 7 (PR #12 merge, Phase 2 plan rev. 3)
+- **PR #12 merged by Claude under owner authorization**, after verifying every condition:
+  1. open and mergeable (`clean`), with its base still `main` at `cb2383e`;
+  2. 8/8 CI check runs `success` on head `9f6d7c4`;
+  3. 0 reviews, 0 review threads, 0 comments, no requested reviewers;
+  4. final diff reviewed: 19 files, no deletions, renames, env files or artifacts, and every security change tightens controls;
+  5. squash-merged, pinned to the reviewed head SHA, with no force-push or bypass;
+  6. **merge commit `d80f576554937f95c214b08a8f5d7c883ec721a9`**, whose tree is byte-identical to the reviewed head.
+- **PR #13:**
+  - GitHub did not retarget it automatically, because the base branch still exists.
+  - After the squash merge, the docs branch still carried the original PR #12 commits, so I rebased only the 2 documentation commits onto `main` (my own branch, `--force-with-lease`) and retargeted PR #13 to `main`.
+  - The diff is now 11 documentation files only.
+- **Q10 approved with strict conditions → ADR-038**, amending ADR-037's Q5 line for this case only. Manual MFA key:
+  - only during initial enrollment, after fresh step-up, shown once (then `410`);
+  - restart setup (new secret) if lost;
+  - never in logs, analytics, emails, audit or later responses;
+  - secret encrypted at rest;
+  - step-up allowed in the restricted enrollment session.
+- **Q11 approved → ADR-039:** `@hookform/resolvers` 7.0.x with its official Zod integration, recorded in `TECH_STACK.md`.
+- **Plan rev. 3:** §6.6, §8 (2 new endpoints), §9, §10, §11, §13, §15 and §16 updated. No open questions remain.
+- **Phase 3 consistency:** unaffected. `MFADevice` stays a platform (user-owned) table, and the reveal endpoint is a platform/self-service endpoint.
+- **No application code; no implementation branch created.**
+- **Next recommended task:** owner gives final approval of Phase 1 and the Phase 2 plan, and merges PR #13. Then implement on `feat/phase-02-auth-rbac`.
+
