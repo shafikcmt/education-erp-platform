@@ -124,3 +124,9 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
   - New variables: `FIELD_ENCRYPTION_KEYS`, `IP_INDEX_KEY` (mandatory in production; real keys only), `FRONTEND_BASE_URL`, `MFA_ISSUER`, `SECURITY_IP_RETENTION_DAYS`, `SECURITY_NOTIFY_NEW_SIGNIN`, `SECURITY_LOGIN_IP_LIMIT`, `PASSWORD_BREACH_CHECK_*`.
   - Celery beat runs `audit.anonymize_expired_ips` and `identity.housekeeping` daily; security emails use the `notifications` queue.
   - CI stack job bootstraps the E2E Super Admin with `create_platform_admin` before Playwright.
+- 2026-11-06 — Security review (ADR-040):
+  - no service uses `env_file`; each gets an explicit environment allow-list. Runtime services (`api`, `worker`, `beat`, `web`) never receive `DATABASE_MIGRATION_URL`, `ERP_OWNER_PASSWORD` or `POSTGRES_PASSWORD`; `migrate` alone gets the owner URL (`ERP_PROCESS_ROLE=migrate`), `postgres` alone the bootstrap passwords;
+  - Django refuses to start a runtime process that holds owner/superuser credentials;
+  - CI: `docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py`, plus a check inside the running containers;
+  - owner-only maintenance: `docker compose run --rm --entrypoint sh migrate -c 'DATABASE_URL=$DATABASE_MIGRATION_URL python manage.py <rotate_field_encryption|rebuild_ip_index>'`;
+  - production (Phase 19) must preserve this separation in its secret management.

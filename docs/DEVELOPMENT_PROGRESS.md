@@ -20,7 +20,7 @@
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
-| 2 | Authentication, users, roles & permissions | Complete | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation) | Plan approved 2026-11-06; PR #15 awaiting owner review — not merged |
+| 2 | Authentication, users, roles & permissions | Complete | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes) | Plan approved 2026-11-06; security review fixed (ADR-040); awaiting owner's final security review — not merged |
 | 3 | SaaS tenants, institutions & campuses | Not started | | |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
@@ -69,6 +69,11 @@ See `DECISION_LOG.md`.
   - The per-IP login limit (default 20 / 5 min) may be too low for institutions behind one NAT address; it is tunable (`SECURITY_LOGIN_IP_LIMIT`) and is revisited with tenant hosts in Phase 3.
   - Breached-password checking is implemented but off by default; enabling it needs outbound access to `api.pwnedpasswords.com` (ADR-037).
   - Production key management (secret manager, key backup and rotation runbook) depends on ADR-019 (Phase 19).
+  - **Audit tamper evidence (ADR-040):** the owner role can still disable the audit trigger by DDL; protection rests on owner-credential isolation. Off-site/hash-chained audit storage: Phase 18.
+  - **Phase 19 must keep the owner/runtime secret separation** (compose allow-lists and the startup guard exist; the production deployment is not built yet).
+  - The MFA and login locks live in Redis: a cache flush clears active locks (counters restart).
+  - CODEOWNERS is in place; the owner must enable "Require review from Code Owners" in branch protection.
+  - Six Dependabot PRs (#3, #4, #7, #8, #9, #14) wait for a rebase onto the post-Phase-2 `main` and a fresh CI run (see Session 9).
 - The dev Postgres image trusts local connections *inside its own container* (`pg_hba` image default). Network connections require SCRAM. Production uses a managed or hardened database (Phase 19).
 - `beat` has no Docker healthcheck. Its dispatch was verified from logs in Session 4 (heartbeat sent and consumed); add a meaningful healthcheck in Phase 19.
 - `s3_mirror` buffers one object at a time in memory, which is fine for dev/CI. Production-scale backup tooling and schedule: Phase 19.
@@ -275,3 +280,14 @@ See `DECISION_LOG.md`.
   - clean-volume `docker compose up --wait`: all services healthy; `smoke_check` OK; Playwright **21 passed** (setup + desktop + mobile).
 - **CI on PR #15:** first run failed only on gitleaks (a dummy test password in history) → pinned in `.gitleaksignore`, test now uses a derived constant.
 - **Next recommended task:** owner reviews PR #15 (security review notes in the PR) and decides on merge; then plan Phase 3 (tenants, institutions, campuses, memberships, RLS, support sessions).
+
+### 2026-11-06 — Session 9 (independent security review and fixes)
+- **Review** of PR #15 at `a77ed9b`: 3 high, 4 medium, 6 low and 2 informational findings, confirmed with temporary probe tests and live PostgreSQL checks (owner role could disable the audit trigger; runtime containers held owner credentials).
+- **Owner authorized all fixes** (L5 approved as a feature). Implemented on `feat/phase-02-auth-rbac` (ADR-040; plan §18.1):
+  - backend: per-account MFA lock, network-scoped login lock, privileged-target rule in services, token invalidation, fingerprint retention, expired-session housekeeping, service-level permission checks, random cache version, IP side-table triggers (`audit.0003`), recovery-code step-up, `__Host-csrftoken`, audit rollback guard, owner-credential startup guard;
+  - infrastructure: compose environment allow-lists (no `env_file`), `infra/scripts/check_runtime_secrets.py`, CI checks on config and running containers, CODEOWNERS;
+  - frontend: nonce-based CSP via the Next.js proxy (pages render per request), zod jitless, step-up dialog with recovery codes, new en/bn messages;
+  - architecture: 3 new import-linter contracts.
+- **Verification (actual results):** backend 286 passed / 9 skipped, coverage 95%; ruff, mypy (139 files), import-linter (5 contracts kept); OpenAPI regenerated, no drift; frontend ESLint, Prettier, `tsc`, Vitest 32 passed, production build; clean-volume stack healthy, `smoke_check` OK, runtime containers hold no owner credentials; Playwright **31 passed** with zero CSP violations; gitleaks (git history and tree) clean; Trivy clean on both runtime images.
+- **Dependabot review:** #3 (setup-uv 7), #4 (setup-node 7), #7 (upload-artifact 7), #8 (checkout 7), #14 (pnpm/action-setup 6) are within ADR-030 (they address the Node 20 runner deprecation) and #9 (Mailpit 1.33.0, dev only) needs the ADR-030 pin table updated. All were green on the pre-Phase-2 `main` only; rebase and re-run CI after PR #15 merges, then merge one at a time with owner approval. None was merged.
+- **Next recommended task:** owner's final security review of PR #15 and merge decision; then Dependabot rebases; then the Phase 3 plan.

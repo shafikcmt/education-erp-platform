@@ -124,6 +124,8 @@ Audit (append-only, `audit_event`) is mandatory for:
 - Retention is configurable (default 365 days, **pending legal review**), after which a job anonymizes them to a network prefix. A documented `erase_ip_data` procedure handles data-subject requests.
 - Audit-event IPs live in a separate, deletable side table, so the audit log itself stays immutable.
 
+**Immutability boundary (ADR-040):** the runtime role `erp_app` can only SELECT and INSERT audit events, and a trigger rejects UPDATE, DELETE and TRUNCATE for every role. The **table owner** (`erp_owner`) can still disable that trigger with DDL, so the guarantee depends on owner credentials never reaching runtime processes (enforced by compose allow-lists, a Django startup guard and CI checks; see §11). Tamper-evident off-site audit storage is a Phase 18 enhancement. For the IP side table, the runtime role can only add rows together with their event and can only clear (never rewrite) IP fields.
+
 Audit records: never updated or deleted by application code; DB role for app has INSERT-only on audit tables; retention per policy (proposed ≥ 7 years for financial, ≥ 1 year for others — **owner/legal confirmation needed**).
 
 ## 7. Secrets & configuration
@@ -178,9 +180,19 @@ Audit records: never updated or deleted by application code; DB role for app has
 `docker compose exec api python manage.py create_platform_admin --email owner@your-domain`.
 The activation link arrives by email; the owner sets a password and must enrol MFA before using the console.
 
-**Rotate the field-encryption key (ADR-031):** generate a key (`python -c "from apps.core.crypto import generate_key; print(generate_key())"`), put `newid:<key>` **first** in `FIELD_ENCRYPTION_KEYS` while keeping the old entries, deploy, run `manage.py rotate_field_encryption`, verify sign-in with MFA, then remove the old key.
+**Rotate the field-encryption key (ADR-031):** generate a key (`python -c "from apps.core.crypto import generate_key; print(generate_key())"`), put `newid:<key>` **first** in `FIELD_ENCRYPTION_KEYS` while keeping the old entries, deploy, then run as the **owner role** from the migrate container (the runtime role may not rewrite audit IP evidence and the command refuses to run as it):
+`docker compose run --rm --entrypoint sh migrate -c 'DATABASE_URL=$DATABASE_MIGRATION_URL python manage.py rotate_field_encryption'`.
+Verify sign-in with MFA, then remove the old key.
 
-**Rotate `IP_INDEX_KEY` (ADR-036):** set the new key, deploy, run `manage.py rebuild_ip_index`.
+**Rotate `IP_INDEX_KEY` (ADR-036):** set the new key, deploy, run `rebuild_ip_index` the same way (owner role).
+
+**Owner credentials (ADR-040):** only the `migrate` service receives `DATABASE_MIGRATION_URL`, and only `postgres` the bootstrap passwords. A runtime process that receives owner/superuser credentials refuses to start. Production deployment (Phase 19) must keep this separation: never place owner credentials in the runtime secret set.
+
+**Brute force (ADR-040):** login lock per (email, network) with a capped global per-email delay; MFA failures counted per account (10 / 15 min → 15-minute lock) across login and step-up; lock notices at most once per user per day.
+
+**Content-Security-Policy (ADR-040):** nonce-based scripts with `strict-dynamic` and no unsafe script allowances; see `frontend/src/lib/security/csp.ts` and `frontend/e2e/csp.spec.ts`.
+
+**IP-derived device fingerprints** (`identity_seendevice`) are kept at most 90 days and are erased by `erase_ip_data` (ADR-036 scope).
 
 **Erase a person's IP data (data-subject request):** `manage.py erase_ip_data --user <uuid> [--before YYYY-MM-DD]`. It deletes the person's audit IP rows and clears the IP fields of their session records; the audit events stay, and the erasure itself is audited.
 
@@ -193,3 +205,4 @@ The activation link arrives by email; the owner sets a password and must enrol M
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
 - 2026-11-06 — Manual MFA key exception (ADR-038) documented.
 - 2026-11-06 — Phase 2 implemented: implementation map and operating procedures added (§11).
+- 2026-11-06 — Security review of PR #15 fixed (ADR-040): immutability boundary stated precisely; owner-only key rotation; owner-credential isolation; brute-force, CSP and fingerprint-retention controls documented.

@@ -707,3 +707,28 @@ Exact versions are re-checked at install time and locked in `uv.lock` / `pnpm-lo
 | D14 | — | Audit list shows platform rows only (`tenant_id IS NULL`) | Tenant events (Phase 3) are never mixed into the platform console |
 
 **Remaining for the owner:** review and merge PR #15; confirm the IP retention period with legal review before production (ADR-036).
+
+### 18.1 Independent security review and fixes (2026-11-06, ADR-040)
+
+The owner authorized fixing every finding of the review of `a77ed9b`. Each has a regression test that reproduces the original weakness (`backend/tests/test_security_review_fixes.py` unless noted).
+
+| # | Finding | Fix | Evidence |
+|---|---|---|---|
+| H1 | MFA guesses unlimited across re-logins | Per-account MFA failure limit (10 / 15 min → 15-minute lock) shared by login and step-up; audited; notice ≤ 1/day; admin reset clears | Lock after 10 guesses across 3 IPs and re-logins; correct code refused while locked |
+| H2 | Support/custom roles could act on Super Admins | `assert_can_act_on` in services: permission + superset of target's permissions; Super Admin only by Super Admin | Support and custom roles refused (403 `insufficient_privilege`); Super Admin allowed; services refuse without the view |
+| H3 | Runtime containers held owner credentials; owner can disable the audit trigger | Per-service env allow-lists (no `env_file`); Django startup guard; CI checker (config + running containers); boundary documented | Checker fails the old compose file, passes the new; live: api/worker/beat/web hold none; runtime start with owner URL refused |
+| M1 | Any attacker could lock any user | Lock per (email, network); capped global delay (30 s); notice ≤ 1/day | User on another network signs in; attacker's network stays locked |
+| M2 | Old email links survived security changes | Invalidate all unused tokens on password change/reset, email change, MFA reset, deactivation | Stale reset link rejected after each event |
+| M3 | No CSP | Per-request nonce CSP via the Next.js proxy; API `default-src 'none'` | `frontend/e2e/csp.spec.ts` through Nginx; full E2E with zero violations |
+| M4 | Device fingerprints (IP-derived) outlived retention and erasure | ≤ 90 days; daily purge; `erase_ip_data` deletes them | Purged at 91 days, not at 89; erased on request |
+| L1 | Expired sessions looked active | Housekeeping closes sessions past 12 h and drops keys | Closed at 12 h + 1 min |
+| L2 | Two services relied on view checks | `require_perm` in `admin_revoke_sessions` and `reveal_ip` | Direct service calls refused |
+| L3 | Resettable cache version | Random version token | Eviction yields a new token; fresh permissions served |
+| L4 | IP evidence rewritable by the app role | DB triggers: add only with the event (same transaction), clear never rewrite; owner-only rotation | DB-level tests as `erp_app` and owner; rotation verified on a scratch DB |
+| L5 | (approved) recovery code for step-up | Single-use, atomic, audited (`purpose=step_up`) | Reuse refused; password still required |
+| L6 | CSRF cookie without `__Host-` | `__Host-csrftoken` in production; frontend reads both names | Prod settings test; Vitest |
+| I1 | Audit rollback unguarded | `audit.0003` refuses reversal unless allowed outside production | Unit test of the guard |
+| I2 | Phase 3 host policy; rbac↔identity cycle risk | Documented in MULTI_TENANT_ARCHITECTURE; 3 new import-linter contracts; CODEOWNERS | `lint-imports`: 5 contracts kept |
+
+**Remaining risks:** the table owner can still alter audit tables by DDL (mitigated by credential isolation; tamper-evident off-site storage in Phase 18); `style-src` allows inline styles (CSS only); the MFA lock lives in Redis, so a cache flush clears active locks; production secret separation must be carried into the Phase 19 deployment.
+

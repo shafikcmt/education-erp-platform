@@ -44,6 +44,7 @@
 | 037 | Phase 2 scope decisions: phone/SMS login → Phase 14; no public registration; breach check optional/off; server-side QR; 30 min idle / 12 h absolute; new sign-in notices; Django admin disabled | **Accepted** (Q5 line amended by ADR-038) | 2026-11-05 |
 | 038 | Manual MFA key entry during initial enrollment only, after re-authentication, shown once (accessibility exception to ADR-037 Q5) | **Accepted (owner, strict conditions)** | 2026-11-06 |
 | 039 | `@hookform/resolvers` with its official Zod integration (Phase 2 frontend forms) | **Accepted** | 2026-11-06 |
+| 040 | Phase 2 security-review hardening: account-level MFA lock, network-scoped login lock, privileged-target rule, owner-credential isolation, nonce CSP, IP side-table integrity, `__Host-` CSRF cookie, audit rollback guard | **Accepted (owner authorized the fixes)** | 2026-11-06 |
 
 ---
 
@@ -415,6 +416,22 @@ Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a
 - Pin a maintained, compatible version, recorded in `TECH_STACK.md`: 7.0.3, with peers `zod ^3.25 || ^4` and `react-hook-form ^7.55`, both compatible with the pinned zod 4.6 and react-hook-form 7.91.
 - **Why:** it avoids an in-house adapter (duplicated, less tested code).
 
+## ADR-040 — Phase 2 security-review hardening
+**Status:** **Accepted** — the owner authorized every fix of the independent review of PR #15 (2026-11-06), including L5 (recovery codes for step-up). It refines ADR-033, ADR-035, ADR-036 and ADR-011 without superseding them.
+
+**Decisions:**
+1. **MFA failures are counted per account** (login MFA and step-up together): 10 failures in 15 minutes lock MFA verification for 15 minutes. A password login cannot reset the counter. Locks are audited (`identity.mfa.locked`) and notified at most once per user per day. Recovery: wait, or an administrator's MFA reset (which clears the lock).
+2. **Login lockout is network-scoped:** the hard lock applies to one (email, IPv4 /24 or IPv6 /48) pair. Per email, from any network, only a progressive delay applies, capped at 30 seconds. Lock notices: at most one per user per day.
+3. **Privileged-target rule:** an actor may reset MFA, deactivate/reactivate or sign out another account only if the actor holds the permission **and** every permission the target holds; only a Super Admin may act on a Super Admin. Enforced in services (`rbac.services.assert_can_act_on`).
+4. **Owner-credential isolation:** runtime processes (API, worker, beat, web) never receive database owner or superuser credentials. Compose uses per-service environment allow-lists (no `env_file`); Django refuses to start a runtime process holding them; CI checks the compose configuration and the running containers. Only `migrate` (`ERP_PROCESS_ROLE=migrate`) holds the owner URL; owner-only maintenance (key rotation, IP index rebuild) runs from that container.
+5. **Audit immutability boundary:** the runtime role can only SELECT/INSERT audit events; a trigger rejects UPDATE/DELETE/TRUNCATE for every role, **but the table owner can still disable the trigger with DDL**. Protection therefore rests on owner-credential isolation (4). Tamper-evident off-site audit storage (hash chain or log shipping) is planned for Phase 18.
+6. **IP side table:** for the runtime role, IP rows can only be added together with their event (same transaction) and existing evidence can only be cleared (set to NULL), never rewritten; DELETE stays allowed for ADR-036 erasure.
+7. **Content-Security-Policy:** per-request nonce; `script-src 'self' 'nonce-…' 'strict-dynamic'` with no `unsafe-inline`/`unsafe-eval` in production; `style-src 'self' 'unsafe-inline'` (CSS only: Radix UI injects scroll-lock styles without a nonce); `img-src 'self' data:` for the MFA QR; `frame-ancestors 'none'`. zod runs jitless so it never needs eval. API responses: `default-src 'none'`.
+8. **CSRF cookie:** `__Host-csrftoken` in production (Secure, Path=/, no Domain); plain `csrftoken` only for local HTTP development. Cookies never get a `Domain` attribute, including when Phase 3 adds tenant subdomains.
+9. **Audit migration rollback** is refused unless `ERP_ALLOW_AUDIT_ROLLBACK=true` in a non-production environment.
+10. **Email-link tokens** are all invalidated after password change/reset, email change, MFA reset and deactivation.
+11. **Step-up may use a single-use recovery code** (L5) instead of the TOTP code; the password is still required.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -426,3 +443,4 @@ Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a
 - 2026-11-05 — Owner approved ADR-031, ADR-032, ADR-034 and ADR-035, and ADR-033 with conditions. Added ADR-036 (IP privacy, Q7) and ADR-037 (Q2–Q9 scope decisions) as Accepted. No other ADR changed.
 - 2026-11-06 — Added ADR-038 (manual MFA key, Q10 strict conditions; amends ADR-037 Q5 line) and ADR-039 (`@hookform/resolvers`, Q11), both Accepted. ADR-037 index row annotated. No other ADR changed.
 - 2026-11-06 — Phase 2 implemented (PR #15) within ADR-031 to ADR-039. No ADR added or changed; implementation deviations from the plan text are recorded in `plans/PHASE_02_PLAN.md` §18.
+- 2026-11-06 — Added ADR-040 (Accepted): security-review hardening of Phase 2. No other ADR status changed; ADR-036's scope now explicitly includes IP-derived device fingerprints (90-day maximum).
