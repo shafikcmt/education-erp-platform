@@ -114,7 +114,7 @@ jobs:
             cache-dependency-glob: backend/uv.lock,
           }
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - working-directory: backend
@@ -133,7 +133,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
@@ -161,7 +161,7 @@ jobs:
           docker compose exec -T -e S3_INTEGRATION=1 -e S3_ISOLATION_PROBE_BUCKET=erp-isolation-probe \
             api python -m pytest -p no:cacheprovider -m integration apps/core/tests/test_s3_integration.py
       - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @erp/frontend exec playwright install --with-deps chromium
