@@ -45,6 +45,9 @@ DATABASES = {"default": env.db("DATABASE_MIGRATION_URL")}
 DATABASES["default"]["CONN_MAX_AGE"] = 0
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
 DATABASES["default"]["TEST"] = {"NAME": "test_erp"}
+# A second alias on the same test database (Phase 3 M1): proves the tenant query guard and
+# transaction state are tracked per connection/alias. Not wrapped in the test transaction.
+DATABASES["isolation_secondary"] = {**DATABASES["default"], "TEST": {"MIRROR": "default"}}
 TEST_APP_DB_USER: str = _app_db["USER"]
 TEST_APP_DB_PASSWORD: str = _app_db["PASSWORD"]
 
@@ -62,3 +65,7 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 LOGGING = build_logging_config(level="WARNING", fmt="console")
 SENTRY_DSN = ""
+
+# Phase 3 M1: test-only probe tables for the isolation suite, and strict leak detection.
+INSTALLED_APPS = [*INSTALLED_APPS, "tests.isolation_app"]
+TENANCY_LEAK_STRICT = True

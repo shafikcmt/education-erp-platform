@@ -20,10 +20,12 @@ if TYPE_CHECKING:
 
 
 def _switch_default_connection(user: str, password: str) -> None:
-    conn = connections["default"]
-    conn.close()
-    conn.settings_dict["USER"] = user
-    conn.settings_dict["PASSWORD"] = password
+    # Every alias (including the Phase 3 test mirror) must use the same role.
+    for alias in connections:
+        conn = connections[alias]
+        conn.close()
+        conn.settings_dict["USER"] = user
+        conn.settings_dict["PASSWORD"] = password
 
 
 @pytest.fixture(scope="session")
