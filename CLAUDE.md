@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-08 (Phase 2 approved and merged in PR #15; Phase 3 plan proposed, awaiting owner approval)
+- **Last updated:** 2026-11-08 (Phase 2 approved and merged in PR #15; Phase 3 plan rev. 2 proposed, Q1–Q12 approved in principle, awaiting final owner approval)
 
 ---
 
@@ -345,7 +345,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
-| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` proposed, awaiting owner approval) |
+| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 2 proposed; Q1–Q12 approved in principle; awaiting final owner approval) |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
@@ -435,3 +435,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037): `staff_member` role code; privileged-account MFA + step-up; IP privacy; platform roles have no implicit tenant-data access.
 - 2026-11-06 — Phase 1 approved; Phase 2 plan approved and implemented (PR #15). Phase table updated; no rule changed.
 - 2026-11-08 — Phase 2 approved and merged (PR #15); Phase 3 plan and ADR-041 to ADR-046 proposed. Phase table updated; no rule changed (ADR-043 would amend ADR-009 §5 and this file's §10 wording on `platform_scope()` only if accepted).
+- 2026-11-08 — Phase 3 plan rev. 2: the phase table and last-updated line were updated. No rule changed. On acceptance, ADR-043 adds wording to §10 item 3 (platform operation catalogue, no runtime `BYPASSRLS`). ADR-047 records the owner's answers to Q1–Q12.

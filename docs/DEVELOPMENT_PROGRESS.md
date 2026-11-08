@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` rev. 1 and ADR-041 to ADR-046 are Proposed (documentation PR, not merged), awaiting owner approval. No Phase 3 application code exists.
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` is at **revision 2** (Proposed): the owner approved Q1–Q12 in principle, and ADR-041 to ADR-047 are Proposed. It is in documentation PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) (not merged) and awaits the owner's final approval. No Phase 3 application code exists.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -22,7 +22,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | Planned | Documentation PR from `docs/phase-03-plan` (plan only; not merged) | Plan rev. 1 + ADR-041–046 Proposed; awaiting owner approval and answers to Q1–Q12 |
+| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan only; not merged) | Plan rev. 2; Q1–Q12 approved in principle; ADR-041–047 Proposed; final approval pending; open decisions D1–D9 |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -50,6 +50,11 @@ See `DECISION_LOG.md`.
 - **Resolved 2026-11-06:** Phase 1 approved; Phase 2 plan rev. 3 approved; PR #13 merged.
 - ~~**Open:** owner review of the Phase 2 implementation (PR #15).~~ Resolved: approved and merged on 2026-11-07.
 - **Proposed 2026-11-08 (Phase 3 planning):** ADR-041 (host-based tenant resolution and the enablement gate), ADR-042 (tenant context lifecycle), ADR-043 (no runtime BYPASSRLS; amends ADR-009 §5), ADR-044 (memberships and scoped role assignments), ADR-045 (support sessions), ADR-046 (RLS policy catalogue and CI enforcement). Owner questions: plan §15 Q1–Q12.
+- **2026-11-08 (Phase 3 plan rev. 2):**
+  - The owner approved Q1–Q12 **in principle**; ADR-047 records the answers.
+  - Runtime BYPASSRLS was **not approved**. ADR-043 rev. 2 instead keeps `erp_platform` unused and introduces the platform operation catalogue.
+  - ADR-041 to ADR-047 are Proposed, awaiting final approval.
+  - Remaining decisions are D1–D9 (plan §17.2). The production platform domain (D1) is needed before tenant hosts can be enabled in production.
 
 ## Known gaps / open questions
 
@@ -328,3 +333,36 @@ See `DECISION_LOG.md`.
   1. The owner reviews the Phase 3 plan, answers Q1–Q12 and accepts or amends ADR-041–046.
   2. Merge the documentation PR with approval.
   3. Implement on `feat/phase-03-tenancy`, milestone M1 first.
+
+### 2026-11-08 — Session 11 (Phase 3 plan revision 2, documentation only)
+- **Owner review of rev. 1:**
+  - Q1–Q12 approved in principle.
+  - Runtime BYPASSRLS not approved; a complete, security-reviewed replacement and a threat model are required.
+  - Ten additional requirements set.
+- **Plan rev. 2** (`plans/PHASE_03_PLAN.md`), with each requirement mapped to its section:
+  - ADR-009 reconciliation and the `erp_platform` disposition: kept, unused, nothing removed;
+  - the platform operation catalogue P1–P16, including the IP-anonymisation task affected by the new RLS;
+  - a threat model for each of the three `SECURITY DEFINER` functions, which read through owner-only `SELECT` policies;
+  - rollback and durable-audit matrix (R1–R9) and performance safeguards;
+  - leak verification for requests and Celery (L1–L10, C1–C10) and concurrency tests (K1–K8);
+  - host decision table, disabled-mode behaviour, placeholder domain, and refusing production provisioning while tenant hosts are disabled;
+  - composite-only foreign keys (PostgreSQL FK checks ignore RLS) with integrity and migration tests;
+  - import boundaries and new import-linter contracts;
+  - support-session guarantees S1–S9;
+  - registry allow-list with a justification and tests for each entry;
+  - `tenancy_tenant` self-scoped.
+- **Decision log:** ADR-041–046 revised (rev. 2); ADR-047 added (owner answers). All Proposed. No Accepted ADR changed.
+- **Roadmap:** files module → Phase 6/7; self-service sign-up → Phase 4/5. Both take effect on final plan approval.
+- **Facts verified in code for rev. 2:**
+  - the production server is Gunicorn with Uvicorn workers (ASGI), and all views are sync;
+  - `erp_platform` is `NOLOGIN`, `BYPASSRLS`, has no members and isn't used by any code;
+  - tests run as `erp_app` with `CONN_MAX_AGE = 0`;
+  - `audit.anonymize_expired_ips` iterates over all IP rows without a context;
+  - sessions use `cached_db`;
+  - there are 5 existing import-linter contracts.
+- **No application code; PR #16 stays documentation only and is not merged.**
+- **Verification:** Prettier check on the changed Markdown and a section cross-reference check (results in the PR).
+- **Next recommended task:**
+  1. The owner gives final approval of plan rev. 2 and ADR-041–047, and answers D1–D9 where possible (D1 can come later; it blocks only production enablement).
+  2. Merge PR #16 with approval.
+  3. Implement on `feat/phase-03-tenancy`, starting with M1.
