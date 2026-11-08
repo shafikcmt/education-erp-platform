@@ -130,3 +130,10 @@ def test_asyncio_tasks_never_see_each_others_context():
 
     assert all(all(r) for r in asyncio.run(main()))
     assert current_tenant() is None
+
+
+def test_core_db_tenant_atomic_is_the_same_single_helper():
+    from apps.core import db
+    from apps.core.tenancy import transaction
+
+    assert db.tenant_atomic is transaction.tenant_atomic

@@ -56,19 +56,30 @@ The resolved tenant is stored in a request-scoped context (`contextvars`) — `c
 
 **Platform scope:** platform code that legitimately needs cross-tenant access (billing runs, metering, migrations, Super Admin aggregates) uses an explicit `with platform_scope(reason=...)` context, which connects with a role permitted to bypass RLS (`BYPASSRLS` limited role) and writes an audit entry. Use is restricted by code review and lint rule.
 
-### 4.1 Transaction-scoped tenant context (ADR-009, accepted)
+### 4.1 Transaction-scoped tenant context (ADR-009, ADR-042) — implemented in Phase 3 M1
 
-- **Single entry point:** `core.db.tenant_atomic(tenant)` opens `transaction.atomic()` and immediately runs `SELECT set_config('app.tenant_id', %s, true)`. The value lives only until COMMIT/ROLLBACK.
-- **Forbidden:** session-level `SET app.tenant_id`, or `set_config(..., false)`. Either would leak tenant context across pooled connections.
-- **Where it is used:**
-  - Tenant-scoped API requests: wrapped by middleware or a view wrapper.
-  - Celery tenant tasks: through the tenant-aware base task.
-  - Management commands and data migrations that touch tenant data.
-  - Nested `atomic()` blocks (savepoints) inherit the transaction's setting.
-- **Guard:** a `connection.execute_wrapper` raises `TenantContextNotApplied` if SQL runs while a tenant context is active but `app.tenant_id` was not applied in the current transaction. Exact mechanics are specified in the Phase 3 plan.
-- **Platform scope:** `platform_scope(reason)` uses the separate `erp_platform` role (`BYPASSRLS`) and writes an audit event.
-- **Pooling:** compatible with PgBouncer transaction pooling.
+**Implemented (M1, `backend/apps/core/tenancy/`):**
+
+| Primitive | Behaviour |
+|---|---|
+| `TenantContext`, `current_tenant()`, `require_tenant()`, `bind_tenant()` | The tenant lives in a `ContextVar` (local to each thread and asyncio task). Tenant ids must be canonical UUIDv7 (`InvalidTenantId` otherwise). Binding a different tenant raises `TenantContextConflict`. A bound context alone grants nothing in the database |
+| `tenant_atomic(tenant=None, using="default")` (also `apps.core.db.tenant_atomic`, the ADR-009 name) | <ul><li>The single sanctioned way to open a tenant transaction.</li><li>Its first statement is `SELECT pg_catalog.set_config('app.tenant_id', <uuid>, true)`.</li><li>Nesting with the same tenant uses a savepoint; a different tenant raises `TenantContextConflict`.</li><li>When opened inside an enclosing transaction it did not start, it clears the setting before releasing its savepoint.</li><li>Context and connection state are always restored in `finally`.</li></ul> |
+| Query guard | <ul><li>A `connection.execute_wrapper` installed on every connection (`connection_created`).</li><li>While a tenant is bound, a query runs only if *that connection's* current transaction applied *that* tenant; otherwise it raises `TenantContextNotApplied` before reaching PostgreSQL. This covers autocommit, `on_commit` callbacks, new threads and other aliases.</li><li>Leftover connection state without a context raises `TenantContextLeak`.</li></ul> |
+| `TenantScopedModel` / `TenantManager` | <ul><li>The default and base manager filter by the bound tenant and raise `TenantContextMissing` without one.</li><li>`save`, `update`, `bulk_create` and `bulk_update` refuse to create rows in, or move rows to, another tenant (`TenantMismatch`).</li><li>M1 uses a plain indexed `tenant_id` UUID column; M2 turns it into a foreign key to the tenant registry.</li></ul> |
+| `app_tenant_id()` (SQL, migration `core.0003`) | <ul><li>Reads the transaction-local setting and returns NULL when it is missing or malformed, so every policy fails closed.</li><li>`STABLE`, `SECURITY INVOKER`.</li><li>`EXECUTE` only for the owner and `erp_app`.</li></ul> |
+| `EnableTenantRLS`, `EnableDualScopeRLS(private=…)` (`core.db_operations`) | <ul><li>ENABLE + FORCE RLS with per-command policies named `tenant_isolation_{select,insert,update,delete}`.</li><li>Reversal is refused in production and staging, and elsewhere unless `ERP_ALLOW_ISOLATION_ROLLBACK=true`.</li></ul> |
+| `platform_scope(operation, actor, reason)` | <ul><li>Accepts only catalogued operations P1–P16; P3, P11, P15 and P16 are disabled.</li><li>Re-checks the actor's permission without cache and audits start and end.</li><li>Refuses to run inside a tenant context, and refuses nesting.</li><li>Allows `tenant_atomic` only for operations catalogued with the targeted or per-tenant mechanism.</li><li>Never sets a tenant, changes role or uses `BYPASSRLS` (ADR-043). `erp_platform` stays `NOLOGIN` and unused.</li></ul> |
+| Boundary leak detectors | Request start/finish and Celery task prerun/postrun clear and report any leftover tenant state. They raise in tests (`TENANCY_LEAK_STRICT`) and log errors in production |
+
+**Rules:**
+- **Forbidden:** session-level `SET app.tenant_id`, `set_config(..., false)`, `SET ROLE`, `RESET ROLE` and `SET SESSION`. A static check in `tests/isolation` enforces this.
+- **Pooling:** only transaction-scoped state is used, so the design is compatible with PgBouncer transaction pooling.
 - **Tests:** RLS tests connect as `erp_app`. Superusers and `BYPASSRLS` roles skip RLS, so tests run with them would prove nothing.
+- **Not yet implemented (later milestones):**
+  - request middleware and host resolution (M3);
+  - the durable audit connection and `lock_timeout` (M3);
+  - `TenantTask` (M7);
+  - the tenancy models (M2).
 
 ## 5. Unique constraints and identifiers
 
@@ -121,10 +132,34 @@ For every tenant-owned resource:
 
 A shared pytest fixture/helper set (`tests/isolation/`) is built in Phase 3 and reused by every later module.
 
-Platform-level CI checks (ADR-009):
-- (a) every table with a `tenant_id` column has RLS enabled + forced + a policy;
-- (b) every concrete model holding tenant data inherits `TenantScopedModel`;
-- (c) the test database user is `erp_app`, not a superuser.
+**Platform-level CI checks (ADR-009, ADR-046). Implemented in M1 in `backend/tests/isolation/`:**
+
+- **`test_rls_coverage.py`** classifies every table in `public` against `registry.py`. The classes are:
+  - standard tenant table;
+  - dual-scope;
+  - self-scoped registry;
+  - scheduled for RLS in a later milestone, which must have no RLS until then;
+  - allow-listed registry table, which needs a justification and named access-control tests that must exist.
+
+  It fails when:
+  - a table lacks ENABLE or FORCE;
+  - a table's policies differ from the reference shape of its class (taken from probe tables built by the real migration operations);
+  - a table is unregistered;
+  - a tenant-to-tenant foreign key lacks `tenant_id`;
+  - a unique constraint doesn't start with `tenant_id`;
+  - a `SECURITY DEFINER` function or owner-only policy is unsafe or unapproved;
+  - a tenant model doesn't inherit `TenantScopedModel`.
+
+  Meta-tests on a throwaway schema prove that each check detects a real violation.
+- **`test_db_role_restrictions.py`:**
+  - only `erp_platform` has `BYPASSRLS` (apart from the cluster bootstrap superuser, which the application never uses);
+  - `erp_platform` cannot log in and has no members;
+  - the application roles inherit no privileged role;
+  - the runtime connection is `erp_app`.
+- **`test_static_checks.py`:** forbidden role and session statements are absent from runtime code, migrations and infrastructure scripts.
+- **`test_concurrency.py`:**
+  - K1: 20 threads × 50 operations alternating tenants;
+  - K2: one reused connection across tenants and the platform.
 
 A failure blocks merge.
 
@@ -137,3 +172,4 @@ A failure blocks merge.
 - 2026-11-08 — Status note updated for plan rev. 2 (ADR-041–047). No design change.
 - 2026-11-08 — Status note updated for plan rev. 3. No design change.
 - 2026-11-08 — Status note: Phase 3 plan approved; ADR-041–047 Accepted. No design text changed yet.
+- 2026-11-08 — Phase 3 M1: §4.1 and §8 now describe the implemented tenant context primitives, RLS tooling and CI checks; items for later milestones are labelled.

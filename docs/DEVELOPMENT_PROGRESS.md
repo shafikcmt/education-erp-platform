@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. The plan `plans/PHASE_03_PLAN.md` rev. 3 is **Approved** (owner final approval, 2026-11-08), and ADR-041–047 are **Accepted**. It was merged into `main` in PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) as `75bb2c5`. Implementation branch: `feat/phase-03-tenancy`. **M1 has not started** and waits for the owner's explicit authorization. No Phase 3 application code exists.
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**. The plan rev. 3 is Approved and ADR-041–047 are Accepted. **M1 (tenant context foundation) is Complete** on `feat/phase-03-tenancy`: pushed, no PR, not merged (Session 14). M2 has not started and waits for the owner's approval.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -22,7 +22,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); implementation branch `feat/phase-03-tenancy` (no PR yet) | Plan rev. 3 **Approved** 2026-11-08; ADR-041–047 Accepted; M1 awaits owner authorization |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); `feat/phase-03-tenancy` (M1 commits, no PR yet) | Plan rev. 3 Approved; **M1 Complete** (tests, lint, types, docs); M2–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -72,6 +72,12 @@ See `DECISION_LOG.md`.
 - Legal/compliance review for minors' data, retention periods, VAT/tax invoicing.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
+- **Phase 3 M1 follow-ups:**
+  - **O1:** `rbac_permission` stays writable by `erp_app`, because `seed_roles`/`sync_permissions` run as the runtime role. Moving seeding to the owner role, then narrowing to SELECT, is an owner decision (plan §24.2).
+  - `rbac_role`, `rbac_rolepermission`, `audit_auditevent` and `audit_auditeventip` have no RLS yet. They are registered as pending M6 in the coverage gate (plan §24.1 N6).
+  - The Celery boundary leak detector can only clear and log, not fail the task (Celery signal semantics; N11).
+  - `platform_scope` audit events are not yet durable; the durable audit connection comes in M3 (N12).
+  - CI runs only on PRs and pushes to `main`, so the M1 branch push ran no CI. All checks were run locally (Session 14).
 - **Phase 3 (planned):**
   - Tenant hosts must stay disabled in production until the owner provides the production domain and approves the Phase 3 security review (D1).
   - The D9 performance values are initial engineering targets that must be measured (plan §8.4), not guarantees.
@@ -435,3 +441,48 @@ See `DECISION_LOG.md`.
   - no implementation PR merged without the owner's approval.
 - **No application code changed.**
 - **Next recommended task:** the owner authorizes M1.
+
+### 2026-11-08 — Session 14 (Phase 3 M1: tenant context foundation)
+- **Verified before coding:**
+  - repository `shafikcmt/education-erp-platform`, branch `feat/phase-03-tenancy`;
+  - HEAD `3778f7a`; `main` at `75bb2c5`; no uncommitted changes;
+  - baseline backend suite: 286 passed, 9 skipped.
+- **Implemented (owner-authorized M1 only):**
+  - `apps/core/tenancy/`:
+    - `TenantContext` with strict UUIDv7 validation;
+    - `ContextVar` binding;
+    - `tenant_atomic` (transaction-local `set_config`, savepoint nesting, conflict on a different tenant, cleanup in `finally`, alias-aware);
+    - per-connection query guard;
+    - `TenantScopedModel`/`TenantManager`, fail closed;
+    - `platform_scope` with the P1–P16 catalogue and uncached permission/audit hooks;
+    - request and Celery boundary leak detectors.
+  - `apps.core.db.tenant_atomic`: a re-export under the ADR-009 name.
+  - Migrations:
+    - `core.0003` creates `app_tenant_id()`;
+    - `core.0004` and `identity.0003` narrow framework-table grants;
+    - `rbac_permission` is unchanged (O1).
+  - `core.db_operations`: `EnableTenantRLS` and `EnableDualScopeRLS`, with reversal refused.
+  - `tests/isolation/`:
+    - RLS coverage gate with registry allow-list and meta-tests;
+    - role restrictions;
+    - static checks;
+    - K1/K2 concurrency;
+    - `platform_scope` tests.
+  - Test-only probe app; second test alias.
+  - Four new import-linter contracts (9 in total).
+  - `01-roles.sh` comment corrected; the role itself is unchanged.
+- **Verification (actual results, local):**
+  - backend: **406 passed, 9 skipped**; coverage **95.02%** (gate 85%). New tenancy modules 98–100%: `context`, `models` and `boundaries` 100%, `transaction` 99%, `platform` 98%.
+  - Phase 2 regression: the original 286 tests unchanged and passing.
+  - ruff, ruff format, mypy (165 files): clean. import-linter: 9 contracts kept. A planted violation broke the expected contracts.
+  - `makemigrations --check`: no changes. OpenAPI: no drift.
+  - **RLS coverage gate:** passes, and its 11 meta-tests detect each planted violation.
+  - **Role checks:** only `erp_platform` has BYPASSRLS apart from the cluster superuser; `erp_platform` is NOLOGIN with no members; the application roles inherit no privileged role.
+  - **K1:** 20 threads × 50 operations. Zero cross-tenant reads or writes, and 1,000/1,000 forged cross-tenant inserts were rejected by RLS.
+  - **K2:** one physical connection reused across tenants and the platform. The setting was empty between transactions, with no cross-tenant visibility.
+  - **Docker stack (fresh volumes):** migrations applied as the owner; `smoke_check` OK; runtime-secret isolation OK; Playwright **31 passed**.
+  - Scans: gitleaks (git history, 44 commits) found no leaks; Trivy on `uv.lock` found 0 HIGH/CRITICAL. No dependency changes.
+- **Stop conditions respected:** no tenant hosts, no runtime BYPASSRLS, no break-glass, no M2+ work, no PR, nothing merged.
+- **Next recommended task:**
+  1. The owner reviews M1 and decides O1.
+  2. On approval, start M2 (tenancy models, composite constraints, RLS, definer functions F1–F3).

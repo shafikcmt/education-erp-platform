@@ -1247,6 +1247,34 @@ Each final documentation requirement maps to its design and the tests that prove
 | Tenant hosts disabled until the production domain and security review are approved | §10.1 step 3, §10.2, §10.3; production config guard; `409 tenant_hosts_disabled` | Config-guard tests; disabled-mode tests (no lookup, uniform 404); provisioning refusal test |
 | Documentation only (this PR) | No application, infrastructure or test code changed | PR file list: documentation files only |
 
+## 24. Implementation notes (appended during implementation)
+
+### 24.1 M1 — tenant context foundation (2026-11-08, branch `feat/phase-03-tenancy`)
+
+M1 is implemented as specified in §5, §6.4, §8.1 and §8.5, with these recorded clarifications. None changes an approved decision.
+
+| # | Item | What was done | Why |
+|---|---|---|---|
+| N1 | `TenantScopedModel.tenant_id` | Plain indexed UUID column in M1 | The tenant registry model does not exist yet (M2). M2 turns it into a foreign key to `tenancy.Tenant` with the same column name |
+| N2 | `platform_scope` permission and audit hooks | Configured in settings (`TENANCY_PLATFORM_AUTHORIZER`, `TENANCY_PLATFORM_AUDITOR`) and implemented in `apps.rbac.platform_operations` and `apps.audit.platform_operations` | Keeps `apps.core` free of imports from `rbac` and `audit` (import contracts §9.1); the same pattern as the RBAC permission sources |
+| N3 | Catalogue permission codes of later milestones (P4–P6, P8) | Listed now. Until the codes are registered, the uncached re-check raises `UnknownPermissionError`, so nothing runs | Fail closed |
+| N4 | `core.db.tenant_atomic` | `apps/core/db.py` re-exports the single implementation in `apps.core.tenancy.transaction` | ADR-009 §4 and `CLAUDE.md` §10 use that name; there is still exactly one helper |
+| N5 | Probe tables | A test-only app (`tests.isolation_app`, installed only by test settings) creates standard, dual-scope and private dual-scope probe tables with the real operations. The coverage gate compares every real table with the probe of its class | Reference policy shapes come from the real operations, not from hand-written strings |
+| N6 | Phase 2 tables `rbac_role`, `rbac_rolepermission`, `audit_auditevent`, `audit_auditeventip` | Registered as **pending M6** (§20). The gate requires them to have no RLS at all until M6 | §19.1 schedules their policies for M6; this prevents a half-configured state |
+| N7 | BYPASSRLS role check | Asserts that no non-superuser role except `erp_platform` has BYPASSRLS. The cluster bootstrap superuser (`postgres`) is excluded | Superusers bypass RLS by definition. The application never uses that account (ADR-040 H3 owner-credential isolation) |
+| N8 | Framework table grants | `auth_group`, `auth_group_permissions`, `auth_permission` and `django_content_type` narrowed to SELECT; `identity_user_groups` and `identity_user_user_permissions` to SELECT, DELETE | Only `migrate` (owner) writes them; user deletion removes link rows |
+| N9 | `rbac_permission` grants | **Not narrowed.** `seed_roles`/`sync_permissions` run as `erp_app`: in the compose `migrate` service after `migrate`, in `create_platform_admin` and in the test bootstrap | Narrowing would break Phase 2 seeding. Moving seeding to the owner role is an open item for the owner (§24.2 O1) |
+| N10 | Commit-dependent tests | pytest-django wraps every alias, including the test mirror, in the test transaction. Real COMMIT/ROLLBACK, `on_commit` and connection-reuse tests therefore run in worker threads with their own connections and clean up committed probe rows. The mirror alias is used for per-alias guard tests | Real transactions are needed; `TransactionTestCase` can't flush because the audit tables reject TRUNCATE |
+| N11 | Celery boundary leak detector | Clears and logs any leftover tenant state. It cannot fail the task, because Celery logs errors raised by signal receivers instead of propagating them. Request boundaries raise in tests | Celery signal semantics |
+| N12 | `platform_scope` audit durability | Start and end events are written in the caller's transaction | The durable audit connection is an M3 deliverable (§8.3) |
+| N13 | `lock_timeout`, `TENANT_HOSTS_ENABLED`, request middleware | Not part of M1 | M3. No tenant host exists: every host still behaves as in Phase 2 |
+
+### 24.2 Open items raised by M1
+
+| # | Item | Proposal |
+|---|---|---|
+| O1 | `rbac_permission` is writable by `erp_app` because seeding runs as the runtime role | Run `seed_roles`/`sync_permissions` as the owner in the `migrate` service and the test bootstrap, then narrow `rbac_permission` to SELECT. Owner decision; not done in M1 |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1264,3 +1292,4 @@ Each final documentation requirement maps to its design and the tests that prove
   - **Updated:** milestones and acceptance criteria.
   - Documentation only.
 - 2026-11-08 — **Approved** (owner final approval of rev. 3). Status lines and the ADR table updated; no content change.
+- 2026-11-08 — §24 appended: M1 implementation notes (N1–N13) and open item O1. No approved decision changed.
