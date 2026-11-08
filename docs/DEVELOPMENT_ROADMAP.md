@@ -65,7 +65,13 @@
 - Tenant hosts stay disabled by default. In production they stay disabled, and provisioning is refused, until the owner provides the platform domain (Q9, ADR-041).
 - Built-in roles become read-only system copies that tenants can clone (Q5). Support sessions need tenant approval by default (Q4). Default limits are 1 institution and 3 campuses (Q12).
 
-Exit criteria in detail: plan §21. Remaining decisions D1–D9: plan §17.2.
+**Plan rev. 3 (final candidate, 2026-11-08):** ADR-041–047 approved in principle, and the owner decided D1–D9 (plan §17.2):
+- tenant hosts stay disabled until the production domain is provided and the security review approved;
+- no emergency or break-glass access in Phase 3;
+- `CONN_MAX_AGE = 0` first;
+- initial performance targets of 5 s lock wait, 2 s warning and ≤ 20% p95 isolation overhead.
+
+Exit criteria in detail: plan §21; approval-gate checklist: plan §23. Awaiting the owner's final approval.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -189,3 +195,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-06 — Phase 1 approved; Phase 2 implemented (PR #15, awaiting owner approval). Scope unchanged.
 - 2026-11-08 — Phase 2 approved and merged (PR #15). Phase 3 plan proposed (`plans/PHASE_03_PLAN.md`, ADR-041–046); proposed scope adjustments noted under Phase 3, pending owner approval.
 - 2026-11-08 — Phase 3 plan rev. 2: the owner approved Q1–Q12 in principle. Scope adjustments are listed under Phase 3 (files module → Phase 6/7; self-service sign-up → Phase 4/5) and take effect on final plan approval.
+- 2026-11-08 — Phase 3 plan rev. 3: D1–D9 decisions recorded under Phase 3. No scope change beyond rev. 2.

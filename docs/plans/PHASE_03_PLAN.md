@@ -1,6 +1,10 @@
 # Phase 3 Implementation Plan — Multi-Tenant Architecture & Tenant Isolation
 
-- **Status:** **Proposed — revision 2** (2026-11-08). On 2026-11-08 the owner approved the Q1–Q12 decisions **in principle** and asked for this revision (§17).
+- **Status:** **Proposed — revision 3, final candidate** (2026-11-08). The owner's approvals so far:
+  - Q1–Q12 approved in principle (rev. 1 review);
+  - ADR-041 to ADR-047 approved in principle and D1–D9 decided (rev. 2 review).
+
+  This revision records those decisions (§17). The plan becomes **Approved** only with the owner's explicit final approval.
   - **No application code until the owner gives final approval of this plan.**
 - **Prepared on:** `main` at `2d61e83` (Phase 2 merged; Phases 0–2 Approved).
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 3 ("SaaS tenants, institutions & campuses").
@@ -16,8 +20,25 @@
   - ADR-036: IP privacy.
   - ADR-040: security-review hardening; Phase 3 host prerequisite I2.
 - **Decisions proposed by this plan:** ADR-041 to ADR-047 (§16). ADR-043 **amends ADR-009 §5**; the clause-by-clause reconciliation is in §6.1.
-- **Remaining unresolved decisions:** §17.2 (D1–D9).
+- **Decisions D1–D9:** decided by the owner (§17.2). **Still open:** §17.3 (none block implementation; the production domain and the security review block enabling tenant hosts in production).
 - **Naming note:** the brief refers to `docs/ROADMAP.md` and `docs/DATABASE.md`. In this repository they are `docs/DEVELOPMENT_ROADMAP.md` and `docs/DATABASE_DESIGN.md`.
+
+### Revision 3 — owner decisions D1–D9 and final documentation requirements
+
+| Item | Owner decision / requirement | Where |
+|---|---|---|
+| D1 | Defer the production domain; use a documented placeholder; tenant hosts stay disabled until the owner provides the domain **and** approves the security review | §10.2, §10.3, §17.2 |
+| D2 | Suspended tenant: no emergency bypass. The tenant owner may sign in **only** to review and approve support access. No suspended-tenant business data is exposed to platform staff | §4.3, §11.3 |
+| D3 | No browsing of tenant audit events from the platform host; only through an approved, audited, tenant-scoped support session | §5.1, §6.3 P11 |
+| D4 | Start with `CONN_MAX_AGE = 0` and transaction-safe connection handling; measure in M3. Any later persistent-connection setting requires leak tests | §2, §8.6 |
+| D5 | Only the tenant owner may disable support approval, with step-up and an immutable audit event. Sessions stay time-limited, visible and revocable | §11.1 |
+| D6 | Break-glass deferred to Phase 18. No `erp_platform` login and no emergency access in Phase 3; any future capability needs a new ADR and approval | §6.2, §6.5 |
+| D7 | Generic authentication error that reveals nothing about the email or account | §10.5 |
+| D8 | No cross-tenant platform lists in the Phase 3 MVP; only the approved tenant-by-tenant mechanisms | §6.3 |
+| D9 | Initial targets: lock wait 5 s, warning 2 s, ≤ 20% p95 overhead attributable to tenant isolation. These are engineering thresholds, not guarantees; environment and methodology documented | §8.4 |
+| Final 3 | ADR-009 stays Accepted; its amendment is documented accurately | §6.1, ADR-009 note, ADR-043 |
+| Final 4–7 | Definer threat models and tests; no silent RLS bypass by platform operations; isolated transaction-scoped context for every request and task; support sessions can't bypass isolation | §23 (approval-gate checklist) |
+| Final 8 | Tenant hosts disabled until domain + security review are approved | §10.2, §23 |
 
 ### Revision 2 — what changed and where (owner's additional requirements)
 
@@ -102,7 +123,7 @@ Turn the Phase 2 platform (users, platform roles, audit) into a **multi-tenant S
 | `identity_*` | Platform (user-owned) tables; `SessionRecord.host` stored | Unchanged; per-host sessions identify tenant sessions |
 | DB roles (`infra/docker/postgres/01-roles.sh`) | `erp_owner` (migrations, `NOBYPASSRLS`), `erp_app` (`NOBYPASSRLS`, `NOINHERIT`, DML, `statement_timeout = 30s`, `idle_in_transaction_session_timeout = 60s`), `erp_platform` (`BYPASSRLS`, `NOLOGIN`, no members) | `erp_platform` **kept unchanged and unused** (ADR-043, §6.2) |
 | Tests | Created as the owner, then **run as `erp_app`** (`conftest.py`); `CONN_MAX_AGE = 0` | Isolation tests run as `erp_app`; concurrency tests use `CONN_MAX_AGE > 0` explicitly |
-| Server | Production image: Gunicorn + Uvicorn workers (**ASGI**); all views are sync; `CONN_MAX_AGE = 60` | Connection behaviour under ASGI is verified in M3 (§8.6, D4) |
+| Server | Production image: Gunicorn + Uvicorn workers (**ASGI**); all views are sync; `CONN_MAX_AGE = 60` (default) | **D4:** default changes to `CONN_MAX_AGE = 0` in M3; measured, and any later persistent setting is gated by leak tests (§8.6) |
 | Requests | Autocommit; `ATOMIC_REQUESTS = False` (the explicit wrapper is the single entry point) | Request-scoped tenant transaction on tenant hosts (ADR-042) |
 | Error handler | `problem_details_exception_handler` without `set_rollback()` | Tenant requests roll back on error; security audit survives (durable audit, §8.3) |
 | Sessions | `cached_db` (dev/prod), `db` (tests); `django_session` is a framework table | Session save runs **after** the tenant transaction, without tenant context (§8.2) |
@@ -203,7 +224,7 @@ Example: one account in three tenants.
 |---|---|---|
 | `provisioning` | 404 | Created by a Super Admin; becomes `active` when the owner invitation is sent |
 | `active` | Normal | — |
-| `suspended` | Sign-in and API return `403 tenant_suspended`. Support sessions follow D2 | Super Admin action with step-up and a reason; audited |
+| `suspended` | Members can't sign in (`403 tenant_suspended`). **Only** a `tenant_owner` may sign in, into a restricted mode limited to reviewing, approving, rejecting and revoking support sessions (D2). Support sessions can't be used while the tenant is suspended, and no business data is exposed to platform staff (§11.3) | Super Admin action with step-up and a reason; audited. Active support sessions are revoked on suspension |
 | `offboarding` | Read-only for the tenant owner (export in Phase 18) | — |
 | `deleted` | 404; the slug is tombstoned forever | Data purge procedure in Phase 18 |
 
@@ -382,18 +403,18 @@ Mechanisms:
 | P2 | "My institutions" for the signed-in user | Platform host, `GET /me/memberships/` | Own account only (wrapper passes `request.user.id`) | **D** `tenancy_memberships_of` | None (own data) |
 | P3 | Sign-in and membership check on a tenant host | Tenant host | Credentials plus active membership or active support session | Ordinary tenant transaction (RLS); no platform mechanism | Failed sign-ins: durable audit (§8.3) |
 | P4 | Provision a tenant | Super Admin, `POST /platform/tenants/` | `tenancy.tenant.create`, MFA; refused while tenant hosts are disabled in production (§10.2) | **R** insert tenant → **T** domain, first institution, main campus, system role copies, owner invitation (one transaction per step group; compensating cleanup marks the tenant `deleted` on failure) | Platform log + tenant log |
-| P5 | Read or update registry fields, suspend, reactivate, override limits | Super Admin | `tenancy.tenant.view_any` / `update_any` / `suspend`, `tenancy.limit.override` (MFA, step-up, reason) | **R** (+ **T** to write the tenant's audit event; host-bound session revocation uses identity tables, **R**) | Platform log + tenant log |
+| P5 | Read or update registry fields, suspend, reactivate, override limits | Super Admin | `tenancy.tenant.view_any` / `update_any` / `suspend`, `tenancy.limit.override` (MFA, step-up, reason) | **R** (+ **T** to write the tenant's audit event and, on suspension, revoke active support sessions (D2); host-bound session revocation uses identity tables, **R**) | Platform log + tenant log |
 | P6 | Request, end or list own support sessions | Platform staff | `tenancy.support_session.request` (MFA, step-up) | **T** to insert or update the session in that tenant; **D** `tenancy_support_sessions_of` for the caller's own list | Platform log + tenant log |
 | P7 | Sync tenant system role copies after template changes (Q5) | `seed_roles` (migrate step) / deploy | Operator (deploy pipeline) | **I**: per tenant, update the system copies of changed templates; idempotent; bumps the tenant cache version | One platform event per run, with a per-tenant result count |
-| P8 | Platform dashboard counts (tenants by status, limits) | Super Admin | `tenancy.tenant.view_any` | **R** only. Per-tenant member counts are **not** offered in Phase 3 (D8) | None |
+| P8 | Platform dashboard counts (tenants by status, limits) | Super Admin | `tenancy.tenant.view_any` | **R** only (registry fields). **D8:** no cross-tenant lists of tenant-owned data (no per-tenant member counts, no all-staff support-session list) in the Phase 3 MVP | None |
 | P9 | Account deactivation, MFA reset, session revocation (Phase 2) | Platform admin | Phase 2 permissions + privileged-target rule | **R** (identity tables); memberships unchanged (a deactivated user can't sign in anywhere) | Platform log |
 | P10 | Anonymise expired security-event IPs (ADR-036) | Celery beat, platform task | System | Platform rows in the platform context **+ I** over tenants for tenant rows. Replaces today's single context-free pass, which would see only platform rows under the new RLS | One platform event per run with counts |
-| P11 | Security investigation of a tenant's audit log | Platform staff | Support session (read-only, tenant-approved, §11) | **T** via the tenant host only; no platform-host view of tenant events (D3) | Tenant log (every request) + platform log |
+| P11 | Security investigation of a tenant's audit log | Platform staff | Support session (read-only, tenant-approved, §11) | **T** via the tenant host only. **D3:** platform staff can't browse tenant audit events from the platform host | Tenant log (every request) + platform log |
 | P12 | Security-email delivery, identity housekeeping, `core.ping` | Celery | System | **R** (identity) / none; declared `platform_task` | Existing |
 | P13 | Data migrations that touch tenant rows | Migration (`erp_owner`) | Code review | **I**: helper `for_each_tenant(apps, schema_editor, fn)` opens `tenant_atomic` per tenant on the owner connection (RLS forced on the owner too) | Migration log |
 | P14 | Cross-tenant isolation monitoring | Platform | System | Guard and host-policy events are recorded in the **platform** log with the tenant id as metadata (no tenant data) | Platform log |
 | P15 | Tenant export and purge | Phase 18 | — | Planned as **I**/**T**; purge of append-only audit data needs its own ADR | — |
-| P16 | Incident break-glass (corruption, forensic cross-tenant query) | Database administrator | Outside the application; maintenance procedure (D6) | Not a runtime capability; `erp_platform` reserved | Procedure log (Phase 18 runbook) |
+| P16 | Incident break-glass (corruption, forensic cross-tenant query) | — | **Not in Phase 3 (D6).** Deferred to Phase 18; a new ADR and explicit owner approval are required | None; `erp_platform` stays `NOLOGIN` and reserved | Procedure log (Phase 18 runbook) |
 
 **Completeness gate (acceptance criterion):**
 - Every code path that touched tenant-related data before Phase 3 appears in this table. P10 is the only Phase 2 task affected.
@@ -424,7 +445,7 @@ with platform_scope(operation="P4", actor=request.user, reason="provision tenant
   - for **tenant** audit rows: per-tenant iteration (P13 helper).
 
   Key rotation of encrypted IPs therefore covers every tenant's rows explicitly; its test asserts that the rotated count equals the total.
-- **Break-glass (D6):** not built in Phase 3. If ever needed:
+- **Break-glass (D6, owner decision):** **not built in Phase 3.** No `erp_platform` login and no emergency bypass access. It is deferred to Phase 18 and requires a new ADR and explicit owner approval. The outline below is only a starting point for that ADR:
   - a database administrator would act in a maintenance window under a written procedure (two people, ticket, session log);
   - granting `LOGIN` to `erp_platform` would need a new ADR.
 
@@ -541,7 +562,7 @@ RequestID → Security → Session → Common → CSRF → Auth → SessionSecur
 - `invitation.invalid_attempt` (rate-limited).
 
 They are written by `audit.record(..., durable=True)`:
-- **Connection:** a separate alias, `audit_durable`. It uses the same `erp_app` credentials (no new role, no new dependency) and `CONN_MAX_AGE = 0` until D4 is decided.
+- **Connection:** a separate alias, `audit_durable`. It uses the same `erp_app` credentials (no new role, no new dependency) and `CONN_MAX_AGE = 0` (D4).
 - **Context:** its own `tenant_atomic(tenant, using="audit_durable")`, so the event is stored under the right tenant and RLS applies. The guard tracks applied transactions **per connection**, so the main transaction and the durable transaction don't interfere.
 - **Scope:** durable events reference only already-committed identifiers (actor user id, tenant id, request id). They never reference rows created in the uncommitted main transaction.
 - **Failure policy:** if the durable write fails, the **response stays a denial** (fail closed). The failure is logged with `request_id` and sent to Sentry. A denial is never turned into success.
@@ -568,8 +589,28 @@ They are written by `audit.record(..., durable=True)`:
 3. **No external I/O inside a tenant transaction:** email, HTTP and storage calls run through `on_commit` or Celery. The review checklist covers this. In tests, a guard in the email backend and the storage helper raises if called inside an open tenant transaction.
 4. **Read-mostly views:** no `select_for_update` in `GET` paths. Row locks are used only for limit checks (lock the tenant registry row) and balance-like counters. Lock order is always tenant → institution → campus → membership → assignment.
 5. **Pagination:** maximum page size 100; list endpoints use indexed `(tenant_id, …)` ordering.
-6. **Observability:** a structured log field `tx_ms` on every tenant request, with a warning above 2 s (proposed) and a Sentry performance span.
-7. **Benchmark (M10):** `manage.py tenancy_load_check` (standard library threads) compares p50/p95 latency of representative tenant endpoints with the Phase 2 platform baseline. **Proposed** threshold: no more than 20% regression at p95. The numbers are proposals (D9).
+6. **Observability:** a structured log field `tx_ms` on every tenant request, with a warning above **2 s** (D9) and a Sentry performance span.
+7. **Initial engineering thresholds (D9, owner-approved):**
+   - PostgreSQL lock wait (`lock_timeout`) 5 s;
+   - warning threshold 2 s;
+   - **at most 20% p95 overhead attributable to tenant isolation.**
+
+   These are initial targets, **not permanent guarantees**. They are reviewed with measured data at the end of M10 and in Phase 18.
+8. **Benchmark methodology (M10; results recorded in `docs/benchmarks/PHASE_03_TENANT_ISOLATION.md`):**
+   - **What is measured:** the overhead of the isolation layer, i.e. host resolution (F1), the request transaction with `set_config`, the query guard, the membership check and RLS policy evaluation. Measured on the same endpoints and data, *with* and *without* that layer.
+   - **Control configuration:** a benchmark-only settings module (`config.settings.benchmark`) runs against a **scratch benchmark database** that the benchmark command creates. Comparison runs use a copy without RLS policies and with the isolation middleware replaced by a fixed context. The settings guard refuses this module unless `DJANGO_ENV=benchmark`, so it can never load in production, staging, dev or CI test runs, and it never touches the application database.
+   - **Workload:**
+     - representative tenant endpoints: list and detail of institutions, campuses and members, `/me/context/`, one write (institution update);
+     - 3 tenants seeded with fixed volumes (proposed: 1 000 members, 10 institutions, 50 campuses each), so plans are realistic;
+     - fixed random seed.
+   - **Procedure:**
+     - warm-up of 200 requests per endpoint;
+     - then 2 000 measured requests per endpoint at concurrency 1, 8 and 32 (standard-library threads against the compose stack through Nginx and Uvicorn);
+     - 3 repetitions;
+     - report p50, p95 and p99, plus the median of the repetitions.
+   - **Overhead metric:** `(p95_with_isolation − p95_control) / p95_control` per endpoint and concurrency level. The target is ≤ 20%.
+   - **Environment recorded with every result:** CPU model and core count, RAM, OS and kernel, Docker and Compose versions, PostgreSQL version and settings (`shared_buffers`, `work_mem`), `CONN_MAX_AGE`, Gunicorn and Uvicorn worker counts, commit SHA, date. Absolute numbers from shared CI runners are noisy, so the gate uses the **relative** overhead measured within one run.
+   - **On a miss:** a measured breach of a threshold is reported to the owner with an analysis. Thresholds are never silently relaxed.
 
 ### 8.5 Context leakage verification (owner requirement 4)
 
@@ -608,9 +649,12 @@ Worker settings stay as in Phase 1 (`acks_late`, prefetch 1). On `worker_process
 ### 8.6 Pooling and ASGI
 
 - Only transaction-scoped database state is used. There is no session-level `SET`, no `LISTEN`, and no server-side prepared statements across transactions. The design is therefore compatible with PgBouncer **transaction** pooling; a PgBouncer stack test is a Phase 19 item.
-- Production serves Django through Uvicorn workers (ASGI), and all views are sync. In M3 a spike checks how persistent connections behave under ASGI: reuse, closure at request end, connection count under concurrency.
-  - If persistent connections don't behave correctly under ASGI, `CONN_MAX_AGE` becomes `0` for the ASGI server (no new dependency).
-  - A connection-pool library (for example `psycopg_pool`) would need separate approval as a new dependency (D4).
+- **D4 (owner decision):** Phase 3 starts with **`CONN_MAX_AGE = 0`** for every runtime alias (`default` and `audit_durable`) and every server (ASGI API, Celery worker and beat), with `CONN_HEALTH_CHECKS = True`. Transaction-safe connection handling means:
+  - a connection never leaves a request or task inside an open transaction (Django closes it at request end; `TenantTask` rolls back in `finally`);
+  - no session-level state is ever set;
+  - `request_finished` and `task_postrun` leak detectors assert both (L8, C5).
+- **M3 measurement:** connection-setup cost, request latency and connection counts under ASGI at concurrency 1, 8 and 32, with the §8.4 methodology. Results are recorded.
+- **Any later persistent-connection configuration** (`CONN_MAX_AGE > 0`, or a pool) requires a change approved by the owner **and** tests proving that tenant context can't leak across requests or reused connections: L1, K1 and K2 re-run with the new setting, plus K3 through the real ASGI stack. Phase 3 already runs L1, K1 and K2 in a forced-reuse configuration, so this guard exists from day one. A pool library (for example `psycopg_pool`) would also need dependency approval.
 
 ### 8.7 Cache and storage keys
 
@@ -725,7 +769,7 @@ Evaluated by `TenantResolutionMiddleware` for every request, in this order:
 - **Provisioning while disabled:**
   - In **production**, `POST /platform/tenants/` returns `409 tenant_hosts_disabled`, and the console explains why. No tenant can exist before its host can be served securely, so no owner invitation can point at a dead link.
   - In dev and CI, provisioning works whenever the suite enables tenant hosts.
-- **Enabling in production:** the owner supplies the domain (D1) → `TENANT_BASE_DOMAIN` and `ALLOWED_HOSTS` (`.<domain>`) are configured → Phase 3 security review → `TENANT_HOSTS_ENABLED = true`. Each step is a configuration change recorded in the deployment log.
+- **Enabling in production (D1, owner decision: deferred):** the owner supplies the domain → `TENANT_BASE_DOMAIN` and `ALLOWED_HOSTS` (`.<domain>`) are configured → Phase 3 security review → `TENANT_HOSTS_ENABLED = true`. Each step is a configuration change recorded in the deployment log.
 
 ### 10.3 Placeholder domain (Q9)
 
@@ -744,7 +788,7 @@ Evaluated by `TenantResolutionMiddleware` for every request, in this order:
 ### 10.5 Sign-in per host (Q2) and SSO extensibility
 
 - Each tenant host has its own session; the same `User` signs in separately. "My institutions" lists each tenant with its sign-in link.
-- **Sign-in on a tenant host by a non-member** gets the same generic failure as wrong credentials, so membership isn't enumerable (D7). The page suggests checking the address.
+- **Non-member sign-in (D7, owner decision):** a sign-in on a tenant host by a non-member, an unknown email, a wrong password, a suspended membership or a non-owner of a suspended tenant all return the **same generic authentication error**: same body, status and code, with timing equalised by the Phase 2 dummy-hash path. It never reveals whether an email or account exists or belongs to the tenant. The page only suggests checking the address and credentials.
 - **Future SSO is kept possible**, with no Phase 3 code:
   - the global `User` and per-host `SessionRecord` already separate identity from host sessions;
   - a later ADR can add a one-time, host-bound handoff token (hashed, single use, ≤ 60 s, issued on the platform host, redeemed on the tenant host) without changing tenancy tables, RLS or the session model;
@@ -773,7 +817,14 @@ sequenceDiagram
 
 **Rules:**
 - **Approval:** tenant approval is required by default (Q4): `support_access_requires_approval = true` at provisioning.
-  - Only a `tenant_owner` may change this setting, with step-up and audit (D5).
+  - **D5 (owner decision):**
+    - only a `tenant_owner` may change this setting, with step-up authentication;
+    - every change writes an **immutable** audit event (`tenancy.support_approval.changed`, old and new value, actor, reason) in the tenant log, in the same transaction as the change. The audit table is append-only (INSERT/SELECT grants plus a mutation-rejecting trigger, Phase 2);
+    - tenant owners are emailed (`on_commit`).
+  - With approval disabled, a session is approved automatically on request, but it is still:
+    - **time-limited** (≤ 120 minutes);
+    - **visible** (banner, owner email on start, history);
+    - **revocable** by the tenant at any time.
   - Super Admins can't change tenant settings: `PATCH /platform/tenants/{id}/` excludes `settings`.
 - **Read-only:** unsafe HTTP methods are rejected while support access is used, and only allow-listed `support_readable` view codes are granted. Write access needs a new ADR.
 - **Time-limited:** 15–120 minutes, with automatic expiry. Sessions can't be extended, only requested again.
@@ -796,6 +847,26 @@ sequenceDiagram
 | S7 | Bounded in time | CHECK constraint (≤ 2 h) plus status checked uncached per request; expiry revokes the staff member's sessions on that host | Expiry and revoke tests |
 | S8 | No platform-host shortcut | Platform endpoints never return tenant data (catalogue §6.3); F3 returns metadata only | URL audit and response-schema tests |
 | S9 | Not reachable by host spoofing | Staff need a session on that exact host (`SessionRecord.host`) | Session replay on another host → anonymous |
+| S10 | No access to suspended tenants (D2) | `SupportSessionSource` grants nothing while the tenant is `suspended`; active sessions are revoked on suspension; staff sign-in on a suspended tenant host gets the generic error (D7) | Suspended tenant: staff with an approved session → no data (403/generic); suspension revokes active sessions |
+
+### 11.3 Suspended tenants (D2, owner decision)
+
+- **No emergency bypass.**
+- Suspension revokes all active support sessions and all member sessions on the tenant host.
+- **Only `tenant_owner` members** can sign in, into a **restricted mode**. A middleware allow-list permits only:
+  - `/me/context/`;
+  - `GET /support-sessions/` and `POST /support-sessions/{id}/approve|reject|revoke/`;
+  - sign-out.
+
+  Every other tenant endpoint returns `403 tenant_suspended`. The restricted mode can't read tenant business data: institutions, members, roles, audit and later-phase records.
+- Support sessions may be **requested, reviewed and approved** while the tenant is suspended, but they **can't be used**. `SupportSessionSource` returns no grants while the tenant isn't `active`, so **no suspended-tenant business data is exposed to platform staff.** An approved session becomes usable only if the tenant is reactivated within the session window. The window isn't extended.
+- All restricted-mode actions are audited in the tenant log.
+- **Tests:**
+  - owner restricted mode allows only the allow-list;
+  - non-owner members get the generic error;
+  - staff with an approved session get no data;
+  - suspension revokes sessions;
+  - reactivation restores normal behaviour.
 
 ## 12. API specification (`/api/v1`, Problem Details, OpenAPI)
 
@@ -998,13 +1069,15 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 
 | ADR | Title | Status |
 |---|---|---|
-| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain | Proposed; Q1, Q2, Q9 approved in principle |
-| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | Proposed; Q7 approved in principle |
-| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | Proposed rev. 2 (owner: runtime BYPASSRLS not approved; replacement and threat model required — §6, §7) |
-| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | Proposed; Q5, Q8, Q12 approved in principle |
-| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass | Proposed; Q4 approved in principle |
-| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | Proposed; Q10 approved in principle |
-| **047** | Phase 3 scope decisions (owner answers Q1–Q12) | Proposed — records the in-principle approvals; becomes Accepted with final plan approval |
+| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain; generic non-member sign-in | Proposed — approved in principle (rev. 2 + D1, D7) |
+| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | Proposed — approved in principle (rev. 2 + D4, D9) |
+| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | Proposed — approved in principle (rev. 2 + D3, D6, D8) |
+| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | Proposed — approved in principle (rev. 2) |
+| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass, suspended-tenant rules | Proposed — approved in principle (rev. 2 + D2, D5) |
+| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | Proposed — approved in principle (rev. 2) |
+| **047** | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | Proposed — approved in principle |
+
+All seven become **Accepted** only with the owner's explicit final approval of this plan. ADR-009 stays **Accepted**; its §5 amendment by ADR-043 takes effect at the same moment (§6.1).
 
 ## 17. Owner decisions and remaining questions
 
@@ -1025,24 +1098,34 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 | Q11 | Files module | **Full module moves to Phase 6/7; only the minimum storage infrastructure needed now** | §1, §8.7; roadmap |
 | Q12 | Default limits | **1 institution and 3 campuses per tenant; configurable for future plans** | §4.1 (`TENANT_DEFAULT_LIMITS`, Super Admin override; Phase 4 plans take over) |
 
-### 17.2 Remaining unresolved decisions
+### 17.2 Decisions D1–D9 (owner, 2026-11-08)
 
-| # | Decision needed | Recommendation | Blocks |
+| # | Topic | Owner decision | Applied in |
 |---|---|---|---|
-| D1 | Production platform domain (Q9) | Owner provides it when ready; until then tenant hosts stay disabled in production | Enabling tenant hosts in production only (not implementation) |
-| D2 | Support access while a tenant is **suspended** (members can't sign in, so nobody can approve) | No emergency bypass in Phase 3. A suspended tenant's `tenant_owner` may still sign in **only** to approve or reject support sessions and read the audit log | M5 |
-| D3 | Platform-host visibility of tenant audit events: today the platform audit view shows all events, but all are platform events | Accept: tenant events visible only on the tenant host (including to support staff through an approved session); cross-tenant security signals are mirrored to the platform log (P14) | M6 |
-| D4 | Connection handling under ASGI and for the durable-audit alias | Measure in the M3 spike; fall back to `CONN_MAX_AGE = 0` (no dependency). A pool library would need separate approval | M3 |
-| D5 | May a tenant waive support approval (Q4 "by default")? | Yes, `tenant_owner` only, step-up, audited; banner and emails still apply | M5 |
-| D6 | Break-glass procedure for incidents (`erp_platform` reserved) | Defer to the Phase 18 runbook; any login for `erp_platform` needs a new ADR | None in Phase 3 |
-| D7 | Sign-in by a non-member on a tenant host | Generic failure identical to wrong credentials (no membership enumeration) | M3/M4 |
-| D8 | Cross-tenant platform lists (all active support sessions, per-tenant member counts) | Not offered in Phase 3; staff see their own sessions (F3); revisit in Phase 18 with a reviewed design | None |
-| D9 | Performance numbers (`lock_timeout` 5 s, 2 s warning, ≤ 20% p95 regression) | Approve as initial values, tuned after M10 measurements | M10 |
+| D1 | Production platform domain | **Deferred.** Use a clearly documented placeholder (`<platform-domain>`). Tenant hosts stay disabled until the owner provides the domain **and** approves the security review | §10.2, §10.3; production guard |
+| D2 | Support access while a tenant is suspended | **No emergency bypass.** The tenant owner may sign in only to review and approve support access. No suspended-tenant business data is exposed to platform staff | §4.3, §11.2 S10, §11.3 |
+| D3 | Tenant audit visibility | Platform staff can't browse tenant audit events from the platform host; only through an approved, audited, tenant-scoped support session | §5.1, §6.3 P11 |
+| D4 | ASGI database connections | Start with `CONN_MAX_AGE = 0` and transaction-safe connection handling; measure in M3. Any later persistent-connection configuration needs tests proving no leak across requests or reused connections | §8.6 |
+| D5 | Disabling support approval | Only the tenant owner, with step-up and an immutable audit event. Sessions stay time-limited, visible and revocable | §11.1 |
+| D6 | Break-glass | Deferred to Phase 18. No `erp_platform` login and no emergency bypass in Phase 3. A future capability needs a new ADR and explicit approval | §6.2, §6.3 P16, §6.5 |
+| D7 | Non-member sign-in | Generic authentication error that reveals nothing about the email, the account or membership | §10.5 |
+| D8 | Cross-tenant platform lists | Not in the Phase 3 MVP; platform operations use only the approved tenant-by-tenant mechanisms | §6.3 |
+| D9 | Performance limits | Initial targets: lock wait 5 s, warning 2 s, ≤ 20% p95 overhead attributable to tenant isolation. Engineering thresholds, not permanent guarantees; environment and methodology documented | §8.4 |
+
+### 17.3 Still open (none blocks implementation)
+
+| Item | Status | Blocks |
+|---|---|---|
+| Actual production platform domain (D1) | Waiting for owner input | Enabling tenant hosts in production |
+| Phase 3 security review of the implementation | After M11 | Enabling tenant hosts in production; merge of the implementation PR |
+| Benchmark results against the D9 targets | Measured in M3 (connections) and M10 (isolation overhead) | Phase 3 completion; a miss is reported to the owner |
+| Seed volumes for the benchmark (§8.4) | Proposed (1 000 members, 10 institutions, 50 campuses per tenant) | Nothing; may be adjusted in M10 with a recorded reason |
+| Inherited known gaps (Bengali copy review, IP-retention legal review, per-IP login limit behind NAT) | Tracked in `DEVELOPMENT_PROGRESS.md` | Production launch, not Phase 3 implementation |
 
 ## 18. Dependencies and technology
 
 - **No new runtime dependencies.** Everything uses Django, PostgreSQL 17 (RLS, `SECURITY DEFINER`, composite FKs), Celery, Redis and the existing frontend stack. The concurrency, load and stack tests use the Python standard library and the existing Playwright.
-- No PgBouncer in Phase 3 (the design is transaction-pooling compatible; a PgBouncer stack test is a Phase 19 item). No connection-pool library (D4).
+- No PgBouncer in Phase 3 (the design is transaction-pooling compatible; a PgBouncer stack test is a Phase 19 item). No connection-pool library; `CONN_MAX_AGE = 0` (D4).
 - No microservices (ADR-002).
 - New Django app: `tenancy`. New core module: `apps.core.tenancy`.
 
@@ -1081,14 +1164,14 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 |---|---|---|
 | M1 | `apps.core.tenancy` (contextvar, `tenant_atomic`, guard, `TenantScopedModel`/`TenantManager`, `platform_scope` with catalogue ids), RLS migration operations, CI catalogue and static checks, role assertions, import contracts, `01-roles.sh` comment fix, framework-table grant review | Unit + DB tests; Phase 2 green |
 | M2 | `tenancy` models, composite constraints, RLS, self-scoped registry, F1–F3 with owner-only policies, limits, slug rules, lifecycle | §4.4 and §7 tests; raw-SQL isolation as `erp_app`; migration rehearsal |
-| M3 | Host policy, `TenantResolutionMiddleware`, tenant transaction middleware, durable-audit alias, rollback on error, performance safeguards, `TENANT_HOSTS_ENABLED` gate and production guard; ASGI connection spike (D4); `ScopeTargetMiddleware` retired | Host decision-table tests; R1–R9; L1–L10; K1, K2, K8; config-guard tests |
+| M3 | Host policy, `TenantResolutionMiddleware`, tenant transaction middleware, durable-audit alias, rollback on error, performance safeguards, `TENANT_HOSTS_ENABLED` gate and production guard, generic sign-in error (D7); `CONN_MAX_AGE = 0` and connection measurement under ASGI (D4); `ScopeTargetMiddleware` retired | Host decision-table tests; R1–R9; L1–L10; K1, K2 (also in forced-reuse mode), K8; config-guard tests; D4 measurement recorded |
 | M4 | Memberships, invitations, role assignments, system copies and cloning, `TenantMembershipSource`, tenant cache versions, guard rails, revocation, P7 sync | RBAC matrix per template; revocation tests; K4, K5 |
-| M5 | Support sessions, `SupportSessionSource`, read-only enforcement, banner data, emails, dual audit | S1–S9; K7 |
+| M5 | Support sessions, `SupportSessionSource`, read-only enforcement, banner data, emails, dual audit, approval setting (D5), suspended-tenant restricted mode (D2) | S1–S10; §11.3 tests; K7 |
 | M6 | Dual-scope RLS on `rbac_role`, `rbac_rolepermission`, `audit_auditevent`, `audit_auditeventip`; tenant audit writes; P10 rewrite | Policy tests on real tables; Phase 2 audit and rbac suites green |
 | M7 | `TenantTask`, `@platform_task` declarations, leak detectors, cache and storage key helpers | C1–C10; K6 |
 | M8 | APIs (§12), OpenAPI and TS client; URL audit with host and catalogue metadata | Allowed/denied per endpoint; schema with zero warnings; completeness test (§6.3) |
 | M9 | Frontend (§13) in en and bn | Vitest; typed i18n parity |
-| M10 | Shared isolation suite, two-tenant E2E, K3 stack test, load check, security monitoring events, threat-model test mapping | Isolation suite green; E2E multi-host; axe; CSP; benchmark within D9 |
+| M10 | Shared isolation suite, two-tenant E2E, K3 stack test, isolation-overhead benchmark (§8.4 methodology), security monitoring events, threat-model test mapping, §23 checklist evidence | Isolation suite green; E2E multi-host; axe; CSP; benchmark report with environment, compared against D9 |
 | M11 | Docs (MULTI_TENANT, SECURITY, API, DB, ERD, DEPLOYMENT, progress; ADR-009 status note if ADR-043 is accepted), security self-review, PR | All CI green; separate PR; not merged without approval |
 
 ## 21. Acceptance criteria
@@ -1104,19 +1187,22 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
    - the tenant comes only from the host;
    - unknown, provisioning and deleted hosts are indistinguishable;
    - disabled mode performs no lookup;
-   - production refuses to enable tenant hosts without a real domain, and refuses provisioning while they are disabled.
+   - production refuses to enable tenant hosts without a real domain, and refuses provisioning while they are disabled;
+   - tenant hosts stay disabled in production until the owner provides the domain and approves the security review (D1);
+   - non-member sign-in returns the generic error (D7).
 6. **Platform operations:**
    - no runtime `BYPASSRLS`;
    - every platform path maps to the catalogue (§6.3), which the completeness test checks;
    - F1–F3 meet their §7 tests;
-   - `erp_platform` is unchanged and unused.
+   - `erp_platform` is unchanged and unused, with no login and no break-glass path (D6);
+   - no cross-tenant platform lists (D8), and no platform-host view of tenant audit events (D3).
 7. **Memberships and RBAC:**
    - one account can hold memberships in several tenants with independent scoped roles;
    - the Phase 2 engine and API are unchanged;
    - anti-escalation, scope-coverage, last-owner and read-only-system-role rules hold;
    - revocation is effective on the next request;
    - the import contracts pass.
-8. **Support access:** only through an explicit session, tenant-approved by default, ≤ 2 h and read-only. Every action is audited in the tenant log, sessions are revocable and the banner is visible. S1–S9 pass.
+8. **Support access:** only through an explicit session, tenant-approved by default, ≤ 2 h and read-only. Every action is audited in the tenant log, sessions are revocable and the banner is visible. Disabling approval works only as described in D5. Suspended tenants follow D2 (§11.3). S1–S10 pass.
 9. **Lifecycle and limits:** provisioning, suspension and limits (default 1/3) work and are audited. Concurrent creation can't exceed limits.
 10. **Compatibility:** all Phase 2 tests, E2E and CI checks stay green. Phase 2 records need no backfill.
 11. **Quality gates:**
@@ -1125,7 +1211,8 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
     - Trivy and gitleaks clean;
     - OpenAPI with zero warnings;
     - en/bn parity;
-    - benchmark within the approved D9 values.
+    - benchmark report against the D9 targets; any miss is reported to the owner, and thresholds are not relaxed silently;
+    - `CONN_MAX_AGE = 0` in all runtime settings (D4).
 12. **Docs and PR:** docs updated; ADR-041–047 accepted before implementation; separate PR; not merged without owner approval.
 
 ## 22. Risks
@@ -1139,8 +1226,24 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 | Separate sign-in per tenant host is friction for multi-tenant users | "My institutions" links; SSO handoff in a later ADR (§10.5) |
 | Dual-scope tables are an exception to fail-closed | Explicit lists; platform rows hold no tenant data; tested |
 | Durable-audit connection cost under error bursts | Only on denials and failures; rate limits; measured in M3 (D4) |
-| ASGI connection behaviour differs from WSGI | M3 spike and K3 stack test before enabling anything (D4) |
+| ASGI connection behaviour differs from WSGI | `CONN_MAX_AGE = 0` from the start; M3 measurement; K3 stack test; persistent connections only with owner approval and leak tests (D4) |
+| `CONN_MAX_AGE = 0` costs a connection per request | Measured in M3. If the cost is material, the owner decides, with leak tests, whether to use persistent connections or a pool (D4) |
+| Benchmark noise on shared CI runners | Gate on overhead relative to the control within one run; record the environment; three repetitions (§8.4) |
 | Redis eviction affects caches | Authorization correctness doesn't depend on Redis: membership, tenant and support checks are uncached; the permission cache is backed by versions and TTL |
+
+## 23. Final approval gate: isolation guarantees checklist
+
+Each final documentation requirement maps to its design and the tests that prove it during implementation. M10 attaches the test evidence to this list in the implementation PR.
+
+| Requirement | Design | Proof (tests / CI) |
+|---|---|---|
+| ADR-009 stays Accepted; amendment documented accurately | §6.1 clause table; ADR-043 states the exact amended wording; an append-only note under ADR-009 records the pending amendment | Decision-log review |
+| Every `SECURITY DEFINER` function has an explicit threat model and tests | §7 F1–F3 (only three allowed); owner-only `SELECT` policies | §7 test rows; CI catalogue check §5.3 #6 (unlisted function, missing `search_path`, `PUBLIC` execute, wrong owner or volatility, any owner write policy → fail) |
+| Platform operations can't silently bypass RLS | §6.3 catalogue (R / T / I / D only); §6.4 `platform_scope` never sets the tenant, changes role or disables RLS; `erp_platform` unused (D6) | Completeness test (undeclared platform view or task → fail); role assertions §5.3 #7; static check for `SET ROLE` and session `SET`; P10 count test; audit events for every T/I run |
+| Every tenant request and Celery task has isolated, transaction-scoped context | §8.1–§8.2, §8.5, §8.6; `CONN_MAX_AGE = 0` (D4) | L1–L10, C1–C10, K1–K3, K6, K8; leak detectors on `request_finished` and `task_postrun`; task-declaration test |
+| Support sessions can't bypass tenant isolation | §11.1–§11.3; same role, host tenant only, allow-listed reads, same-transaction audit, nothing while suspended (D2) | S1–S10; R9; K7 |
+| Tenant hosts disabled until the production domain and security review are approved | §10.1 step 3, §10.2, §10.3; production config guard; `409 tenant_hosts_disabled` | Config-guard tests; disabled-mode tests (no lookup, uniform 404); provisioning refusal test |
+| Documentation only (this PR) | No application, infrastructure or test code changed | PR file list: documentation files only |
 
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
@@ -1153,4 +1256,8 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
     - system roles read-only with cloning;
     - support approval required by default;
     - sections renumbered.
+  - Documentation only.
+- 2026-11-08 — Rev. 3 (final candidate): the owner approved ADR-041–047 in principle and decided D1–D9.
+  - **Added:** D1–D9 decisions (§17.2) and still-open items (§17.3); suspended-tenant restricted mode (§11.3, S10); D5 approval-setting rules; D7 generic sign-in error; D4 `CONN_MAX_AGE = 0` with leak-test gate (§8.6); D9 thresholds and benchmark methodology (§8.4); approval-gate checklist (§23).
+  - **Updated:** milestones and acceptance criteria.
   - Documentation only.

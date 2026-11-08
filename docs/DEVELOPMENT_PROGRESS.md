@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` is at **revision 2** (Proposed): the owner approved Q1–Q12 in principle, and ADR-041 to ADR-047 are Proposed. It is in documentation PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) (not merged) and awaits the owner's final approval. No Phase 3 application code exists.
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` **revision 3 (final candidate)**: ADR-041–047 approved in principle, and the owner decided D1–D9. It is in documentation PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) (not merged) and awaits the owner's **final approval**. No Phase 3 application code and no implementation branch exist.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -22,7 +22,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan only; not merged) | Plan rev. 2; Q1–Q12 approved in principle; ADR-041–047 Proposed; final approval pending; open decisions D1–D9 |
+| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan only; not merged) | Plan rev. 3 (final candidate); ADR-041–047 approved in principle; D1–D9 decided; final approval pending |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -50,6 +50,10 @@ See `DECISION_LOG.md`.
 - **Resolved 2026-11-06:** Phase 1 approved; Phase 2 plan rev. 3 approved; PR #13 merged.
 - ~~**Open:** owner review of the Phase 2 implementation (PR #15).~~ Resolved: approved and merged on 2026-11-07.
 - **Proposed 2026-11-08 (Phase 3 planning):** ADR-041 (host-based tenant resolution and the enablement gate), ADR-042 (tenant context lifecycle), ADR-043 (no runtime BYPASSRLS; amends ADR-009 §5), ADR-044 (memberships and scoped role assignments), ADR-045 (support sessions), ADR-046 (RLS policy catalogue and CI enforcement). Owner questions: plan §15 Q1–Q12.
+- **2026-11-08 (Phase 3 plan rev. 3):**
+  - ADR-041–047 approved in principle; D1–D9 decided (plan §17.2).
+  - ADR-009 stays Accepted; an append-only note records the pending §5 amendment.
+  - **Open:** the owner's final approval of the plan; the production domain (D1, needed only to enable tenant hosts in production).
 - **2026-11-08 (Phase 3 plan rev. 2):**
   - The owner approved Q1–Q12 **in principle**; ADR-047 records the answers.
   - Runtime BYPASSRLS was **not approved**. ADR-043 rev. 2 instead keeps `erp_platform` unused and introduces the platform operation catalogue.
@@ -64,6 +68,10 @@ See `DECISION_LOG.md`.
 - Legal/compliance review for minors' data, retention periods, VAT/tax invoicing.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
+- **Phase 3 (planned):**
+  - Tenant hosts must stay disabled in production until the owner provides the production domain and approves the Phase 3 security review (D1).
+  - The D9 performance values are initial engineering targets that must be measured (plan §8.4), not guarantees.
+  - Break-glass access is deferred to Phase 18 (D6).
 - Institution-type preset content (especially madrasa variants and hostel profile defaults) needs validation with real institutions.
 - Branch protection for `main` must be configured by the repository owner in GitHub settings (require the CI jobs listed in `DOCKER_DEPLOYMENT.md` §6).
 - ESLint is held at 9.x (deprecated upstream) and TypeScript at 5.9; both are owner-approved as temporary, with upgrade triggers tracked in ADR-030.
@@ -366,3 +374,33 @@ See `DECISION_LOG.md`.
   1. The owner gives final approval of plan rev. 2 and ADR-041–047, and answers D1–D9 where possible (D1 can come later; it blocks only production enablement).
   2. Merge PR #16 with approval.
   3. Implement on `feat/phase-03-tenancy`, starting with M1.
+
+### 2026-11-08 — Session 12 (Phase 3 plan revision 3, documentation only)
+- **Verified before changes:**
+  - PR #16 open, `clean`, head `82a5d65`, CI 8/8 green;
+  - `main` at `2d61e83`;
+  - no `feat/phase-03-tenancy` branch.
+- **Owner review of rev. 2:** ADR-041–047 approved in principle; D1–D9 decided; final documentation requirements set.
+- **Plan rev. 3** (`plans/PHASE_03_PLAN.md`):
+  - D1–D9 applied throughout;
+  - suspended-tenant restricted mode (§11.3, S10);
+  - approval-setting rules for D5;
+  - generic sign-in error (D7);
+  - `CONN_MAX_AGE = 0` with a leak-test gate for any later change (D4);
+  - D9 thresholds and benchmark methodology, including the environment record (§8.4);
+  - approval-gate checklist mapping each final requirement to design and tests (§23);
+  - §17.3 lists what is still open.
+- **Decision log:**
+  - ADR-041–047 marked approved in principle, with D1–D9 added to their bodies;
+  - ADR-009 stays **Accepted**, with an append-only note giving the exact pending §5 wording; the original text is unchanged.
+- **Roadmap, `CLAUDE.md` phase table and this tracker:** updated. No rule changed.
+- **No application code; no implementation branch; PR #16 not merged.**
+- **Verification:**
+  - Prettier check on the changed Markdown;
+  - section cross-reference check;
+  - check that every relative document link resolves;
+  - PR CI results (recorded in the PR and the session report).
+- **Next recommended task:**
+  1. Owner gives final approval.
+  2. Merge PR #16 with that approval.
+  3. Create `feat/phase-03-tenancy` and implement M1.

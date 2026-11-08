@@ -2,7 +2,7 @@
 
 > Tenant isolation is a **non-negotiable** platform guarantee. See `CLAUDE.md` §2 and §10.
 
-> **Status (2026-11-08):** this document describes the **target** design. Nothing tenant-scoped is implemented yet. The detailed Phase 3 design is **proposed** in `plans/PHASE_03_PLAN.md` (revision 2) together with ADR-041–047 (Proposed; owner answers Q1–Q12 approved in principle). Where the plan refines this document (for example, `platform_scope()` without a `BYPASSRLS` login, ADR-043), the plan applies only once the owner approves it, and this document will then be updated.
+> **Status (2026-11-08):** this document describes the **target** design. Nothing tenant-scoped is implemented yet. The detailed Phase 3 design is **proposed** in `plans/PHASE_03_PLAN.md` (revision 3) together with ADR-041–047 (Proposed; approved in principle by the owner). Where the plan refines this document (for example, `platform_scope()` without a `BYPASSRLS` login, ADR-043), the plan applies only once the owner approves it, and this document will then be updated.
 
 ## 1. Tenancy hierarchy
 
@@ -135,3 +135,4 @@ A failure blocks merge.
 - 2026-11-06 — Phase 3 prerequisite (security review I2): `apps.rbac.middleware.ScopeTargetMiddleware` currently treats **every** host as the platform host. It must be replaced by host-based tenant resolution **before** any tenant host is added to `ALLOWED_HOSTS`; session and CSRF cookies stay host-only (no `Domain`) for tenant subdomains (ADR-040).
 - 2026-11-08 — Added a status note pointing to the proposed Phase 3 plan (ADR-041–046). No design change.
 - 2026-11-08 — Status note updated for plan rev. 2 (ADR-041–047). No design change.
+- 2026-11-08 — Status note updated for plan rev. 3. No design change.
