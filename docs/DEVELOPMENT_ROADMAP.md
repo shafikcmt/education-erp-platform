@@ -57,6 +57,12 @@
 **Depends on:** Phase 2; ADR-009, ADR-010 **Accepted**.
 **Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, **Membership** and tenant **RoleAssignment** on the Phase 2 plan §4 design, tenant **invitations** using the Phase 2 `core.tokens` utility, audited time-limited **support sessions** (Phase 2 plan §4.5) and dual-scope RLS policies for `rbac_role`/`rbac_rolepermission`/`audit_auditevent` (§4.6) — ADR-032 accepted), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies, `core.db.tenant_atomic()` (transaction-scoped `set_config`) + execute-wrapper guard, `platform_scope()` (via `erp_platform` role), Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, configurable `max_institutions`/`max_campuses` limit enforcement (ADR-010), Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
 **Exit:** isolation suite green; RLS verified with raw SQL tests; security review.
+**Plan (Proposed, 2026-11-08):** `plans/PHASE_03_PLAN.md` rev. 1 with ADR-041 to ADR-046 (Proposed) and owner questions Q1–Q12. The deliverables above stay as approved; the plan proposes these changes, which apply only if the owner accepts them:
+- `platform_scope()` without a `BYPASSRLS` login (ADR-043, Q3);
+- the full `files` module moves to the first phase that stores uploads, so Phase 3 delivers only tenant storage keys and the presigned-URL helper (Q11);
+- self-service tenant sign-up is deferred to Phase 4/5 (Q6);
+- tenant hosts stay disabled by default (`TENANT_HOSTS_ENABLED`, ADR-041).
+Exit criteria in detail: plan §19.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -176,3 +182,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037) reflected; support sessions + dual-scope RLS noted for Phase 3; phone login added to Phase 14.
 - 2026-11-06 — Phase 2 dependency line updated (ADR-038/039; plan rev. 3).
 - 2026-11-06 — Phase 1 approved; Phase 2 implemented (PR #15, awaiting owner approval). Scope unchanged.
+- 2026-11-08 — Phase 2 approved and merged (PR #15). Phase 3 plan proposed (`plans/PHASE_03_PLAN.md`, ADR-041–046); proposed scope adjustments noted under Phase 3, pending owner approval.

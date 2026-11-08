@@ -5,7 +5,8 @@
 
 ## Current state
 
-- **Current phase:** Phase 2 — Authentication, users, roles & permissions (implemented; PR #15 awaiting owner review)
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` rev. 1 and ADR-041 to ADR-046 are Proposed (documentation PR, not merged), awaiting owner approval. No Phase 3 application code exists.
+- **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
 - **Phase 1 status:** Complete.
@@ -20,8 +21,8 @@
 |---|---|---|---|---|
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
-| 2 | Authentication, users, roles & permissions | Complete | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes) | Plan approved 2026-11-06; security review fixed (ADR-040); awaiting owner's final security review — not merged |
-| 3 | SaaS tenants, institutions & campuses | Not started | | |
+| 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
+| 3 | SaaS tenants, institutions & campuses | Planned | Documentation PR from `docs/phase-03-plan` (plan only; not merged) | Plan rev. 1 + ADR-041–046 Proposed; awaiting owner approval and answers to Q1–Q12 |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -47,7 +48,8 @@ See `DECISION_LOG.md`.
 - **Accepted 2026-11-05 (Phase 2 planning):** ADR-031, ADR-032, ADR-033 (with conditions), ADR-034, ADR-035, ADR-036 (IP privacy, Q7), ADR-037 (Q2–Q9).
 - **Accepted 2026-11-06:** ADR-038 (manual MFA key with strict conditions, Q10), ADR-039 (`@hookform/resolvers`, Q11).
 - **Resolved 2026-11-06:** Phase 1 approved; Phase 2 plan rev. 3 approved; PR #13 merged.
-- **Open:** owner review of the Phase 2 implementation (PR #15).
+- ~~**Open:** owner review of the Phase 2 implementation (PR #15).~~ Resolved: approved and merged on 2026-11-07.
+- **Proposed 2026-11-08 (Phase 3 planning):** ADR-041 (host-based tenant resolution and the enablement gate), ADR-042 (tenant context lifecycle), ADR-043 (no runtime BYPASSRLS; amends ADR-009 §5), ADR-044 (memberships and scoped role assignments), ADR-045 (support sessions), ADR-046 (RLS policy catalogue and CI enforcement). Owner questions: plan §15 Q1–Q12.
 
 ## Known gaps / open questions
 
@@ -291,3 +293,38 @@ See `DECISION_LOG.md`.
 - **Verification (actual results):** backend 286 passed / 9 skipped, coverage 95%; ruff, mypy (139 files), import-linter (5 contracts kept); OpenAPI regenerated, no drift; frontend ESLint, Prettier, `tsc`, Vitest 32 passed, production build; clean-volume stack healthy, `smoke_check` OK, runtime containers hold no owner credentials; Playwright **31 passed** with zero CSP violations; gitleaks (git history and tree) clean; Trivy clean on both runtime images.
 - **Dependabot review:** #3 (setup-uv 7), #4 (setup-node 7), #7 (upload-artifact 7), #8 (checkout 7), #14 (pnpm/action-setup 6) are within ADR-030 (they address the Node 20 runner deprecation) and #9 (Mailpit 1.33.0, dev only) needs the ADR-030 pin table updated. All were green on the pre-Phase-2 `main` only; rebase and re-run CI after PR #15 merges, then merge one at a time with owner approval. None was merged.
 - **Next recommended task:** owner's final security review of PR #15 and merge decision; then Dependabot rebases; then the Phase 3 plan.
+
+### 2026-11-08 — Session 10 (Phase 2 merge; Phase 3 planning, documentation only)
+- **PR #15 merge (owner-authorized):** all merge conditions were verified first:
+  - the PR was open and ready;
+  - the head was exactly `2cf3670`;
+  - all 8 checks were green;
+  - there were no conflicts and no blocking comments.
+  It was then squash-merged into `main` as `2d61e83`, and the merged tree is identical to the reviewed head. No branch protection or required check was bypassed, and no history was rewritten. Phase 2 is now `Approved`.
+- **Phase 3 planning (documentation only), on branch `docs/phase-03-plan` from `main` `2d61e83`:**
+  - `plans/PHASE_03_PLAN.md` rev. 1 (Proposed). It covers:
+    - the domain model and ERD;
+    - the RLS policy catalogue;
+    - the tenant context lifecycle (pooling, concurrency, Celery);
+    - tenant-aware RBAC and revocation;
+    - host resolution and the enablement gate;
+    - support sessions;
+    - the API specification and frontend flows (en/bn);
+    - the threat model (T1–T17) and monitoring;
+    - the test strategy and the six isolation checks;
+    - migration and rollback, milestones M1–M11, acceptance criteria and risks.
+  - ADR-041 to ADR-046 were added to `DECISION_LOG.md` as **Proposed**. The roadmap and `CLAUDE.md` phase table were updated, with no rule changed.
+- **Code inspected for the plan** (verified on `main`, no changes):
+  - `ScopeTargetMiddleware` maps every host to the platform scope;
+  - the dev `ALLOWED_HOSTS` contains `.localhost`;
+  - `ATOMIC_REQUESTS = False` and `CONN_MAX_AGE = 60`;
+  - the Problem Details handler doesn't call `set_rollback`;
+  - `audit_auditeventip` has no `tenant_id`.
+  The plan addresses each of these.
+- **Dependencies:** none proposed.
+- **No application code changed; no implementation branch created.** Dependabot PRs were not processed (owner instruction).
+- **Verification:** documentation only. Prettier format check on the changed Markdown (result in the PR).
+- **Next recommended task:**
+  1. The owner reviews the Phase 3 plan, answers Q1–Q12 and accepts or amends ADR-041–046.
+  2. Merge the documentation PR with approval.
+  3. Implement on `feat/phase-03-tenancy`, milestone M1 first.
