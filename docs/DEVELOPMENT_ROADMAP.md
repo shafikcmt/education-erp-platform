@@ -57,6 +57,21 @@
 **Depends on:** Phase 2; ADR-009, ADR-010 **Accepted**.
 **Deliverables:** `tenancy` (Tenant, TenantDomain, Institution, Campus, **Membership** and tenant **RoleAssignment** on the Phase 2 plan §4 design, tenant **invitations** using the Phase 2 `core.tokens` utility, audited time-limited **support sessions** (Phase 2 plan §4.5) and dual-scope RLS policies for `rbac_role`/`rbac_rolepermission`/`audit_auditevent` (§4.6) — ADR-032 accepted), tenant middleware + context, `TenantScopedModel`/manager (fail closed), RLS migration helper + policies, `core.db.tenant_atomic()` (transaction-scoped `set_config`) + execute-wrapper guard, `platform_scope()` (via `erp_platform` role), Celery tenant-aware base task, tenant-prefixed cache & file keys, `files` module, support sessions, tenant lifecycle states, configurable `max_institutions`/`max_campuses` limit enforcement (ADR-010), Super Admin console (tenants list/create/suspend), tenant onboarding API (without Studio), **shared isolation test suite**.
 **Exit:** isolation suite green; RLS verified with raw SQL tests; security review.
+**Plan (Proposed, 2026-11-08):** `plans/PHASE_03_PLAN.md` rev. 1 with ADR-041 to ADR-046 (Proposed) and owner questions Q1–Q12.
+**Plan rev. 2 (Proposed, 2026-11-08):** the owner approved Q1–Q12 **in principle** (recorded in ADR-047) and did not approve runtime BYPASSRLS (ADR-043 rev. 2). The deliverables above are adjusted as follows, **effective on final plan approval**:
+- `platform_scope()` works through the platform operation catalogue (registry, targeted tenant transactions, per-tenant iteration, three reviewed `SECURITY DEFINER` functions). `erp_platform` stays provisioned but unused (ADR-043; amends ADR-009 §5 if accepted).
+- The full `files` module moves to Phase 6/7 (Q11). Phase 3 delivers only the tenant storage-key helper: no uploads, no presigned URLs.
+- Self-service tenant sign-up is deferred to Phase 4/5 (Q6). Phase 3 provisioning is Super Admin only.
+- Tenant hosts stay disabled by default. In production they stay disabled, and provisioning is refused, until the owner provides the platform domain (Q9, ADR-041).
+- Built-in roles become read-only system copies that tenants can clone (Q5). Support sessions need tenant approval by default (Q4). Default limits are 1 institution and 3 campuses (Q12).
+
+**Plan rev. 3 (final candidate, 2026-11-08):** ADR-041–047 approved in principle, and the owner decided D1–D9 (plan §17.2):
+- tenant hosts stay disabled until the production domain is provided and the security review approved;
+- no emergency or break-glass access in Phase 3;
+- `CONN_MAX_AGE = 0` first;
+- initial performance targets of 5 s lock wait, 2 s warning and ≤ 20% p95 isolation overhead.
+
+Exit criteria in detail: plan §21; approval-gate checklist: plan §23. Awaiting the owner's final approval.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -68,11 +83,13 @@
 **Depends on:** Phase 4; ADR-016 decided.
 **Deliverables:** `customization` (presets loader + initial presets for all six institution types, config sets with versioning/publish/rollback, effective config resolver + cache, terminology, custom field definitions + JSONB validation framework, form definitions + DynamicForm renderer, workflow engine (definitions/instances/transitions), rules evaluator (sandboxed) with tests, template engine (sandboxed) + preview, numbering sequences), Studio UI, onboarding wizard (choose institution type → preset → modules → branding), `notifications_core` minimal (in-app + email) for workflow notifications.
 **Exit:** create a tenant per institution type from presets; publish/rollback works; rule & template sandbox security tests pass.
+**Note (Phase 3 plan rev. 2, Q6):** self-service tenant sign-up (PLT-06) is planned for Phase 4/5, together with trial plans and abuse controls. The phase is chosen in the Phase 4 plan.
 
 ## Phase 6 — Academic structure & student admission
 **Depends on:** Phase 5.
 **Deliverables:** `academics` (years, terms, structure levels, academic unit tree, subjects/courses, offerings, capability flags), `timetable` (basic: periods, rooms, slots, clash detection), `admissions` (inquiries, cycles, public forms, applications, review workflow, test scheduling, merit list, conversion hook — student creation completes with Phase 7 models, so the student model may be introduced minimally here or conversion is finalized in Phase 7; decide in phase plan).
 **Exit:** school/university/madrasa/coaching structures configurable without code changes (tests per preset).
+**Moved here (Phase 3 plan rev. 2, Q11, effective on plan approval):** the full `files` module (uploads, presigned URLs, virus-scan hook, quotas). It is built in Phase 6, or in Phase 7 if Phase 6 stores no uploads, on top of the Phase 3 `tenant_storage_key()` helper.
 
 ## Phase 7 — Student, teacher & parent management
 **Depends on:** Phase 6.
@@ -176,3 +193,6 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-05 — Phase 2 approvals (ADR-031 to ADR-037) reflected; support sessions + dual-scope RLS noted for Phase 3; phone login added to Phase 14.
 - 2026-11-06 — Phase 2 dependency line updated (ADR-038/039; plan rev. 3).
 - 2026-11-06 — Phase 1 approved; Phase 2 implemented (PR #15, awaiting owner approval). Scope unchanged.
+- 2026-11-08 — Phase 2 approved and merged (PR #15). Phase 3 plan proposed (`plans/PHASE_03_PLAN.md`, ADR-041–046); proposed scope adjustments noted under Phase 3, pending owner approval.
+- 2026-11-08 — Phase 3 plan rev. 2: the owner approved Q1–Q12 in principle. Scope adjustments are listed under Phase 3 (files module → Phase 6/7; self-service sign-up → Phase 4/5) and take effect on final plan approval.
+- 2026-11-08 — Phase 3 plan rev. 3: D1–D9 decisions recorded under Phase 3. No scope change beyond rev. 2.

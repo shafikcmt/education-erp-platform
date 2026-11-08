@@ -13,7 +13,7 @@
 | 006 | Strict server-side tenant isolation | Accepted (owner mandate) | 2026-11-05 |
 | 007 | Financial operations in DB transactions | Accepted (owner mandate) | 2026-11-05 |
 | 008 | AI and custom modules never bypass authorization | Accepted (owner mandate) | 2026-11-05 |
-| 009 | Tenancy model: shared schema + `tenant_id` + RLS, transaction-scoped tenant context | **Accepted** | 2026-11-05 |
+| 009 | Tenancy model: shared schema + `tenant_id` + RLS, transaction-scoped tenant context | **Accepted** (§5 third bullet: amendment by ADR-043 pending final approval) | 2026-11-05 |
 | 010 | Tenant hierarchy Tenant → Institution → Campus; tenant-level subscription; configurable campus limits | **Accepted** | 2026-11-05 |
 | 011 | Web auth: Django session auth (HttpOnly/Secure/SameSite cookies + CSRF); separate token path for mobile/third-party | **Accepted (with owner modification)** | 2026-11-05 |
 | 012 | UUIDv7 primary keys via pinned library behind `core.ids` abstraction | **Accepted** | 2026-11-05 |
@@ -45,6 +45,13 @@
 | 038 | Manual MFA key entry during initial enrollment only, after re-authentication, shown once (accessibility exception to ADR-037 Q5) | **Accepted (owner, strict conditions)** | 2026-11-06 |
 | 039 | `@hookform/resolvers` with its official Zod integration (Phase 2 frontend forms) | **Accepted** | 2026-11-06 |
 | 040 | Phase 2 security-review hardening: account-level MFA lock, network-scoped login lock, privileged-target rule, owner-credential isolation, nonce CSP, IP side-table integrity, `__Host-` CSRF cookie, audit rollback guard | **Accepted (owner authorized the fixes)** | 2026-11-06 |
+| 041 | Tenant resolution by host only (one subdomain per tenant); explicit platform hosts; `TENANT_HOSTS_ENABLED` gate with no lookup while disabled; placeholder domain; per-host sessions; generic non-member sign-in error | Proposed — approved in principle (owner, 2026-11-08; D1, D7) | 2026-11-08 |
+| 042 | Tenant context lifecycle: contextvar + `tenant_atomic` + query guard; one tenant transaction per request with rollback, durable audit and performance safeguards; `CONN_MAX_AGE = 0`; `TenantTask` | Proposed — approved in principle (owner, 2026-11-08; D4, D9) | 2026-11-08 |
+| 043 | No runtime BYPASSRLS: `erp_platform` kept but unused; platform operation catalogue (registry / targeted / per-tenant / 3 `SECURITY DEFINER` functions); no break-glass in Phase 3; amends ADR-009 §5 | Proposed — approved in principle (owner, 2026-11-08; D3, D6, D8) | 2026-11-08 |
+| 044 | Membership + scoped RoleAssignment model; composite-only FKs; read-only system roles + cloning; import boundaries; default limits 1/3 | Proposed — approved in principle (owner, 2026-11-08) | 2026-11-08 |
+| 045 | Support sessions: tenant approval by default (owner-only waiver), read-only, ≤ 2 h, audited in the same transaction, no RLS bypass, no use while the tenant is suspended | Proposed — approved in principle (owner, 2026-11-08; D2, D5) | 2026-11-08 |
+| 046 | RLS policy catalogue (standard, dual-scope, private dual-scope, self-scoped registry) + CI-enforced registry allow-list with justification and tests | Proposed — approved in principle (owner, 2026-11-08) | 2026-11-08 |
+| 047 | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | Proposed — approved in principle (owner, 2026-11-08) | 2026-11-08 |
 
 ---
 
@@ -96,6 +103,12 @@
 7. **Database-per-tenant (option C)** remains a future enterprise option. It needs a new ADR and uses the same code.
 
 **Consequences:** All later phases build on these primitives (delivered in Phase 3; DB roles are provisioned from Phase 1). Raw SQL must run inside `tenant_atomic` or `platform_scope`.
+
+**Pending amendment (note added 2026-11-08; the text above is unchanged):** ADR-009 remains **Accepted**. ADR-043, approved in principle on 2026-11-08 and effective on final approval of `plans/PHASE_03_PLAN.md`, amends **only the third bullet of §5**. Once in effect, that bullet reads:
+
+> `erp_platform` stays provisioned (`NOLOGIN`, `BYPASSRLS`, no members) and is used by **no** runtime or maintenance code path. `platform_scope()` gives platform code access through the platform operation catalogue (registry, targeted tenant transaction, per-tenant iteration, reviewed `SECURITY DEFINER` functions) and never bypasses RLS. Any login or use of `erp_platform` (break-glass) requires a new ADR.
+
+All other clauses are unchanged (clause table: plan §6.1).
 
 ## ADR-010 — Tenant hierarchy
 **Status:** **Accepted** — approved by owner 2026-11-05.
@@ -432,6 +445,262 @@ Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a
 10. **Email-link tokens** are all invalidated after password change/reset, email change, MFA reset and deactivation.
 11. **Step-up may use a single-use recovery code** (L5) instead of the TOTP code; the password is still required.
 
+## ADR-041 — Tenant resolution by host; platform host separation; enablement gate
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2 + D1, D7). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. (Plan §10.)
+
+**Context:** Phase 2 maps every allowed host to the platform scope (`ScopeTargetMiddleware`). Because of the dev `.localhost` wildcard, any `*.localhost` host is served as the platform today. ADR-040 I2 requires that no tenant host be enabled before secure host-to-tenant resolution exists and has been tested.
+
+**Proposal:**
+1. **One subdomain per tenant (Q1).** The tenant comes **only** from the request host. Headers (`X-Tenant`), request bodies and query strings never select the tenant.
+2. **Platform hosts:** `PLATFORM_HOSTS` is an explicit list. Platform hosts have no tenant context.
+3. **Resolution order** (plan §10.1):
+   - health endpoints;
+   - `ALLOWED_HOSTS`;
+   - platform hosts;
+   - **disabled gate: uniform 404 with no database lookup**;
+   - exact `<slug>.<TENANT_BASE_DOMAIN>` shape;
+   - the `SECURITY DEFINER` lookup F1.
+
+   Unknown, `provisioning` and `deleted` tenants get the **same** 404.
+4. **Enablement gate:**
+   - `TENANT_HOSTS_ENABLED` defaults to `false` everywhere.
+   - In production, settings refuse `true` unless `TENANT_BASE_DOMAIN` is set and is not a placeholder or reserved name (`localhost`, `.test`, `.example`, `.invalid`, `.local`, `example.com/.net/.org`).
+   - While tenant hosts are disabled, production refuses tenant provisioning (`409 tenant_hosts_disabled`).
+5. **Placeholder domain (Q9):**
+   - documents use `<platform-domain>`;
+   - dev uses `{slug}.localhost`;
+   - tests use `{slug}.tenants.test`;
+   - no production domain is assumed. Tenant hosts stay disabled in production until the owner supplies the domain.
+6. **Sessions (Q2):**
+   - Each host has its own session: host-only cookies, the `__Host-` prefix in production, never a `Domain` attribute (ADR-011, ADR-040 L6).
+   - Sessions are bound to their host through `SessionRecord.host`.
+   - The MVP has a separate sign-in per tenant host. A non-member who signs in gets a generic failure.
+   - Future single sign-on would use a host-bound, one-time handoff token defined in a later ADR. No tenancy or RLS change would be needed.
+7. **D1:** the production domain is deferred and the placeholder `<platform-domain>` is used. Tenant hosts stay disabled until the owner provides the domain **and** approves the Phase 3 security review.
+8. **D7:** non-member, unknown-email, wrong-password and suspended-membership sign-ins on a tenant host all return the same generic authentication error, with equalised timing.
+
+**Alternatives considered:**
+- One shared host with the tenant in the URL path: weaker cookie isolation and no white-label domains.
+- A tenant header: client-chosen, which CLAUDE.md §10 rejects.
+
+## ADR-042 — Tenant context lifecycle
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2 + D4, D9). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. This ADR refines ADR-009 §4 without changing it (plan §8).
+
+**Proposal:**
+1. **Primitives in `apps.core.tenancy`:**
+   - a `contextvars`-based `TenantContext`;
+   - `tenant_atomic(tenant, using=…)`, whose first statement is a transaction-local `set_config('app.tenant_id', …, true)`. Nesting with the same tenant uses a savepoint; a different tenant raises `TenantContextConflict`; the context is reset in `finally`;
+   - a per-connection `execute_wrapper` guard that raises `TenantContextNotApplied` for any query issued under a tenant context that the current transaction has not applied;
+   - `TenantScopedModel` with a fail-closed manager.
+2. **Request transaction:**
+   - Each tenant-host request runs in one tenant transaction.
+   - Error responses roll back (`set_rollback`), and so do unhandled exceptions.
+   - Side effects run only through `on_commit`.
+   - Session saves run after the transaction, without tenant context.
+   - Streaming responses are rejected on tenant hosts.
+3. **Durable security audit:**
+   - Denials and other security events are written through a second connection alias, `audit_durable`. It uses the same `erp_app` role and its own `tenant_atomic`.
+   - These events reference only committed identifiers.
+   - If a durable write fails, the response still stays a denial (fail closed).
+4. **Performance safeguards:**
+   - transaction-local `lock_timeout` (5 s proposed), on top of the existing statement and idle-in-transaction timeouts;
+   - no external I/O inside a tenant transaction;
+   - no row locks on read paths;
+   - a fixed lock order;
+   - capped page size;
+   - a `tx_ms` log field;
+   - a benchmark against the Phase 2 baseline. The numbers are proposals (plan D9).
+5. **Celery:**
+   - Tenant tasks use the `TenantTask` base class: an explicit `tenant_id`, `tenant_atomic`, reset in `finally`, and leak detectors on `task_prerun`/`task_postrun`.
+   - Every other task must be declared `@platform_task` with a platform-operation id. CI enforces this.
+6. **Cache and storage keys:** cache keys use `t:{tenant_id}:…`, with a per-tenant permission-cache version. The storage-key helper `tenants/{tenant_id}/…` is the only file infrastructure in Phase 3 (Q11).
+7. **Pooling:** only transaction-scoped state is used, so the design stays compatible with PgBouncer transaction pooling. Persistent-connection behaviour under the ASGI server is verified before enablement (plan D4). Any pool library would need separate approval.
+8. **Verification:** the leak tests (L1–L10, C1–C10), rollback tests (R1–R9) and concurrency tests (K1–K8) in plan §8.3, §8.5 and §15.3 are acceptance criteria.
+9. **D4:**
+   - Phase 3 starts with `CONN_MAX_AGE = 0` for all runtime aliases and servers, with transaction-safe connection handling (no connection leaves inside a transaction; leak detectors).
+   - Performance is measured in M3.
+   - Any later persistent-connection or pool configuration needs owner approval and leak tests (L1, K1–K3) under that configuration.
+10. **D9:** initial engineering targets are a 5 s lock wait, a 2 s warning threshold, and at most 20% p95 overhead attributable to tenant isolation. They are not permanent guarantees. Measurement follows the documented methodology and environment record (plan §8.4).
+
+## ADR-043 — No runtime BYPASSRLS; platform operation catalogue
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2 + D3, D6, D8). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. History: in the rev. 1 review the owner **did not approve runtime BYPASSRLS** and required:
+- that no platform-level database capability be removed without a complete, security-reviewed replacement;
+- narrowly scoped, explicitly authorized and audited platform operations;
+- documented changes to ADR-009;
+- a detailed threat model before implementation.
+
+Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this ADR **amends ADR-009 §5, third bullet only**. ADR-009 stays Accepted and receives an append-only status note.
+
+**Decision proposed:**
+1. **ADR-009 reconciliation** (plan §6.1):
+   - §1–§4, §6, §7 and the consequence ("Raw SQL must run inside `tenant_atomic` or `platform_scope`") are unchanged.
+   - `platform_scope()` remains the only entry point for platform code.
+   - Only the use of `erp_platform` changes.
+2. **`erp_platform` is kept, not removed:**
+   - It stays provisioned exactly as today: `BYPASSRLS`, `NOLOGIN`, no members.
+   - It is used by no runtime or maintenance code path.
+   - It is reserved for a future, separately approved break-glass procedure (plan D6).
+   - CI asserts that no other role has `BYPASSRLS`, that `erp_platform` can't log in or be assumed, and that the code contains no `SET ROLE`.
+3. **Platform operation catalogue** (plan §6.3, P1–P16). Every platform need is met by one of four mechanisms:
+   - **R:** registry tables;
+   - **T:** a targeted `tenant_atomic` for one explicitly named tenant, on behalf of an authorized actor;
+   - **I:** per-tenant iteration, each tenant in its own transaction;
+   - **D:** one of three `SECURITY DEFINER` read functions (F1 host resolution, F2 own memberships, F3 own support sessions).
+
+   The only Phase 2 duty affected is IP anonymisation (P10), which becomes platform rows plus per-tenant iteration.
+4. **`platform_scope(operation, actor, reason)`:**
+   - requires a catalogue id;
+   - re-checks the actor's permission without cache;
+   - refuses to run inside a tenant context;
+   - never sets the tenant, disables RLS or changes role;
+   - audits start, end, outcome and the affected tenants.
+
+   Views and tasks declare their catalogue id, and a completeness test fails on undeclared platform paths.
+5. **`SECURITY DEFINER` rules** (plan §7):
+   - functions are owned by `erp_owner`, which is still subject to `FORCE` RLS;
+   - they read only through owner-only, `SELECT`-only policies for exactly the needed rows;
+   - pinned `search_path` with `pg_temp` last, schema-qualified references;
+   - `STABLE` SQL, no dynamic SQL, no writes;
+   - `EXECUTE` granted only to `erp_app`;
+   - each has a single Python wrapper;
+   - each has a per-function threat model and tests.
+6. **Honest limit** (plan §5.4): RLS against `erp_app` protects against application bugs, not against arbitrary SQL by a compromised runtime, because any role can call `set_config`. Keeping `BYPASSRLS` out of the runtime ensures that a compromise or injection never gains a policy-free path.
+
+7. **Owner decisions:**
+   - **D3:** platform staff can't browse tenant audit events from the platform host, only through an approved, audited, tenant-scoped support session.
+   - **D6:** no break-glass in Phase 3. No `erp_platform` login and no emergency access; deferred to Phase 18, and a new ADR and explicit approval are required.
+   - **D8:** no cross-tenant platform lists in the Phase 3 MVP.
+
+**Trade-offs:**
+- Cross-tenant platform views are limited. Staff see only their own support sessions, and there are no per-tenant member counts (plan D8).
+- Tenant audit events are viewed on the tenant host through an approved support session (plan D3).
+- Per-tenant iteration is slower than one unscoped query.
+
+## ADR-044 — Membership and scoped role-assignment model
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. It implements ADR-032 within the ADR-033 data model (plan §4, §9).
+
+**Proposal:**
+1. **Membership:** one `Membership` per (tenant, user), with statuses `invited`, `active`, `suspended` and `left`. One account may belong to many tenants, and nobody is required to belong to more than one.
+2. **Role assignments:** `RoleAssignment` (in `apps.rbac`, table `rbac_roleassignment`, RLS) assigns a role at `tenant`, `institution` or `campus` scope, with `valid_from`/`valid_until`. Institution membership is derived from assignments, not stored.
+3. **Composite foreign keys (Q8):**
+   - Every reference between tenant tables uses a `(tenant_id, …)` composite FK (`MATCH SIMPLE`, `ON DELETE RESTRICT`) plus scope CHECK constraints, added through reviewed `RunSQL`.
+   - Django FKs between tenant tables use `db_constraint=False`, so no single-column FK exists. This also removes an existence oracle, because PostgreSQL foreign-key checks ignore RLS.
+   - Unique constraints on tenant tables start with `tenant_id`, apart from three justified exceptions.
+   - Catalogue, raw-SQL integrity and migration tests are required (plan §4.4).
+4. **Roles (Q5):**
+   - Built-in role templates are copied into each tenant as **read-only** system roles, kept in sync by a per-tenant iteration (P7).
+   - Tenants customise by **cloning**; clones are never synced.
+   - Templates themselves can't be assigned.
+5. **Permission sources:** two new sources, `TenantMembershipSource` and `SupportSessionSource`, live in `apps.tenancy` and are loaded from settings. The Phase 2 engine and its API are unchanged.
+6. **Import boundaries:**
+   - `core`, rbac core, identity models and audit core must not import `tenancy`;
+   - `rbac` refers to tenancy models only by lazy string;
+   - cache invalidation flows one way only (tenancy → rbac);
+   - the migration graph has no cycles;
+   - new import-linter contracts enforce this.
+7. **Guard rails:**
+   - no granting beyond one's own permissions or scope;
+   - the last active `tenant_owner` can't be removed;
+   - `assert_can_act_on` extends to members;
+   - platform roles grant nothing on tenant hosts.
+8. **Revocation:**
+   - membership, tenant and support-session status is checked uncached on every tenant request;
+   - permission caches use per-tenant versions;
+   - removing a member revokes their sessions on that tenant's hosts.
+9. **Default limits (Q12):** `max_institutions = 1` and `max_campuses = 3` per tenant, taken from the `TENANT_DEFAULT_LIMITS` setting and stored on the tenant. A Super Admin may override them, with audit (ADR-010). They are enforced under a row lock, and Phase 4 plans take over as the source.
+
+## ADR-045 — Support sessions
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2 + D2, D5). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. It implements CLAUDE.md §9 and ADR-037's rule of no implicit tenant-data access (plan §11).
+
+**Proposal:**
+1. **Access only through a session:** platform staff reach tenant data **only** through a `SupportSession`. A request requires:
+   - a reason (at least 10 characters) and a ticket reference;
+   - a duration of 15–120 minutes;
+   - MFA and step-up re-authentication.
+2. **Approval:**
+   - Tenant approval is **required by default** (`support_access_requires_approval = true`).
+   - Only a `tenant_owner` may change that setting, with step-up and audit (plan D5). Super Admins can't change tenant settings.
+   - Staff can never approve their own session.
+3. **Read-only:** unsafe HTTP methods are rejected, and only allow-listed `support_readable` view permissions are granted. Write access would need a new ADR.
+4. **No RLS bypass** (plan §11.2, S1–S9):
+   - the same `erp_app` role and the normal middleware;
+   - the session is looked up inside the host tenant's transaction, so it is invisible on any other host;
+   - each support request is audited in the **same** tenant transaction. If the audit write fails, the request fails;
+   - no `SECURITY DEFINER` function returns tenant data.
+5. **Visibility:**
+   - a banner for every tenant user while a session is active;
+   - emails to tenant owners on request, approval and start;
+   - history visible to the tenant;
+   - the tenant can revoke at any time;
+   - request and end are also recorded in the platform log.
+6. **Suspended tenants (D2):**
+   - no emergency bypass;
+   - suspension revokes active support sessions;
+   - only the tenant owner may sign in, into a restricted mode limited to reviewing, approving, rejecting and revoking support sessions;
+   - approved sessions **can't be used** while the tenant is suspended, so no suspended-tenant business data is exposed to platform staff (plan §11.3).
+7. **Disabling approval (D5):** only the tenant owner, with step-up authentication and an immutable audit event in the same transaction. Sessions created without approval are still time-limited, visible to the tenant and revocable.
+
+## ADR-046 — RLS policy catalogue and enforcement
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08 (rev. 2). All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. It extends ADR-009 §3 and §6 (plan §5).
+
+**Proposal:**
+1. **Standard tenant tables:** `ENABLE` + `FORCE`, with per-command policies `tenant_id = app_tenant_id()`. With no tenant context, no rows are visible.
+2. **Dual-scope tables** (`rbac_role`, `rbac_rolepermission`):
+   - read when `tenant_id IS NULL OR tenant_id = ctx`;
+   - write when `tenant_id IS NOT DISTINCT FROM ctx`.
+3. **Private dual-scope tables** (`audit_auditevent`, `audit_auditeventip`):
+   - read and insert when `tenant_id IS NOT DISTINCT FROM ctx`;
+   - `audit_auditeventip` gains a `tenant_id` filled by an invoker trigger;
+   - existing grants and immutability triggers are unchanged.
+4. **Self-scoped registry:** `tenancy_tenant` is visible in full only without a tenant context. Inside a tenant context, only that tenant's own row is visible.
+5. **Registry exceptions without RLS** sit on an explicit, CI-enforced allow-list. Each entry needs a justification and named access-control tests (plan §5.2). The list covers identity tables, `rbac_permission`, `rbac_platformroleassignment` and Django framework tables. Framework table grants are narrowed to `SELECT` where the application never writes.
+6. **Migration operations:** reversible `EnableTenantRLS` and `EnableDualScopeRLS`. Reversing an isolation migration is refused in production and staging.
+7. **CI fails when:**
+   - a `tenant_id` table lacks forced RLS or a per-command policy;
+   - a dual-scope or self-scoped table is unlisted or has the wrong policy shape;
+   - a table without RLS is unlisted, unjustified or untested;
+   - a tenant model doesn't use `TenantScopedModel`;
+   - a foreign key between tenant tables lacks `tenant_id`, or a unique constraint doesn't start with `tenant_id` (outside the exceptions);
+   - a `SECURITY DEFINER` function or owner-only policy breaks the ADR-043 rules;
+   - role assertions fail;
+   - the code contains session-level `SET`, `SET ROLE` or `set_config(..., false)`.
+
+## ADR-047 — Phase 3 scope decisions (owner answers Q1–Q12)
+**Status:** Proposed — **approved in principle** by the owner on 2026-11-08. All ADR-041–047 become **Accepted** only with the owner's explicit final approval of `plans/PHASE_03_PLAN.md`. It records the owner's answers to Q1–Q12 and the decisions D1–D9.
+
+**Decisions:**
+
+| Question | Decision |
+|---|---|
+| Q1 | One subdomain per tenant |
+| Q2 | Separate sign-in per tenant host for the MVP; architecture kept open for single sign-on |
+| Q3 | No runtime BYPASSRLS. Replacement and threat model as in ADR-043 |
+| Q4 | Tenant approval of support sessions required by default |
+| Q5 | Read-only built-in role templates; tenants customise by cloning |
+| Q6 | Self-service tenant sign-up deferred to Phase 4/5 |
+| Q7 | One transaction per tenant request, with performance safeguards and tests for rollback, connection reuse and concurrent tenant requests |
+| Q8 | Composite foreign keys through reviewed SQL migrations, with migration and integrity tests |
+| Q9 | No production domain assumed. A documented placeholder is used, and tenant hosts stay disabled until the owner provides the domain |
+| Q10 | An explicit, CI-enforced allow-list for registry tables without RLS, with a justification and access-control tests for each |
+| Q11 | The full `files` module moves to Phase 6/7. Phase 3 includes only the tenant storage-key helper |
+| Q12 | Default limits of 1 institution and 3 campuses per tenant, configurable for future subscription plans |
+
+**Owner decisions D1–D9 (2026-11-08):**
+
+| # | Decision |
+|---|---|
+| D1 | Production domain deferred; documented placeholder; tenant hosts disabled until the domain is provided and the security review approved |
+| D2 | No emergency bypass for suspended tenants; the owner signs in only to review and approve support access; no suspended-tenant business data exposed to platform staff |
+| D3 | No platform-host browsing of tenant audit events; only through approved, audited, tenant-scoped support sessions |
+| D4 | `CONN_MAX_AGE = 0` and transaction-safe connection handling first; measure in M3; persistent connections only with leak tests |
+| D5 | Only the tenant owner may disable support approval, with step-up and an immutable audit event; sessions stay time-limited, visible and revocable |
+| D6 | Break-glass deferred to Phase 18; no `erp_platform` login or emergency access in Phase 3; new ADR and approval required |
+| D7 | Generic authentication error for non-member sign-in |
+| D8 | No cross-tenant platform lists in the Phase 3 MVP |
+| D9 | Initial targets: lock wait 5 s, warning 2 s, ≤ 20% p95 overhead attributable to isolation; not permanent guarantees; methodology and environment documented |
+
+**Still open:** plan §17.3 (production domain value, security review, benchmark results). None of them blocks implementation.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -444,3 +713,6 @@ Implementation: Phase 2 plan §6.6 (manual-key subsection), §8, §10, §16 (11a
 - 2026-11-06 — Added ADR-038 (manual MFA key, Q10 strict conditions; amends ADR-037 Q5 line) and ADR-039 (`@hookform/resolvers`, Q11), both Accepted. ADR-037 index row annotated. No other ADR changed.
 - 2026-11-06 — Phase 2 implemented (PR #15) within ADR-031 to ADR-039. No ADR added or changed; implementation deviations from the plan text are recorded in `plans/PHASE_02_PLAN.md` §18.
 - 2026-11-06 — Added ADR-040 (Accepted): security-review hardening of Phase 2. No other ADR status changed; ADR-036's scope now explicitly includes IP-derived device fingerprints (90-day maximum).
+- 2026-11-08 — Added ADR-041 to ADR-046 (Proposed) with the Phase 3 plan (`plans/PHASE_03_PLAN.md`). ADR-043 would amend ADR-009 §5 if accepted. No existing ADR status changed.
+- 2026-11-08 — ADR-041 to ADR-046 revised (rev. 2) after the owner's in-principle approval of Q1–Q12 and rejection of runtime BYPASSRLS; ADR-047 added (Proposed) to record the owner's answers. No existing Accepted ADR changed; ADR-043 would amend ADR-009 §5 only if accepted.
+- 2026-11-08 — ADR-041 to ADR-047 marked **approved in principle** (owner) and updated with decisions D1–D9. They become Accepted on final approval of the Phase 3 plan. ADR-009 stays Accepted: an append-only note records the pending §5 amendment by ADR-043 with its exact wording, and the original text is unchanged.
