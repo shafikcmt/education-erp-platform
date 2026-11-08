@@ -1,11 +1,13 @@
 # Phase 3 Implementation Plan — Multi-Tenant Architecture & Tenant Isolation
 
-- **Status:** **Proposed — revision 3, final candidate** (2026-11-08). The owner's approvals so far:
-  - Q1–Q12 approved in principle (rev. 1 review);
-  - ADR-041 to ADR-047 approved in principle and D1–D9 decided (rev. 2 review).
-
-  This revision records those decisions (§17). The plan becomes **Approved** only with the owner's explicit final approval.
-  - **No application code until the owner gives final approval of this plan.**
+- **Status:** **Approved — revision 3.** The owner gave final approval on 2026-11-08 to the plan and to ADR-041 to ADR-047 (all **Accepted**), including decisions D1–D9.
+  - Approval history:
+    - Q1–Q12 approved in principle (rev. 1 review);
+    - ADR-041 to ADR-047 approved in principle and D1–D9 decided (rev. 2 review);
+    - final approval of rev. 3.
+  - Merged into `main` in PR #16 (`75bb2c5`).
+  - Implementation branch: `feat/phase-03-tenancy`.
+  - **Implementation (M1 onwards) starts only when the owner explicitly authorizes it.**
 - **Prepared on:** `main` at `2d61e83` (Phase 2 merged; Phases 0–2 Approved).
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 3 ("SaaS tenants, institutions & campuses").
 - **Governing decisions (Accepted):**
@@ -1069,15 +1071,15 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 
 | ADR | Title | Status |
 |---|---|---|
-| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain; generic non-member sign-in | Proposed — approved in principle (rev. 2 + D1, D7) |
-| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | Proposed — approved in principle (rev. 2 + D4, D9) |
-| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | Proposed — approved in principle (rev. 2 + D3, D6, D8) |
-| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | Proposed — approved in principle (rev. 2) |
-| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass, suspended-tenant rules | Proposed — approved in principle (rev. 2 + D2, D5) |
-| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | Proposed — approved in principle (rev. 2) |
-| **047** | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | Proposed — approved in principle |
+| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain; generic non-member sign-in | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D1, D7) |
+| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D4, D9) |
+| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D3, D6, D8) |
+| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | **Accepted** (owner final approval 2026-11-08) (rev. 2) |
+| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass, suspended-tenant rules | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D2, D5) |
+| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | **Accepted** (owner final approval 2026-11-08) (rev. 2) |
+| **047** | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | **Accepted** (owner final approval 2026-11-08) |
 
-All seven become **Accepted** only with the owner's explicit final approval of this plan. ADR-009 stays **Accepted**; its §5 amendment by ADR-043 takes effect at the same moment (§6.1).
+All seven were **Accepted** with the owner's final approval on 2026-11-08. ADR-009 stays **Accepted**, and its §5 amendment by ADR-043 is now in effect (§6.1).
 
 ## 17. Owner decisions and remaining questions
 
@@ -1261,3 +1263,4 @@ Each final documentation requirement maps to its design and the tests that prove
   - **Added:** D1–D9 decisions (§17.2) and still-open items (§17.3); suspended-tenant restricted mode (§11.3, S10); D5 approval-setting rules; D7 generic sign-in error; D4 `CONN_MAX_AGE = 0` with leak-test gate (§8.6); D9 thresholds and benchmark methodology (§8.4); approval-gate checklist (§23).
   - **Updated:** milestones and acceptance criteria.
   - Documentation only.
+- 2026-11-08 — **Approved** (owner final approval of rev. 3). Status lines and the ADR table updated; no content change.

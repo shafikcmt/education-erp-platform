@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. Plan `plans/PHASE_03_PLAN.md` **revision 3 (final candidate)**: ADR-041–047 approved in principle, and the owner decided D1–D9. It is in documentation PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) (not merged) and awaits the owner's **final approval**. No Phase 3 application code and no implementation branch exist.
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **Planned**. The plan `plans/PHASE_03_PLAN.md` rev. 3 is **Approved** (owner final approval, 2026-11-08), and ADR-041–047 are **Accepted**. It was merged into `main` in PR [#16](https://github.com/shafikcmt/education-erp-platform/pull/16) as `75bb2c5`. Implementation branch: `feat/phase-03-tenancy`. **M1 has not started** and waits for the owner's explicit authorization. No Phase 3 application code exists.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -22,7 +22,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan only; not merged) | Plan rev. 3 (final candidate); ADR-041–047 approved in principle; D1–D9 decided; final approval pending |
+| 3 | SaaS tenants, institutions & campuses | Planned | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); implementation branch `feat/phase-03-tenancy` (no PR yet) | Plan rev. 3 **Approved** 2026-11-08; ADR-041–047 Accepted; M1 awaits owner authorization |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -50,6 +50,10 @@ See `DECISION_LOG.md`.
 - **Resolved 2026-11-06:** Phase 1 approved; Phase 2 plan rev. 3 approved; PR #13 merged.
 - ~~**Open:** owner review of the Phase 2 implementation (PR #15).~~ Resolved: approved and merged on 2026-11-07.
 - **Proposed 2026-11-08 (Phase 3 planning):** ADR-041 (host-based tenant resolution and the enablement gate), ADR-042 (tenant context lifecycle), ADR-043 (no runtime BYPASSRLS; amends ADR-009 §5), ADR-044 (memberships and scoped role assignments), ADR-045 (support sessions), ADR-046 (RLS policy catalogue and CI enforcement). Owner questions: plan §15 Q1–Q12.
+- **Accepted 2026-11-08 (Phase 3 final approval):**
+  - ADR-041–047 Accepted and the Phase 3 plan rev. 3 Approved.
+  - ADR-009 stays Accepted; its §5 third bullet is amended by ADR-043, recorded in an append-only note.
+  - `CLAUDE.md` §10 item 3 updated.
 - **2026-11-08 (Phase 3 plan rev. 3):**
   - ADR-041–047 approved in principle; D1–D9 decided (plan §17.2).
   - ADR-009 stays Accepted; an append-only note records the pending §5 amendment.
@@ -404,3 +408,30 @@ See `DECISION_LOG.md`.
   1. Owner gives final approval.
   2. Merge PR #16 with that approval.
   3. Create `feat/phase-03-tenancy` and implement M1.
+
+### 2026-11-08 — Session 13 (Phase 3 plan approval and merge; implementation branch)
+- **PR #16 merge (owner-authorized):** all merge conditions were verified first:
+  - the PR was open, `clean` and targeting `main`;
+  - the head was exactly `a54d5a4`;
+  - all 8 checks were green on that head;
+  - there were no reviews, review threads or comments;
+  - the diff was 6 documentation files only.
+
+  The PR was then squash-merged, pinned to `a54d5a4`, as **`75bb2c5`**. The merged tree is identical to the reviewed head. No branch protection or required check was bypassed.
+- **Implementation branch:** `feat/phase-03-tenancy`, created from `main` `75bb2c5` and pushed.
+- **Owner final approval:**
+  - plan rev. 3 **Approved**;
+  - ADR-041–047 **Accepted** (including D1–D9);
+  - ADR-009 stays Accepted, and the §5 amendment by ADR-043 is recorded as in effect (append-only note);
+  - `CLAUDE.md` §10 item 3 updated.
+
+  This documentation commit is the first commit on `feat/phase-03-tenancy`.
+- **M1 checklist prepared** (session report): context primitives, RLS migration tooling, role restrictions, leak prevention, rollback primitives, context validation, concurrency tests K1/K2. **Not started.**
+- **Stop conditions in force:**
+  - no tenant hosts enabled;
+  - no runtime BYPASSRLS;
+  - no break-glass access;
+  - no Phase 4 work;
+  - no implementation PR merged without the owner's approval.
+- **No application code changed.**
+- **Next recommended task:** the owner authorizes M1.

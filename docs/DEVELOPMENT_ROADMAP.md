@@ -71,7 +71,8 @@
 - `CONN_MAX_AGE = 0` first;
 - initial performance targets of 5 s lock wait, 2 s warning and ≤ 20% p95 isolation overhead.
 
-Exit criteria in detail: plan §21; approval-gate checklist: plan §23. Awaiting the owner's final approval.
+Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
+**Plan Approved (2026-11-08):** owner final approval; ADR-041–047 Accepted; merged in PR #16 (`75bb2c5`). The scope adjustments listed above are now in effect. Implementation branch `feat/phase-03-tenancy`; M1 starts only on owner authorization.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -196,3 +197,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-08 — Phase 2 approved and merged (PR #15). Phase 3 plan proposed (`plans/PHASE_03_PLAN.md`, ADR-041–046); proposed scope adjustments noted under Phase 3, pending owner approval.
 - 2026-11-08 — Phase 3 plan rev. 2: the owner approved Q1–Q12 in principle. Scope adjustments are listed under Phase 3 (files module → Phase 6/7; self-service sign-up → Phase 4/5) and take effect on final plan approval.
 - 2026-11-08 — Phase 3 plan rev. 3: D1–D9 decisions recorded under Phase 3. No scope change beyond rev. 2.
+- 2026-11-08 — Phase 3 plan Approved; scope adjustments (files → Phase 6/7, self-service sign-up → Phase 4/5) now in effect.
