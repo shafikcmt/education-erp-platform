@@ -60,6 +60,11 @@ EVENTS: dict[str, frozenset[str]] = {
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
     "authz.denied": frozenset({"permission", "reason"}),
+    # platform operations (Phase 3, ADR-043): platform_scope start/end
+    "platform.operation.started": frozenset({"operation", "reason", "permission"}),
+    "platform.operation.completed": frozenset(
+        {"operation", "reason", "permission", "tenant_count"}
+    ),
 }
 
 
