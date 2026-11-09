@@ -10,7 +10,6 @@ import contextvars
 import logging
 import threading
 import uuid
-from collections.abc import Iterator
 
 import pytest
 from django.core.signals import request_finished
@@ -37,7 +36,7 @@ from apps.core.tenancy.transaction import (
     applied_tenant_id,
     has_query_guard,
 )
-from tests.isolation.threads import delete_probe_rows, in_thread
+from tests.isolation.threads import in_thread
 from tests.isolation_app.models import ProbeRecord
 
 SECONDARY = "isolation_secondary"
@@ -57,19 +56,15 @@ def _pid(alias: str) -> int:
 
 
 @pytest.fixture
-def a() -> TenantContext:
-    return TenantContext(new_id(), slug="a")
+def a(tenant_factory) -> TenantContext:
+    ctx: TenantContext = tenant_factory()
+    return ctx
 
 
 @pytest.fixture
-def b() -> TenantContext:
-    return TenantContext(new_id(), slug="b")
-
-
-@pytest.fixture
-def committed_cleanup(a: TenantContext, b: TenantContext) -> Iterator[None]:
-    yield
-    delete_probe_rows(a, b)
+def b(tenant_factory) -> TenantContext:
+    ctx: TenantContext = tenant_factory()
+    return ctx
 
 
 # --------------------------------------------------------------------------- applying
@@ -154,7 +149,9 @@ def test_inner_savepoint_rollback_keeps_outer_work_and_tenant(a):
         assert set(ProbeRecord.objects.values_list("name", flat=True)) == {"kept"}
 
 
-def test_on_commit_runs_after_commit_and_never_after_rollback(a, committed_cleanup):
+def test_on_commit_runs_after_commit_and_never_after_rollback(committed_tenant_pair):
+    a = committed_tenant_pair[0]
+
     def run() -> list[str]:
         calls: list[str] = []
         with tenant_atomic(a):
@@ -171,7 +168,9 @@ def test_on_commit_runs_after_commit_and_never_after_rollback(a, committed_clean
     assert in_thread(run) == ["committed", "committed"]
 
 
-def test_on_commit_callbacks_cannot_query_tenant_data(a):
+def test_on_commit_callbacks_cannot_query_tenant_data(committed_tenant_pair):
+    a = committed_tenant_pair[0]
+
     def run() -> list[BaseException]:
         errors: list[BaseException] = []
 
@@ -189,7 +188,9 @@ def test_on_commit_callbacks_cannot_query_tenant_data(a):
     assert len(errors) == 1 and isinstance(errors[0], TenantContextNotApplied)
 
 
-def test_committed_transaction_leaves_nothing_on_the_reused_connection(a, b, committed_cleanup):
+def test_committed_transaction_leaves_nothing_on_the_reused_connection(committed_tenant_pair):
+    a, b = committed_tenant_pair
+
     def run() -> tuple[int, int, str, int, int, str]:
         with tenant_atomic(a):
             ProbeRecord.objects.create(name="a-row")

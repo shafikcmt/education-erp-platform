@@ -21,7 +21,7 @@ import pytest
 from django.db import DatabaseError, connection, connections, transaction
 
 from apps.core.ids import new_id
-from apps.core.tenancy import TenantContext, current_tenant, tenant_atomic
+from apps.core.tenancy import current_tenant, tenant_atomic
 from tests.isolation.threads import delete_probe_rows, in_thread
 from tests.isolation_app.models import ProbeRecord
 
@@ -37,8 +37,8 @@ def _raw_rows() -> list[tuple[str, str]]:
         return list(cursor.fetchall())
 
 
-def test_k1_twenty_threads_alternating_tenants_never_cross():
-    tenants = [TenantContext(new_id(), slug=s) for s in ("a", "b")]
+def test_k1_twenty_threads_alternating_tenants_never_cross(committed_tenant_pair):
+    tenants = committed_tenant_pair
     ids = {str(t.id) for t in tenants}
     barrier = threading.Barrier(THREADS)
     violations: list[str] = []
@@ -123,8 +123,8 @@ def test_k1_twenty_threads_alternating_tenants_never_cross():
         delete_probe_rows(*tenants)
 
 
-def test_k2_one_reused_connection_carries_no_tenant_between_transactions():
-    a, b = TenantContext(new_id(), slug="a"), TenantContext(new_id(), slug="b")
+def test_k2_one_reused_connection_carries_no_tenant_between_transactions(committed_tenant_pair):
+    a, b = committed_tenant_pair
 
     def run() -> list[tuple[str, int, str, list[tuple[str, str]]]]:
         steps: list[tuple[str, int, str, list[tuple[str, str]]]] = []
