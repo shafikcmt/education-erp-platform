@@ -7,7 +7,7 @@
 
 - **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
-  - **M2 (tenancy data model): Complete** on `feat/phase-03-m2`: pushed, no PR, not merged (Session 16).
+  - **M2 (tenancy data model): Complete** and merged into `main` (PR [#18](https://github.com/shafikcmt/education-erp-platform/pull/18), squash `3616778`; Sessions 16–18).
   - M3 has not started and waits for the owner's approval.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
@@ -25,7 +25,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`); `feat/phase-03-m2` (M2, no PR yet) | **M1 Complete (merged); M2 Complete (branch)**; M3–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`) | **M1 and M2 Complete (merged)**; M3–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -576,3 +576,12 @@ See `DECISION_LOG.md`.
   - Docker clean-volume bootstrap, smoke and Playwright, plus gitleaks and Trivy: see the session report.
 - **No M3 work, no PR, no merge.**
 - **Next recommended task:** the owner decides on the M2 PR.
+
+### 2026-11-09 — Session 18 (Phase 3 M2 PR and merge)
+- **PR:** [#18](https://github.com/shafikcmt/education-erp-platform/pull/18) "Phase 3 M2: Tenant Data Model and Isolation", from `feat/phase-03-m2` (head `fc544c3`).
+- **Pre-PR checks:** branch based on `main` `3108824`; clean tree, remote in sync; 37 files; N14/N16/N18/P6 verified in code; migration chain `rbac.0004` → `tenancy.0001`–`0004` (probe `0002` depends on `tenancy.0001`); no M3 markers.
+- **GitHub CI on `fc544c3`: 8/8 success** (backend tests as `erp_app`; backend lint/format/types/import contracts; dependency audit; frontend lint/format/types/unit tests; OpenAPI drift; production images + Trivy; gitleaks; docker compose stack + smoke + Playwright). No fixes were needed.
+- **Merge:** owner authorized; squash-merged pinned to `fc544c3` → **`3616778`** on `main`. The merged tree is identical to `fc544c3`. No reviews were outstanding.
+- **Carried forward:** M5 aligns `role_templates.py:36` to `tenancy.support_session.request`; M4's RoleAssignment migration is `rbac.0005` (not plan §19.1's "rbac.0003"); Phase 18 purge only for `deleted` tenants.
+- **No M3 work.** Dependabot PRs untouched.
+- **Next recommended task:** the owner authorizes M3 (host resolution, `TENANT_HOSTS_ENABLED` still off by default).
