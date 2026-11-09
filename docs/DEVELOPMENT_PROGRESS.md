@@ -5,7 +5,10 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**. The plan rev. 3 is Approved and ADR-041–047 are Accepted. **M1 (tenant context foundation) is Complete** on `feat/phase-03-tenancy`: pushed, no PR, not merged (Session 14). M2 has not started and waits for the owner's approval.
+- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**.
+  - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
+  - **M2 (tenancy data model): Complete** on `feat/phase-03-m2`: pushed, no PR, not merged (Session 16).
+  - M3 has not started and waits for the owner's approval.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -22,7 +25,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); `feat/phase-03-tenancy` (M1 + O1 commits, no PR yet) | Plan rev. 3 Approved; **M1 Complete including O1**; M2–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`); `feat/phase-03-m2` (M2, no PR yet) | **M1 Complete (merged); M2 Complete (branch)**; M3–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -72,6 +75,9 @@ See `DECISION_LOG.md`.
 - Legal/compliance review for minors' data, retention periods, VAT/tax invoicing.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
+- **Phase 3 M2 follow-ups:**
+  - The `offboarding→active` transition and the reserved-slug list are engineering proposals (plan §24.4 N16, N18).
+  - P6 (support-session list) fails closed until M5 registers its permission.
 - **Phase 3 M1 follow-ups:**
   - ~~**O1:** `rbac_permission` writable by `erp_app`~~ — **resolved 2026-11-09** (Session 15). The catalogue bootstrap is owner-only, and `erp_app` has SELECT only.
   - `rbac_role`, `rbac_rolepermission`, `audit_auditevent` and `audit_auditeventip` have no RLS yet. They are registered as pending M6 in the coverage gate (plan §24.1 N6).
@@ -515,3 +521,39 @@ See `DECISION_LOG.md`.
     - Playwright **31 passed**; `smoke_check` OK; runtime-secret isolation OK.
   - Scans: see the session report (gitleaks, Trivy).
 - **Next recommended task:** the owner reviews the M1 + O1 result and authorizes M2.
+
+### 2026-11-09 — Session 16 (Phase 3: M1 merge; M2 tenancy data model)
+- **M1 merge (owner-authorized):** all merge conditions were verified first:
+  - PR #17 open, targeting `main`;
+  - head exactly `b2ab5fa`;
+  - 8/8 checks green;
+  - no reviews, review threads or comments;
+  - `clean`, with the working tree clean.
+
+  It was then squash-merged, pinned to the head, as **`3108824`**. The tree is identical to the reviewed head.
+- **M2 branch:** `feat/phase-03-m2`, created from `main` `3108824`.
+- **Implemented (approved M2 scope only):**
+  - `apps.tenancy`, with Tenant, TenantDomain, Institution, Campus, Membership, Invitation and SupportSession;
+  - `TenantScopedModel.tenant` is now a registry FK;
+  - migrations `tenancy.0001`–`0004` and `rbac.0004`:
+    - composite FKs;
+    - registry guard trigger and tombstone grant;
+    - standard RLS on the six tenant tables and the self-scoped registry;
+    - definer functions F1–F3 with owner-only SELECT policies;
+  - slug rules, lifecycle and limits;
+  - definer wrappers;
+  - the test probe FK migration.
+
+  Notes N14–N24 are in plan §24.4.
+- **Verification (actual results, local):**
+  - backend: **512 passed, 9 skipped**; coverage **95.37%** (gate 85%); new tenancy modules 95–100%; ruff, ruff format and mypy (181 files) clean; import-linter 9/9 kept; `makemigrations --check` clean; OpenAPI: no drift.
+  - RLS coverage gate green with the new tables registered: self-scoped registry, two justified global unique keys, three approved definer functions, three owner-only SELECT policies.
+  - **§4.4:** composite keys present with the expected shape. Cross-tenant and cross-institution references and template roles are rejected with `23503` for `erp_app` and the owner, and the same error is returned for a foreign id and a random id.
+  - **§7:** F1–F3 threat-model tests (uniform results, columns, no PUBLIC, pinned `search_path`, hijack attempt, owner-only policies invisible to `erp_app`, single wrapper caller).
+  - Raw-SQL isolation for all six tenant tables as `erp_app`.
+  - Two-transaction race at the institution limit: exactly one created.
+  - **Migration rehearsal:** reversal refused by default; with the override, reverse and forward work with Phase 2 data identical.
+  - **Docker clean volumes:** all migrations applied as the owner; seeding as the owner; RLS forced on all seven tenancy tables; `smoke_check` OK; runtime-secret isolation OK; Playwright **31 passed**.
+  - Scans: see the session report.
+- **Not started:** M3 (host resolution middleware, `TENANT_HOSTS_ENABLED`) and everything later. No PR created.
+- **Next recommended task:** the owner reviews M2 and decides on the M2 PR and M3.

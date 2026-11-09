@@ -73,7 +73,8 @@
 
 Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **Plan Approved (2026-11-08):** owner final approval; ADR-041–047 Accepted; merged in PR #16 (`75bb2c5`). The scope adjustments listed above are now in effect. Implementation branch `feat/phase-03-tenancy`.
-**M1 Complete (2026-11-09):** tenant isolation foundation and O1 (owner-controlled permission catalogue) on `feat/phase-03-tenancy`, PR for owner review. Notes and grant design: plan §24. M2 starts only on owner authorization.
+**M1 Complete (2026-11-09):** tenant isolation foundation and O1 (owner-controlled permission catalogue) on `feat/phase-03-tenancy`, PR for owner review. Notes and grant design: plan §24. M1 merged in PR #17.
+**M2 Complete (2026-11-09):** tenancy data model, composite keys, RLS, self-scoped registry, F1–F3, limits, slug rules, lifecycle on `feat/phase-03-m2` (notes: plan §24.4). M3 starts only on owner authorization.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -200,3 +201,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-08 — Phase 3 plan rev. 3: D1–D9 decisions recorded under Phase 3. No scope change beyond rev. 2.
 - 2026-11-08 — Phase 3 plan Approved; scope adjustments (files → Phase 6/7, self-service sign-up → Phase 4/5) now in effect.
 - 2026-11-09 — Phase 3 M1 (incl. O1) complete; M2 awaits owner authorization.
+- 2026-11-09 — Phase 3 M1 merged; M2 complete on its branch; M3 awaits owner authorization.
