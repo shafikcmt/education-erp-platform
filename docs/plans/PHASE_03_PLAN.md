@@ -1263,7 +1263,7 @@ M1 is implemented as specified in §5, §6.4, §8.1 and §8.5, with these record
 | N6 | Phase 2 tables `rbac_role`, `rbac_rolepermission`, `audit_auditevent`, `audit_auditeventip` | Registered as **pending M6** (§20). The gate requires them to have no RLS at all until M6 | §19.1 schedules their policies for M6; this prevents a half-configured state |
 | N7 | BYPASSRLS role check | Asserts that no non-superuser role except `erp_platform` has BYPASSRLS. The cluster bootstrap superuser (`postgres`) is excluded | Superusers bypass RLS by definition. The application never uses that account (ADR-040 H3 owner-credential isolation) |
 | N8 | Framework table grants | `auth_group`, `auth_group_permissions`, `auth_permission` and `django_content_type` narrowed to SELECT; `identity_user_groups` and `identity_user_user_permissions` to SELECT, DELETE | Only `migrate` (owner) writes them; user deletion removes link rows |
-| N9 | `rbac_permission` grants | **Not narrowed.** `seed_roles`/`sync_permissions` run as `erp_app`: in the compose `migrate` service after `migrate`, in `create_platform_admin` and in the test bootstrap | Narrowing would break Phase 2 seeding. Moving seeding to the owner role is an open item for the owner (§24.2 O1) |
+| N9 | `rbac_permission` grants | First not narrowed, because seeding ran as `erp_app`. **Resolved by O1 (§24.2)**: the catalogue is now owner-controlled, and `erp_app` has SELECT only (`rbac.0003`) | Owner decision O1, approved with conditions on 2026-11-09 |
 | N10 | Commit-dependent tests | pytest-django wraps every alias, including the test mirror, in the test transaction. Real COMMIT/ROLLBACK, `on_commit` and connection-reuse tests therefore run in worker threads with their own connections and clean up committed probe rows. The mirror alias is used for per-alias guard tests | Real transactions are needed; `TransactionTestCase` can't flush because the audit tables reject TRUNCATE |
 | N11 | Celery boundary leak detector | Clears and logs any leftover tenant state. It cannot fail the task, because Celery logs errors raised by signal receivers instead of propagating them. Request boundaries raise in tests | Celery signal semantics |
 | N12 | `platform_scope` audit durability | Start and end events are written in the caller's transaction | The durable audit connection is an M3 deliverable (§8.3) |
@@ -1271,9 +1271,50 @@ M1 is implemented as specified in §5, §6.4, §8.1 and §8.5, with these record
 
 ### 24.2 Open items raised by M1
 
-| # | Item | Proposal |
+| # | Item | Outcome |
 |---|---|---|
-| O1 | `rbac_permission` is writable by `erp_app` because seeding runs as the runtime role | Run `seed_roles`/`sync_permissions` as the owner in the `migrate` service and the test bootstrap, then narrow `rbac_permission` to SELECT. Owner decision; not done in M1 |
+| O1 | `rbac_permission` was writable by `erp_app`, because seeding ran as the runtime role | **Resolved (owner approved with conditions, 2026-11-09).** See below |
+
+**O1 implementation:**
+
+1. **Owner-controlled bootstrap.**
+   - The compose `migrate` service runs `export DATABASE_URL="$DATABASE_MIGRATION_URL" && migrate --noinput && seed_roles`, so migrations **and** seeding run as `erp_owner`. It remains the only service with the owner URL (`ERP_PROCESS_ROLE=migrate`).
+   - The test bootstrap (`conftest.py`) also seeds as the owner, before switching to `erp_app`.
+2. **Runtime processes can't write the catalogue.**
+   - `rbac.0003` narrows `erp_app` to SELECT on `rbac_permission`.
+   - As a code guard on top of the grant, `sync_permissions()` and `seed_roles()` call `require_owner_role` before touching anything. Running them as `erp_app` raises `CommandError`, so system roles (`rbac_role`/`rbac_rolepermission`, which the runtime role may still write for custom roles) can't be re-seeded from a runtime container either.
+3. **`create_platform_admin` no longer seeds.** It runs as `erp_app` and calls the read-only `catalog_drift()`. While the catalogue or the system roles differ from the declared manifests and templates, it refuses with a message to run the owner bootstrap.
+4. **Auditable.** Every run writes `rbac.permission_catalog.synced` (`created`, `updated`, `deprecated`, `declared`) and `rbac.system_roles.seeded` (`roles`, `created`, `added`, `removed`), with `actor_type = system`.
+5. **PostgreSQL integration tests** (`tests/test_permission_catalog.py`) check that `erp_app`:
+   - has SELECT and no INSERT, UPDATE, DELETE or TRUNCATE privileges;
+   - is refused raw INSERT, UPDATE and DELETE and ORM updates (`permission denied`);
+   - is refused by the seeding functions and commands, which write nothing.
+6. **Repeatable and idempotent.** On a throwaway database, using the real commands as the owner:
+   - the first `seed_roles` creates 20 permissions and 22 roles;
+   - a second run changes nothing;
+   - deprecation works, and a repeat run changes nothing;
+   - running as `erp_app` is refused;
+   - `create_platform_admin` succeeds as `erp_app`;
+   - audit counts match the runs.
+7. **No escalation path:** no new role, grant, `SECURITY DEFINER` function or credential. The runtime containers still get no owner credentials (`check_runtime_secrets.py` and the settings guard).
+
+### 24.3 Database grant design after M1 (runtime role `erp_app`)
+
+All tables are owned by `erp_owner` (migrations and the owner bootstrap). `erp_app` has no DDL, no TRUNCATE, no CREATE on the schema, no BYPASSRLS, and no membership in a privileged role.
+
+| Table(s) | `erp_app` grants | Reason |
+|---|---|---|
+| `rbac_permission` | SELECT | Owner-only catalogue (O1, `rbac.0003`) |
+| `audit_auditevent` | SELECT, INSERT | Append-only; a trigger rejects UPDATE/DELETE/TRUNCATE for every role (Phase 2) |
+| `audit_auditeventip` | SELECT, INSERT, UPDATE, DELETE | ADR-036 anonymisation and erasure; integrity triggers allow only clearing (ADR-040 L4) |
+| `django_migrations` | SELECT | Phase 2 (`core.0002`) |
+| `auth_group`, `auth_group_permissions`, `auth_permission`, `django_content_type` | SELECT | Written only by `migrate` (`core.0004`) |
+| `identity_user_groups`, `identity_user_user_permissions` | SELECT, DELETE | Unused links; user deletion removes them (`identity.0003`) |
+| `django_session`, `identity_*` (user, tokens, MFA, recovery codes, sessions, seen devices) | SELECT, INSERT, UPDATE, DELETE | Runtime account and session management |
+| `rbac_role`, `rbac_rolepermission`, `rbac_platformroleassignment` | SELECT, INSERT, UPDATE, DELETE | Custom roles and role grants through the RBAC API. System roles are read-only in services, and their re-seeding is owner-only |
+| Functions | `EXECUTE` on `app_tenant_id()` only (not PUBLIC) | Tenant context helper (`core.0003`) |
+
+The matrix was verified on the clean-volume stack (`has_table_privilege` per table) and is enforced by `apps/core/tests/test_db_grants.py`, `tests/test_permission_catalog.py` and the isolation registry.
 
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
@@ -1293,3 +1334,4 @@ M1 is implemented as specified in §5, §6.4, §8.1 and §8.5, with these record
   - Documentation only.
 - 2026-11-08 — **Approved** (owner final approval of rev. 3). Status lines and the ADR table updated; no content change.
 - 2026-11-08 — §24 appended: M1 implementation notes (N1–N13) and open item O1. No approved decision changed.
+- 2026-11-09 — §24.2: O1 implemented (owner-controlled catalogue bootstrap, `rbac_permission` SELECT-only for `erp_app`); §24.3: final runtime grant design recorded.

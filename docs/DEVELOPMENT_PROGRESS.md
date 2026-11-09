@@ -22,7 +22,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); `feat/phase-03-tenancy` (M1 commits, no PR yet) | Plan rev. 3 Approved; **M1 Complete** (tests, lint, types, docs); M2–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan, merged as `75bb2c5`); `feat/phase-03-tenancy` (M1 + O1 commits, no PR yet) | Plan rev. 3 Approved; **M1 Complete including O1**; M2–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -73,7 +73,7 @@ See `DECISION_LOG.md`.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
 - **Phase 3 M1 follow-ups:**
-  - **O1:** `rbac_permission` stays writable by `erp_app`, because `seed_roles`/`sync_permissions` run as the runtime role. Moving seeding to the owner role, then narrowing to SELECT, is an owner decision (plan §24.2).
+  - ~~**O1:** `rbac_permission` writable by `erp_app`~~ — **resolved 2026-11-09** (Session 15). The catalogue bootstrap is owner-only, and `erp_app` has SELECT only.
   - `rbac_role`, `rbac_rolepermission`, `audit_auditevent` and `audit_auditeventip` have no RLS yet. They are registered as pending M6 in the coverage gate (plan §24.1 N6).
   - The Celery boundary leak detector can only clear and log, not fail the task (Celery signal semantics; N11).
   - `platform_scope` audit events are not yet durable; the durable audit connection comes in M3 (N12).
@@ -486,3 +486,32 @@ See `DECISION_LOG.md`.
 - **Next recommended task:**
   1. The owner reviews M1 and decides O1.
   2. On approval, start M2 (tenancy models, composite constraints, RLS, definer functions F1–F3).
+
+### 2026-11-09 — Session 15 (Phase 3 M1 follow-up: O1, owner-controlled permission catalogue)
+- **Owner decision O1:** approved with conditions — narrow `erp_app` to SELECT on `rbac_permission` after moving seeding to an owner-controlled bootstrap.
+- **Implemented:**
+  - `seed_roles`/`sync_permissions` run as the owner in the compose `migrate` service and in the test bootstrap;
+  - both functions refuse to run as `erp_app` (code guard on top of the grant);
+  - every run is audited (`rbac.permission_catalog.synced`, `rbac.system_roles.seeded`);
+  - `create_platform_admin` is read-only on the catalogue: it checks with `catalog_drift()` and refuses while the catalogue is out of sync;
+  - migration `rbac.0003` narrows `rbac_permission` to SELECT for `erp_app`.
+
+  Details are in plan §24.2, and the final grant design in plan §24.3.
+- **Tests:** `tests/test_permission_catalog.py` (7 tests).
+  - PostgreSQL grants: SELECT only; INSERT, UPDATE, DELETE and ORM updates all refused.
+  - Seeding refused as `erp_app`, with nothing written.
+  - Drift detection.
+  - Compose bootstrap order, and no owner URL in runtime services.
+  - Repeatable and idempotent owner bootstrap on a throwaway database, using the real commands.
+- Two Phase 2 tests no longer write the catalogue as `erp_app`; their seeding and deprecation checks moved into the owner-run test.
+- **Verification (actual results):**
+  - backend: **413 passed, 9 skipped**; coverage **95%** (gate 85%); ruff, ruff format and mypy (166 files) clean; import-linter 9/9 kept; `makemigrations --check` clean.
+  - **Clean-volume Docker stack:**
+    - `migrate` applied `rbac.0003`, then seeded 20 permissions and 22 roles as the owner, writing 1 audit event per step;
+    - re-running `migrate` was idempotent (0 created/updated/deprecated, 0 roles created, 0 permissions added or removed);
+    - `erp_app` grants on `rbac_permission`: SELECT only;
+    - `seed_roles` run in the `api` container was refused;
+    - `create_platform_admin` (`api`, `erp_app`) created the E2E admin;
+    - Playwright **31 passed**; `smoke_check` OK; runtime-secret isolation OK.
+  - Scans: see the session report (gitleaks, Trivy).
+- **Next recommended task:** the owner reviews the M1 + O1 result and authorizes M2.
