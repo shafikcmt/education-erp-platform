@@ -585,3 +585,10 @@ See `DECISION_LOG.md`.
 - **Carried forward:** M5 aligns `role_templates.py:36` to `tenancy.support_session.request`; M4's RoleAssignment migration is `rbac.0005` (not plan §19.1's "rbac.0003"); Phase 18 purge only for `deleted` tenants.
 - **No M3 work.** Dependabot PRs untouched.
 - **Next recommended task:** the owner authorizes M3 (host resolution, `TENANT_HOSTS_ENABLED` still off by default).
+
+### 2026-11-09 — Session 19 (docs sync; Phase 3 M3 planning)
+- **Docs sync:** [PR #19](https://github.com/shafikcmt/education-erp-platform/pull/19) (documentation only, 3 files) squash-merged as `e23ba29`; CI 9/9 success. `main` now contains M1 (`3108824`), M2 (`3616778`) and the status updates.
+- **M3 plan (Proposed):** `docs/plans/PHASE_03_M3_PLAN.md` on branch `docs/phase-03-m3-plan`. Covers host policy, tenant resolution and transaction middleware, durable-audit alias, `TENANT_HOSTS_ENABLED` gate and production guard, tenant-host sign-in (D7), `CONN_MAX_AGE = 0` and its measurement (D4), retirement of `ScopeTargetMiddleware`. Seven questions (Q1–Q7) await the owner.
+- **Known gaps recorded for later milestones:** R2 cross-tenant invisibility (M6), R9 (M5), K3 full stack (M10), storage-I/O guard (M7), owner restricted mode for suspended tenants (M4/M5).
+- **No M3 implementation, no application code, no PR for the plan.**
+- **Next recommended task:** the owner reviews the M3 plan and answers Q1–Q7.
