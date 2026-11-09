@@ -1,11 +1,13 @@
 # Phase 3 Implementation Plan — Multi-Tenant Architecture & Tenant Isolation
 
-- **Status:** **Proposed — revision 3, final candidate** (2026-11-08). The owner's approvals so far:
-  - Q1–Q12 approved in principle (rev. 1 review);
-  - ADR-041 to ADR-047 approved in principle and D1–D9 decided (rev. 2 review).
-
-  This revision records those decisions (§17). The plan becomes **Approved** only with the owner's explicit final approval.
-  - **No application code until the owner gives final approval of this plan.**
+- **Status:** **Approved — revision 3.** The owner gave final approval on 2026-11-08 to the plan and to ADR-041 to ADR-047 (all **Accepted**), including decisions D1–D9.
+  - Approval history:
+    - Q1–Q12 approved in principle (rev. 1 review);
+    - ADR-041 to ADR-047 approved in principle and D1–D9 decided (rev. 2 review);
+    - final approval of rev. 3.
+  - Merged into `main` in PR #16 (`75bb2c5`).
+  - Implementation branch: `feat/phase-03-tenancy`.
+  - **Implementation (M1 onwards) starts only when the owner explicitly authorizes it.**
 - **Prepared on:** `main` at `2d61e83` (Phase 2 merged; Phases 0–2 Approved).
 - **Roadmap reference:** `DEVELOPMENT_ROADMAP.md` → Phase 3 ("SaaS tenants, institutions & campuses").
 - **Governing decisions (Accepted):**
@@ -1069,15 +1071,15 @@ These run with `transaction=True` on a real PostgreSQL, as `erp_app`, with `CONN
 
 | ADR | Title | Status |
 |---|---|---|
-| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain; generic non-member sign-in | Proposed — approved in principle (rev. 2 + D1, D7) |
-| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | Proposed — approved in principle (rev. 2 + D4, D9) |
-| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | Proposed — approved in principle (rev. 2 + D3, D6, D8) |
-| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | Proposed — approved in principle (rev. 2) |
-| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass, suspended-tenant rules | Proposed — approved in principle (rev. 2 + D2, D5) |
-| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | Proposed — approved in principle (rev. 2) |
-| **047** | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | Proposed — approved in principle |
+| **041** | Tenant resolution by host; platform host separation; enablement gate; placeholder domain; generic non-member sign-in | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D1, D7) |
+| **042** | Tenant context lifecycle: primitives, request transaction, rollback, durable audit, performance safeguards, Celery, keys | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D4, D9) |
+| **043** | No runtime BYPASSRLS; platform operation catalogue; **amends ADR-009 §5** (`erp_platform` reserved, unused) | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D3, D6, D8) |
+| **044** | Membership and scoped role-assignment model; composite FKs; read-only system roles + cloning; import boundaries | **Accepted** (owner final approval 2026-11-08) (rev. 2) |
+| **045** | Support sessions: tenant approval by default, read-only, ≤ 2 h, audited, no RLS bypass, suspended-tenant rules | **Accepted** (owner final approval 2026-11-08) (rev. 2 + D2, D5) |
+| **046** | RLS policy catalogue and CI enforcement; registry allow-list with justification and tests; `SECURITY DEFINER` rules | **Accepted** (owner final approval 2026-11-08) (rev. 2) |
+| **047** | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | **Accepted** (owner final approval 2026-11-08) |
 
-All seven become **Accepted** only with the owner's explicit final approval of this plan. ADR-009 stays **Accepted**; its §5 amendment by ADR-043 takes effect at the same moment (§6.1).
+All seven were **Accepted** with the owner's final approval on 2026-11-08. ADR-009 stays **Accepted**, and its §5 amendment by ADR-043 is now in effect (§6.1).
 
 ## 17. Owner decisions and remaining questions
 
@@ -1245,6 +1247,75 @@ Each final documentation requirement maps to its design and the tests that prove
 | Tenant hosts disabled until the production domain and security review are approved | §10.1 step 3, §10.2, §10.3; production config guard; `409 tenant_hosts_disabled` | Config-guard tests; disabled-mode tests (no lookup, uniform 404); provisioning refusal test |
 | Documentation only (this PR) | No application, infrastructure or test code changed | PR file list: documentation files only |
 
+## 24. Implementation notes (appended during implementation)
+
+### 24.1 M1 — tenant context foundation (2026-11-08, branch `feat/phase-03-tenancy`)
+
+M1 is implemented as specified in §5, §6.4, §8.1 and §8.5, with these recorded clarifications. None changes an approved decision.
+
+| # | Item | What was done | Why |
+|---|---|---|---|
+| N1 | `TenantScopedModel.tenant_id` | Plain indexed UUID column in M1 | The tenant registry model does not exist yet (M2). M2 turns it into a foreign key to `tenancy.Tenant` with the same column name |
+| N2 | `platform_scope` permission and audit hooks | Configured in settings (`TENANCY_PLATFORM_AUTHORIZER`, `TENANCY_PLATFORM_AUDITOR`) and implemented in `apps.rbac.platform_operations` and `apps.audit.platform_operations` | Keeps `apps.core` free of imports from `rbac` and `audit` (import contracts §9.1); the same pattern as the RBAC permission sources |
+| N3 | Catalogue permission codes of later milestones (P4–P6, P8) | Listed now. Until the codes are registered, the uncached re-check raises `UnknownPermissionError`, so nothing runs | Fail closed |
+| N4 | `core.db.tenant_atomic` | `apps/core/db.py` re-exports the single implementation in `apps.core.tenancy.transaction` | ADR-009 §4 and `CLAUDE.md` §10 use that name; there is still exactly one helper |
+| N5 | Probe tables | A test-only app (`tests.isolation_app`, installed only by test settings) creates standard, dual-scope and private dual-scope probe tables with the real operations. The coverage gate compares every real table with the probe of its class | Reference policy shapes come from the real operations, not from hand-written strings |
+| N6 | Phase 2 tables `rbac_role`, `rbac_rolepermission`, `audit_auditevent`, `audit_auditeventip` | Registered as **pending M6** (§20). The gate requires them to have no RLS at all until M6 | §19.1 schedules their policies for M6; this prevents a half-configured state |
+| N7 | BYPASSRLS role check | Asserts that no non-superuser role except `erp_platform` has BYPASSRLS. The cluster bootstrap superuser (`postgres`) is excluded | Superusers bypass RLS by definition. The application never uses that account (ADR-040 H3 owner-credential isolation) |
+| N8 | Framework table grants | `auth_group`, `auth_group_permissions`, `auth_permission` and `django_content_type` narrowed to SELECT; `identity_user_groups` and `identity_user_user_permissions` to SELECT, DELETE | Only `migrate` (owner) writes them; user deletion removes link rows |
+| N9 | `rbac_permission` grants | First not narrowed, because seeding ran as `erp_app`. **Resolved by O1 (§24.2)**: the catalogue is now owner-controlled, and `erp_app` has SELECT only (`rbac.0003`) | Owner decision O1, approved with conditions on 2026-11-09 |
+| N10 | Commit-dependent tests | pytest-django wraps every alias, including the test mirror, in the test transaction. Real COMMIT/ROLLBACK, `on_commit` and connection-reuse tests therefore run in worker threads with their own connections and clean up committed probe rows. The mirror alias is used for per-alias guard tests | Real transactions are needed; `TransactionTestCase` can't flush because the audit tables reject TRUNCATE |
+| N11 | Celery boundary leak detector | Clears and logs any leftover tenant state. It cannot fail the task, because Celery logs errors raised by signal receivers instead of propagating them. Request boundaries raise in tests | Celery signal semantics |
+| N12 | `platform_scope` audit durability | Start and end events are written in the caller's transaction | The durable audit connection is an M3 deliverable (§8.3) |
+| N13 | `lock_timeout`, `TENANT_HOSTS_ENABLED`, request middleware | Not part of M1 | M3. No tenant host exists: every host still behaves as in Phase 2 |
+
+### 24.2 Open items raised by M1
+
+| # | Item | Outcome |
+|---|---|---|
+| O1 | `rbac_permission` was writable by `erp_app`, because seeding ran as the runtime role | **Resolved (owner approved with conditions, 2026-11-09).** See below |
+
+**O1 implementation:**
+
+1. **Owner-controlled bootstrap.**
+   - The compose `migrate` service runs `export DATABASE_URL="$DATABASE_MIGRATION_URL" && migrate --noinput && seed_roles`, so migrations **and** seeding run as `erp_owner`. It remains the only service with the owner URL (`ERP_PROCESS_ROLE=migrate`).
+   - The test bootstrap (`conftest.py`) also seeds as the owner, before switching to `erp_app`.
+2. **Runtime processes can't write the catalogue.**
+   - `rbac.0003` narrows `erp_app` to SELECT on `rbac_permission`.
+   - As a code guard on top of the grant, `sync_permissions()` and `seed_roles()` call `require_owner_role` before touching anything. Running them as `erp_app` raises `CommandError`, so system roles (`rbac_role`/`rbac_rolepermission`, which the runtime role may still write for custom roles) can't be re-seeded from a runtime container either.
+3. **`create_platform_admin` no longer seeds.** It runs as `erp_app` and calls the read-only `catalog_drift()`. While the catalogue or the system roles differ from the declared manifests and templates, it refuses with a message to run the owner bootstrap.
+4. **Auditable.** Every run writes `rbac.permission_catalog.synced` (`created`, `updated`, `deprecated`, `declared`) and `rbac.system_roles.seeded` (`roles`, `created`, `added`, `removed`), with `actor_type = system`.
+5. **PostgreSQL integration tests** (`tests/test_permission_catalog.py`) check that `erp_app`:
+   - has SELECT and no INSERT, UPDATE, DELETE or TRUNCATE privileges;
+   - is refused raw INSERT, UPDATE and DELETE and ORM updates (`permission denied`);
+   - is refused by the seeding functions and commands, which write nothing.
+6. **Repeatable and idempotent.** On a throwaway database, using the real commands as the owner:
+   - the first `seed_roles` creates 20 permissions and 22 roles;
+   - a second run changes nothing;
+   - deprecation works, and a repeat run changes nothing;
+   - running as `erp_app` is refused;
+   - `create_platform_admin` succeeds as `erp_app`;
+   - audit counts match the runs.
+7. **No escalation path:** no new role, grant, `SECURITY DEFINER` function or credential. The runtime containers still get no owner credentials (`check_runtime_secrets.py` and the settings guard).
+
+### 24.3 Database grant design after M1 (runtime role `erp_app`)
+
+All tables are owned by `erp_owner` (migrations and the owner bootstrap). `erp_app` has no DDL, no TRUNCATE, no CREATE on the schema, no BYPASSRLS, and no membership in a privileged role.
+
+| Table(s) | `erp_app` grants | Reason |
+|---|---|---|
+| `rbac_permission` | SELECT | Owner-only catalogue (O1, `rbac.0003`) |
+| `audit_auditevent` | SELECT, INSERT | Append-only; a trigger rejects UPDATE/DELETE/TRUNCATE for every role (Phase 2) |
+| `audit_auditeventip` | SELECT, INSERT, UPDATE, DELETE | ADR-036 anonymisation and erasure; integrity triggers allow only clearing (ADR-040 L4) |
+| `django_migrations` | SELECT | Phase 2 (`core.0002`) |
+| `auth_group`, `auth_group_permissions`, `auth_permission`, `django_content_type` | SELECT | Written only by `migrate` (`core.0004`) |
+| `identity_user_groups`, `identity_user_user_permissions` | SELECT, DELETE | Unused links; user deletion removes them (`identity.0003`) |
+| `django_session`, `identity_*` (user, tokens, MFA, recovery codes, sessions, seen devices) | SELECT, INSERT, UPDATE, DELETE | Runtime account and session management |
+| `rbac_role`, `rbac_rolepermission`, `rbac_platformroleassignment` | SELECT, INSERT, UPDATE, DELETE | Custom roles and role grants through the RBAC API. System roles are read-only in services, and their re-seeding is owner-only |
+| Functions | `EXECUTE` on `app_tenant_id()` only (not PUBLIC) | Tenant context helper (`core.0003`) |
+
+The matrix was verified on the clean-volume stack (`has_table_privilege` per table) and is enforced by `apps/core/tests/test_db_grants.py`, `tests/test_permission_catalog.py` and the isolation registry.
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1261,3 +1332,6 @@ Each final documentation requirement maps to its design and the tests that prove
   - **Added:** D1–D9 decisions (§17.2) and still-open items (§17.3); suspended-tenant restricted mode (§11.3, S10); D5 approval-setting rules; D7 generic sign-in error; D4 `CONN_MAX_AGE = 0` with leak-test gate (§8.6); D9 thresholds and benchmark methodology (§8.4); approval-gate checklist (§23).
   - **Updated:** milestones and acceptance criteria.
   - Documentation only.
+- 2026-11-08 — **Approved** (owner final approval of rev. 3). Status lines and the ADR table updated; no content change.
+- 2026-11-08 — §24 appended: M1 implementation notes (N1–N13) and open item O1. No approved decision changed.
+- 2026-11-09 — §24.2: O1 implemented (owner-controlled catalogue bootstrap, `rbac_permission` SELECT-only for `erp_app`); §24.3: final runtime grant design recorded.

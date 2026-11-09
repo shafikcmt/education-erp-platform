@@ -9,8 +9,10 @@
 #   erp_owner    — owns the application database/schema; runs migrations only.
 #   erp_app      — runtime role: NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS,
 #                  DML only (no DDL). Row-Level Security applies to it (Phase 3).
-#   erp_platform — reserved for audited platform_scope() code paths (BYPASSRLS). Login is
-#                  disabled until Phase 3 enables and wires it.
+#   erp_platform — BYPASSRLS but NOLOGIN, with no members: reserved, and used by NO runtime or
+#                  maintenance code path (ADR-043, amending ADR-009 §5). platform_scope() works
+#                  through the platform operation catalogue instead. Enabling login or any
+#                  break-glass use requires a new ADR and explicit owner approval (D6).
 #
 # Extensions are installed as superuser in the app database AND template1, so databases
 # created later (e.g. the pytest test database) inherit them without superuser rights.

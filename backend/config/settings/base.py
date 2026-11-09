@@ -188,6 +188,16 @@ RBAC_PERMISSION_SOURCES: list[str] = [
 ]
 RBAC_CACHE_TTL_SECONDS = 300
 
+# ------------------------------------------------------------------- Phase 3 tenancy (M1)
+# platform_scope hooks (ADR-043): core never imports rbac/audit, so they are configured here.
+TENANCY_PLATFORM_AUTHORIZER = "apps.rbac.platform_operations.authorize_platform_operation"
+TENANCY_PLATFORM_AUDITOR = "apps.audit.platform_operations.record_platform_operation"
+# Raise (instead of only logging) when tenant state leaks to a request/task boundary.
+TENANCY_LEAK_STRICT: bool = env.bool("TENANCY_LEAK_STRICT", default=False)
+# Reversing tenant-isolation migrations (RLS, tenant context function) is refused unless
+# explicitly allowed, and is never allowed in production or staging (plan §19.2).
+ERP_ALLOW_ISOLATION_ROLLBACK: bool = env.bool("ERP_ALLOW_ISOLATION_ROLLBACK", default=False)
+
 # --------------------------------------------------------------------------- security headers
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = "same-origin"

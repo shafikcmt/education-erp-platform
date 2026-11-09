@@ -63,6 +63,9 @@ ignore = ["RUF012"]
 "config/settings/*.py" = ["F405", "F403"]
 # API error classes are named after their stable Problem Details codes (invalid_credentials, ...).
 "apps/identity/errors.py" = ["N818"]
+# Tenant-isolation error names are fixed by the approved Phase 3 plan and ADR-042
+# (TenantContextConflict, TenantContextNotApplied, ...).
+"apps/core/tenancy/exceptions.py" = ["N818"]
 
 # ---------------------------------------------------------------- mypy
 [tool.mypy]
@@ -119,7 +122,7 @@ ignore_imports = ["apps.core.ids -> uuid_utils"]
 name = "core is the foundation: it must not import other apps"
 type = "forbidden"
 source_modules = ["apps.core"]
-forbidden_modules = ["apps.identity", "apps.rbac", "apps.audit"]
+forbidden_modules = ["apps.identity", "apps.rbac", "apps.audit", "apps.tenancy"]
 
 # Review I2: rbac and identity call each other only through their API/service edges. The
 # permission engine, its data and the identity data model must never form an import cycle.
@@ -142,6 +145,40 @@ name = "identity data model does not import rbac or audit"
 type = "forbidden"
 source_modules = ["apps.identity.models", "apps.identity.managers"]
 forbidden_modules = ["apps.rbac", "apps.audit"]
+
+# Phase 3 M1 (plan §9.1): tenant context primitives stay at the bottom of the graph, and the
+# Phase 2 engine/data model never import the tenancy app (no cycles; sources load from settings).
+[[tool.importlinter.contracts]]
+name = "core tenancy primitives import no other app"
+type = "forbidden"
+source_modules = ["apps.core.tenancy"]
+forbidden_modules = ["apps.identity", "apps.rbac", "apps.audit", "apps.tenancy"]
+
+[[tool.importlinter.contracts]]
+name = "rbac core is independent of tenancy"
+type = "forbidden"
+source_modules = [
+    "apps.rbac.engine",
+    "apps.rbac.sources",
+    "apps.rbac.models",
+    "apps.rbac.registry",
+    "apps.rbac.seeding",
+    "apps.rbac.role_templates",
+    "apps.rbac.signals",
+]
+forbidden_modules = ["apps.tenancy"]
+
+[[tool.importlinter.contracts]]
+name = "identity data model does not import tenancy"
+type = "forbidden"
+source_modules = ["apps.identity.models", "apps.identity.managers"]
+forbidden_modules = ["apps.tenancy"]
+
+[[tool.importlinter.contracts]]
+name = "audit core does not import tenancy"
+type = "forbidden"
+source_modules = ["apps.audit.models", "apps.audit.services", "apps.audit.events"]
+forbidden_modules = ["apps.tenancy"]
 
 [[tool.importlinter.contracts]]
 name = "audit log core does not import identity"
