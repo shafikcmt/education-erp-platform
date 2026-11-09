@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-08 (Phase 3 plan rev. 3 Approved; ADR-041–047 Accepted; implementation branch `feat/phase-03-tenancy`, implementation not yet authorized)
+- **Last updated:** 2026-11-09 (Phase 3 in progress: M1 tenant isolation foundation incl. O1 complete, PR open for owner review; M2 not started)
 
 ---
 
@@ -345,7 +345,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
-| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**, merged in PR #16; ADR-041–047 Accepted; implementation on `feat/phase-03-tenancy` awaits owner authorization) |
+| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**, merged in PR #16; ADR-041–047 Accepted; **in progress**: M1 tenant isolation foundation incl. O1 complete on `feat/phase-03-tenancy`, PR for owner review; M2+ not started) |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
@@ -438,3 +438,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-08 — Phase 3 plan rev. 2: the phase table and last-updated line were updated. No rule changed. On acceptance, ADR-043 adds wording to §10 item 3 (platform operation catalogue, no runtime `BYPASSRLS`). ADR-047 records the owner's answers to Q1–Q12.
 - 2026-11-08 — Phase 3 plan rev. 3: the phase table and last-updated line were updated. No rule changed. The §10 wording change from ADR-043 is still applied only on final acceptance.
 - 2026-11-08 — Owner final approval of the Phase 3 plan: ADR-041–047 Accepted. §10 item 3 now states the platform operation catalogue and no runtime `BYPASSRLS` (ADR-043 amends ADR-009 §5). Phase table updated.
+- 2026-11-09 — Phase 3 M1 (incl. O1) complete; phase table and last-updated line updated. No rule changed.
