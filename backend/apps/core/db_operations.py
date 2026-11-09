@@ -204,8 +204,20 @@ def tenant_policy_expressions(kind: str) -> dict[str, tuple[str | None, str | No
       only rows of the current scope (``IS NOT DISTINCT FROM``: platform context writes
       platform rows, tenant context its own rows).
     * ``dual_private``: reads and writes only the current scope.
+    * ``self_scoped``: registry table keyed by ``id``; all rows without a context, only the
+      tenant's own row inside one.
     """
     ctx = TENANT_CONTEXT_EXPR
+    if kind == "self_scoped":
+        # Registry table keyed by its own id (tenancy_tenant): the platform (no context) sees
+        # every row; a tenant context sees only its own row (plan §5.1).
+        own = f"({ctx} IS NULL OR id = {ctx})"
+        return {
+            "select": (own, None),
+            "insert": (None, own),
+            "update": (own, own),
+            "delete": (own, None),
+        }
     if kind == "standard":
         own = f"(tenant_id = {ctx})"
         read = own
@@ -297,3 +309,12 @@ class EnableDualScopeRLS(_EnableRLS):
     def describe(self) -> str:
         scope = "private dual-scope" if self.private else "dual-scope"
         return f"Enable {scope} RLS on {self.table}"
+
+
+class EnableSelfScopedRLS(_EnableRLS):
+    """ENABLE + FORCE RLS on the tenant registry (``tenancy_tenant``): self-scoped by ``id``."""
+
+    kind = "self_scoped"
+
+    def describe(self) -> str:
+        return f"Enable self-scoped registry RLS on {self.table}"
