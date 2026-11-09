@@ -41,13 +41,13 @@ def django_db_setup(django_db_setup: Any, django_db_blocker: Any) -> Iterator[No
             app = connections["default"].ops.quote_name(settings.TEST_APP_DB_USER)
             cursor.execute(f"REVOKE CONNECT, TEMPORARY ON DATABASE {db} FROM PUBLIC")
             cursor.execute(f"GRANT CONNECT ON DATABASE {db} TO {app}")
-        _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
-        # Permission registry + system roles, as the compose ``migrate`` service does (as erp_app,
-        # which has DML rights on these tables).
+        # Permission catalogue + system roles, exactly as the compose ``migrate`` bootstrap does:
+        # as the OWNER role (O1: erp_app may only read rbac_permission).
         from apps.rbac.seeding import seed_roles, sync_permissions
 
         sync_permissions()
         seed_roles()
+        _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
     yield
     with django_db_blocker.unblock():
         # Teardown (DROP DATABASE) needs the owner again.

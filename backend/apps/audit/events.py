@@ -56,6 +56,9 @@ EVENTS: dict[str, frozenset[str]] = {
     "rbac.role.permissions_changed": frozenset({"role_code", "added", "removed"}),
     "rbac.platform_role.granted": frozenset({"role_code"}),
     "rbac.platform_role.revoked": frozenset({"role_code"}),
+    # owner-only catalogue bootstrap (Phase 3 M1 / O1)
+    "rbac.permission_catalog.synced": frozenset({"created", "updated", "deprecated", "declared"}),
+    "rbac.system_roles.seeded": frozenset({"roles", "created", "added", "removed"}),
     # audit / authorization
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),

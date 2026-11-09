@@ -141,8 +141,9 @@ services:
 
   migrate:
     <<: *backend
-    # Migrations run as the owner role; the app never has DDL rights (ADR-009). Then the
-    # permission registry and system roles are synced as the runtime role (DML only).
+    # Owner-level bootstrap: migrations, then the permission catalogue and system roles
+    # (seed_roles), all as the owner role. The runtime role has no DDL rights (ADR-009) and only
+    # SELECT on rbac_permission (O1, rbac.0003); seed_roles refuses to run as erp_app.
     # The ONLY service with the owner URL; ERP_PROCESS_ROLE=migrate lets the settings guard
     # accept it. Also used for owner-only ops commands (key rotation, IP index rebuild).
     environment:
@@ -153,7 +154,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        'DATABASE_URL="$$DATABASE_MIGRATION_URL" python manage.py migrate --noinput && python manage.py seed_roles',
+        'export DATABASE_URL="$$DATABASE_MIGRATION_URL" && python manage.py migrate --noinput && python manage.py seed_roles',
       ]
     depends_on:
       postgres:

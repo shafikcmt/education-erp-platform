@@ -110,10 +110,13 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
     ),
     "rbac_permission": AllowEntry(
         "Global, code-defined permission catalogue shared by every tenant; no tenant data. "
-        "Written only by sync_permissions; no API creates or changes permissions.",
+        "SELECT only for the runtime role (O1, rbac.0003); written only by the owner-run "
+        "bootstrap (sync_permissions/seed_roles); no API creates or changes permissions.",
         (
             "apps/rbac/tests/test_api.py::test_permission_catalog_lists_flags",
-            "apps/rbac/tests/test_engine.py::test_registry_covers_the_phase_2_catalog_and_seed_is_idempotent",
+            "tests/test_permission_catalog.py::test_runtime_role_can_only_read_the_permission_catalog",
+            "tests/test_permission_catalog.py::test_seeding_functions_and_commands_refuse_the_runtime_role",
+            "tests/test_permission_catalog.py::test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused",
         ),
     ),
     "rbac_platformroleassignment": AllowEntry(

@@ -22,7 +22,7 @@ from apps.rbac.engine import (
 from apps.rbac.models import Permission, PlatformRoleAssignment, Role, RoleKind, RolePermission
 from apps.rbac.registry import declared_permissions
 from apps.rbac.role_templates import PLATFORM_ROLES, TEMPLATE_ROLES
-from apps.rbac.seeding import seed_roles, sync_permissions
+from apps.rbac.seeding import catalog_drift
 from apps.rbac.services import (
     GuardRailViolation,
     create_role,
@@ -41,14 +41,13 @@ CAMPUS_1A, CAMPUS_1B = uuid.uuid4(), uuid.uuid4()
 
 
 def test_registry_covers_the_phase_2_catalog_and_seed_is_idempotent():
+    """Idempotency of the owner-run bootstrap itself is proven on a throwaway database in
+    ``tests/test_permission_catalog.py`` (O1: erp_app can no longer write the catalogue)."""
     codes = set(declared_permissions())
     assert len(codes) == 20
     assert {"identity.user.view", "audit.event.view_ip", "rbac.platform_role.assign"} <= codes
     assert set(Permission.objects.values_list("code", flat=True)) >= codes
-    before = RolePermission.objects.count()
-    assert sync_permissions().created == 0
-    seed_roles()
-    assert RolePermission.objects.count() == before
+    assert catalog_drift() == []
 
 
 def test_all_claude_md_roles_are_seeded_with_bengali_names():
@@ -71,12 +70,11 @@ def test_super_admin_holds_every_permission_and_others_their_subsets():
     }
 
 
-def test_deprecated_codes_are_marked_not_deleted():
-    Permission.objects.create(
-        code="identity.legacy.thing", module_code="identity", description="old"
-    )
-    assert sync_permissions().deprecated == 1
-    assert Permission.objects.get(code="identity.legacy.thing").deprecated_at is not None
+def test_deprecated_codes_are_unknown_to_the_engine():
+    """Deprecation by ``sync_permissions`` is tested as the owner in
+    ``tests/test_permission_catalog.py``; here: a deprecated code is unknown at runtime."""
+    deprecated = Permission.objects.filter(deprecated_at__isnull=False)
+    assert not deprecated.exists()
     with pytest.raises(UnknownPermissionError):
         has_perm(make_user().user, "identity.legacy.thing")
 
