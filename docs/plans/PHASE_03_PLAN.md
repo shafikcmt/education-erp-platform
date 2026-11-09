@@ -1324,9 +1324,9 @@ M2 is implemented as specified in §4, §5, §7, §19.1 (migrations 2–5) and �
 |---|---|---|---|
 | N14 | `rbac_role` `UNIQUE(tenant_id, id)` | Added in M2 (`rbac.0004_role_tenant_key`). `template_id`, `RoleAssignment` and the role RLS stay in M4/M6 | The invitation→role composite FK (§4.4, `tenancy.0002`) needs this key. §19.1 lists it under migration 6, which runs later |
 | N15 | Foreign keys from tenant tables to **platform** tables (tenant registry, user, role) | `on_delete=DO_NOTHING` in Django. PostgreSQL enforces integrity: registry and user FKs; the composite role key with `ON DELETE RESTRICT` | Django's delete collector would otherwise walk tenant tables from platform code through the fail-closed manager (a platform role deletion failed with `TenantContextMissing`). Foreign keys between tenant tables keep `PROTECT` |
-| N16 | Tenant lifecycle (§4.3) | Transitions are `provisioning→active/deleted`, `active→suspended/offboarding`, `suspended→active/offboarding`, `offboarding→active/deleted`; `deleted` is terminal. Enforced in the model and by the `tenancy_tenant_guard` trigger, which also keeps `id` and `slug` immutable. A test checks that Python and SQL agree on every pair | §4.3 lists the states; `offboarding→active` (cancelled offboarding) is an engineering choice, open to owner review |
+| N16 | Tenant lifecycle (§4.3) — **superseded by §24.5** | Transitions are `provisioning→active/deleted`, `active→suspended/offboarding`, `suspended→active/offboarding`, `offboarding→active/deleted`; `deleted` is terminal. Enforced in the model and by the `tenancy_tenant_guard` trigger, which also keeps `id` and `slug` immutable. A test checks that Python and SQL agree on every pair | §4.3 lists the states; `offboarding→active` (cancelled offboarding) is an engineering choice, open to owner review |
 | N17 | Tombstones | `erp_app` has SELECT, INSERT and UPDATE on `tenancy_tenant`, no DELETE. Deleted tenants keep their row, so a slug is never reused | §4.1 "never reused" |
-| N18 | Reserved slugs | 33 names (`admin`, `api`, `www`, `mail`, `static`, `support`, `status`, …) in `apps/tenancy/rules.py`, also enforced by a CHECK constraint | §10.4 gives examples; the full list is a proposal the owner may amend |
+| N18 | Reserved slugs — **superseded by §24.5** | 33 names (`admin`, `api`, `www`, `mail`, `static`, `support`, `status`, …) in `apps/tenancy/rules.py`, also enforced by a CHECK constraint | §10.4 gives examples; the full list is a proposal the owner may amend |
 | N19 | Limits | `TENANT_DEFAULT_LIMITS` (1/3) is copied onto each tenant. `assert_capacity()` locks the tenant row inside `tenant_atomic`, and archived rows don't count. No creation services or APIs (M4/M8) | Q12, ADR-010. Concurrency is proven by a two-transaction race test |
 | N20 | Definer functions F1–F3 | As §7. Owner-only SELECT policies: `definer_resolve_host` (verified domains), `definer_memberships_of` (open memberships), `definer_support_sessions_of` (all rows; the function filters by staff). Row policies can't restrict columns for the owning role; the functions return only the documented columns | §7 |
 | N21 | Definer wrappers | `apps.tenancy.selectors.platform` is the only caller; a static test checks this. Each wrapper runs only inside its catalogued `platform_scope` operation (P1 anonymous, P2 own account, P6), using the scope's actor. P6 fails closed until M5 registers `tenancy.support_session.request` | ADR-043, §6.3 |
@@ -1341,6 +1341,25 @@ M2 is implemented as specified in §4, §5, §7, §19.1 (migrations 2–5) and �
 - **M6:** RLS on the role and audit tables.
 - **M7:** `TenantTask`.
 - **M8:** APIs and permission codes.
+
+### 24.5 Owner decisions on the M2 review (2026-11-09)
+
+| # | Decision | Applied in M2 |
+|---|---|---|
+| N14 | **Accepted as implemented.** `UNIQUE(tenant_id, id)` on `rbac_role` stays in M2 (`rbac.0004`). M4 must neither duplicate nor remove it; RoleAssignment reuses it, and M4's migration numbering shifts accordingly (`rbac.0005`, not §19.1's "rbac.0003") | No change |
+| N16 | **Changed.** No direct `offboarding → active`. `offboarding → suspended` is allowed, and `suspended → active` is the only reactivation path, which must use the P5 controls (step-up, mandatory reason, immutable audit). **Phase 18 requirement:** reactivation must be refused once a purge has started. No purge state exists yet, so M2 adds no mechanism for it | `apps/tenancy/rules.py` `TRANSITIONS`; trigger in `tenancy.0002`; Python/SQL parity test plus a dedicated `offboarding` test |
+| N18 | **Expanded.** The 33 names are kept and 35 added, for 68 in total: `account`, `accounts`, `my`, `id`, `oauth`, `oidc`, `signup`, `register`, `onboarding`, `files`, `storage`, `uploads`, `s3`, `pay`, `payments`, `checkout`, `demo`, `sandbox`, `preview`, `beta`, `internal`, `metrics`, `monitoring`, `webmail`, `email`, `autodiscover`, `autoconfig`, `mta-sts`, `postmaster`, `abuse`, `noreply`, `localhost`, `mobile`, `tenant`, `tenants`. `my`, `id` and `s3` are shorter than the 3-character minimum and already rejected by the format; they are listed so they stay reserved if the format ever changes. No product brand name is confirmed in the repository, so none is reserved. The slug format is unchanged | `apps/tenancy/rules.py` `RESERVED_SLUGS`; the CHECK `tenancy_tenant_slug_valid` regenerated in the unmerged `tenancy.0001`; tests for every new name in Python and the database |
+| P6 | **Canonical code `tenancy.support_session.request`**, deferred to M5: not seeded or granted in M2. **M5 must align** the `platform_support` template in `apps/rbac/role_templates.py`, which currently lists the planned code `platform.support_session.request` | No change |
+
+Final tenant lifecycle:
+
+| From \ To | provisioning | active | suspended | offboarding | deleted |
+|---|---|---|---|---|---|
+| provisioning | — | ✅ | ✗ | ✗ | ✅ |
+| active | ✗ | — | ✅ | ✅ | ✗ |
+| suspended | ✗ | ✅ (P5 reactivation) | — | ✅ | ✗ |
+| offboarding | ✗ | ✗ | ✅ | — | ✅ |
+| deleted | ✗ | ✗ | ✗ | ✗ | — (terminal; slug tombstoned) |
 
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
@@ -1362,3 +1381,4 @@ M2 is implemented as specified in §4, §5, §7, §19.1 (migrations 2–5) and �
 - 2026-11-08 — §24 appended: M1 implementation notes (N1–N13) and open item O1. No approved decision changed.
 - 2026-11-09 — §24.2: O1 implemented (owner-controlled catalogue bootstrap, `rbac_permission` SELECT-only for `erp_app`); §24.3: final runtime grant design recorded.
 - 2026-11-09 — §24.4 appended: M2 implementation notes N14–N24. No approved decision changed.
+- 2026-11-09 — §24.5: owner decisions on the M2 review (N14 accepted, N16 lifecycle changed, N18 list expanded to 68, P6 canonical code). §24.4 N16/N18 are superseded by §24.5.

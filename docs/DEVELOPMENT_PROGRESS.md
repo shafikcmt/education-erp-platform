@@ -76,8 +76,10 @@ See `DECISION_LOG.md`.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
 - **Phase 3 M2 follow-ups:**
-  - The `offboarding→active` transition and the reserved-slug list are engineering proposals (plan §24.4 N16, N18).
-  - P6 (support-session list) fails closed until M5 registers its permission.
+  - N16 and N18 were decided by the owner on 2026-11-09 (plan §24.5).
+  - **Phase 18 requirement:** refuse tenant reactivation once a purge has started.
+  - **M5 requirement:** register `tenancy.support_session.request` and align the `platform_support` template, which currently lists `platform.support_session.request`.
+  - P6 fails closed until then.
 - **Phase 3 M1 follow-ups:**
   - ~~**O1:** `rbac_permission` writable by `erp_app`~~ — **resolved 2026-11-09** (Session 15). The catalogue bootstrap is owner-only, and `erp_app` has SELECT only.
   - `rbac_role`, `rbac_rolepermission`, `audit_auditevent` and `audit_auditeventip` have no RLS yet. They are registered as pending M6 in the coverage gate (plan §24.1 N6).
@@ -557,3 +559,20 @@ See `DECISION_LOG.md`.
   - Scans: see the session report.
 - **Not started:** M3 (host resolution middleware, `TENANT_HOSTS_ENABLED`) and everything later. No PR created.
 - **Next recommended task:** the owner reviews M2 and decides on the M2 PR and M3.
+
+### 2026-11-09 — Session 17 (Phase 3 M2 review decisions)
+- **Owner decisions** (plan §24.5):
+  - N14 accepted as implemented;
+  - N16: `offboarding → active` removed; `offboarding → suspended` added; `suspended → active` is the only reactivation path;
+  - N18: 35 reserved slugs added (68 in total);
+  - P6: canonical code `tenancy.support_session.request`, deferred to M5.
+- **Changes on `feat/phase-03-m2`:**
+  - `apps/tenancy/rules.py` (transitions, reserved list);
+  - the `tenancy.0002` trigger;
+  - `tenancy.0001` regenerated: only the reserved list in the CHECK changed, and no follow-up migration was added;
+  - new tests: the exact 68-name set, every new name refused in Python and by the database CHECK, `offboarding → active` refused in Python and SQL, `offboarding → suspended → active` allowed. The Python/SQL parity test still covers every status pair.
+- **Verification (actual results, local):**
+  - backend: **613 passed, 9 skipped**; coverage **95.37%**; ruff, ruff format and mypy (181 files) clean; import-linter 9/9; `makemigrations --check` clean.
+  - Docker clean-volume bootstrap, smoke and Playwright, plus gitleaks and Trivy: see the session report.
+- **No M3 work, no PR, no merge.**
+- **Next recommended task:** the owner decides on the M2 PR.
