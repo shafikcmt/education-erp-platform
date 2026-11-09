@@ -46,7 +46,7 @@ BEGIN
        (OLD.status = 'provisioning' AND NEW.status IN ('active', 'deleted'))
     OR (OLD.status = 'active' AND NEW.status IN ('suspended', 'offboarding'))
     OR (OLD.status = 'suspended' AND NEW.status IN ('active', 'offboarding'))
-    OR (OLD.status = 'offboarding' AND NEW.status IN ('active', 'deleted'))
+    OR (OLD.status = 'offboarding' AND NEW.status IN ('suspended', 'deleted'))
   ) THEN
     RAISE EXCEPTION 'invalid tenant status transition % -> %', OLD.status, NEW.status
       USING ERRCODE = 'check_violation';

@@ -18,40 +18,79 @@ SLUG_PATTERN = r"^[a-z][a-z0-9-]{1,30}[a-z0-9]$"
 _SLUG_RE = re.compile(SLUG_PATTERN)
 
 # Hosts the platform needs for itself, or that invite confusion/phishing. Never assignable.
+# Categories: platform/admin hosts; API/app/content hosts; accounts, login and SSO; signup and
+# onboarding; storage; payments; environments; operations; mail and DNS conventions; service
+# and support pages; generic. Names shorter than 3 characters (``my``, ``id``, ``s3``) are already
+# rejected by the format; they are listed so that they stay reserved if the format ever changes.
 RESERVED_SLUGS: frozenset[str] = frozenset(
     {
+        "abuse",
+        "account",
+        "accounts",
         "admin",
         "api",
         "app",
         "assets",
         "auth",
+        "autoconfig",
+        "autodiscover",
+        "beta",
         "billing",
         "blog",
         "cdn",
+        "checkout",
         "dashboard",
+        "demo",
         "dev",
         "docs",
+        "email",
+        "files",
         "ftp",
         "help",
+        "id",
         "imap",
+        "internal",
+        "localhost",
         "login",
         "mail",
         "media",
+        "metrics",
+        "mobile",
+        "monitoring",
+        "mta-sts",
+        "my",
+        "noreply",
         "ns1",
         "ns2",
+        "oauth",
+        "oidc",
+        "onboarding",
+        "pay",
+        "payments",
         "platform",
         "pop",
         "portal",
+        "postmaster",
+        "preview",
+        "register",
         "root",
+        "s3",
+        "sandbox",
         "security",
+        "signup",
         "smtp",
         "sso",
         "staging",
         "static",
         "status",
+        "storage",
         "support",
         "system",
+        "tenant",
+        "tenants",
         "test",
+        "uploads",
+        "webmail",
         "www",
     }
 )
@@ -98,7 +137,10 @@ TRANSITIONS: dict[str, frozenset[str]] = {
     TenantStatus.PROVISIONING: frozenset({TenantStatus.ACTIVE, TenantStatus.DELETED}),
     TenantStatus.ACTIVE: frozenset({TenantStatus.SUSPENDED, TenantStatus.OFFBOARDING}),
     TenantStatus.SUSPENDED: frozenset({TenantStatus.ACTIVE, TenantStatus.OFFBOARDING}),
-    TenantStatus.OFFBOARDING: frozenset({TenantStatus.ACTIVE, TenantStatus.DELETED}),
+    # Owner decision (M2 review): no direct offboarding -> active. Restoring access always goes
+    # through suspended -> active, the single reactivation path (P5: step-up, reason, audit).
+    # Phase 18 must refuse reactivation once a purge has started (no purge state exists yet).
+    TenantStatus.OFFBOARDING: frozenset({TenantStatus.SUSPENDED, TenantStatus.DELETED}),
     TenantStatus.DELETED: frozenset(),
 }
 

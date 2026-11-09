@@ -48,8 +48,9 @@ def test_invalid_slugs(slug):
         validate_slug(slug)
 
 
-@pytest.mark.parametrize("slug", sorted(RESERVED_SLUGS))
+@pytest.mark.parametrize("slug", sorted(s for s in RESERVED_SLUGS if len(s) >= 3))
 def test_reserved_slugs_are_refused(slug):
+    """Format-valid reserved names fail as reserved (shorter ones: see the M2 decision tests)."""
     with pytest.raises(InvalidSlug, match="reserved"):
         validate_slug(slug)
 
@@ -170,3 +171,69 @@ def test_registry_policies_have_the_self_scoped_shape():
         "WHERE oid = 'tenancy_tenant'::regclass"
     )
     assert forced == [(True, True)]
+
+
+# --------------------------------------------------------------------------- M2 review decisions
+ORIGINAL_RESERVED = {
+    "admin", "api", "app", "assets", "auth", "billing", "blog", "cdn", "dashboard", "dev",
+    "docs", "ftp", "help", "imap", "login", "mail", "media", "ns1", "ns2", "platform", "pop",
+    "portal", "root", "security", "smtp", "sso", "staging", "static", "status", "support",
+    "system", "test", "www",
+}  # fmt: skip
+ADDED_RESERVED = {
+    "account", "accounts", "my", "id", "oauth", "oidc", "signup", "register", "onboarding",
+    "files", "storage", "uploads", "s3", "pay", "payments", "checkout", "demo", "sandbox",
+    "preview", "beta", "internal", "metrics", "monitoring", "webmail", "email", "autodiscover",
+    "autoconfig", "mta-sts", "postmaster", "abuse", "noreply", "localhost", "mobile", "tenant",
+    "tenants",
+}  # fmt: skip
+
+
+def test_reserved_list_is_the_approved_68_names():
+    assert len(ORIGINAL_RESERVED) == 33 and len(ADDED_RESERVED) == 35
+    assert RESERVED_SLUGS == ORIGINAL_RESERVED | ADDED_RESERVED
+    assert len(RESERVED_SLUGS) == 68
+    assert all(slug == slug.lower().strip() for slug in RESERVED_SLUGS)
+
+
+@pytest.mark.parametrize("slug", sorted(ADDED_RESERVED))
+def test_every_newly_reserved_slug_is_refused(slug):
+    with pytest.raises(InvalidSlug) as exc:
+        validate_slug(slug)
+    # Format-valid names fail as reserved; my/id/s3 already fail the 3-character minimum.
+    expected = "invalid_slug" if len(slug) < 3 else "reserved_slug"
+    assert exc.value.code == expected
+
+
+@pytest.mark.parametrize("slug", sorted(s for s in ADDED_RESERVED if len(s) >= 3))
+def test_database_check_refuses_newly_reserved_slugs(slug):
+    with pytest.raises(IntegrityError, match="tenancy_tenant_slug_valid"):
+        with transaction.atomic(), connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO tenancy_tenant (id, created_at, updated_at, slug, name, status, "
+                "default_locale, locales, timezone, currency, country, data_region, limits, "
+                "limits_override_reason, settings, branding) VALUES (%s, now(), now(), %s, 'x', "
+                "'active', 'en', '{}', 'UTC', 'USD', '', '', '{}', '', '{}', '{}')",
+                [new_id(), slug],
+            )
+
+
+def test_offboarding_cannot_reactivate_directly(tenant_factory):
+    """Owner decision: offboarding -> suspended -> active is the only way back."""
+    assert TRANSITIONS[TenantStatus.OFFBOARDING] == {TenantStatus.SUSPENDED, TenantStatus.DELETED}
+    assert {s for s, targets in TRANSITIONS.items() if TenantStatus.ACTIVE in targets} == {
+        TenantStatus.PROVISIONING,
+        TenantStatus.SUSPENDED,
+    }
+    ctx = tenant_factory(status=TenantStatus.OFFBOARDING)
+    with pytest.raises(IntegrityError, match="offboarding -> active"), transaction.atomic():
+        _raw("UPDATE tenancy_tenant SET status = 'active' WHERE id = %s", [ctx.id])
+    tenant = Tenant.objects.get(pk=ctx.id)
+    tenant.status = TenantStatus.ACTIVE
+    with pytest.raises(InvalidStatusTransition):
+        tenant.save()
+    tenant.status = TenantStatus.SUSPENDED
+    tenant.save()
+    tenant.status = TenantStatus.ACTIVE
+    tenant.save()
+    assert Tenant.objects.get(pk=ctx.id).status == TenantStatus.ACTIVE
