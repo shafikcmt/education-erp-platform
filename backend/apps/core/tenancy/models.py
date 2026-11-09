@@ -8,8 +8,8 @@
   ``bulk_update()`` apply the same rule.
 * RLS (``EnableTenantRLS``) enforces the same boundary again in PostgreSQL.
 
-M1 note: ``tenant_id`` is a plain indexed UUID column. M2 turns it into a foreign key to the
-tenant registry (``tenancy.Tenant``, same column name) once that model exists.
+``tenant`` is a foreign key to the tenant registry (``tenancy.Tenant``; column ``tenant_id``).
+It was a plain UUID column in M1, before the registry existed (plan §24.1 N1).
 """
 
 from __future__ import annotations
@@ -69,7 +69,15 @@ class TenantManager(models.Manager[M]):
 class TenantScopedModel(BaseModel):
     """Abstract base for every tenant-owned table (ADR-009 §1)."""
 
-    tenant_id = models.UUIDField(db_index=True, editable=False)
+    # Registry FK (``tenancy_tenant`` is not a tenant table, so a plain FK is correct here). The
+    # model is referenced by label only: ``core`` never imports the ``tenancy`` app.
+    # DO_NOTHING (not PROTECT): Django's delete collector must never walk tenant tables from
+    # platform code, where the fail-closed manager rightly raises. Integrity is enforced by
+    # the database FK instead (a tenant with rows can't be deleted), and the runtime role can't
+    # delete tenants at all (tombstones, ``tenancy.0002``).
+    tenant = models.ForeignKey(
+        "tenancy.Tenant", on_delete=models.DO_NOTHING, related_name="+", editable=False
+    )
     created_by = models.UUIDField(null=True, blank=True, editable=False)
     updated_by = models.UUIDField(null=True, blank=True, editable=False)
 

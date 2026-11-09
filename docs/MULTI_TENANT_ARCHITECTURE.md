@@ -39,6 +39,12 @@ Option C remains available for enterprise/data-residency needs without code fork
 
 The resolved tenant is stored in a request-scoped context (`contextvars`) — `core.tenant_context.current_tenant()`.
 
+### 3.1 Implemented data model (Phase 3 M2)
+
+- **Tables:** `tenancy_tenant` (registry, self-scoped RLS), `tenancy_tenantdomain`, `tenancy_institution`, `tenancy_campus`, `tenancy_membership`, `tenancy_invitation` and `tenancy_supportsession`. The six tenant tables have standard RLS and composite `(tenant_id, …)` foreign keys.
+- **Host resolution:** `tenancy_resolve_host()` (F1) exists, called only through `apps.tenancy.selectors.platform` inside `platform_scope(P1)`. **No request path uses it yet.** Middleware and tenant hosts arrive in M3, and tenant hosts stay disabled until the production domain and the security review are approved (D1).
+- **Further reading:** plan §4, §5, §7 and §24.4.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -173,3 +179,4 @@ A failure blocks merge.
 - 2026-11-08 — Status note updated for plan rev. 3. No design change.
 - 2026-11-08 — Status note: Phase 3 plan approved; ADR-041–047 Accepted. No design text changed yet.
 - 2026-11-08 — Phase 3 M1: §4.1 and §8 now describe the implemented tenant context primitives, RLS tooling and CI checks; items for later milestones are labelled.
+- 2026-11-09 — §3.1: implemented tenancy data model (Phase 3 M2). No design change.

@@ -33,7 +33,9 @@ DUAL_SCOPE_TABLES: dict[str, str] = {
     "isolation_probe_dual_private": "dual_private",
 }
 
-SELF_SCOPED_TABLES: dict[str, str] = {}  # M2: "tenancy_tenant": "id"
+# Registry tables keyed by their own id (plan §5.1). tenancy_tenant: the platform sees every
+# row, a tenant context only its own (M2, ``EnableSelfScopedRLS``).
+SELF_SCOPED_TABLES: dict[str, str] = {"tenancy_tenant": "id"}
 
 
 @dataclass(frozen=True)
@@ -170,12 +172,30 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
     ),
 }
 
-# Unique constraints on standard tenant tables must start with tenant_id; justified global
-# exceptions are listed here as (table, columns). M2 adds tenantdomain.domain etc.
-UNIQUE_EXCEPTIONS: frozenset[tuple[str, tuple[str, ...]]] = frozenset()
+# Unique constraints on standard tenant tables must start with tenant_id (plan §4.4 (5)).
+# Justified global exceptions (unique-constraint checks bypass RLS, so each is an existence
+# oracle only for values that are public or unguessable):
+# * a host name is public in DNS anyway, and must be globally unique to resolve;
+# * an invitation token hash is the SHA-256 of 256 random bits.
+UNIQUE_EXCEPTIONS: frozenset[tuple[str, tuple[str, ...]]] = frozenset(
+    {
+        ("tenancy_tenantdomain", ("domain",)),
+        ("tenancy_invitation", ("token_hash",)),
+    }
+)
 
-# Reviewed SECURITY DEFINER functions (plan §7). M2 adds F1-F3. Anything else fails.
-DEFINER_FUNCTIONS: frozenset[str] = frozenset()
+# Reviewed SECURITY DEFINER functions (plan §7: F1-F3, threat-modelled; tests in
+# apps/tenancy/tests/test_definer_functions.py). Anything else fails.
+DEFINER_FUNCTIONS: frozenset[str] = frozenset(
+    {"tenancy_resolve_host", "tenancy_memberships_of", "tenancy_support_sessions_of"}
+)
 
-# Reviewed owner-only SELECT policies backing definer functions (plan §7). M2 adds them.
-OWNER_POLICIES: frozenset[tuple[str, str]] = frozenset()
+# Reviewed owner-only SELECT policies backing the definer functions (plan §7). They apply only
+# to the owner role (never to erp_app) and must be SELECT only.
+OWNER_POLICIES: frozenset[tuple[str, str]] = frozenset(
+    {
+        ("tenancy_tenantdomain", "definer_resolve_host"),
+        ("tenancy_membership", "definer_memberships_of"),
+        ("tenancy_supportsession", "definer_support_sessions_of"),
+    }
+)

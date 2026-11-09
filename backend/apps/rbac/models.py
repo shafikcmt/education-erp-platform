@@ -60,6 +60,9 @@ class Role(BaseModel):
                 name="rbac_role_tenant_code_unique",
                 nulls_distinct=False,
             ),
+            # Composite-FK target (Phase 3 plan §4.4): tenant tables reference tenant roles by
+            # (tenant_id, id), so a role of another tenant (or a template) never matches.
+            models.UniqueConstraint(fields=["tenant_id", "id"], name="rbac_role_tenant_key"),
             models.CheckConstraint(
                 condition=models.Q(kind="tenant", tenant_id__isnull=False)
                 | models.Q(kind__in=["platform", "template"], tenant_id__isnull=True),

@@ -87,8 +87,8 @@ def _denied(fn: Any) -> bool:
     return False
 
 
-def test_standard_table_without_context_shows_and_accepts_nothing():
-    tid = new_id()
+def test_standard_table_without_context_shows_and_accepts_nothing(tenant_factory):
+    tid = tenant_factory().id
     with tenant_atomic(tid):
         _insert("isolation_probe_record", tid, "a")
     assert _names("isolation_probe_record") == set()

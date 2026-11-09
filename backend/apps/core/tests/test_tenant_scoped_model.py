@@ -18,13 +18,15 @@ pytestmark = pytest.mark.django_db
 
 
 @pytest.fixture
-def a() -> TenantContext:
-    return TenantContext(new_id())
+def a(tenant_factory) -> TenantContext:
+    ctx: TenantContext = tenant_factory()
+    return ctx
 
 
 @pytest.fixture
-def b() -> TenantContext:
-    return TenantContext(new_id())
+def b(tenant_factory) -> TenantContext:
+    ctx: TenantContext = tenant_factory()
+    return ctx
 
 
 def test_queries_without_context_raise_instead_of_returning_everything():

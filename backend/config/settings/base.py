@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "apps.identity",
     "apps.rbac",
     "apps.audit",
+    "apps.tenancy",
 ]
 
 MIDDLEWARE = [
@@ -194,6 +195,9 @@ TENANCY_PLATFORM_AUTHORIZER = "apps.rbac.platform_operations.authorize_platform_
 TENANCY_PLATFORM_AUDITOR = "apps.audit.platform_operations.record_platform_operation"
 # Raise (instead of only logging) when tenant state leaks to a request/task boundary.
 TENANCY_LEAK_STRICT: bool = env.bool("TENANCY_LEAK_STRICT", default=False)
+# Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
+# by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
+TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}
 # Reversing tenant-isolation migrations (RLS, tenant context function) is refused unless
 # explicitly allowed, and is never allowed in production or staging (plan §19.2).
 ERP_ALLOW_ISOLATION_ROLLBACK: bool = env.bool("ERP_ALLOW_ISOLATION_ROLLBACK", default=False)

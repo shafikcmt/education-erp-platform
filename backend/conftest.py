@@ -105,3 +105,21 @@ def admin_api(admin: "Person") -> "Api":
     client.login(admin, expect="authenticated")
     client.step_up(admin)
     return client
+
+
+# --------------------------------------------------------------------------- Phase 3 tenants
+@pytest.fixture
+def tenant_factory(db: Any) -> Any:
+    """Create tenant registry rows in the test transaction (``make_tenant``)."""
+    from tests.isolation.factories import make_tenant
+
+    return make_tenant
+
+
+@pytest.fixture
+def committed_tenant_pair(owner_dsn: dict[str, Any]) -> Iterator[Any]:
+    """Two committed tenants for worker-thread tests; rows removed afterwards."""
+    from tests.isolation.factories import committed_tenants
+
+    with committed_tenants(owner_dsn, 2) as tenants:
+        yield tenants
