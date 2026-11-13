@@ -17,6 +17,7 @@ PROD_ENV = {
     "DJANGO_SETTINGS_MODULE": "config.settings.prod",
     "DJANGO_SECRET_KEY": secrets.token_urlsafe(64),  # fresh random key per test run
     "DJANGO_ALLOWED_HOSTS": "app.example.com",
+    "PLATFORM_HOSTS": "app.example.com",
     "DATABASE_URL": "postgres://erp_app:x@db:5432/erp",
     "REDIS_URL": "redis://redis:6379/0",
     "CELERY_BROKER_URL": "redis://redis:6379/1",
@@ -127,6 +128,13 @@ def test_prod_storage_is_private_with_presigned_urls(prod):
         {"FIELD_ENCRYPTION_KEYS": "test1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
         {"FIELD_ENCRYPTION_KEYS": "prod1:" + base64.urlsafe_b64encode(b"y" * 32).decode()},
         {"IP_INDEX_KEY": base64.urlsafe_b64encode(b"i" * 32).decode()},
+        # Phase 3 M3: host policy (D1) and connection handling (D4).
+        {"PLATFORM_HOSTS": None},
+        {"PLATFORM_HOSTS": "other.example.com"},
+        {"TENANT_HOSTS_ENABLED": "true"},
+        {"TENANT_HOSTS_ENABLED": "true", "TENANT_BASE_DOMAIN": "localhost"},
+        {"TENANT_HOSTS_ENABLED": "true", "TENANT_BASE_DOMAIN": "tenants.example.com"},
+        {"DATABASE_CONN_MAX_AGE": "60"},
     ],
 )
 def test_prod_refuses_to_start_with_unsafe_configuration(overrides):
@@ -203,3 +211,40 @@ def test_prod_migrate_process_may_hold_owner_credentials():
         }
     )
     assert result.returncode == 0, result.stderr
+
+
+def test_tenant_hosts_are_off_and_connections_are_not_persistent_by_default():
+    """D1 and D4, for every settings module: this process runs the test settings; base, dev
+    and prod defaults are read in clean subprocesses."""
+    assert settings.TENANT_HOSTS_ENABLED is False
+    assert {a: c["CONN_MAX_AGE"] for a, c in settings.DATABASES.items()} == {
+        "default": 0,
+        "isolation_secondary": 0,
+        "audit_durable": 0,
+    }
+    probe = (
+        "import json, django; from django.conf import settings as s; django.setup(); "
+        "print(json.dumps([s.TENANT_HOSTS_ENABLED, s.PLATFORM_HOSTS, s.TENANT_BASE_DOMAIN, "
+        "{a: c['CONN_MAX_AGE'] for a, c in s.DATABASES.items()}]))"
+    )
+    for module, hosts, domain in (
+        ("config.settings.prod", ["app.example.com"], ""),
+        ("config.settings.dev", ["localhost", "127.0.0.1", "api"], "localhost"),
+    ):
+        env = {k: v for k, v in os.environ.items() if not k.startswith(("DJANGO_", "DATABASE_"))}
+        env.update(PROD_ENV | {"DJANGO_SETTINGS_MODULE": module})
+        if module.endswith("dev"):
+            env.pop("PLATFORM_HOSTS")
+            env["DJANGO_ALLOWED_HOSTS"] = "localhost,127.0.0.1,api,.localhost"
+        for name in ("TENANT_HOSTS_ENABLED", "TENANT_BASE_DOMAIN", "ERP_PROCESS_ROLE"):
+            env.pop(name, None)
+        result = subprocess.run(  # noqa: S603 - fixed interpreter and inline probe
+            [sys.executable, "-c", probe], cwd=BACKEND_DIR, env=env, capture_output=True, text=True
+        )
+        assert result.returncode == 0, result.stderr
+        enabled, platform_hosts, base_domain, ages = json.loads(
+            result.stdout.strip().splitlines()[-1]
+        )
+        assert enabled is False, module
+        assert (platform_hosts, base_domain) == (hosts, domain), module
+        assert ages == {"default": 0, "audit_durable": 0}, module

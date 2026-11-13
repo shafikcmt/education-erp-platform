@@ -74,9 +74,14 @@ def make_user(
 class Api:
     """JSON client that enforces CSRF like a browser: fetches the cookie, sends the header."""
 
-    def __init__(self, *, remote_addr: str = "198.51.100.7", user_agent: str = "") -> None:
+    def __init__(
+        self, *, remote_addr: str = "198.51.100.7", user_agent: str = "", host: str = ""
+    ) -> None:
+        # ``host`` (Phase 3): a tenant host such as ``acme.tenants.test``; default ``testserver``.
+        extra: dict[str, Any] = {"HTTP_HOST": host} if host else {}
         self.client = Client(
             enforce_csrf_checks=True,
+            **extra,
             REMOTE_ADDR=remote_addr,
             HTTP_USER_AGENT=user_agent
             or "Mozilla/5.0 (X11; Linux x86_64) Gecko/20100101 Firefox/140.0",

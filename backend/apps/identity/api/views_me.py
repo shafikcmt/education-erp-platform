@@ -10,6 +10,7 @@ from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.hosts import PLATFORM_AND_TENANT
 from apps.identity import session_state as state
 from apps.identity.api import serializers as s
 from apps.identity.api.utils import CsrfProtectedView, get_or_404, service_errors
@@ -64,6 +65,7 @@ class MeView(CsrfProtectedView):
         HasPermission({"GET": "identity.account.view_own", "PATCH": "identity.account.update_own"})
     ]
     allow_during_mfa_enrollment = True
+    host_classes = PLATFORM_AND_TENANT  # own account only; members pass the tenant gate first
 
     @extend_schema(
         tags=TAGS, summary="Current user, permissions and session", responses=s.MeSerializer

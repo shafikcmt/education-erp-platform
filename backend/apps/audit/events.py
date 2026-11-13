@@ -63,12 +63,29 @@ EVENTS: dict[str, frozenset[str]] = {
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
     "authz.denied": frozenset({"permission", "reason"}),
+    # tenant isolation monitoring (Phase 3 M3, P14): platform log, tenant id as metadata only
+    "tenancy.isolation.blocked": frozenset({"reason", "tenant_id", "host_kind"}),
     # platform operations (Phase 3, ADR-043): platform_scope start/end
     "platform.operation.started": frozenset({"operation", "reason", "permission"}),
     "platform.operation.completed": frozenset(
         {"operation", "reason", "permission", "tenant_count"}
     ),
 }
+
+# Events whose evidence must survive the rollback of a tenant request transaction (Phase 3
+# plan §8.3). Inside a tenant context they are always written through the durable connection.
+# ``support.*`` and ``invitation.invalid_attempt`` join this set with M5 and M4.
+DURABLE_ACTIONS: frozenset[str] = frozenset(
+    {
+        "authz.denied",
+        "identity.login.failed",
+        "identity.login.locked",
+        "identity.login.throttled",
+        "identity.mfa.challenge_failed",
+        "identity.mfa.locked",
+        "tenancy.isolation.blocked",
+    }
+)
 
 
 def allowed_metadata(action: str) -> frozenset[str]:

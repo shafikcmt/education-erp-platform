@@ -23,7 +23,7 @@ from django.utils import timezone
 from apps.audit.services import record as audit
 from apps.core import crypto
 from apps.core.ip_privacy import seal_ip
-from apps.core.net import client_ip, user_agent_summary
+from apps.core.net import client_ip, normalize_host, user_agent_summary
 from apps.core.tokens import hash_token
 from apps.identity import session_state as state
 from apps.identity.models import SessionRecord
@@ -64,7 +64,7 @@ def start_session(request: HttpRequest, user: User, *, mfa_verified: bool) -> Se
         user=user,
         session_key_hash=hash_token(key),
         session_key_encrypted=_seal_key(key),
-        host=request.get_host()[:255],
+        host=normalize_host(request.get_host())[:255],
         last_seen_at=timezone.now(),
         mfa_verified_at=timezone.now() if mfa_verified else None,
         user_agent_summary=user_agent_summary(request.META.get("HTTP_USER_AGENT", "")),

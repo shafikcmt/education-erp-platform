@@ -37,7 +37,12 @@ from .base import *
 from .base import env
 
 DEBUG = False
-ALLOWED_HOSTS = ["testserver", "localhost"]
+ALLOWED_HOSTS = ["testserver", "localhost", ".tenants.test"]
+# Host policy (Phase 3 plan §10.3): RFC 6761 reserved test domain. Tenant hosts stay OFF by
+# default here too; tenant-host tests switch them on with the ``tenant_hosts`` fixture.
+PLATFORM_HOSTS = ["testserver", "localhost"]
+TENANT_BASE_DOMAIN = "tenants.test"
+TENANT_HOSTS_ENABLED = False
 
 # Create/migrate the test database as the owner role; conftest switches to erp_app afterwards.
 _app_db = env.db("DATABASE_URL")
@@ -48,6 +53,9 @@ DATABASES["default"]["TEST"] = {"NAME": "test_erp"}
 # A second alias on the same test database (Phase 3 M1): proves the tenant query guard and
 # transaction state are tracked per connection/alias. Not wrapped in the test transaction.
 DATABASES["isolation_secondary"] = {**DATABASES["default"], "TEST": {"MIRROR": "default"}}
+# Durable audit alias (M3): a real second connection to the same test database, outside the
+# test transaction, exactly like production.
+DATABASES["audit_durable"] = {**DATABASES["default"], "TEST": {"MIRROR": "default"}}
 TEST_APP_DB_USER: str = _app_db["USER"]
 TEST_APP_DB_PASSWORD: str = _app_db["PASSWORD"]
 

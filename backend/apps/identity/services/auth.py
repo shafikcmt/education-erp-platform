@@ -17,6 +17,7 @@ from django.contrib.auth import authenticate
 from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
+from django.utils.module_loading import import_string
 
 from apps.audit.services import record as audit
 from apps.core import crypto
@@ -82,6 +83,22 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
             _on_lock(request, email)
         raise errors.InvalidCredentials()
     assert isinstance(user, User)  # noqa: S101 - EmailBackend returns identity.User
+    refusal = _sign_in_refusal(request, user)
+    if refusal is not None:
+        # D7: on a tenant host, a correct password of a non-member (or on an unusable
+        # tenant) is answered exactly like a wrong password: same error, same counters.
+        # Checked before the MFA step, so that step can't be used as an oracle either.
+        locked = throttling.register_login_failure(email_subject, net_subject)
+        audit(
+            "identity.login.failed",
+            actor_user_id=user.pk,
+            request=request,
+            outcome="failure",
+            metadata={"reason": refusal},
+        )
+        if locked:
+            _on_lock(request, email)
+        raise errors.InvalidCredentials()
     throttling.clear_login_failures(email_subject, net_subject)
 
     if mfa.has_mfa(user):
@@ -96,6 +113,16 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
     if user_requires_mfa(user, use_cache=False):
         return LoginResult(LoginStatus.MFA_ENROLLMENT_REQUIRED, user)
     return LoginResult(LoginStatus.AUTHENTICATED, user)
+
+
+def _sign_in_refusal(request: HttpRequest, user: User) -> str | None:
+    """First refusal reason from ``IDENTITY_SIGN_IN_GUARDS`` (configured, so identity does
+    not import the apps that know about hosts and memberships)."""
+    for path in getattr(settings, "IDENTITY_SIGN_IN_GUARDS", ()):
+        reason: str | None = import_string(path)(request, user)
+        if reason:
+            return reason
+    return None
 
 
 def _on_lock(request: HttpRequest, email: str) -> None:

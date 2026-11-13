@@ -165,6 +165,25 @@ def _json_problem(request: HttpRequest, status_code: int, code: str, title: str)
     return JsonResponse(body, status=status_code, content_type=PROBLEM_CONTENT_TYPE)
 
 
+def problem_response(
+    request: HttpRequest, status_code: int, code: str, title: str, detail: str = ""
+) -> JsonResponse:
+    """Problem Details response for middleware (outside DRF's exception handling)."""
+    body = problem(
+        status_code=status_code,
+        code=code,
+        title=title,
+        detail=detail or title,
+        request_id=get_request_id(request),
+    )
+    return JsonResponse(body, status=status_code, content_type=PROBLEM_CONTENT_TYPE)
+
+
+def uniform_not_found(request: HttpRequest) -> JsonResponse:
+    """The single 404 body for unknown paths, rejected hosts and unknown tenants alike."""
+    return _json_problem(request, 404, "not_found", "Not found")
+
+
 def handler404(request: HttpRequest, exception: Exception | None = None) -> JsonResponse:
     """Django-level 404 (non-DRF routes) as Problem Details."""
     return _json_problem(request, 404, "not_found", "Not found")
