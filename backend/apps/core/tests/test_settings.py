@@ -231,13 +231,16 @@ def test_tenant_hosts_are_off_and_connections_are_not_persistent_by_default():
         ("config.settings.prod", ["app.example.com"], ""),
         ("config.settings.dev", ["localhost", "127.0.0.1", "api"], "localhost"),
     ):
-        env = {k: v for k, v in os.environ.items() if not k.startswith(("DJANGO_", "DATABASE_"))}
+        env = {
+            k: v
+            for k, v in os.environ.items()
+            if not k.startswith(("DJANGO_", "DATABASE_", "ERP_", "POSTGRES_", "TENANT_"))
+            and k != "PLATFORM_HOSTS"
+        }
         env.update(PROD_ENV | {"DJANGO_SETTINGS_MODULE": module})
         if module.endswith("dev"):
             env.pop("PLATFORM_HOSTS")
             env["DJANGO_ALLOWED_HOSTS"] = "localhost,127.0.0.1,api,.localhost"
-        for name in ("TENANT_HOSTS_ENABLED", "TENANT_BASE_DOMAIN", "ERP_PROCESS_ROLE"):
-            env.pop(name, None)
         result = subprocess.run(  # noqa: S603 - fixed interpreter and inline probe
             [sys.executable, "-c", probe], cwd=BACKEND_DIR, env=env, capture_output=True, text=True
         )

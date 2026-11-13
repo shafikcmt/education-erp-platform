@@ -47,6 +47,9 @@
 - Test names describe behavior: `test_teacher_cannot_enter_marks_for_unassigned_offering`.
 - Frontend: `*.test.ts(x)` beside sources; E2E in `frontend/e2e/` organized by role.
 - Flaky tests are fixed or quarantined with an issue reference within the same PR — never silently retried forever.
+- **Tenant-host tests (Phase 3 M3):** tenant hosts are off by default in the test settings too. The `tenant_hosts` / `tenant_site` fixtures switch them on, use the reserved domain `{slug}.tenants.test`, and install probe endpoints (`tests.isolation_app.urls`) that exist only in tests.
+- **Durable audit in tests:** `audit_durable` is a real second connection. A test that triggers a durable event lists it in `pytest.mark.django_db(databases=[...])` and reads the events through that alias. Worker-thread tests commit real, append-only audit events, so assertions on audit events must be scoped (by tenant, actor or request), never global counts.
+- **Real transactions:** commit, rollback, `on_commit` and connection-reuse behaviour are tested in worker threads on unwrapped connections with committed tenants (`committed_tenant_pair`, `committed_tenant_sites`), which the fixtures remove afterwards.
 
 ## 6. Commands (implemented in Phase 1 — see `Makefile`)
 
@@ -74,3 +77,4 @@ Each phase summary includes the exact commands run and their results (pass/fail 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Phase 1: commands implemented; test-role mechanics documented.
+- 2026-11-13 — Phase 3 M3: tenant-host fixtures, durable-audit and real-transaction test conventions.

@@ -1,6 +1,6 @@
 # Phase 3 — Milestone M3 Implementation Plan: Host Policy, Tenant Request Lifecycle and Durable Audit
 
-- **Status:** **Proposed** — for owner review. Nothing in this plan is implemented.
+- **Status:** **Approved** (owner, 2026-11-13, with the answers to §8 recorded in ADR-048) and **implemented** on `feat/phase-03-m3`; see §11 for what was built, what deviates and what is deferred. The text of §1–§10 is kept as proposed.
 - **Phase:** 3 — SaaS tenants, institutions and campuses (plan `PHASE_03_PLAN.md` rev. 3, **Approved**; ADR-041–047 **Accepted**).
 - **Milestone:** M3 (after M1 `3108824` and M2 `3616778`, both merged).
 - **Planned branch:** `feat/phase-03-m3` (created only after this plan is approved). This document lives on `docs/phase-03-m3-plan`.
@@ -264,5 +264,75 @@ Each item has a recommendation. None changes an approved decision; each fills a 
 
 Implementation starts only after the owner approves this plan (or amends it through §8). The M3 branch is created from the then-current `main`; the PR is opened separately and is **not merged without explicit owner approval**. M4 is not started.
 
+## 11. Owner decisions and implementation record (2026-11-13)
+
+### 11.1 Owner answers to §8 (ADR-048)
+
+| # | Answer |
+|---|---|
+| Q1 | Two stages: pure host policy before sessions; tenant resolution later |
+| Q2 | Tenant hosts serve login, MFA, logout, CSRF and `me`; everything else platform-only |
+| Q3 | `api` added to the development, CI and E2E platform hosts |
+| Q4 | R2 invisibility → M6; R9 → M5; K3 → M10; storage guard → M7. Not marked as passed |
+| Q5 | Suspended: fail closed for everyone; offboarding: no writes; D2 owner mode → M5 |
+| Q6 | `CONN_MAX_AGE = 0` by default; non-production override; production rejects non-zero |
+| Q7 | Results in `docs/benchmarks/PHASE_03_CONNECTIONS.md`; nothing invented, nothing relaxed automatically |
+
+### 11.2 What was implemented
+
+| Package | Implementation |
+|---|---|
+| M3-A | `PLATFORM_HOSTS`, `TENANT_BASE_DOMAIN`, `TENANT_HOSTS_ENABLED` (default `false` in every settings module), `DATABASE_CONN_MAX_AGE` default 0; `core.config_guards.assert_host_configuration` and `assert_no_persistent_connections` |
+| M3-B | `apps/tenancy/hosts.py` `classify_host` (pure) and `core.net.normalize_host` |
+| M3-C | `HostPolicyMiddleware` (before sessions) and `TenantResolutionMiddleware` (F1 through `platform_scope("P1")`, never cached; session-host binding; `request.tenant`, `request.scope_target`). `apps/rbac/middleware.py` (`ScopeTargetMiddleware`) removed |
+| M3-D | `TenantTransactionMiddleware`: `tenant_atomic(tenant, lock_timeout="5s")`, rollback for status ≥ 400, streaming bodies refused with a 500, `tx_ms` log with a warning above 2 s. `tenant_atomic` gained the `lock_timeout` argument |
+| M3-E | `apps/tenancy/access.py`: request gate (`tenant_suspended`, `not_a_member`, `membership_inactive`, `tenant_unavailable`) and the sign-in guard behind `IDENTITY_SIGN_IN_GUARDS` (D7) |
+| M3-F | `apps/core/hosts.py`: `host_classes` on views, platform-only by default; reviewed allow-list test `tests/test_host_classes.py` |
+| M3-G | `audit_durable` alias; `audit.record(..., durable=…)`; `DURABLE_ACTIONS`; `tenancy.isolation.blocked` |
+| M3-H | `infra/scripts/measure_db_connections.py`; results in `docs/benchmarks/PHASE_03_CONNECTIONS.md` |
+
+### 11.3 Clarifications and deviations from §3–§4 (none changes an approved decision)
+
+| # | Item | What was done | Why |
+|---|---|---|---|
+| I1 | Session-host mismatch | The request continues as anonymous with a fresh empty session, so the misplaced cookie is dropped on that host only; the stored session is untouched. One `tenancy.isolation.blocked` event in the platform log | Replaying a cookie on another host must not sign the real user out |
+| I2 | `X-Forwarded-Host` | It stays trusted (`USE_X_FORWARDED_HOST`, Phase 1): Nginx overwrites it on every request and the Next.js server relays the browser host through it. It is therefore the request host and passes `ALLOWED_HOSTS` and the whole host policy. A test asserts the Nginx directive | The API container must never be reachable except through Nginx and the web service (already required for `X-Real-IP`). Recorded in `SECURITY.md` |
+| I3 | Durable events | `DURABLE_ACTIONS` also contains `identity.login.throttled`, `identity.mfa.challenge_failed` and `identity.mfa.locked` | They are failure evidence of the same sign-in flow and would otherwise vanish with the rolled-back request |
+| I4 | Tenant stamp | Inside a tenant context every audit event is stamped with that tenant unless the caller passes one. The platform audit API already lists only `tenant_id IS NULL` events (D3) | Tenant-host events belong to the tenant log; RLS on the audit tables follows in M6 |
+| I5 | Isolation violations | A `TenantIsolationError` raised inside a tenant request is recorded after the transaction ended, in the platform log, with the tenant id as metadata only (P14) | The request transaction is rolled back; the platform log must not hold tenant data |
+| I6 | Gate exemptions | Login, MFA verify, CSRF and logout skip the membership gate (`tenant_auth_flow`): sign-in is refused by the guard instead, and logout only ends the caller's own session, also on a suspended tenant | Otherwise D7 could not answer with the generic error, and a user could not sign out |
+| I7 | Host-class test | Instead of requiring a declaration on every view, views default to platform-only and a reviewed allow-list test pins the exact set of tenant-reachable routes | Same fail-closed result with one reviewed place to change |
+| I8 | Rollback rule | Implemented in the middleware (status ≥ 400), not in the Problem Details handler | Covers non-DRF responses too; platform hosts are untouched (R7) |
+| I9 | Durable audit in tests | The alias is a second connection. Main-thread tests read it through the alias (it is wrapped in its own test transaction); worker-thread tests commit real, append-only events and find them by tenant id | Audit rows cannot be deleted; one Phase 2 assertion was scoped to its own actor for that reason |
+| I10 | Forced-reuse mode | The Django test client keeps a thread's connection open between requests, so K1, K2 and K8 run every request of a thread on one physical connection (asserted with `pg_backend_pid()`) | This is the persistent-connection case D4 guards against |
+
+### 11.4 Test status against §4 (actual, local)
+
+| Item | Status |
+|---|---|
+| Host decision table (steps 0–6), disabled mode with zero queries, uniform 404 | **Pass** |
+| R1, R3, R4, R5, R6, R7, R8 | **Pass** |
+| R2 | **Partial:** the durable event carries the right `tenant_id`. Cross-tenant invisibility is **not tested**: the audit tables get RLS in M6 |
+| R9 | **Not implemented** (support sessions, M5) |
+| L1, L2, L3, L6, L7 | **Pass** (request level) |
+| L4, L5, L8, L10 | **Pass** at the primitive level (M1 suites, unchanged); L8 also asserted after failed requests |
+| L9 | **Pass** in process through Django's ASGI handler. The Nginx/Uvicorn stack test is K3 |
+| K1, K2, K8 | **Pass**, in forced-reuse mode (I10) |
+| K3 | **Not implemented** (M10) |
+| Config guards, defaults off in every settings module, `CONN_MAX_AGE = 0` | **Pass** |
+| D7 sign-in equality, shared throttles | **Pass** |
+| External-I/O guard: email | **Not implemented.** Security emails are queued through Celery, which runs inline in tests, so a guard in the email backend would misfire. It moves to M7 with `TenantTask` / `@platform_task` |
+| External-I/O guard: storage | **Not implemented** (no storage helper before M7) |
+
+### 11.5 Open follow-ups
+
+- M4: owner-only access during offboarding; tenant RBAC sources (until then nobody holds a tenant permission on a tenant host).
+- M5: owner restricted mode for suspended tenants (D2); support sessions; R9; align `role_templates.py:36`.
+- M6: RLS on the audit tables and the R2 invisibility test.
+- M7: external-I/O guards; `TenantTask`.
+- M9: tenant-host pages in the frontend (the Next.js server already relays the browser host).
+- M10: K3 and the isolation-overhead benchmark against D9.
+
 ### Change notes
 - 2026-11-09 — Initial proposal (status **Proposed**).
+- 2026-11-13 — Owner answered §8 (ADR-048); plan Approved and implemented; §11 added.
