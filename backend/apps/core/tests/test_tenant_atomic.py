@@ -345,3 +345,96 @@ def test_boundary_clears_leaked_platform_operation_and_connection_state(a):
         boundaries.check_boundary("test")
     assert ctx_module._PLATFORM_OPERATION.get() is None
     assert getattr(connection, _STATE_ATTR) is None
+
+
+# --------------------------------------------------------------------------- M3: lock_timeout
+def _lock_timeout() -> str:
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('lock_timeout')")
+        return str(cursor.fetchone()[0])
+
+
+def test_lock_timeout_is_transaction_local(tenant_factory):
+    tenant = tenant_factory()
+    before = _lock_timeout()
+    with tenant_atomic(tenant, lock_timeout="5s"):
+        assert _lock_timeout() == "5s"
+        with tenant_atomic(tenant, lock_timeout="1s"):  # nested: the outer limit stays
+            assert _lock_timeout() == "5s"
+    assert _lock_timeout() == before
+    with tenant_atomic(tenant):
+        assert _lock_timeout() == before
+
+
+@pytest.mark.parametrize("value", ["", "5", "5 s", "0s", "5s; DROP TABLE x", "1h", "-1s", "abc"])
+def test_lock_timeout_accepts_only_simple_durations(tenant_factory, value):
+    with (
+        pytest.raises(ValueError, match="lock_timeout"),
+        tenant_atomic(tenant_factory(), lock_timeout=value),
+    ):
+        pass
+
+
+def test_marked_for_rollback_block_inside_an_outer_transaction_restores_everything(
+    tenant_factory,
+):
+    """A request that ends with ``set_rollback(True)`` inside an enclosing transaction (the
+    test transaction): the savepoint rollback discards the data and both settings, and the
+    outer transaction stays usable."""
+    tenant = tenant_factory()
+    before = _lock_timeout()
+    with tenant_atomic(tenant, lock_timeout="5s"):
+        ProbeRecord.objects.create(name="discarded")
+        transaction.set_rollback(True)
+    assert not connection.needs_rollback
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT current_setting('app.tenant_id', true)")
+        assert (cursor.fetchone()[0] or "") == ""
+    assert _lock_timeout() == before
+    with tenant_atomic(tenant):
+        assert not ProbeRecord.objects.exists()
+
+
+def test_lock_timeout_stops_a_blocked_request(committed_tenant_pair):
+    """Two real transactions: the second gives up after its lock wait limit instead of
+    hanging behind the first."""
+    import threading
+
+    from django.db import OperationalError
+
+    from tests.isolation.threads import in_thread
+
+    tenant, _ = committed_tenant_pair
+    in_thread(lambda: _create_probe(tenant, "locked-row"))
+    holding, release = threading.Event(), threading.Event()
+
+    def holder() -> None:
+        with tenant_atomic(tenant):
+            list(ProbeRecord.objects.select_for_update())
+            holding.set()
+            release.wait(timeout=10)
+
+    def waiter() -> str:
+        holding.wait(timeout=10)
+        try:
+            with tenant_atomic(tenant, lock_timeout="200ms"):
+                list(ProbeRecord.objects.select_for_update())
+        except OperationalError as exc:
+            return str(exc)
+        finally:
+            release.set()
+        return "no timeout"
+
+    thread = threading.Thread(target=lambda: in_thread(holder))
+    thread.start()
+    try:
+        message = in_thread(waiter)
+    finally:
+        release.set()
+        thread.join()
+    assert "lock timeout" in message
+
+
+def _create_probe(tenant, name: str) -> None:
+    with tenant_atomic(tenant):
+        ProbeRecord.objects.create(name=name)

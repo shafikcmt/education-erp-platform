@@ -122,7 +122,11 @@ def test_denials_are_audited_and_aggregated(target):
     from apps.audit.models import AuditEvent
 
     api = Api()
-    api.login(make_user("plain@example.com"))
+    person = make_user("plain@example.com")
+    api.login(person)
     for _ in range(3):
         api.get("/api/v1/platform/users/")
-    assert AuditEvent.objects.filter(action="authz.denied").count() == 1
+    # Scoped to this actor: the durable-audit tests (Phase 3 M3) commit real, append-only
+    # ``authz.denied`` events of their own, which stay in the test database.
+    denials = AuditEvent.objects.filter(action="authz.denied", actor_user_id=person.user.pk)
+    assert denials.count() == 1

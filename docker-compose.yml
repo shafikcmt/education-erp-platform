@@ -24,6 +24,8 @@ x-backend-env: &backend_env
   LOG_FORMAT: ${LOG_FORMAT:-console}
   API_DOCS_ENABLED: ${API_DOCS_ENABLED:-true}
   DATABASE_URL: ${DATABASE_URL}
+  # D4: 0 everywhere. Override only for non-production connection measurements.
+  DATABASE_CONN_MAX_AGE: ${DATABASE_CONN_MAX_AGE:-0}
   REDIS_URL: ${REDIS_URL}
   CELERY_BROKER_URL: ${CELERY_BROKER_URL}
   CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND}
