@@ -34,7 +34,7 @@ from apps.audit.services import record as audit
 from apps.core import hosts
 from apps.core.exceptions import problem_response, uniform_not_found
 from apps.core.net import normalize_host
-from apps.core.tenancy import TenantContext, tenant_atomic
+from apps.core.tenancy import TenantContext, TenantIsolationError, tenant_atomic
 from apps.core.tenancy.platform import platform_scope
 from apps.rbac.engine import PLATFORM, ScopeTarget
 from apps.tenancy import access
@@ -165,6 +165,7 @@ class TenantTransactionMiddleware:
                     transaction.set_rollback(True)
             return response
         finally:
+            self._report_isolation_violation(request, tenant)
             tx_ms = round((time.perf_counter() - started) * 1000, 2)
             log = logger.warning if tx_ms > settings.TENANT_TX_WARN_MS else logger.info
             log(
@@ -174,6 +175,33 @@ class TenantTransactionMiddleware:
                 status=status_code,
                 slow=tx_ms > settings.TENANT_TX_WARN_MS,
             )
+
+    def process_exception(self, request: HttpRequest, exception: Exception) -> None:
+        # Views outside DRF: remember the cause; Django still builds the 500 response.
+        request.unhandled_exception = exception  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _report_isolation_violation(request: HttpRequest, tenant: TenantContext) -> None:
+        """P14: a blocked isolation violation (query guard, tenant conflict, mismatch, leak)
+        is recorded in the PLATFORM log with the tenant id as metadata only. Runs after the
+        tenant transaction and context have ended, so the event is committed on its own."""
+        cause = getattr(request, "unhandled_exception", None)
+        if not isinstance(cause, TenantIsolationError):
+            return
+        try:
+            audit(
+                "tenancy.isolation.blocked",
+                outcome="denied",
+                actor_user_id=getattr(getattr(request, "user", None), "pk", None),
+                request=request,
+                metadata={
+                    "reason": type(cause).__name__,
+                    "tenant_id": str(tenant.id),
+                    "host_kind": hosts.TENANT,
+                },
+            )
+        except Exception:
+            logger.exception("tenancy.isolation_report_failed", tenant_id=str(tenant.id))
 
     def process_view(
         self, request: HttpRequest, view_func: Any, view_args: Any, view_kwargs: Any

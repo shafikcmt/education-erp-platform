@@ -29,7 +29,7 @@ from tests.isolation_app.models import ProbeRecord
 # The durable audit alias is a second connection; pytest-django wraps it in its own test
 # transaction, so durable events are read back through that alias and vanish after the test.
 DURABLE = "audit_durable"
-pytestmark = pytest.mark.django_db(databases=["default", DURABLE])
+pytestmark = pytest.mark.django_db(databases=["default", DURABLE, "isolation_secondary"])
 
 NOT_FOUND_KEYS = {"type", "title", "status", "code", "detail", "request_id"}
 
@@ -270,6 +270,61 @@ def test_platform_request_after_a_tenant_request_sees_no_tenant_rows(tenant_site
     assert first["pid"] == second["pid"]
     assert first["raw"] == [str(tenant.id)]
     assert (second["raw"], second["setting"], second["context"]) == ([], "", None)
+
+
+def test_blocked_isolation_violation_is_audited_in_the_platform_log(tenant_site):
+    """P14: the query guard stops a query that would run outside the tenant transaction; the
+    request fails and rolls back, and the platform log records it with the tenant id as
+    metadata only."""
+    tenant = tenant_site(slug="acme")
+    response = _post(tenant, "never", "bypass")
+    assert response.status_code == 500 and response.json()["code"] == "internal_error"
+    assert "TenantContext" not in response.content.decode()  # no internals in the body
+    assert _names(tenant) == set()
+    events = AuditEvent.objects.filter(action="tenancy.isolation.blocked")
+    assert [(e.tenant_id, e.outcome, e.metadata) for e in events] == [
+        (
+            None,
+            "denied",
+            {
+                "reason": "TenantContextNotApplied",
+                "tenant_id": str(tenant.id),
+                "host_kind": "tenant",
+            },
+        )
+    ]
+    assert current_tenant() is None and connections_with_tenant_state() == []
+
+
+def test_tenant_requests_log_their_transaction_time_and_warn_when_slow(tenant_site, settings):
+    import structlog
+
+    tenant = tenant_site(slug="acme")
+    with structlog.testing.capture_logs() as logs:
+        _get(tenant_host(tenant))
+        settings.TENANT_TX_WARN_MS = -1  # everything is "slow"
+        _get(tenant_host(tenant))
+        _get("testserver")
+    entries = [entry for entry in logs if entry["event"] == "tenant_request"]
+    assert [(e["log_level"], e["slow"], e["status"]) for e in entries] == [
+        ("info", False, 200),
+        ("warning", True, 200),
+    ]
+    assert all(e["tenant_id"] == str(tenant.id) and e["tx_ms"] >= 0 for e in entries)
+
+
+def test_rejected_hosts_are_logged_sampled_and_never_stored(tenant_site):
+    import structlog
+
+    from apps.tenancy import middleware
+
+    before = AuditEvent.objects.count()
+    with structlog.testing.capture_logs() as logs:
+        for _ in range(2 * middleware._REJECTION_LOG_SAMPLE):
+            _get("nobody.tenants.test")
+    rejected = [entry for entry in logs if entry["event"] == "tenancy.host.rejected"]
+    assert len(rejected) == 2 and rejected[0]["reason"] == "unknown_tenant"
+    assert AuditEvent.objects.count() == before
 
 
 # --------------------------------------------------------------------------- gate (Q5)

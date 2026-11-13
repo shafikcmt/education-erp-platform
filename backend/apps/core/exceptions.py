@@ -142,6 +142,10 @@ def problem_details_exception_handler(exc: Exception, context: dict[str, Any]) -
         )
 
     logger.exception("unhandled_api_exception", exc_type=type(exc).__name__)
+    if request is not None:
+        # For middleware that must react to the cause after the response is built (the
+        # tenant request path audits isolation violations). Never sent to the client.
+        getattr(request, "_request", request).unhandled_exception = exc
     body = problem(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         code="internal_error",

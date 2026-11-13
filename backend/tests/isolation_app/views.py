@@ -79,6 +79,10 @@ class Records(_Open):
                 pass
         if mode == "403":
             raise PermissionDenied()
+        if mode == "bypass":
+            # A query on another connection that never applied this tenant: the guard
+            # refuses it before it reaches PostgreSQL.
+            ProbeRecord.objects.using("isolation_secondary").count()
         if mode == "raise":
             raise RuntimeError("probe failure")
         if mode == "stream":
