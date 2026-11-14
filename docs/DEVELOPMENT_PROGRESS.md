@@ -616,6 +616,12 @@ See `DECISION_LOG.md`.
   - settings and production guards (`PLATFORM_HOSTS`, `TENANT_BASE_DOMAIN`, `TENANT_HOSTS_ENABLED=false`, `CONN_MAX_AGE = 0`);
   - `infra/scripts/measure_db_connections.py` and the recorded D4 measurement.
 - **Migrations:** none. No new dependency, grant, role or `SECURITY DEFINER` function.
-- **Verification (actual results, local):** see the session report and the end of this entry.
+- **Verification (actual results, local; GitHub CI has not run because no PR is open):**
+  - backend: **745 passed, 9 skipped**; coverage **95.58%** (gate 85%); ruff, ruff format and mypy (192 files) clean; import-linter 9/9; `makemigrations --check` clean; OpenAPI schema unchanged.
+  - frontend (unchanged code): ESLint and `tsc` clean; Vitest **32 passed**.
+  - Docker: clean-volume bootstrap (migrations and seeding as the owner), `smoke_check` passed, no owner credentials in runtime containers, `*.localhost` hosts now receive the uniform 404; Playwright **31 passed**. The images themselves were **not rebuilt** (see Known gaps).
+  - gitleaks: no leaks in 71 commits. Trivy on `uv.lock`: 0 HIGH/CRITICAL. Image scans were not run (no rebuilt images).
+  - migration reversal rehearsal: unchanged and passing (`tests/test_tenancy_migrations.py`); M3 adds no migration.
+- **D4 measurement:** `docs/benchmarks/PHASE_03_CONNECTIONS.md`. `CONN_MAX_AGE = 0` served all 18,000 measured requests; the `60` control exhausted PostgreSQL connections under concurrency (HTTP 500 for 13% of requests at concurrency 8 and 60% at 32). Cost of `0` at concurrency 1: p50 +3.2%, p95 +2.1%.
 - **Not done:** M4 and later; no PR; nothing merged; nothing deployed; tenant hosts not enabled; Dependabot PRs untouched.
 - **Next recommended task:** the owner reviews `feat/phase-03-m3` and decides on the M3 PR and on M4.
