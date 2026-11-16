@@ -1,0 +1,10 @@
+{% autoescape off %}Hello,
+
+You have been invited to join {{ tenant_name }} on Education ERP.
+To accept, open this link within 7 days and sign in with this email address:
+
+{{ action_url }}
+
+If you did not expect this email, you can ignore it. The link works only once.
+
+— Education ERP{% endautoescape %}

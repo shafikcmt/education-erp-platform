@@ -13,6 +13,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from apps.core.models import BaseModel
+from apps.core.tenancy.models import TenantScopedModel
 
 
 class Permission(BaseModel):
@@ -47,6 +48,11 @@ class Role(BaseModel):
     kind = models.CharField(max_length=16, choices=RoleKind.choices)
     institution_types = ArrayField(models.CharField(max_length=32), default=list, blank=True)
     is_system = models.BooleanField(default=False)
+    # Tenant system copies point at the template they mirror (Phase 3 M4; plan §4.1, Q5).
+    # A trigger guarantees the target is a ``template`` row; clones and custom roles have none.
+    template = models.ForeignKey(
+        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="copies"
+    )
     permissions: "models.ManyToManyField[Permission, RolePermission]" = models.ManyToManyField(
         Permission, through="RolePermission", related_name="roles"
     )
@@ -67,6 +73,16 @@ class Role(BaseModel):
                 condition=models.Q(kind="tenant", tenant_id__isnull=False)
                 | models.Q(kind__in=["platform", "template"], tenant_id__isnull=True),
                 name="rbac_role_kind_tenant_consistent",
+            ),
+            # Only a tenant's read-only system copy mirrors a template; one copy per template.
+            models.CheckConstraint(
+                condition=models.Q(template__isnull=True) | models.Q(kind="tenant", is_system=True),
+                name="rbac_role_template_only_on_system_copy",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant_id", "template"],
+                condition=models.Q(template__isnull=False),
+                name="rbac_role_one_copy_per_template",
             ),
         ]
 
@@ -117,3 +133,85 @@ class PlatformRoleAssignment(BaseModel):
 
     def __str__(self) -> str:
         return f"{self.user_id}:{self.role_id}"
+
+
+class AssignmentScope(models.TextChoices):
+    TENANT = "tenant", "Tenant"
+    INSTITUTION = "institution", "Institution"
+    CAMPUS = "campus", "Campus"
+
+
+class RoleAssignment(TenantScopedModel):
+    """A tenant role held by a member in a scope (Phase 3 M4; plan §4.1, §9; ADR-044).
+
+    Tenant-owned (standard RLS). References to the membership, role, institution and campus
+    are composite ``(tenant_id, ...)`` keys in the database (``rbac.0005``), so a row of another
+    tenant, a template role or a campus of another institution can never be referenced. The
+    relations to ``tenancy`` models are lazy strings: ``rbac`` never imports ``tenancy``.
+
+    An assignment is in force while it is not revoked and ``valid_from <= now < valid_until``.
+    Rows are never deleted: revoking sets ``revoked_at`` (history and audit stay intact).
+    """
+
+    membership = models.ForeignKey(
+        "tenancy.Membership",
+        on_delete=models.PROTECT,
+        related_name="role_assignments",
+        db_constraint=False,
+    )
+    role = models.ForeignKey(
+        Role, on_delete=models.DO_NOTHING, related_name="assignments", db_constraint=False
+    )
+    scope_type = models.CharField(max_length=16, choices=AssignmentScope.choices)
+    institution = models.ForeignKey(
+        "tenancy.Institution",
+        on_delete=models.PROTECT,
+        related_name="+",
+        null=True,
+        blank=True,
+        db_constraint=False,
+    )
+    campus = models.ForeignKey(
+        "tenancy.Campus",
+        on_delete=models.PROTECT,
+        related_name="+",
+        null=True,
+        blank=True,
+        db_constraint=False,
+    )
+    valid_from = models.DateTimeField()
+    valid_until = models.DateTimeField(null=True, blank=True)
+    granted_by = models.UUIDField(null=True, blank=True)
+    reason = models.CharField(max_length=255, blank=True, default="")
+    revoked_at = models.DateTimeField(null=True, blank=True)
+    revoked_by = models.UUIDField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "rbac_roleassignment"
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(scope_type="tenant", institution__isnull=True, campus__isnull=True)
+                    | models.Q(
+                        scope_type="institution", institution__isnull=False, campus__isnull=True
+                    )
+                    | models.Q(scope_type="campus", institution__isnull=False, campus__isnull=False)
+                ),
+                name="rbac_assignment_scope",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(valid_until__isnull=True)
+                | models.Q(valid_until__gt=models.F("valid_from")),
+                name="rbac_assignment_validity",
+            ),
+            # No duplicate live assignment of the same role in the same scope.
+            models.UniqueConstraint(
+                fields=["tenant", "membership", "role", "scope_type", "institution", "campus"],
+                condition=models.Q(revoked_at__isnull=True),
+                nulls_distinct=False,
+                name="rbac_assignment_one_live",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"assignment {self.pk}"

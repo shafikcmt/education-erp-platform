@@ -100,6 +100,16 @@ class Protected(APIView):
         return Response({"ok": True})
 
 
+class TenantProtected(APIView):
+    """Needs a tenant permission in the request's (tenant-level) scope."""
+
+    permission_classes = [HasPermission("tenancy.member.view")]
+    host_classes = TENANT_ONLY
+
+    def get(self, request: Request) -> Response:
+        return Response({"ok": True})
+
+
 class PlatformOnly(_Open):
     host_classes = frozenset({"platform"})
 

@@ -154,7 +154,7 @@ def test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused(ow
     try:
         manage("migrate", "--noinput")
         first = manage("seed_roles")
-        assert "permissions: 20 created" in first and "system roles: 22 seeded (22 created" in first
+        assert "permissions: 37 created" in first and "system roles: 22 seeded (22 created" in first
         second = manage("seed_roles")
         assert "permissions: 0 created, 0 updated, 0 deprecated" in second
         assert "(0 created, 0 permissions added, 0 removed)" in second

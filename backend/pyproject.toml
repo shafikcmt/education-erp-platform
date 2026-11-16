@@ -63,6 +63,7 @@ ignore = ["RUF012"]
 "config/settings/*.py" = ["F405", "F403"]
 # API error classes are named after their stable Problem Details codes (invalid_credentials, ...).
 "apps/identity/errors.py" = ["N818"]
+"apps/tenancy/errors.py" = ["N818"]
 # Tenant-isolation error names are fixed by the approved Phase 3 plan and ADR-042
 # (TenantContextConflict, TenantContextNotApplied, ...).
 "apps/core/tenancy/exceptions.py" = ["N818"]
