@@ -143,3 +143,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
   - production (Phase 19) must preserve this separation in its secret management.
 - 2026-11-09 — Phase 3 M1 / O1: the `migrate` service now runs **both** `migrate` and `seed_roles` as the owner role (`export DATABASE_URL="$DATABASE_MIGRATION_URL"`). `erp_app` only reads `rbac_permission`; `seed_roles`/`sync_permissions` refuse to run as `erp_app`; `create_platform_admin` (run in `api`) only checks that the catalogue is synchronized. This supersedes the 2026-11-06 note that seeding ran as `erp_app`.
 - 2026-11-13 — Phase 3 M3: host-policy and connection variables documented (§5). Tenant hosts stay disabled.
+- 2026-11-16 — Phase 3 M4: the one-shot `migrate` step now runs `migrate`, `seed_roles` and `sync_tenant_roles` (tenant system role copies, P7), all as the owner role.

@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-13 (Phase 3 in progress: M1 merged (PR #17); M2 merged (PR #18); M3 request lifecycle complete on `feat/phase-03-m3`, awaiting owner review; tenant hosts disabled; M4 not started)
+- **Last updated:** 2026-11-13 (Phase 3 in progress: M1 merged (PR #17); M2 merged (PR #18); M3 and M4 complete on `feat/phase-03-m3` and `feat/phase-03-m4`, awaiting owner review; tenant hosts disabled; M5 not started)
 
 ---
 
@@ -345,7 +345,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
-| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–047 Accepted; **in progress**: M1 merged in PR #17; M2 tenancy data model merged in PR #18; M3 host policy and tenant request lifecycle complete on `feat/phase-03-m3`, awaiting owner review; M4+ not started) |
+| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–047 Accepted; **in progress**: M1 merged in PR #17; M2 tenancy data model merged in PR #18; M3 (host policy, tenant request lifecycle) and M4 (memberships, invitations, role assignments) complete on `feat/phase-03-m3` and `feat/phase-03-m4`, awaiting owner review; M5+ not started) |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
@@ -442,3 +442,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-09 — Phase 3 M1 merged; M2 complete on its branch; phase table and last-updated line updated. No rule changed.
 - 2026-11-09 — Phase 3 M2 merged (PR #18, `3616778`); phase table and last-updated line updated. No rule changed.
 - 2026-11-13 — Phase 3 M3 complete on its branch (ADR-048 records the owner's M3 decisions); phase table and last-updated line updated. No rule changed.
+- 2026-11-16 — Phase 3 M4 complete on its branch; phase table and last-updated line updated. No rule changed.
