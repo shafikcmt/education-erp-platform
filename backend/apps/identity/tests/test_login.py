@@ -126,15 +126,19 @@ def test_mfa_login_flow_replay_window_and_attempt_limit():
     first = api.post(LOGIN, {"email": person.user.email, "password": PASSWORD})
     assert first.json() == {"status": "mfa_required"}
     assert api.get("/api/v1/me/").status_code == 401  # not logged in yet
-    assert api.post("/api/v1/auth/mfa/verify/", {"code": person.code()}).status_code == 200
+    # Both codes are taken at ONE instant. Asking the clock again for "the same step" made
+    # this test fail whenever the run crossed a 30-second TOTP boundary in between: the
+    # second call then returned a fresh, valid code instead of the one already used.
+    used, following = person.code(), person.code(1)
+    assert api.post("/api/v1/auth/mfa/verify/", {"code": used}).status_code == 200
     assert api.get("/api/v1/me/").json()["session"]["mfa_verified"] is True
 
     # Replay of the same step in a new login is rejected; the next step (+1) is accepted.
     second = Api()
     second.post(LOGIN, {"email": person.user.email, "password": PASSWORD})
-    replay = second.post("/api/v1/auth/mfa/verify/", {"code": person.code()})
+    replay = second.post("/api/v1/auth/mfa/verify/", {"code": used})
     assert replay.status_code == 401 and replay.json()["code"] == "invalid_mfa_code"
-    assert second.post("/api/v1/auth/mfa/verify/", {"code": person.code(1)}).status_code == 200
+    assert second.post("/api/v1/auth/mfa/verify/", {"code": following}).status_code == 200
 
     third = Api()
     third.post(LOGIN, {"email": person.user.email, "password": PASSWORD})
