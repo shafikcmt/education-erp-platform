@@ -8,8 +8,8 @@
 - **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
   - **M2 (tenancy data model): Complete** and merged into `main` (PR [#18](https://github.com/shafikcmt/education-erp-platform/pull/18), squash `3616778`; Sessions 16–18).
-  - **M3 (host policy, tenant request lifecycle, durable audit): Complete** on `feat/phase-03-m3` (pushed, no PR, not merged; Session 20). Deferred test items are listed under "Known gaps". **Tenant hosts remain disabled.**
-  - **M4 (memberships, invitations, role assignments, tenant roles): Complete** on `feat/phase-03-m4` (committed locally on top of M3; **not pushed** at the owner's request; no PR; Session 21). Deferred items are listed under "Known gaps".
+  - **M3 (host policy, tenant request lifecycle, durable audit): Complete** and merged into `main` (PR [#29](https://github.com/shafikcmt/education-erp-platform/pull/29), squash `066b727`; Sessions 20 and 22). Deferred test items are listed under "Known gaps". **Tenant hosts remain disabled.**
+  - **M4 (memberships, invitations, role assignments, tenant roles): Complete** on `feat/phase-03-m4`, rebased onto `main` after the M3 merge; pull request open for merge (Sessions 21 and 22). Deferred items are listed under "Known gaps".
   - M5 has not started and waits for the owner's approval.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
@@ -27,7 +27,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`); `feat/phase-03-m3` (M3, no PR yet) | **M1 and M2 Complete (merged); M3 and M4 Complete (branches)**; M5–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`); `feat/phase-03-m4` (M4) | **M1, M2 and M3 Complete (merged); M4 Complete (branch)**; M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -85,7 +85,6 @@ See `DECISION_LOG.md`.
   - **`rbac_role` / `rbac_rolepermission` still have no RLS** (M6). M4 code filters tenant roles by `tenant_id` explicitly everywhere.
   - **Inviter re-check:** an invitation stays valid if the inviter later loses the right to invite; it can be revoked. Re-validating at acceptance is a possible hardening for M8.
   - **K4** is covered at the primitive level only (M2 test); the service-level test arrives with the institution API (M8).
-  - `feat/phase-03-m4` is **stacked on the unmerged M3 branch**; it should be merged after M3.
 - **Phase 3 M3 gaps (recorded, not hidden; `plans/PHASE_03_M3_PLAN.md` §11.4):**
   - **R2** is proven only for the tenant id of durable events. Cross-tenant invisibility of audit events is untested until the audit tables get RLS (**M6**).
   - **R9** (support-session read audited atomically) is not implemented (**M5**).
@@ -654,3 +653,9 @@ See `DECISION_LOG.md`.
   - gitleaks: no leaks. No dependency changed since the Trivy scan of Session 20.
 - **Not done:** M5 and later; no PR; nothing pushed, merged or deployed; tenant hosts not enabled; Dependabot PRs untouched.
 - **Next recommended task:** the owner reviews M3 and M4, decides on pushing and the PRs, and on M5.
+
+### 2026-11-17 — Session 22 (M3 and M4 pull requests)
+- **Authorization:** the owner asked to push and merge.
+- **M3:** [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29). First CI run: 7 of 8 checks passed; `backend · tests` failed on one Phase 2 test, `test_mfa_login_flow_replay_window_and_attempt_limit`. Root cause: the test asked the clock twice for "the same" TOTP step and the run crossed a 30-second boundary (05:50:59.97 UTC), so the second code was a fresh valid one. It was not an M3 defect and no security check was weakened: the test now replays the code it actually submitted (`93c4598`). Second run: **8/8 success**. Squash-merged pinned to `93c4598` → **`066b727`**.
+- **M4:** rebased onto the new `main` (content unchanged) and opened as its own pull request.
+- **Tenant hosts not enabled; nothing deployed; Dependabot PRs untouched.**

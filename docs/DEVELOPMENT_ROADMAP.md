@@ -207,3 +207,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-09 — Phase 3 M2 merged (PR #18); M3 awaits owner authorization.
 - 2026-11-13 — Phase 3 M3 complete on its branch (ADR-048); M4 awaits owner authorization.
 - 2026-11-16 — Phase 3 M4 complete on its branch; M5 awaits owner authorization.
+- 2026-11-17 — Phase 3 M3 merged (PR #29); M4 in its own pull request.
