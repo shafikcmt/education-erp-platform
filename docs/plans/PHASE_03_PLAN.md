@@ -1361,6 +1361,24 @@ Final tenant lifecycle:
 | offboarding | ✗ | ✗ | ✅ | — | ✅ |
 | deleted | ✗ | ✗ | ✗ | ✗ | — (terminal; slug tombstoned) |
 
+### 24.6 M3 — host policy, tenant request lifecycle, durable audit (2026-11-13, branch `feat/phase-03-m3`)
+
+M3 is implemented as specified in §8.2–§8.6 and §10, with the owner's answers to seven open points (ADR-048). The detailed record (packages, clarifications I1–I10, test status, follow-ups) is in `PHASE_03_M3_PLAN.md` §11. Summary of what differs from the text above:
+
+| # | Section | Note |
+|---|---|---|
+| N25 | §8.2 | Two middlewares resolve the host: `HostPolicyMiddleware` **before** sessions (steps 0–4, no I/O) and `TenantResolutionMiddleware` after `SessionSecurity` (steps 5–6). A rejected host never touches the session store or the database (ADR-048 Q1) |
+| N26 | §8.2 | A session used on another host is not rejected with an error: the request continues as anonymous and the cookie is dropped on that host only; the stored session is untouched |
+| N27 | §8.3 | The rollback rule (status ≥ 400) lives in `TenantTransactionMiddleware`, not in the Problem Details handler. Durable events: the §8.3 list that exists today plus `identity.login.throttled`, `identity.mfa.challenge_failed` and `identity.mfa.locked` |
+| N28 | §8.3 R2, R9 | R2 is proven for the tenant id only; invisibility needs the M6 policies. R9 arrives with M5 |
+| N29 | §8.4.3 | The external-I/O guards (email, storage) are **not** implemented in M3; they move to M7 with `TenantTask` |
+| N30 | §10.1 | `X-Forwarded-Host` remains the trusted proxy header (Nginx overwrites it); it is subject to the whole host policy |
+| N31 | §10.3 | Development, CI and E2E platform hosts include `api`, the internal service host of the Next.js server (ADR-048 Q3) |
+| N32 | §11.3, §10.1 step 6 | Until M4/M5: a suspended tenant denies every signed-in request and every sign-in, owners included; an offboarding tenant denies writes for everyone |
+| N33 | §12 | Views are platform-only unless they declare `host_classes`; M3 exposes login, MFA verify, logout, CSRF and `me` on tenant hosts (ADR-048 Q2) |
+| N34 | §15.3 | K1, K2 and K8 run through the Django test client, whose threads keep one physical connection (forced reuse). K3 remains M10 |
+| N35 | §19.1 | M3 adds no migration, grant, role or `SECURITY DEFINER` function |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1382,3 +1400,4 @@ Final tenant lifecycle:
 - 2026-11-09 — §24.2: O1 implemented (owner-controlled catalogue bootstrap, `rbac_permission` SELECT-only for `erp_app`); §24.3: final runtime grant design recorded.
 - 2026-11-09 — §24.4 appended: M2 implementation notes N14–N24. No approved decision changed.
 - 2026-11-09 — §24.5: owner decisions on the M2 review (N14 accepted, N16 lifecycle changed, N18 list expanded to 68, P6 canonical code). §24.4 N16/N18 are superseded by §24.5.
+- 2026-11-13 — §24.6 appended: M3 implementation notes N25–N35 (details in `PHASE_03_M3_PLAN.md` §11; owner decisions in ADR-048). No approved decision changed.

@@ -45,6 +45,33 @@ The resolved tenant is stored in a request-scoped context (`contextvars`) — `c
 - **Host resolution:** `tenancy_resolve_host()` (F1) exists, called only through `apps.tenancy.selectors.platform` inside `platform_scope(P1)`. **No request path uses it yet.** Middleware and tenant hosts arrive in M3, and tenant hosts stay disabled until the production domain and the security review are approved (D1).
 - **Further reading:** plan §4, §5, §7 and §24.4.
 
+### 3.2 Implemented request path (Phase 3 M3)
+
+Tenant hosts are **disabled by default in every environment** (`TENANT_HOSTS_ENABLED=false`) and stay disabled in production until the domain and the security review are approved (D1). The text of §3 items 1–3 describes the target; item 4 (`X-Tenant`) is future work and no header ever selects a tenant today.
+
+```
+RequestID → Security → HostPolicy → Session → Common → CSRF → Auth → SessionSecurity
+  → TenantResolution → TenantTransaction → ApiNoStore → XFrameOptions
+```
+
+| Step | Where | Behaviour |
+|---|---|---|
+| Health probes | `HostPolicyMiddleware` | `/healthz`, `/readyz`: host-independent, no session, no tenant |
+| Platform host | `HostPolicyMiddleware` | Exact match in `PLATFORM_HOSTS` (lower-case, port stripped). Autocommit, as in Phase 2 |
+| Disabled mode | `HostPolicyMiddleware` | Every other host gets the uniform `404 not_found`. No session, no query |
+| Tenant candidate | `HostPolicyMiddleware` | Exactly `<slug>.<TENANT_BASE_DOMAIN>` with a valid, non-reserved slug; anything else gets the same 404 |
+| Resolution | `TenantResolutionMiddleware` | One F1 lookup (`platform_scope("P1")`, never cached). Unknown, unverified, provisioning and deleted tenants get the same 404. Sets `request.tenant` and `request.scope_target` |
+| Session binding | `TenantResolutionMiddleware` | A session presented on another host than the one it was created on is ignored (anonymous request, cookie dropped on that host, stored session untouched) and reported as `tenancy.isolation.blocked` |
+| Transaction | `TenantTransactionMiddleware` | One `tenant_atomic` per tenant request with `lock_timeout = 5s`; status ≥ 400 rolls back; streaming bodies are refused; `tx_ms` is logged, with a warning above 2 s |
+| Host class | `TenantTransactionMiddleware.process_view` | Views are platform-only unless they declare `host_classes`; the wrong host gets the uniform 404 |
+| Gate | `apps.tenancy.access` | Signed-in requests need an active membership and a usable tenant: `tenant_suspended`, `not_a_member`, `membership_inactive`, `tenant_unavailable` (writes during offboarding) |
+
+- **Sign-in on a tenant host** returns the generic `invalid_credentials` error for every refusal (D7).
+- **Authorization:** no tenant RBAC source exists before M4, so nobody holds a tenant permission on a tenant host; platform roles never apply there. Only self-service permissions (own account) work.
+- **Database connections:** `CONN_MAX_AGE = 0` on every alias; production refuses anything else (D4).
+- **Durable audit:** denial and failure events written inside a tenant context use the `audit_durable` connection and survive the rollback (see `SECURITY.md` §6).
+- **Further reading:** `plans/PHASE_03_M3_PLAN.md` §11, plan §24.6, ADR-048.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -180,3 +207,4 @@ A failure blocks merge.
 - 2026-11-08 — Status note: Phase 3 plan approved; ADR-041–047 Accepted. No design text changed yet.
 - 2026-11-08 — Phase 3 M1: §4.1 and §8 now describe the implemented tenant context primitives, RLS tooling and CI checks; items for later milestones are labelled.
 - 2026-11-09 — §3.1: implemented tenancy data model (Phase 3 M2). No design change.
+- 2026-11-13 — Phase 3 M3: §3.2 added (implemented request path: host policy, resolution, tenant transaction, gate). The 2026-11-06 prerequisite about `ScopeTargetMiddleware` is met: it is removed and replaced by host-based resolution; tenant hosts remain disabled.

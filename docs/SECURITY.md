@@ -126,7 +126,19 @@ Audit (append-only, `audit_event`) is mandatory for:
 
 **Immutability boundary (ADR-040):** the runtime role `erp_app` can only SELECT and INSERT audit events, and a trigger rejects UPDATE, DELETE and TRUNCATE for every role. The **table owner** (`erp_owner`) can still disable that trigger with DDL, so the guarantee depends on owner credentials never reaching runtime processes (enforced by compose allow-lists, a Django startup guard and CI checks; see §11). Tamper-evident off-site audit storage is a Phase 18 enhancement. For the IP side table, the runtime role can only add rows together with their event and can only clear (never rewrite) IP fields.
 
+**Durable security events (Phase 3 M3, ADR-042):** a tenant request runs in one transaction that is rolled back for every 4xx/5xx response. Evidence of denials must survive that, so inside a tenant context the events in `audit.events.DURABLE_ACTIONS` (`authz.denied`, failed/locked/throttled sign-ins, MFA failures, `tenancy.isolation.blocked`) are written through a second connection, `audit_durable`, in their own tenant transaction. It uses the **same** runtime credentials (`erp_app`): no new role, grant or secret. If that write fails, the failure is logged and the response stays a denial; a denial is never turned into success. Outside a tenant context nothing changed: events are written in the caller's transaction and a failed write fails the action.
+
 Audit records: never updated or deleted by application code; DB role for app has INSERT-only on audit tables; retention per policy (proposed ≥ 7 years for financial, ≥ 1 year for others — **owner/legal confirmation needed**).
+
+## 6a. Host policy and tenant hosts (Phase 3 M3; ADR-041, ADR-048)
+
+- **Tenant hosts are disabled by default** in every environment and must stay disabled in production until the production domain and the security review are approved (D1). Production settings refuse `TENANT_HOSTS_ENABLED=true` without a real `TENANT_BASE_DOMAIN` (placeholders such as `localhost`, `*.test`, `*.example`, `example.com` are rejected), refuse empty or disallowed `PLATFORM_HOSTS`, and refuse persistent database connections.
+- **The host alone selects the tenant.** `X-Tenant`-style headers, query strings and bodies never do. Unknown hosts, unknown tenants and tenants that are not usable are indistinguishable (one 404 body), and while tenant hosts are disabled no lookup is made at all.
+- **Trusted proxy headers.** Django trusts `X-Forwarded-Host` (and `X-Real-IP`, `X-Forwarded-Proto`) because Nginx **overwrites** them on every request; the Next.js server relays the browser host the same way. The API container must therefore never be reachable except through Nginx and the web service. `X-Forwarded-Host` goes through `ALLOWED_HOSTS` and the full host policy like `Host`.
+- **Sessions are bound to their host.** Cookies are host-only (`__Host-` in production). A session presented on any other host is ignored and reported (`tenancy.isolation.blocked`); the real session is not revoked, so a replayed cookie cannot sign the user out.
+- **Sign-in on a tenant host** needs an active membership of that tenant and an active tenant; every refusal is the generic `invalid_credentials` error with the same throttling (D7). The check runs before the MFA step.
+- **Views are platform-only by default.** Only login, MFA verify, logout, CSRF and `me` are reachable on tenant hosts (reviewed allow-list test).
+- **Fail-closed states (until M4/M5):** a suspended tenant denies every signed-in request and every sign-in, owners included; an offboarding tenant accepts no writes; platform staff have no access on tenant hosts.
 
 ## 7. Secrets & configuration
 
@@ -206,3 +218,4 @@ Verify sign-in with MFA, then remove the old key.
 - 2026-11-06 — Manual MFA key exception (ADR-038) documented.
 - 2026-11-06 — Phase 2 implemented: implementation map and operating procedures added (§11).
 - 2026-11-06 — Security review of PR #15 fixed (ADR-040): immutability boundary stated precisely; owner-only key rotation; owner-credential isolation; brute-force, CSP and fingerprint-retention controls documented.
+- 2026-11-13 — Phase 3 M3: durable security events (§6) and host policy / tenant hosts (§6a) documented. Tenant hosts remain disabled.

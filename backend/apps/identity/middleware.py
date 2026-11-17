@@ -50,6 +50,8 @@ class SessionSecurityMiddleware:
         if record is None or record.revoked_at is not None or record.user_id != request.user.pk:
             django_logout(request)
             return
+        # For the session-host binding that runs next (Phase 3 plan §8.2): no second lookup.
+        request.session_record = record  # type: ignore[attr-defined]
         now = state.now_ts()
         auth_at = int(request.session.get(state.AUTH_AT, 0))
         last = int(request.session.get(state.LAST_ACTIVITY, 0))

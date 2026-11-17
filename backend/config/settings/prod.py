@@ -4,10 +4,25 @@ import os
 
 from django.core.exceptions import ImproperlyConfigured
 
-from apps.core.config_guards import assert_runtime_has_no_owner_credentials
+from apps.core.config_guards import (
+    assert_host_configuration,
+    assert_no_persistent_connections,
+    assert_runtime_has_no_owner_credentials,
+)
+from apps.tenancy.rules import RESERVED_SLUGS
 
 from .base import *
-from .base import ALLOWED_HOSTS, DATABASES, FIELD_ENCRYPTION_KEYS, IP_INDEX_KEY, SECRET_KEY, env
+from .base import (
+    ALLOWED_HOSTS,
+    DATABASES,
+    FIELD_ENCRYPTION_KEYS,
+    IP_INDEX_KEY,
+    PLATFORM_HOSTS,
+    SECRET_KEY,
+    TENANT_BASE_DOMAIN,
+    TENANT_HOSTS_ENABLED,
+    env,
+)
 
 DEBUG = False
 
@@ -70,3 +85,15 @@ assert_runtime_has_no_owner_credentials(
     database_user=str(DATABASES["default"].get("USER", "")),
     owner_roles={env.str("DATABASE_OWNER_ROLE", default="erp_owner"), "postgres"},
 )
+
+# Phase 3 M3 (plan §10.2, D1): platform hosts are mandatory; tenant hosts can be enabled only
+# with a real base domain. D4: production never uses persistent database connections.
+assert_host_configuration(
+    platform_hosts=PLATFORM_HOSTS,
+    allowed_hosts=ALLOWED_HOSTS,
+    tenant_hosts_enabled=TENANT_HOSTS_ENABLED,
+    tenant_base_domain=TENANT_BASE_DOMAIN,
+    reserved_labels=RESERVED_SLUGS,
+    production=True,
+)
+assert_no_persistent_connections(DATABASES)

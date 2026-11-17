@@ -22,6 +22,7 @@ with :class:`TenantContextNotApplied` before it reaches PostgreSQL.
 
 from __future__ import annotations
 
+import re
 import uuid
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
@@ -51,6 +52,10 @@ _GUARD_MARK = "_erp_tenant_guard"
 
 APPLY_SQL = "SELECT pg_catalog.set_config('app.tenant_id', %s, true)"
 CLEAR_SQL = "SELECT pg_catalog.set_config('app.tenant_id', '', true)"
+# Transaction-local lock wait limit for request transactions (plan §8.4.2, D9).
+LOCK_TIMEOUT_SQL = "SELECT pg_catalog.set_config('lock_timeout', %s, true)"
+READ_LOCK_TIMEOUT_SQL = "SELECT pg_catalog.current_setting('lock_timeout')"
+_LOCK_TIMEOUT = re.compile(r"^[1-9][0-9]{0,5}(ms|s)$")
 
 
 @dataclass
@@ -118,7 +123,10 @@ def has_query_guard(connection: BaseDatabaseWrapper) -> bool:
 # --------------------------------------------------------------------------- tenant_atomic
 @contextmanager
 def tenant_atomic(
-    tenant: TenantContext | uuid.UUID | str | None = None, using: str = "default"
+    tenant: TenantContext | uuid.UUID | str | None = None,
+    using: str = "default",
+    *,
+    lock_timeout: str | None = None,
 ) -> Iterator[TenantContext]:
     """Run the block in a transaction that has applied ``tenant`` (or the bound tenant).
 
@@ -127,7 +135,11 @@ def tenant_atomic(
     * Exceptions roll the transaction (or savepoint) back, which also discards the setting;
       ``on_commit`` callbacks registered inside never run after a rollback.
     * The previous Python context and the connection state are always restored in ``finally``.
+    * ``lock_timeout`` (for example ``"5s"``) sets PostgreSQL's lock wait limit for this
+      transaction only; it is ignored for a nested block, which keeps the outer limit.
     """
+    if lock_timeout is not None and not _LOCK_TIMEOUT.match(lock_timeout):
+        raise ValueError("lock_timeout must look like '5s' or '500ms'.")
     if using not in settings.DATABASES:
         raise TenantContextConflict(f"Unknown database alias {using!r}.")
     ctx = TenantContext.coerce(tenant) if tenant is not None else require_tenant()
@@ -171,16 +183,25 @@ def tenant_atomic(
     setattr(conn, _APPLYING_ATTR, ctx.id)
     try:
         with transaction.atomic(using=using):
+            previous_lock_timeout: str | None = None
             with conn.cursor() as cursor:
                 cursor.execute(APPLY_SQL, [str(ctx.id)])
+                if lock_timeout is not None:
+                    if inside_foreign:
+                        cursor.execute(READ_LOCK_TIMEOUT_SQL)
+                        previous_lock_timeout = cursor.fetchone()[0]
+                    cursor.execute(LOCK_TIMEOUT_SQL, [lock_timeout])
             setattr(conn, _STATE_ATTR, _TxState(ctx.id, 1, inside_foreign))
             setattr(conn, _APPLYING_ATTR, None)
             yield ctx
-            if inside_foreign:
-                # The enclosing transaction continues after us: clear the setting before the
-                # savepoint is released. (On error the savepoint rollback reverts it.)
+            if inside_foreign and not conn.needs_rollback:
+                # The enclosing transaction continues after us: clear the settings before the
+                # savepoint is released. (On error, or when the block was marked for rollback
+                # with ``set_rollback(True)``, the savepoint rollback reverts them.)
                 with conn.cursor() as cursor:
                     cursor.execute(CLEAR_SQL)
+                    if previous_lock_timeout is not None:
+                        cursor.execute(LOCK_TIMEOUT_SQL, [previous_lock_timeout])
     finally:
         setattr(conn, _STATE_ATTR, None)
         setattr(conn, _APPLYING_ATTR, None)

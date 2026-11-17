@@ -57,6 +57,9 @@ Errors: 400 validation, 401 unauthenticated, 403 forbidden (permission / `module
   - `rate_limited` bodies carry `retry_after` (seconds) and a `Retry-After` header.
   - Security review (ADR-040) adds: `mfa_locked` (429, `retry_after`), `insufficient_privilege` (403, acting on a more privileged account), `cannot_reset_own_mfa` (409).
   - `POST /auth/step-up/` accepts `recovery_code` instead of `code` (single use).
+  - Phase 3 M3 adds, on tenant hosts only (403): `tenant_suspended`, `not_a_member`, `membership_inactive`, `tenant_unavailable` (write during offboarding). Sign-in refusals on a tenant host always use `invalid_credentials`.
+  - **Uniform 404:** an unknown path, a host that is not served, an unknown or unusable tenant, and an endpoint that is not available on the request's kind of host (platform or tenant) all return the same `not_found` body. Clients cannot tell them apart.
+  - On tenant hosts every response with status ≥ 400 means the request changed nothing (its transaction was rolled back).
 - API responses carry `Content-Security-Policy: default-src 'none'; frame-ancestors 'none'`.
 - All `/api/` responses carry `Cache-Control: no-store` unless a view sets its own policy.
 - Messages localized by `Accept-Language`; never include stack traces, SQL or other tenants' data.
@@ -129,3 +132,4 @@ plus a scoped queryset from selectors (`selectors.visible_students(actor=request
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
 - 2026-11-06 — Phase 2 implemented: authentication error codes, 401 challenge and `no-store` documented.
 - 2026-11-06 — ADR-040 error codes, step-up `recovery_code` and the API CSP documented.
+- 2026-11-13 — Phase 3 M3: tenant-host error codes, the uniform 404 and the rollback rule documented.

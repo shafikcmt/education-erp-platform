@@ -1,7 +1,8 @@
 """Writing, revealing and anonymising audit data.
 
 ``record()`` writes in the caller's transaction; when the write fails, the exception
-propagates, so the security action fails too (fail closed, plan §6.8).
+propagates, so the security action fails too (fail closed, plan §6.8). Inside a tenant context,
+denial and failure events use the durable connection instead (Phase 3 plan §8.3).
 """
 
 from __future__ import annotations
@@ -10,20 +11,25 @@ import uuid
 from datetime import datetime, timedelta
 from typing import TYPE_CHECKING, Any
 
+import structlog
 from django.conf import settings
 from django.db import transaction
 from django.http import HttpRequest
 from django.utils import timezone
 
-from apps.audit.events import allowed_metadata
+from apps.audit.events import DURABLE_ACTIONS, allowed_metadata
 from apps.audit.models import ActorType, AuditEvent, AuditEventIP, Outcome
 from apps.core.ip_privacy import ip_search_index, open_ip, seal_ip
 from apps.core.logging import _is_sensitive
 from apps.core.middleware import get_request_id
 from apps.core.net import client_ip, user_agent_summary
+from apps.core.tenancy.context import current_tenant
+from apps.core.tenancy.transaction import tenant_atomic
 
 if TYPE_CHECKING:
     from django.contrib.auth.models import AbstractBaseUser
+
+logger = structlog.get_logger("erp.audit")
 
 _MAX_STR = 200
 _MAX_LIST = 50
@@ -50,6 +56,54 @@ def _clean_metadata(action: str, metadata: dict[str, Any] | None) -> dict[str, A
     return cleaned
 
 
+def _write(
+    using: str,
+    *,
+    action: str,
+    outcome: str,
+    actor_user_id: uuid.UUID | None,
+    actor_type: str,
+    target_type: str,
+    target_id: uuid.UUID | str | None,
+    metadata: dict[str, Any],
+    request: HttpRequest | None,
+    tenant_id: uuid.UUID | None,
+    support_session_id: uuid.UUID | None,
+    save: bool = True,
+) -> AuditEvent:
+    now = timezone.now()
+    event = AuditEvent(
+        occurred_at=now,
+        tenant_id=tenant_id,
+        actor_user_id=actor_user_id,
+        actor_type=actor_type,
+        support_session_id=support_session_id,
+        action=action,
+        outcome=outcome,
+        target_type=target_type,
+        target_id=str(target_id) if target_id else "",
+        metadata=metadata,
+        user_agent_summary=(
+            user_agent_summary(request.META.get("HTTP_USER_AGENT", "")) if request else ""
+        ),
+        request_id=get_request_id(request) if request else "",
+    )
+    if not save:
+        return event
+    event.save(using=using, force_insert=True)
+    ip = client_ip(request) if request else ""
+    if ip:
+        sealed = seal_ip(ip)
+        AuditEventIP.objects.using(using).create(
+            event=event,
+            ip_encrypted=sealed.ip_encrypted,
+            ip_index=sealed.ip_index,
+            ip_prefix=sealed.ip_prefix,
+            created_at=now,
+        )
+    return event
+
+
 def record(
     action: str,
     *,
@@ -63,41 +117,52 @@ def record(
     request: HttpRequest | None = None,
     tenant_id: uuid.UUID | None = None,
     support_session_id: uuid.UUID | None = None,
+    durable: bool = False,
 ) -> AuditEvent:
-    """Append one audit event (and its encrypted IP, when a request is given)."""
+    """Append one audit event (and its encrypted IP, when a request is given).
+
+    Inside a tenant context the event is stamped with that tenant. Events in
+    ``DURABLE_ACTIONS`` (or with ``durable=True``) are then written through the durable
+    connection in their own tenant transaction, so they survive the rollback of the request
+    transaction (Phase 3 plan §8.3). If that write fails, the failure is logged and the caller
+    continues: every durable event is a denial or a failure, and the response stays one.
+    Outside a tenant context nothing changes: the event is written in the caller's
+    transaction and a failed write propagates (fail closed, Phase 2 plan §6.8).
+    """
     cleaned = _clean_metadata(action, metadata)
     if actor is not None and getattr(actor, "is_authenticated", False):
         actor_user_id = actor.pk
     if actor_type is None:
         actor_type = ActorType.USER if actor_user_id else ActorType.SYSTEM
-    now = timezone.now()
-    ua = user_agent_summary(request.META.get("HTTP_USER_AGENT", "")) if request else ""
-    with transaction.atomic():
-        event = AuditEvent.objects.create(
-            occurred_at=now,
-            tenant_id=tenant_id,
-            actor_user_id=actor_user_id,
-            actor_type=actor_type,
-            support_session_id=support_session_id,
-            action=action,
-            outcome=outcome,
-            target_type=target_type,
-            target_id=str(target_id) if target_id else "",
-            metadata=cleaned,
-            user_agent_summary=ua,
-            request_id=get_request_id(request) if request else "",
-        )
-        ip = client_ip(request) if request else ""
-        if ip:
-            sealed = seal_ip(ip)
-            AuditEventIP.objects.create(
-                event=event,
-                ip_encrypted=sealed.ip_encrypted,
-                ip_index=sealed.ip_index,
-                ip_prefix=sealed.ip_prefix,
-                created_at=now,
+    ctx = current_tenant()
+    if ctx is not None and tenant_id is None:
+        tenant_id = ctx.id
+    fields: dict[str, Any] = {
+        "action": action,
+        "outcome": outcome,
+        "actor_user_id": actor_user_id,
+        "actor_type": actor_type,
+        "target_type": target_type,
+        "target_id": target_id,
+        "metadata": cleaned,
+        "request": request,
+        "tenant_id": tenant_id,
+        "support_session_id": support_session_id,
+    }
+    alias = getattr(settings, "AUDIT_DURABLE_ALIAS", "")
+    if ctx is not None and alias and (durable or action in DURABLE_ACTIONS):
+        try:
+            with tenant_atomic(ctx, using=alias):
+                return _write(alias, **fields)
+        except Exception:
+            logger.exception(
+                "audit.durable_write_failed",
+                action=action,
+                request_id=get_request_id(request) if request else "",
             )
-    return event
+            return _write(alias, **fields, save=False)
+    with transaction.atomic():
+        return _write("default", **fields)
 
 
 def reveal_ip(event: AuditEvent, *, actor: AbstractBaseUser, request: HttpRequest) -> str:

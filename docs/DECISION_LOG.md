@@ -52,6 +52,7 @@
 | 045 | Support sessions: tenant approval by default (owner-only waiver), read-only, ≤ 2 h, audited in the same transaction, no RLS bypass, no use while the tenant is suspended | **Accepted** (owner final approval; D2, D5) | 2026-11-08 |
 | 046 | RLS policy catalogue (standard, dual-scope, private dual-scope, self-scoped registry) + CI-enforced registry allow-list with justification and tests | **Accepted** (owner final approval) | 2026-11-08 |
 | 047 | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | **Accepted** (owner final approval) | 2026-11-08 |
+| 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
 
 ---
 
@@ -703,6 +704,24 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 
 **Still open:** plan §17.3 (production domain value, security review, benchmark results). None of them blocks implementation.
 
+## ADR-048 — Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7)
+
+**Status:** Accepted (owner, 2026-11-13). **Context:** the M3 plan (`plans/PHASE_03_M3_PLAN.md` §8) listed seven points where the approved Phase 3 plan was silent or ambiguous. The owner answered them. None changes ADR-041 to ADR-047; they refine how M3 implements them.
+
+| # | Decision |
+|---|---|
+| M3-Q1 | Two-stage host handling: an early, pure host-policy middleware **before** the session middleware; tenant resolution (F1) later |
+| M3-Q2 | Reachable on tenant hosts in M3: login, MFA, logout, CSRF and the current-user (`me`) endpoint. Every other endpoint stays platform-only |
+| M3-Q3 | `api` (the internal service host used by the Next.js server) is a platform host in development, CI and E2E |
+| M3-Q4 | Future-dependent tests are recorded as such, never as passed: R2 cross-tenant audit invisibility → M6; R9 → M5; K3 → M10; storage guard → M7 |
+| M3-Q5 | Suspended tenants fail closed for everyone in M3; offboarding tenants accept no writes; the D2 restricted owner mode stays M5 work |
+| M3-Q6 | `CONN_MAX_AGE` defaults to 0; a non-production measurement override is allowed; production rejects non-zero values |
+| M3-Q7 | Measurements are recorded in `docs/benchmarks/PHASE_03_CONNECTIONS.md`; no invented results and no automatic relaxation of limits |
+
+**Unchanged constraint:** tenant hosts stay disabled until the production domain and the required security review are approved (D1).
+
+**Implementation notes (M3):** recorded in `plans/PHASE_03_M3_PLAN.md` §11 and `plans/PHASE_03_PLAN.md` §24.6.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -719,3 +738,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-08 — ADR-041 to ADR-046 revised (rev. 2) after the owner's in-principle approval of Q1–Q12 and rejection of runtime BYPASSRLS; ADR-047 added (Proposed) to record the owner's answers. No existing Accepted ADR changed; ADR-043 would amend ADR-009 §5 only if accepted.
 - 2026-11-08 — ADR-041 to ADR-047 marked **approved in principle** (owner) and updated with decisions D1–D9. They become Accepted on final approval of the Phase 3 plan. ADR-009 stays Accepted: an append-only note records the pending §5 amendment by ADR-043 with its exact wording, and the original text is unchanged.
 - 2026-11-08 — Owner final approval: ADR-041 to ADR-047 **Accepted** (with `plans/PHASE_03_PLAN.md` rev. 3 Approved). ADR-009 stays Accepted; its §5 third bullet is amended by ADR-043, recorded in an append-only note. No other ADR changed.
+- 2026-11-13 — Added ADR-048 (Accepted): the owner's answers to the seven M3 questions. No existing ADR changed.

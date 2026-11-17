@@ -61,6 +61,17 @@ docker-compose.prod.yml, cd.yml          production overrides + CD (Phase 19)
 
 `DJANGO_SETTINGS_MODULE`, `DJANGO_SECRET_KEY`, `DATABASE_URL` (runtime role `erp_app`, NOBYPASSRLS), `DATABASE_MIGRATION_URL` (owner role `erp_owner`, migrations only), `REDIS_URL`, `CELERY_BROKER_URL`, `S3_ENDPOINT_URL`, `S3_BUCKET`, `S3_ACCESS_KEY_ID`, `S3_SECRET_ACCESS_KEY`, `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `ALLOWED_HOSTS`, `PLATFORM_DOMAIN`, `CORS_ALLOWED_ORIGINS`, `EMAIL_*`, `FIELD_ENCRYPTION_KEYS`, `LLM_PROVIDER`, `LLM_API_KEY`, `NEXT_PUBLIC_*` (non-secret only).
 
+**Host policy and connections (Phase 3 M3):**
+
+| Variable | Dev / CI default | Production |
+|---|---|---|
+| `PLATFORM_HOSTS` | `localhost,127.0.0.1,api` (`api` is the internal host the Next.js server calls) | **Required.** Exact platform hosts, each covered by `DJANGO_ALLOWED_HOSTS`; include the internal API host used by the web service |
+| `TENANT_BASE_DOMAIN` | `localhost` (tenant hosts would be `{slug}.localhost`) | Empty until the owner provides the domain (D1) |
+| `TENANT_HOSTS_ENABLED` | `false` | **`false`.** `true` is refused without a real base domain; enabling it also needs the approved security review |
+| `DATABASE_CONN_MAX_AGE` | `0` | Must be `0` (settings refuse anything else, D4). The override exists only for non-production measurements |
+
+The API service must be reachable only through Nginx and the web service: Django trusts the proxy headers they set (`SECURITY.md` §6a).
+
 `.env.example` contains **dummy values only**. Real values never enter git.
 
 ## 6. CI pipeline (GitHub Actions — `.github/workflows/ci.yml`, implemented in Phase 1)
@@ -131,3 +142,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
   - owner-only maintenance: `docker compose run --rm --entrypoint sh migrate -c 'DATABASE_URL=$DATABASE_MIGRATION_URL python manage.py <rotate_field_encryption|rebuild_ip_index>'`;
   - production (Phase 19) must preserve this separation in its secret management.
 - 2026-11-09 — Phase 3 M1 / O1: the `migrate` service now runs **both** `migrate` and `seed_roles` as the owner role (`export DATABASE_URL="$DATABASE_MIGRATION_URL"`). `erp_app` only reads `rbac_permission`; `seed_roles`/`sync_permissions` refuse to run as `erp_app`; `create_platform_admin` (run in `api`) only checks that the catalogue is synchronized. This supersedes the 2026-11-06 note that seeding ran as `erp_app`.
+- 2026-11-13 — Phase 3 M3: host-policy and connection variables documented (§5). Tenant hosts stay disabled.

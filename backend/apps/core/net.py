@@ -89,3 +89,20 @@ def user_agent_summary(user_agent: str) -> str:
     browser = next((name for name, pattern in _BROWSERS if pattern.search(ua)), "Unknown browser")
     system = next((name for name, pattern in _SYSTEMS if pattern.search(ua)), "unknown OS")
     return f"{browser} on {system}"
+
+
+def normalize_host(raw: str) -> str:
+    """Lower-case host name without its port (``""`` when it can't be parsed).
+
+    Used wherever hosts are compared (host policy, session-host binding), so ``Acme.Test:8443``
+    and ``acme.test`` are the same host. A trailing dot is kept: it is a different cookie host.
+    """
+    host = (raw or "").strip().lower()
+    if host.startswith("["):  # bracketed IPv6 literal, optionally with a port
+        end = host.find("]")
+        return host[: end + 1] if end > 0 else ""
+    if host.count(":") == 1:
+        host = host.split(":", 1)[0]
+    elif ":" in host:
+        return ""
+    return host

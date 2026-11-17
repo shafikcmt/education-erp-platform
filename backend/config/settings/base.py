@@ -43,14 +43,18 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "apps.core.middleware.RequestIDMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    # Pure host policy (no I/O) BEFORE sessions: rejected hosts touch no store and no database.
+    "apps.tenancy.middleware.HostPolicyMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    # Phase 2: idle/absolute timeouts + SessionRecord upkeep (plan §6.7), then the
-    # authorization scope (platform host only in Phase 2; tenant hosts in Phase 3, §4.3).
+    # Phase 2: idle/absolute timeouts + SessionRecord upkeep (plan §6.7).
     "apps.identity.middleware.SessionSecurityMiddleware",
-    "apps.rbac.middleware.ScopeTargetMiddleware",
+    # Phase 3 M3 (plan §8.2, §10.1): F1 resolution, session-host binding and the authorization
+    # scope; then one tenant transaction per tenant-host request (platform hosts: autocommit).
+    "apps.tenancy.middleware.TenantResolutionMiddleware",
+    "apps.tenancy.middleware.TenantTransactionMiddleware",
     "apps.core.middleware.ApiNoStoreMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -72,11 +76,18 @@ TEMPLATES = [
 # DATABASE_URL is the *runtime* role (erp_app: NOSUPERUSER, NOBYPASSRLS — ADR-009).
 # Migrations use DATABASE_MIGRATION_URL (erp_owner); see infra/docker/postgres/init.
 DATABASES: dict[str, dict[str, Any]] = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("DATABASE_CONN_MAX_AGE", default=60)
+# D4 (Phase 3): no persistent connections. Tenant context is transaction-local, so reuse would
+# be safe, but any non-zero value needs owner approval and leak tests; production refuses it
+# (core.config_guards). The override exists for non-production measurements only.
+DATABASES["default"]["CONN_MAX_AGE"] = env.int("DATABASE_CONN_MAX_AGE", default=0)
 DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 # Tenant data must run inside explicit tenant transactions (Phase 3, core.db.tenant_atomic);
 # ATOMIC_REQUESTS stays off so that wrapper is the single, explicit entry point.
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
+# Durable security audit (Phase 3 plan §8.3; ADR-042): a second connection with the SAME
+# runtime credentials, so denial evidence survives the rollback of the request transaction.
+AUDIT_DURABLE_ALIAS = "audit_durable"
+DATABASES[AUDIT_DURABLE_ALIAS] = {**DATABASES["default"]}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"  # only for third-party apps; ours use UUIDv7
 
@@ -195,6 +206,19 @@ TENANCY_PLATFORM_AUTHORIZER = "apps.rbac.platform_operations.authorize_platform_
 TENANCY_PLATFORM_AUDITOR = "apps.audit.platform_operations.record_platform_operation"
 # Raise (instead of only logging) when tenant state leaks to a request/task boundary.
 TENANCY_LEAK_STRICT: bool = env.bool("TENANCY_LEAK_STRICT", default=False)
+# Host policy (plan §10; ADR-041). Tenant hosts are OFF everywhere by default (D1): only
+# PLATFORM_HOSTS are served and every other host gets the uniform 404 with no lookup.
+PLATFORM_HOSTS: list[str] = [
+    h.strip().lower() for h in env.list("PLATFORM_HOSTS", default=[]) if h.strip()
+]
+TENANT_BASE_DOMAIN: str = env.str("TENANT_BASE_DOMAIN", default="").strip().lower()
+TENANT_HOSTS_ENABLED: bool = env.bool("TENANT_HOSTS_ENABLED", default=False)
+# Request-wide tenant transactions (plan §8.4, D9): lock wait limit and slow-request warning.
+TENANT_REQUEST_LOCK_TIMEOUT = "5s"
+TENANT_TX_WARN_MS = 2000
+# Sign-in guards (callables ``(request, user) -> reason | None``): a non-None reason turns a
+# correct password into the generic invalid-credentials error (D7).
+IDENTITY_SIGN_IN_GUARDS: list[str] = ["apps.tenancy.access.sign_in_guard"]
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}

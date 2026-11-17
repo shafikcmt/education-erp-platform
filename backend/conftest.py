@@ -123,3 +123,28 @@ def committed_tenant_pair(owner_dsn: dict[str, Any]) -> Iterator[Any]:
 
     with committed_tenants(owner_dsn, 2) as tenants:
         yield tenants
+
+
+@pytest.fixture
+def tenant_hosts(settings: Any) -> None:
+    """Switch tenant hosts on (they are off by default in every settings module, D1) and add
+    the test-only probe endpoints used to exercise the tenant request path."""
+    settings.TENANT_HOSTS_ENABLED = True
+    settings.ROOT_URLCONF = "tests.isolation_app.urls"
+
+
+@pytest.fixture
+def tenant_site(tenant_hosts: None, db: Any) -> Any:
+    """Factory for tenants that F1 can resolve (``make_tenant_site``)."""
+    from tests.isolation.factories import make_tenant_site
+
+    return make_tenant_site
+
+
+@pytest.fixture
+def committed_tenant_sites(tenant_hosts: None, owner_dsn: dict[str, Any]) -> Iterator[Any]:
+    """Three committed, resolvable tenants for worker-thread request tests."""
+    from tests.isolation.factories import committed_tenants
+
+    with committed_tenants(owner_dsn, 3, sites=True) as tenants:
+        yield tenants

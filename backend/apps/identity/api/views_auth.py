@@ -14,6 +14,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from apps.core.hosts import PLATFORM_AND_TENANT
 from apps.identity import session_state as state
 from apps.identity.api import serializers as s
 from apps.identity.api.utils import CsrfProtectedView, service_errors
@@ -28,6 +29,8 @@ _ACCEPTED = {"detail": "If the account is eligible, an email is on its way."}
 @method_decorator(ensure_csrf_cookie, name="dispatch")
 class CsrfView(CsrfProtectedView):
     permission_classes = [AllowAny]
+    host_classes = PLATFORM_AND_TENANT
+    tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(tags=TAGS, summary="Set the CSRF cookie", responses=s.CsrfSerializer)
     def get(self, request: Request) -> Response:
@@ -36,6 +39,8 @@ class CsrfView(CsrfProtectedView):
 
 class LoginView(CsrfProtectedView):
     permission_classes = [AllowAny]
+    host_classes = PLATFORM_AND_TENANT
+    tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(
         tags=TAGS,
@@ -54,6 +59,8 @@ class LoginView(CsrfProtectedView):
 
 class MfaVerifyView(CsrfProtectedView):
     permission_classes = [AllowAny]
+    host_classes = PLATFORM_AND_TENANT
+    tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(
         tags=TAGS,
@@ -74,6 +81,8 @@ class MfaVerifyView(CsrfProtectedView):
 
 class LogoutView(CsrfProtectedView):
     permission_classes = [IsAuthenticatedSession]
+    host_classes = PLATFORM_AND_TENANT
+    tenant_auth_flow = True  # ending one's own session is always allowed
     allow_during_mfa_enrollment = True
 
     @extend_schema(tags=TAGS, summary="Sign out", request=None, responses={204: None})
