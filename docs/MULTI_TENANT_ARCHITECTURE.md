@@ -81,6 +81,14 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 - **Revocation:** effective on the next request (uncached membership check, per-tenant cache version); suspension and removal end the member's sessions on that tenant's hosts.
 - **Not yet:** HTTP endpoints (M8). Details: plan §24.7.
 
+### 3.4 Implemented support access (Phase 3 M5)
+
+- Platform staff reach tenant data **only** through a support session of that tenant: requested with a reason, a ticket and 15–120 minutes (P6), approved by a tenant owner unless the owner turned approval off (D5), and usable only on that tenant's host, with the staff member's own account and MFA.
+- Access is **read-only** and limited to the `support_readable` view codes; writes are refused before the view runs. Every support request is audited in the tenant's log in the same transaction as its data; no audit row, no data (R9).
+- Sessions end on revocation, on the staff member's request, at the end of their window, or when the tenant is suspended; each ends the staff member's sign-ins on that tenant's hosts.
+- **Suspended tenants (D2):** no support access at all; only owners sign in, into a restricted mode limited to reviewing support access.
+- Owners are emailed on request, start and approval-setting changes; members see active sessions (banner data). Details: plan §24.8.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -218,3 +226,4 @@ A failure blocks merge.
 - 2026-11-09 — §3.1: implemented tenancy data model (Phase 3 M2). No design change.
 - 2026-11-13 — Phase 3 M3: §3.2 added (implemented request path: host policy, resolution, tenant transaction, gate). The 2026-11-06 prerequisite about `ScopeTargetMiddleware` is met: it is removed and replaced by host-based resolution; tenant hosts remain disabled.
 - 2026-11-16 — Phase 3 M4: §3.3 added (implemented tenant authorization).
+- 2026-11-18 — Phase 3 M5: §3.4 added (implemented support access).

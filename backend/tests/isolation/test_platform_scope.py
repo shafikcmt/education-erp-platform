@@ -3,6 +3,7 @@
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.db import connection
+from django.utils import timezone
 
 from apps.audit.models import AuditEvent
 from apps.core.ids import new_id
@@ -21,8 +22,21 @@ from tests.helpers import make_user
 pytestmark = pytest.mark.django_db
 
 
+@pytest.fixture(autouse=True)
+def _since() -> None:
+    """Audit rows are append-only and some suites commit real ones in worker threads, so these
+    tests only look at the events written during the test itself."""
+    global _STARTED
+    _STARTED = timezone.now()
+
+
+_STARTED = None
+
+
 def _events(action: str) -> list[AuditEvent]:
-    return list(AuditEvent.objects.filter(action=action).order_by("occurred_at"))
+    return list(
+        AuditEvent.objects.filter(action=action, occurred_at__gte=_STARTED).order_by("occurred_at")
+    )
 
 
 def test_catalogue_matches_plan_and_disables_what_phase_3_forbids():

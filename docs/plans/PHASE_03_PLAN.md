@@ -1400,6 +1400,24 @@ M4 is implemented as specified in §4.1, §4.4, §9 and §12.3 (tenant-scope cod
 | N48 | §15.3 | K4 is covered by the M2 limit test (`test_concurrent_creation_never_exceeds_the_limit`) at the primitive level; institution and campus services arrive with the APIs (M8). K5 is implemented at request level |
 | N49 | §6.3 P4 | Tenant provisioning (P4) is not part of M4. Tests give a tenant its system copies through `sync_system_copies`, the function provisioning will call |
 
+### 24.8 M5 — support sessions and the suspended-tenant restricted mode (2026-11-18, branch `feat/phase-03-m5`)
+
+M5 implements §11 (ADR-045, D2, D5) as services, a permission source, the request gate and tests. HTTP endpoints remain M8. Notes:
+
+| # | Section | Note |
+|---|---|---|
+| N50 | §19.1 | Two migrations: `rbac.0006` adds `rbac_permission.support_readable` (the registry refuses the flag on any code that is not a `*.view`); `tenancy.0005` adds `support_session.duration_minutes` (CHECK 15–120). The window starts at approval: `starts_at = approval time`, `ends_at = starts_at + duration`; it is never extended |
+| N51 | §12.3 | Registered: `tenancy.support_session.view|approve|revoke` (tenant) and `tenancy.support_session.request` (platform, P6). Total: 41 codes. `platform_support` now holds the canonical P6 code (the template's old placeholder is gone, owner decision P6). `tenant_owner` holds the three tenant codes |
+| N52 | §11.2 S3 | Support-readable codes: `tenancy.tenant|institution|campus|member.view`, `rbac.role.view`, `rbac.assignment.view`, `audit.event.view`. Never support-readable: any support-session code (S6), `audit.event.view_ip`, any write |
+| N53 | §11.1 | Statuses: `requested` → `approved` (owner, or at once when approval is off) → `active` (first use on the tenant host; owners emailed) → `ended` (staff) / `revoked` (tenant or suspension) / `expired` (window passed) / `rejected`. A lapsed session is marked `expired` on its next use, in a follow-up transaction that commits although the denied request is rolled back. There is no scheduled sweep yet (M7, `TenantTask`); a lapsed session is unusable in any case |
+| N54 | §11.2 S4, R9 | The `support.request` audit row is written by `TenantTransactionMiddleware` in the request transaction after the view returned a 2xx/3xx response. If it fails, the response becomes a 500 and the transaction rolls back (R9) |
+| N55 | §11.2 S3 | Writes through support access get `403 support_access_read_only` from the request gate (before the view) with a durable `support.write_rejected` event; a lapsed, revoked or ended session gets `403 support_session_expired` with a durable `support.access_denied` event |
+| N56 | §11.3 | Restricted owner mode: on a suspended tenant only active tenant owners sign in, and only views that declare `suspended_tenant_allowed` are served (the support-session review endpoints of M8); everything else gets `tenant_suspended`. `TenantMembershipSource` gives owners only the three support-session codes while suspended. Sign-out is always allowed. Members and staff get the generic sign-in error |
+| N57 | §11.3, D2 | `support.revoke_open_sessions()` revokes every open session of the tenant and ends the staff sign-ins on its hosts. The suspension service (P5, M8) must call it; until then it is exercised by tests |
+| N58 | D5 | `set_approval_required` needs an active `tenant_owner` assignment **and** `tenancy.tenant.update`, a reason of ≥ 10 characters, and writes `tenancy.support_approval.changed` (old, new, reason) in the same transaction; owners are emailed after commit. Step-up is enforced by the API (M8) |
+| N59 | §11.1 | Owner emails (English and Bengali): request (approval needed or opened at once), start, approval-setting change. Approval and revocation are audited but not emailed (the acting owner already knows) |
+| N60 | M7 | Celery's leak detector logs a tenant-context warning when an email task runs **eagerly** inside a tenant transaction's commit hook (tests only; real workers enqueue). Declaring tasks as `@platform_task`/`TenantTask` is M7 (C6) |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1423,3 +1441,4 @@ M4 is implemented as specified in §4.1, §4.4, §9 and §12.3 (tenant-scope cod
 - 2026-11-09 — §24.5: owner decisions on the M2 review (N14 accepted, N16 lifecycle changed, N18 list expanded to 68, P6 canonical code). §24.4 N16/N18 are superseded by §24.5.
 - 2026-11-13 — §24.6 appended: M3 implementation notes N25–N35 (details in `PHASE_03_M3_PLAN.md` §11; owner decisions in ADR-048). No approved decision changed.
 - 2026-11-16 — §24.7 appended: M4 implementation notes N36–N49. No approved decision changed.
+- 2026-11-18 — §24.8 appended: M5 implementation notes N50–N60. No approved decision changed.

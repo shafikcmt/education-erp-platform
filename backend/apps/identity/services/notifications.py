@@ -37,6 +37,10 @@ TEMPLATES = frozenset(
         "mfa_disabled",
         "mfa_locked",
         "tenant_invitation",  # Phase 3 M4: sent by apps.tenancy.services.invitations
+        # Phase 3 M5: support sessions, sent to tenant owners by apps.tenancy.services.support
+        "support_session_requested",
+        "support_session_started",
+        "support_approval_changed",
     }
 )
 

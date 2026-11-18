@@ -23,6 +23,8 @@ class Permission(BaseModel):
     is_sensitive = models.BooleanField(default=False)
     requires_mfa = models.BooleanField(default=False)
     requires_step_up = models.BooleanField(default=False)
+    # Phase 3 M5 (plan §11.2 S3): a read permission that an approved support session may use.
+    support_readable = models.BooleanField(default=False)
     deprecated_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

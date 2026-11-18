@@ -76,7 +76,9 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **M1 Complete (2026-11-09):** tenant isolation foundation and O1 (owner-controlled permission catalogue) on `feat/phase-03-tenancy`, PR for owner review. Notes and grant design: plan §24. M1 merged in PR #17.
 **M2 Complete (2026-11-09):** tenancy data model, composite keys, RLS, self-scoped registry, F1–F3, limits, slug rules, lifecycle; merged in PR #18 (`3616778`) (notes: plan §24.4). 
 **M3 Complete (2026-11-13):** host policy, tenant resolution (F1), one tenant transaction per tenant-host request with rollback and a 5 s lock wait limit, membership and tenant-status gate, generic tenant-host sign-in error, durable audit connection, settings guards, `CONN_MAX_AGE = 0` and its measurement, on `feat/phase-03-m3` (record: `plans/PHASE_03_M3_PLAN.md` §11; ADR-048). Tenant hosts stay disabled. Deferred test items: R2 invisibility (M6), R9 (M5), K3 (M10), I/O guards (M7). 
-**M4 Complete (2026-11-16):** `rbac_roleassignment` with composite keys and RLS, tenant permission codes and templates, read-only system role copies with cloning and P7 sync, `TenantMembershipSource`, per-tenant cache versions, and member, invitation and assignment services with guard rails, on `feat/phase-03-m4` (stacked on M3; notes: plan §24.7). No HTTP API yet (M8). M5 starts only on owner authorization.
+**M4 Complete (2026-11-16):** `rbac_roleassignment` with composite keys and RLS, tenant permission codes and templates, read-only system role copies with cloning and P7 sync, `TenantMembershipSource`, per-tenant cache versions, and member, invitation and assignment services with guard rails, on `feat/phase-03-m4` (stacked on M3; notes: plan §24.7). No HTTP API yet (M8). 
+**M4 merged (2026-11-17, PR #30).**
+**M5 Complete (2026-11-18):** support sessions (request, approval, read-only use, revocation, expiry, D5 setting, owner emails), `SupportSessionSource`, R9 audit of every support request, and the suspended-tenant restricted owner mode (D2), on `feat/phase-03-m5` (notes: plan §24.8). Endpoints are M8.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -208,3 +210,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-13 — Phase 3 M3 complete on its branch (ADR-048); M4 awaits owner authorization.
 - 2026-11-16 — Phase 3 M4 complete on its branch; M5 awaits owner authorization.
 - 2026-11-17 — Phase 3 M3 merged (PR #29); M4 in its own pull request.
+- 2026-11-18 — Phase 3 M4 merged (PR #30); M5 complete on its branch.

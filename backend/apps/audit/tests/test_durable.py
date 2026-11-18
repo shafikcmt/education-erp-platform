@@ -139,6 +139,8 @@ def test_durable_set_holds_only_denials_and_failures():
         "identity.login.throttled",
         "identity.mfa.challenge_failed",
         "identity.mfa.locked",
+        "support.access_denied",
+        "support.write_rejected",
         "tenancy.invitation.invalid_attempt",
         "tenancy.isolation.blocked",
     } == DURABLE_ACTIONS

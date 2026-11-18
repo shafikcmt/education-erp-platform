@@ -33,7 +33,8 @@ PLATFORM_ROLES: list[dict[str, Any]] = [
             "identity.mfa.reset",
             "audit.event.view",
         ],
-        "planned": ["platform.support_session.request"],
+        # Phase 3 M5: the canonical code (owner decision P6, plan §24.5).
+        "planned": ["tenancy.support_session.request"],
     },
     {
         "code": "platform_billing",
@@ -105,7 +106,20 @@ _OWNER_CODES = [
     "rbac.assignment.manage",
     "audit.event.view",
     "audit.event.view_ip",
+    # Phase 3 M5: support access is decided by the tenant's owners (ADR-045).
+    "tenancy.support_session.view",
+    "tenancy.support_session.approve",
+    "tenancy.support_session.revoke",
 ]
+# What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
+# review and decide support access, nothing else.
+SUSPENDED_OWNER_CODES = frozenset(
+    {
+        "tenancy.support_session.view",
+        "tenancy.support_session.approve",
+        "tenancy.support_session.revoke",
+    }
+)
 _INSTITUTION_ADMIN_CODES = [
     TENANT_VIEW,
     "tenancy.institution.view",

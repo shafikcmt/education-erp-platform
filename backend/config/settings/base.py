@@ -202,6 +202,8 @@ RBAC_PERMISSION_SOURCES: list[str] = [
     "apps.rbac.sources.PlatformRoleSource",
     # Phase 3 M4: role assignments of the tenant applied to the current transaction.
     "apps.tenancy.rbac_sources.TenantMembershipSource",
+    # Phase 3 M5: read-only grants of an approved support session (ADR-045).
+    "apps.tenancy.rbac_sources.SupportSessionSource",
 ]
 RBAC_CACHE_TTL_SECONDS = 300
 

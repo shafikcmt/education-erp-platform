@@ -1,0 +1,8 @@
+{% autoescape off %}Hello,
+
+{{ changed_by }} changed the support access setting of {{ tenant_name }}.
+{% if required %}Support access now needs an owner's approval again.{% else %}Support access no longer needs approval. Sessions stay read-only, limited to two hours, visible and revocable.{% endif %}
+
+If you did not expect this change, review it in your organisation's settings.
+
+— Education ERP{% endautoescape %}

@@ -270,15 +270,18 @@ def test_memberships_wrapper_uses_the_scope_actor_only(tenant_factory, admin):
     assert [(r.tenant_id, r.membership_status) for r in result] == [(ctx.id, "active")]
 
 
-def test_support_sessions_wrapper_requires_p6_permission(tenant_factory, admin, settings):
-    """P6 needs tenancy.support_session.request (registered in M5): until then it fails closed.
-    With an authorizer that allows it, the wrapper returns the actor's own sessions only."""
-    from apps.rbac.engine import UnknownPermissionError
+def test_support_sessions_wrapper_requires_p6_permission(tenant_factory, admin):
+    """P6 needs ``tenancy.support_session.request`` (registered in M5), checked uncached: an
+    account without it is refused; a Super Admin holds it. The wrapper returns the actor's own
+    sessions only."""
+    from django.core.exceptions import PermissionDenied
 
-    with pytest.raises(UnknownPermissionError):
-        with platform_scope(operation="P6", actor=admin.user, reason="list my sessions"):
+    from tests.helpers import make_user
+
+    plain = make_user("plain-staff@example.com").user
+    with pytest.raises(PermissionDenied):
+        with platform_scope(operation="P6", actor=plain, reason="list my sessions"):
             pass
-    settings.TENANCY_PLATFORM_AUTHORIZER = "apps.tenancy.tests.test_definer_functions.allow_all"
     ctx = tenant_factory()
     with tenant_atomic(ctx):
         m.SupportSession.objects.create(
@@ -290,10 +293,6 @@ def test_support_sessions_wrapper_requires_p6_permission(tenant_factory, admin, 
     with platform_scope(operation="P6", actor=admin.user, reason="list my sessions"):
         sessions = wrappers.support_sessions_of()
     assert [(s.tenant_id, s.status) for s in sessions] == [(ctx.id, "requested")]
-
-
-def allow_all(actor: Any, permission: str) -> None:
-    """Test-only authorizer (settings override above)."""
 
 
 def test_only_the_wrapper_module_calls_the_definer_functions():
