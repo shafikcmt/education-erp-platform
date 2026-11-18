@@ -220,3 +220,4 @@ Verify sign-in with MFA, then remove the old key.
 - 2026-11-06 — Security review of PR #15 fixed (ADR-040): immutability boundary stated precisely; owner-only key rotation; owner-credential isolation; brute-force, CSP and fingerprint-retention controls documented.
 - 2026-11-13 — Phase 3 M3: durable security events (§6) and host policy / tenant hosts (§6a) documented. Tenant hosts remain disabled.
 - 2026-11-18 — Phase 3 M5: support sessions implemented as described in `MULTI_TENANT_ARCHITECTURE.md` §3.4 and plan §24.8 (read-only, tenant-approved by default, ≤ 2 h, audited per request, no access to suspended tenants).
+- 2026-11-18 — Phase 3 M6: the audit log is now separated per scope in the database (private dual-scope RLS): platform staff cannot read tenant audit events from the platform host (D3), and IP retention and erasure run in every scope.

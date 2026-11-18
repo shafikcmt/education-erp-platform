@@ -1418,6 +1418,20 @@ M5 implements §11 (ADR-045, D2, D5) as services, a permission source, the reque
 | N59 | §11.1 | Owner emails (English and Bengali): request (approval needed or opened at once), start, approval-setting change. Approval and revocation are audited but not emailed (the acting owner already knows) |
 | N60 | M7 | Celery's leak detector logs a tenant-context warning when an email task runs **eagerly** inside a tenant transaction's commit hook (tests only; real workers enqueue). Declaring tasks as `@platform_task`/`TenantTask` is M7 (C6) |
 
+### 24.9 M6 — dual-scope RLS on roles and the audit log (2026-11-18, branch `feat/phase-03-m6`)
+
+M6 implements §5.1 for the four Phase 2 tables and the P10 rewrite of §6.3. Notes:
+
+| # | Section | Note |
+|---|---|---|
+| N61 | §19.1 #7–8 | Migrations are `rbac.0007_dual_scope_rls` (not `rbac.0004`) and `audit.0004_tenant_scope`. `audit_auditeventip.tenant_id` is copied from its event by a `BEFORE INSERT` trigger and frozen on update; existing rows are backfilled before RLS is enabled. Both reverse paths are refused unless allowed on a disposable database |
+| N62 | §5.1 | `PENDING_RLS` is now empty: every table is a standard, dual-scope, self-scoped or reviewed registry table, enforced by the coverage gate |
+| N63 | §6.3 P10 | IP retention runs in every scope: once without a tenant context (platform rows), then one tenant transaction per registered tenant, deleted tenants included, each failure isolated (`apps/tenancy/iteration.py`). A test proves the Phase 2 single pass would now miss tenant rows. The Celery task moved to `apps/tenancy/tasks.py` with the same name and schedule, because covering tenants needs the registry and `audit` sits below `tenancy` |
+| N64 | §6.3 P13 | Data-subject IP erasure (`erase_ip_data`), field-key rotation and IP-index rebuild use the same per-scope iteration under P13 (system maintenance touching tenant rows). No catalogue entry was added |
+| N65 | §8.3 R2 | R2 is now complete: a tenant's events (durable or not) and their IP rows are invisible on the platform host and in every other tenant; forensic IP search is limited to the current scope; neither the platform nor another tenant can write into a tenant's log |
+| N66 | D3 | The platform audit API already listed only `tenant_id IS NULL`; RLS now guarantees it in the database. Tenant-log reading happens only through a support session on the tenant host (P11) |
+| N67 | Tests | Tests that read tenant roles or tenant events now do so inside that tenant's transaction (`tests.isolation.factories.system_role / role_codes / tenant_events`). Two Phase 2 tests wrote a tenant event and a tenant role without a tenant; they now prove the database refuses exactly that |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1442,3 +1456,4 @@ M5 implements §11 (ADR-045, D2, D5) as services, a permission source, the reque
 - 2026-11-13 — §24.6 appended: M3 implementation notes N25–N35 (details in `PHASE_03_M3_PLAN.md` §11; owner decisions in ADR-048). No approved decision changed.
 - 2026-11-16 — §24.7 appended: M4 implementation notes N36–N49. No approved decision changed.
 - 2026-11-18 — §24.8 appended: M5 implementation notes N50–N60. No approved decision changed.
+- 2026-11-18 — §24.9 appended: M6 implementation notes N61–N67. No approved decision changed.

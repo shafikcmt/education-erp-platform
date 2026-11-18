@@ -79,6 +79,8 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **M4 Complete (2026-11-16):** `rbac_roleassignment` with composite keys and RLS, tenant permission codes and templates, read-only system role copies with cloning and P7 sync, `TenantMembershipSource`, per-tenant cache versions, and member, invitation and assignment services with guard rails, on `feat/phase-03-m4` (stacked on M3; notes: plan §24.7). No HTTP API yet (M8). 
 **M4 merged (2026-11-17, PR #30).**
 **M5 Complete (2026-11-18):** support sessions (request, approval, read-only use, revocation, expiry, D5 setting, owner emails), `SupportSessionSource`, R9 audit of every support request, and the suspended-tenant restricted owner mode (D2), on `feat/phase-03-m5` (notes: plan §24.8). Endpoints are M8.
+**M5 merged (2026-11-18, PR #31).**
+**M6 Complete (2026-11-18):** dual-scope RLS on `rbac_role` and `rbac_rolepermission`, private dual-scope RLS on both audit tables (D3, R2 completed), and P10 / IP maintenance in every scope, on `feat/phase-03-m6` (notes: plan §24.9).
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -211,3 +213,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-16 — Phase 3 M4 complete on its branch; M5 awaits owner authorization.
 - 2026-11-17 — Phase 3 M3 merged (PR #29); M4 in its own pull request.
 - 2026-11-18 — Phase 3 M4 merged (PR #30); M5 complete on its branch.
+- 2026-11-18 — Phase 3 M5 merged (PR #31); M6 complete on its branch.
