@@ -108,7 +108,9 @@ def bump_cache_version() -> None:
 
 
 def _tenant_version_key(tenant_id: uuid.UUID) -> str:
-    return f"t:{tenant_id}:perm:version"  # tenant-prefixed (CLAUDE.md §10.7)
+    from apps.core.tenancy.keys import tenant_cache_key
+
+    return tenant_cache_key("perm", "version", tenant=tenant_id)  # CLAUDE.md §10.7
 
 
 def tenant_cache_version(tenant_id: uuid.UUID) -> str:

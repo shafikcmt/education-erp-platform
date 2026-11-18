@@ -194,6 +194,13 @@ def tenant_atomic(
             setattr(conn, _STATE_ATTR, _TxState(ctx.id, 1, inside_foreign))
             setattr(conn, _APPLYING_ATTR, None)
             yield ctx
+            if not inside_foreign:
+                # This block is the outermost transaction and is about to commit. Django runs
+                # ``on_commit`` callbacks right after COMMIT, still inside this ``with``: they
+                # must find no applied tenant transaction on the connection (Phase 3 M7). A
+                # tenant query in a callback is then refused by the guard (L4), and a task run
+                # from a callback (eager mode, C6) opens a transaction of its own.
+                setattr(conn, _STATE_ATTR, None)
             if inside_foreign and not conn.needs_rollback:
                 # The enclosing transaction continues after us: clear the settings before the
                 # savepoint is released. (On error, or when the block was marked for rollback

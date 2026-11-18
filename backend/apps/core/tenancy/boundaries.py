@@ -55,9 +55,17 @@ def on_request_finished(**_: Any) -> None:
     check_boundary("request_finished")
 
 
-def on_task_prerun(**_: Any) -> None:
-    check_boundary("task_prerun")
+def _eager(task: Any) -> bool:
+    """An eager task runs inside its caller (tests, or ``apply()``): it is not a boundary.
+    ``TenantTask``/``PlatformTask`` isolate it instead (Phase 3 M7, C6)."""
+    return bool(getattr(getattr(task, "request", None), "is_eager", False))
 
 
-def on_task_postrun(**_: Any) -> None:
-    check_boundary("task_postrun")
+def on_task_prerun(task: Any = None, **_: Any) -> None:
+    if not _eager(task):
+        check_boundary("task_prerun")
+
+
+def on_task_postrun(task: Any = None, **_: Any) -> None:
+    if not _eager(task):
+        check_boundary("task_postrun")
