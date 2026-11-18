@@ -110,6 +110,28 @@ class TenantProtected(APIView):
         return Response({"ok": True})
 
 
+class TenantProtectedWrite(APIView):
+    """A tenant write guarded by a tenant permission (support access must never reach it)."""
+
+    permission_classes = [HasPermission("tenancy.member.update")]
+    host_classes = TENANT_ONLY
+
+    def post(self, request: Request) -> Response:
+        return Response({"ok": True})
+
+
+class SupportReview(APIView):
+    """Stands in for the support-session review endpoints (M8): allowed for owners in the
+    restricted mode of a suspended tenant (D2); never support-readable."""
+
+    permission_classes = [HasPermission("tenancy.support_session.view")]
+    host_classes = TENANT_ONLY
+    suspended_tenant_allowed = True
+
+    def get(self, request: Request) -> Response:
+        return Response({"ok": True})
+
+
 class PlatformOnly(_Open):
     host_classes = frozenset({"platform"})
 
