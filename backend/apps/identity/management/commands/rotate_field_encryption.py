@@ -53,9 +53,20 @@ class Command(BaseCommand):
                 if updates:
                     SessionRecord.objects.filter(pk=rec.pk).update(**updates)
                     counts["session"] += 1
+
+        def rotate_audit_ips() -> int:
+            count = 0
             for row in AuditEventIP.objects.select_for_update():
                 new = _rotate(row.ip_encrypted, IP_PURPOSE, primary)
                 if new:
                     AuditEventIP.objects.filter(pk=row.pk).update(ip_encrypted=new)
-                    counts["audit_ip"] += 1
+                    count += 1
+            return count
+
+        from apps.tenancy.iteration import in_every_scope
+
+        # Audit IP rows live in the platform scope and in every tenant's scope (M6).
+        counts["audit_ip"] = in_every_scope(
+            rotate_audit_ips, operation="P13", reason="rotate field encryption keys"
+        ).rows
         self.stdout.write(f"re-encrypted with key {primary!r}: {counts}")

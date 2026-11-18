@@ -84,8 +84,8 @@ def test_housekeeping_anonymises_old_session_ips_and_purges_tokens():
 
 
 def test_celery_tasks_run():
-    from apps.audit.tasks import anonymize_expired_ips
     from apps.identity.tasks import housekeeping
+    from apps.tenancy.tasks import anonymize_expired_ips  # P10, moved in Phase 3 M6
 
     assert anonymize_expired_ips.delay().get() == 0
     assert housekeeping.delay().get() == {

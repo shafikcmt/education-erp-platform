@@ -31,6 +31,12 @@ REFERENCE_PROBES: dict[str, str] = {
 DUAL_SCOPE_TABLES: dict[str, str] = {
     "isolation_probe_dual": "dual",
     "isolation_probe_dual_private": "dual_private",
+    # Phase 3 M6 (plan §5.1): templates and platform roles are readable everywhere; tenant
+    # roles only in their tenant. Audit events: platform and tenant logs never see each other.
+    "rbac_role": "dual",
+    "rbac_rolepermission": "dual",
+    "audit_auditevent": "dual_private",
+    "audit_auditeventip": "dual_private",
 }
 
 # Registry tables keyed by their own id (plan §5.1). tenancy_tenant: the platform sees every
@@ -45,16 +51,9 @@ class Pending:
     note: str
 
 
-# Phase 2 tables whose policies are part of a later Phase 3 milestone (plan §20). Until then
-# they must have NO row security at all; the milestone moves them to DUAL_SCOPE_TABLES.
-PENDING_RLS: dict[str, Pending] = {
-    "rbac_role": Pending("dual", "M6", "Platform templates + tenant role copies (plan §5.1)."),
-    "rbac_rolepermission": Pending("dual", "M6", "Follows rbac_role (tenant-sync trigger)."),
-    "audit_auditevent": Pending("dual_private", "M6", "Platform and tenant audit events."),
-    "audit_auditeventip": Pending(
-        "dual_private", "M6", "Gains a trigger-filled tenant_id in audit.0004 (plan §19.1)."
-    ),
-}
+# Tables whose policies belong to a later milestone (plan §20). Until then they must have NO row
+# security at all; the milestone moves them to DUAL_SCOPE_TABLES. Empty since M6.
+PENDING_RLS: dict[str, Pending] = {}
 
 
 # --------------------------------------------------------------------------- registry tables

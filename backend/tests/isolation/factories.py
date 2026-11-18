@@ -128,3 +128,34 @@ def committed_tenants(
         delete_probe_rows(*tenants)
         _delete_tenant_rows(*tenants)
         delete_tenants_as_owner(owner_dsn, *tenants)
+
+
+# --------------------------------------------------------------------------- reading (M6)
+# Tenant roles and tenant audit events are under row-level security since M6: they exist only
+# inside their tenant's transaction. These helpers read them there, from anywhere in a test.
+def system_role(tenant: Any, template_code: str) -> Any:
+    """The tenant's read-only system copy of ``template_code`` (loaded in that tenant)."""
+    from apps.rbac.tenant_roles import system_role as load
+
+    tenant_id = getattr(tenant, "id", tenant)
+    with tenant_atomic(tenant_id):
+        return load(tenant_id, template_code)
+
+
+def role_codes(role: Any) -> set[str]:
+    """Permission codes of a role, read in the role's own scope."""
+    from apps.rbac.tenant_roles import role_codes as load
+
+    if role.tenant_id is None:
+        return load(role)
+    with tenant_atomic(role.tenant_id):
+        return load(role)
+
+
+def tenant_events(tenant: Any, *, using: str = "default", **filters: Any) -> list[Any]:
+    """Audit events of one tenant (``using="audit_durable"`` for durable evidence)."""
+    from apps.audit.models import AuditEvent
+
+    tenant_id = getattr(tenant, "id", tenant)
+    with tenant_atomic(tenant_id, using=using):
+        return list(AuditEvent.objects.using(using).filter(**filters).order_by("occurred_at"))

@@ -6,7 +6,7 @@ import uuid
 import pytest
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.utils import DataError, InternalError
+from django.db.utils import DataError, InternalError, ProgrammingError
 
 from apps.rbac import engine
 from apps.rbac.engine import (
@@ -251,15 +251,24 @@ def test_system_roles_are_read_only():
         update_role(actor=sa, role=_role("platform_support"), changes={"name": "x"})
 
 
-def test_role_permission_tenant_id_follows_role_and_role_tenant_is_immutable():
-    tenant = uuid.uuid4()
-    role = Role.objects.create(tenant_id=tenant, code="t_role", name="T", kind=RoleKind.TENANT)
+def test_role_permission_tenant_id_follows_role_and_role_tenant_is_immutable(tenant_factory):
+    from apps.core.tenancy import tenant_atomic
+
+    ctx = tenant_factory()
+    tenant = ctx.id
     perm = Permission.objects.get(code="identity.user.view")
-    rp = RolePermission.objects.create(role=role, permission=perm, tenant_id=None)
-    rp.refresh_from_db()
-    assert rp.tenant_id == tenant
-    with pytest.raises(IntegrityError), transaction.atomic():
-        Role.objects.filter(pk=role.pk).update(tenant_id=uuid.uuid4())
+    # Tenant roles are written inside their tenant (dual-scope RLS, Phase 3 M6).
+    with tenant_atomic(ctx):
+        role = Role.objects.create(tenant_id=tenant, code="t_role", name="T", kind=RoleKind.TENANT)
+        rp = RolePermission.objects.create(role=role, permission=perm, tenant_id=None)
+        rp.refresh_from_db()
+        assert rp.tenant_id == tenant
+        with pytest.raises(IntegrityError), transaction.atomic():
+            Role.objects.filter(pk=role.pk).update(tenant_id=uuid.uuid4())
+    # Outside the tenant the role does not exist, and the platform can't create one.
+    assert not Role.objects.filter(pk=role.pk).exists()
+    with pytest.raises(ProgrammingError, match="row-level security"), transaction.atomic():
+        Role.objects.create(tenant_id=tenant, code="sneaky", name="S", kind=RoleKind.TENANT)
 
 
 def test_role_kind_and_tenant_must_be_consistent():

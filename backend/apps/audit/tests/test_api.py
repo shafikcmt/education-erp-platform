@@ -25,12 +25,23 @@ def test_list_masks_ips_and_filters(admin_api):
     assert admin_api.get("/api/v1/platform/audit-events/", occurred_after="bad").status_code == 400
 
 
-def test_tenant_events_are_not_listed_on_the_platform(admin_api):
-    import uuid
+def test_tenant_events_are_not_listed_on_the_platform(admin_api, tenant_factory):
+    """D3: a tenant's events exist only inside that tenant (private dual-scope RLS, M6); the
+    platform can neither list them nor write into a tenant's log from outside it."""
+    from django.db import transaction
+    from django.db.utils import ProgrammingError
 
-    record("identity.logout", tenant_id=uuid.uuid4())
+    from apps.core.tenancy import tenant_atomic
+
+    tenant = tenant_factory()
+    with tenant_atomic(tenant):
+        tenant_event = record("identity.logout")
+    assert tenant_event.tenant_id == tenant.id
     rows = admin_api.get("/api/v1/platform/audit-events/", action="identity.logout").json()
     assert rows["results"] == []
+    assert not AuditEvent.objects.filter(pk=tenant_event.pk).exists()
+    with pytest.raises(ProgrammingError, match="row-level security"), transaction.atomic():
+        record("identity.logout", tenant_id=tenant.id)
 
 
 def test_reveal_needs_step_up_and_is_audited(admin, admin_api):

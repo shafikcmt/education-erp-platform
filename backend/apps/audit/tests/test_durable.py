@@ -30,7 +30,11 @@ class _BoomError(Exception):
 
 
 def _events(tenant, **filters):
-    return in_thread(lambda: list(AuditEvent.objects.filter(tenant_id=tenant.id, **filters)))
+    def read() -> list[AuditEvent]:
+        with tenant_atomic(tenant):
+            return list(AuditEvent.objects.filter(**filters))
+
+    return in_thread(read)
 
 
 def test_durable_event_survives_the_rollback_and_plain_events_do_not(committed_tenant_pair):

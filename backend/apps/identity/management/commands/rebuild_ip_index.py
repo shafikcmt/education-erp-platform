@@ -20,12 +20,20 @@ class Command(BaseCommand):
 
     def handle(self, *args: Any, **options: Any) -> None:
         require_owner_role("rebuild_ip_index")
-        updated = 0
+        from apps.tenancy.iteration import in_every_scope
+
+        def rebuild(model: Any) -> int:
+            count = 0
+            for row in model.objects.select_for_update().filter(ip_encrypted__isnull=False):
+                index = ip_search_index(open_ip(row.ip_encrypted))
+                model.objects.filter(pk=row.pk).update(ip_index=index)
+                count += 1
+            return count
+
         with transaction.atomic():
-            for model in (AuditEventIP, SessionRecord):
-                rows = model.objects.select_for_update().filter(ip_encrypted__isnull=False)
-                for row in rows:
-                    index = ip_search_index(open_ip(row.ip_encrypted))
-                    model.objects.filter(pk=row.pk).update(ip_index=index)
-                    updated += 1
+            updated = rebuild(SessionRecord)
+        # Audit IP rows live in the platform scope and in every tenant's scope (M6).
+        updated += in_every_scope(
+            lambda: rebuild(AuditEventIP), operation="P13", reason="rebuild IP blind indexes"
+        ).rows
         self.stdout.write(f"rebuilt {updated} IP indexes")

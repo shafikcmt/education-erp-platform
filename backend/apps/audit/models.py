@@ -73,6 +73,9 @@ class AuditEventIP(models.Model):
     ip_prefix = models.CharField(max_length=64, blank=True, default="")
     created_at = models.DateTimeField(db_index=True)
     anonymized_at = models.DateTimeField(null=True, blank=True)
+    # Phase 3 M6: copy of the event's tenant, set by trigger (audit.0004), so the side table
+    # carries the same private dual-scope RLS as the events. Never written by the application.
+    tenant_id = models.UUIDField(null=True, blank=True, editable=False, db_index=True)
 
     class Meta:
         db_table = "audit_auditeventip"

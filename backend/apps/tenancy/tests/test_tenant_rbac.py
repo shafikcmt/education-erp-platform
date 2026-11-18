@@ -33,7 +33,14 @@ from apps.tenancy.rules import TenantStatus
 from apps.tenancy.services import assignments, memberships
 from apps.tenancy.services.system_roles import sync_all_tenants
 from tests.helpers import make_user
-from tests.isolation.factories import add_member, grant_role, seed_tenant_roles
+from tests.isolation.factories import (
+    add_member,
+    grant_role,
+    role_codes,
+    seed_tenant_roles,
+    system_role,
+    tenant_events,
+)
 
 pytestmark = pytest.mark.django_db
 SELF = SELF_SERVICE_CODES
@@ -48,7 +55,7 @@ def _perms(tenant, user, target: ScopeTarget | None = None, *, cache: bool = Fal
 
 
 def _codes(tenant, template_code: str) -> set[str]:
-    return tenant_roles.role_codes(tenant_roles.system_role(tenant.id, template_code))
+    return role_codes(system_role(tenant.id, template_code))
 
 
 def _membership(org, user) -> Membership:
@@ -111,11 +118,11 @@ def test_cross_tenant_and_template_references_are_impossible(org, tenant_site):
         other_inst = Institution.objects.create(code="x", name="X", institution_type="school")
         other_campus = Campus.objects.create(institution=other_inst, code="c", name="C")
     stranger = add_member(other, make_user("stranger@example.com").user)
-    other_role = tenant_roles.system_role(other.id, "teacher")
+    other_role = system_role(other.id, "teacher")
     template = Role.objects.get(kind=RoleKind.TEMPLATE, code="teacher")
     platform = Role.objects.get(kind=RoleKind.PLATFORM, code="super_admin")
     mine = _membership(org, org.teacher)
-    role = tenant_roles.system_role(org.tenant.id, "teacher")
+    role = system_role(org.tenant.id, "teacher")
     t = org.tenant.id
 
     def insert(membership, role_id, scope, inst=None, campus=None) -> str:
@@ -161,15 +168,17 @@ def test_referenced_rows_cannot_be_deleted(org):
 # --------------------------------------------------------------------------- system copies
 def test_system_copies_mirror_the_templates_and_are_read_only(org):
     t = org.tenant.id
-    copies = tenant_roles.tenant_roles(t)
-    assert sorted(copies.values_list("code", flat=True)) == sorted(TEMPLATE_CODES)
-    for copy in copies.select_related("template"):
-        assert copy.is_system and copy.kind == RoleKind.TENANT and copy.tenant_id == t
-        template = copy.template
-        assert template is not None and template.kind == RoleKind.TEMPLATE
-        assert tenant_roles.role_codes(copy) == tenant_roles.role_codes(template)
     with tenant_atomic(org.tenant):
+        copies = tenant_roles.tenant_roles(t)
+        assert sorted(copies.values_list("code", flat=True)) == sorted(TEMPLATE_CODES)
+        for copy in copies.select_related("template"):
+            assert copy.is_system and copy.kind == RoleKind.TENANT and copy.tenant_id == t
+            template = copy.template
+            assert template is not None and template.kind == RoleKind.TEMPLATE
+            assert tenant_roles.role_codes(copy) == tenant_roles.role_codes(template)
         assert not tenant_roles.sync_system_copies(t).changed  # idempotent
+    # Outside the tenant (platform context) its roles don't exist: RLS (M6).
+    assert not tenant_roles.tenant_roles(t).exists()
     owner_codes = _codes(org.tenant, "tenant_owner")
     assert {"tenancy.member.remove", "rbac.assignment.manage", "rbac.role.clone"} <= owner_codes
     assert _codes(org.tenant, "institution_admin") < owner_codes
@@ -179,25 +188,29 @@ def test_system_copies_mirror_the_templates_and_are_read_only(org):
 
 def test_template_reference_must_be_a_template(org):
     platform = Role.objects.get(kind=RoleKind.PLATFORM, code="super_admin")
-    copy = tenant_roles.system_role(org.tenant.id, "teacher")
+    copy = system_role(org.tenant.id, "teacher")
     template = Role.objects.get(kind=RoleKind.TEMPLATE, code="teacher")
-    for bad in (platform.pk, copy.pk, new_id()):
-        with pytest.raises(IntegrityError, match="template"), transaction.atomic():
-            Role.objects.filter(pk=copy.pk).update(template_id=bad)
-    # Only a tenant's system copy may carry a template, and only one copy per template.
-    with pytest.raises(IntegrityError, match="template_only_on_system_copy"), transaction.atomic():
-        Role.objects.create(
-            tenant_id=org.tenant.id, kind="tenant", code="custom", name="C", template=template
-        )
-    with pytest.raises(IntegrityError, match="one_copy_per_template"), transaction.atomic():
-        Role.objects.create(
-            tenant_id=org.tenant.id,
-            kind="tenant",
-            code="teacher-two",
-            name="T",
-            is_system=True,
-            template=template,
-        )
+    with tenant_atomic(org.tenant):
+        for bad in (platform.pk, copy.pk, new_id()):
+            with pytest.raises(IntegrityError, match="template"), transaction.atomic():
+                Role.objects.filter(pk=copy.pk).update(template_id=bad)
+        # Only a tenant's system copy may carry a template, and only one copy per template.
+        with (
+            pytest.raises(IntegrityError, match="template_only_on_system_copy"),
+            transaction.atomic(),
+        ):
+            Role.objects.create(
+                tenant_id=org.tenant.id, kind="tenant", code="custom", name="C", template=template
+            )
+        with pytest.raises(IntegrityError, match="one_copy_per_template"), transaction.atomic():
+            Role.objects.create(
+                tenant_id=org.tenant.id,
+                kind="tenant",
+                code="teacher-two",
+                name="T",
+                is_system=True,
+                template=template,
+            )
 
 
 def test_p7_syncs_every_tenant_and_isolates_failures(org, tenant_site, monkeypatch):
@@ -214,7 +227,8 @@ def test_p7_syncs_every_tenant_and_isolates_failures(org, tenant_site, monkeypat
     for tenant in (org.tenant, other):
         assert _codes(tenant, "teacher") == {"tenancy.tenant.view", "tenancy.member.view"}
         assert tenant_cache_version(tenant.id) != versions[tenant.id]
-    assert not Role.objects.filter(tenant_id=gone.id).exists()
+    with tenant_atomic(gone):
+        assert not Role.objects.filter(tenant_id=gone.id).exists()
     assert sync_all_tenants().changed == 0  # idempotent
     # A failure in one tenant never stops the others.
     extra.delete()
@@ -239,7 +253,7 @@ def _permission_id(code: str) -> Any:
 
 
 def test_clone_is_editable_never_synced_and_needs_the_permissions(org):
-    source = tenant_roles.system_role(org.tenant.id, "institution_admin")
+    source = system_role(org.tenant.id, "institution_admin")
     with tenant_atomic(org.tenant):
         with pytest.raises(PermissionDenied):
             tenant_roles.clone_role(
@@ -404,7 +418,7 @@ def _grant(org, actor, user, template_code, scope, institution=None, campus=None
         return assignments.grant_assignment(
             actor=actor,
             membership=membership,
-            role=tenant_roles.system_role(org.tenant.id, template_code),
+            role=system_role(org.tenant.id, template_code),
             scope_type=scope,
             institution=institution,
             campus=campus,
@@ -448,9 +462,9 @@ def test_only_roles_and_scopes_of_this_tenant_can_be_granted(org, tenant_site):
     bad_roles = [
         Role.objects.get(kind=RoleKind.TEMPLATE, code="teacher"),
         Role.objects.get(kind=RoleKind.PLATFORM, code="super_admin"),
-        tenant_roles.system_role(other.id, "teacher"),
+        system_role(other.id, "teacher"),
     ]
-    good = tenant_roles.system_role(org.tenant.id, "teacher")
+    good = system_role(org.tenant.id, "teacher")
     with tenant_atomic(org.tenant):
         for role in bad_roles:
             with pytest.raises(ValidationError):
@@ -477,7 +491,6 @@ def test_only_roles_and_scopes_of_this_tenant_can_be_granted(org, tenant_site):
 
 
 def test_grant_and_revoke_are_audited_idempotent_and_effective_at_once(org):
-    from apps.audit.models import AuditEvent
 
     new = make_user("new@example.com").user
     first = _grant(org, org.owner, new, "institution_admin", "institution", org.north)
@@ -492,8 +505,8 @@ def test_grant_and_revoke_are_audited_idempotent_and_effective_at_once(org):
         assert revoked.revoked_at is not None and revoked.revoked_by == org.owner.pk
         assert assignments.revoke_assignment(actor=org.owner, assignment=first).pk == first.pk
     assert _perms(org.tenant, new, org.t_main, cache=True) == SELF
-    events = AuditEvent.objects.filter(tenant_id=org.tenant.id, action__startswith="rbac.assign")
-    assert sorted(events.values_list("action", "metadata__role_code")) == [
+    events = tenant_events(org.tenant, action__startswith="rbac.assign")
+    assert sorted((e.action, e.metadata["role_code"]) for e in events) == [
         ("rbac.assignment.granted", "institution_admin"),
         ("rbac.assignment.granted", "institution_admin"),
         ("rbac.assignment.revoked", "institution_admin"),
@@ -563,7 +576,7 @@ def test_acting_on_a_member_needs_every_permission_that_member_holds(org):
             assignments.grant_assignment(
                 actor=org.owner,
                 membership=removed,
-                role=tenant_roles.system_role(org.tenant.id, "teacher"),
+                role=system_role(org.tenant.id, "teacher"),
                 scope_type="tenant",
             )
     assert _perms(org.tenant, org.head, org.t_north) == SELF

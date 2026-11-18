@@ -10,7 +10,6 @@ from django.core import mail
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 
-from apps.audit.models import AuditEvent
 from apps.core.tenancy import tenant_atomic
 from apps.core.tokens import hash_token
 from apps.rbac import tenant_roles
@@ -22,7 +21,13 @@ from apps.tenancy.errors import InvitationEmailMismatch, InvitationInvalid, Invi
 from apps.tenancy.models import Invitation, Membership
 from apps.tenancy.services import invitations
 from tests.helpers import make_user
-from tests.isolation.factories import add_member, seed_tenant_roles
+from tests.isolation.factories import (
+    add_member,
+    role_codes,
+    seed_tenant_roles,
+    system_role,
+    tenant_events,
+)
 
 DURABLE = "audit_durable"
 pytestmark = pytest.mark.django_db(databases=["default", DURABLE])
@@ -48,9 +53,7 @@ def _accept(org, token, user):
 
 
 def _attempts(org) -> list[str]:
-    events = AuditEvent.objects.using(DURABLE).filter(
-        tenant_id=org.tenant.id, action="tenancy.invitation.invalid_attempt"
-    )
+    events = tenant_events(org.tenant, using=DURABLE, action="tenancy.invitation.invalid_attempt")
     return sorted(e.metadata["reason"] for e in events)
 
 
@@ -67,7 +70,7 @@ def test_invitation_stores_only_the_hash_and_mails_a_tenant_host_link_after_comm
     assert message.to == ["new.teacher@example.com"]
     assert f"http://acme.tenants.test:8080/en/accept-invitation#token={token}" in message.body
     assert "ACME" in message.subject
-    event = AuditEvent.objects.get(tenant_id=org.tenant.id, action="tenancy.invitation.created")
+    [event] = tenant_events(org.tenant, action="tenancy.invitation.created")
     assert event.metadata == {"role_code": "teacher", "scope_type": "campus"}
     assert token not in str(event.metadata)
 
@@ -123,7 +126,7 @@ def test_accepting_creates_the_membership_and_the_offered_assignment(org):
             org.main.pk,
         )
         assert effective_permissions(person, org.t_main, use_cache=True) == (
-            tenant_roles.role_codes(tenant_roles.system_role(org.tenant.id, "campus_admin")) | SELF
+            role_codes(system_role(org.tenant.id, "campus_admin")) | SELF
         )
         assert Invitation.objects.get(token_hash=hash_token(token)).accepted_at is not None
     # Re-accepting is idempotent for the same person, and "used" for anyone else.
