@@ -1432,6 +1432,21 @@ M6 implements §5.1 for the four Phase 2 tables and the P10 rewrite of §6.3. No
 | N66 | D3 | The platform audit API already listed only `tenant_id IS NULL`; RLS now guarantees it in the database. Tenant-log reading happens only through a support session on the tenant host (P11) |
 | N67 | Tests | Tests that read tenant roles or tenant events now do so inside that tenant's transaction (`tests.isolation.factories.system_role / role_codes / tenant_events`). Two Phase 2 tests wrote a tenant event and a tenant role without a tenant; they now prove the database refuses exactly that |
 
+### 24.10 M7 — Celery tasks, key helpers and the external-I/O guard (2026-11-18, branch `feat/phase-03-m7`)
+
+M7 implements §8.5 (C1–C10), §8.7 and the deferred items of M3 and M5. Notes:
+
+| # | Section | Note |
+|---|---|---|
+| N68 | §8.5 C10 | Declarations: `apps.core.tasking.platform_task(name=, operation=)` (only enabled **system** operations of the catalogue) and `apps.tenancy.tasking.tenant_task(name=, statuses=)`. Existing tasks: `core.ping`, `identity.deliver_security_email`, `identity.housekeeping` → P12; `audit.anonymize_expired_ips` → P10. A CI test fails for any undeclared task and for any beat entry that is not a platform task |
+| N69 | §8.5 C1–C4, C7, C9 | `TenantTask` takes `tenant_id` as a keyword (never inherited), validates it, and opens `tenant_atomic` per attempt; the registry status is read **inside** that transaction (self-scoped row). It refuses missing, malformed, unknown and unaccepted tenants (`TenantTaskRefused`) before the body runs. Celery's own argument check is off for tenant tasks so the refusal is uniform |
+| N70 | §8.5 C6, L4 | `tenant_atomic` now clears the connection's tenant state when the outermost transaction is about to commit. `on_commit` callbacks still see the bound context, so a tenant query in a callback is still refused (L4, test unchanged); a tenant task applied from a callback opens its own transaction for the same tenant and raises `TenantContextConflict` for another. The `task_prerun/postrun` leak detectors skip eager runs (not a boundary). This removes the eager-mode warning recorded in N60 |
+| N71 | §8.5 C8 | Platform tasks unbind any tenant context for their duration (eager runs from tenant requests) |
+| N72 | §15.3 K6 | K6 runs a real Celery worker in-process (thread pool, concurrency 2, memory broker) with real commits. The prefork variant through the compose worker is added with the M10 stack tests (like K3) |
+| N73 | §8.7 | `tenant_cache_key` (`t:{tenant}:…`) and `tenant_storage_key` (`tenants/{tenant}/…`, no `.`/`..`/absolute/backslash/control characters) in `apps.core.tenancy.keys`; the per-tenant permission version and the denial-throttle keys use them. A static test forbids hand-built cache keys in `apps/tenancy` |
+| N74 | §8.4.3 | External-I/O guard: `assert_no_open_tenant_transaction()` refuses email/storage I/O while a tenant transaction is open, except inside a Celery task body. The test email backend applies it to every test (an autouse fixture keeps it, because pytest-django replaces the backend); `tenant_storage()` applies it to storage. This completes the M3 deferred guards |
+| N75 | §11.1, N53 | Support-session expiry sweep: platform task `tenancy.sweep_support_sessions` (P12, registry read) every 5 minutes enqueues `tenancy.expire_support_sessions(tenant_id=…)` per active, suspended or offboarding tenant (mechanism I) |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1457,3 +1472,4 @@ M6 implements §5.1 for the four Phase 2 tables and the P10 rewrite of §6.3. No
 - 2026-11-16 — §24.7 appended: M4 implementation notes N36–N49. No approved decision changed.
 - 2026-11-18 — §24.8 appended: M5 implementation notes N50–N60. No approved decision changed.
 - 2026-11-18 — §24.9 appended: M6 implementation notes N61–N67. No approved decision changed.
+- 2026-11-18 — §24.10 appended: M7 implementation notes N68–N75. No approved decision changed.

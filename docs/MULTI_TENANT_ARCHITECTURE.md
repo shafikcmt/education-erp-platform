@@ -99,6 +99,13 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 - Jobs that must reach every row of these tables (IP retention P10, data-subject erasure, key rotation, index rebuild) run once for the platform and once per tenant; RLS is never bypassed.
 - Every table is now covered: none is pending RLS (`tests/isolation/registry.py`). Details: plan §24.9.
 
+### 3.6 Implemented Celery task isolation (Phase 3 M7)
+
+- Every task is either a **platform task** (bound to a catalogued system operation; never sees a tenant) or a **tenant task** (`tenant_id` passed explicitly; runs in that tenant's transaction; refused for missing, unknown or unaccepted tenants). Beat schedules only platform tasks; work for many tenants fans out one tenant task per tenant.
+- A task run from a transaction's commit hook gets its own transaction; tenant state never leaks between tasks (leak detectors at task start and end).
+- Cache keys are `t:{tenant}:…` and object-storage keys `tenants/{tenant}/…`, built only by the helpers in `apps.core.tenancy.keys`; email and storage I/O inside an open tenant transaction is refused in tests.
+- Details: plan §24.10.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -238,3 +245,4 @@ A failure blocks merge.
 - 2026-11-16 — Phase 3 M4: §3.3 added (implemented tenant authorization).
 - 2026-11-18 — Phase 3 M5: §3.4 added (implemented support access).
 - 2026-11-18 — Phase 3 M6: §3.5 added (dual-scope RLS on roles and the audit log).
+- 2026-11-18 — Phase 3 M7: §3.6 added (Celery task isolation, key helpers).

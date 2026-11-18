@@ -11,8 +11,9 @@
   - **M3 (host policy, tenant request lifecycle, durable audit): Complete** and merged into `main` (PR [#29](https://github.com/shafikcmt/education-erp-platform/pull/29), squash `066b727`; Sessions 20 and 22). Deferred test items are listed under "Known gaps". **Tenant hosts remain disabled.**
   - **M4 (memberships, invitations, role assignments, tenant roles): Complete** and merged into `main` (PR [#30](https://github.com/shafikcmt/education-erp-platform/pull/30), squash `14a54d6`; Sessions 21–22).
   - **M5 (support sessions, restricted owner mode): Complete** and merged into `main` (PR [#31](https://github.com/shafikcmt/education-erp-platform/pull/31), squash `cd5d07a`; Session 23).
-  - **M6 (dual-scope RLS on roles and the audit log, P10 in every scope): Complete** on `feat/phase-03-m6` (Session 24).
-  - M7 has not started.
+  - **M6 (dual-scope RLS on roles and the audit log, P10 in every scope): Complete** and merged into `main` (PR [#32](https://github.com/shafikcmt/education-erp-platform/pull/32), squash `0b39b39`; Session 24).
+  - **M7 (declared Celery tasks, TenantTask, key helpers, I/O guard, support expiry sweep): Complete** on `feat/phase-03-m7` (Session 25).
+  - M8 has not started.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -29,7 +30,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`); `feat/phase-03-m6` (M6) | **M1–M5 Complete (merged); M6 Complete (branch)**; M5–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`); `feat/phase-03-m7` (M7) | **M1–M6 Complete (merged); M7 Complete (branch)**; M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -82,8 +83,9 @@ See `DECISION_LOG.md`.
 - **Phase 3 M5 gaps (recorded, not hidden; plan §24.8):**
   - **No HTTP endpoints** for requesting, approving, rejecting, revoking or listing support sessions, nor for the approval setting (M8). Banner and history exist as selectors.
   - **Suspension service (P5)** is M8; it must call `support.revoke_open_sessions()`.
-  - **No scheduled expiry sweep:** lapsed sessions expire on their next use (M7 adds tasks). They are never usable after `ends_at`.
-  - **Eager-mode Celery warning** in tests when an email task runs inside a tenant commit hook (M7, C6).
+  - ~~**No scheduled expiry sweep**~~ — **resolved in M7** (`tenancy.sweep_support_sessions` every 5 minutes).
+  - ~~**Eager-mode Celery warning**~~ — **resolved in M7** (C6; plan §24.10 N70).
+  - **K6 prefork:** K6 runs with an in-process threaded worker; the prefork run through the compose worker comes with the M10 stack tests.
 - **Phase 3 M4 gaps (recorded, not hidden; plan §24.7):**
   - **No HTTP API yet** for members, invitations, roles and assignments (M8). M4 is models, services, the permission source and tests.
   - **Invitation acceptance** works for an existing signed-in account only; creating a new account from an invitation is M8.
@@ -96,7 +98,7 @@ See `DECISION_LOG.md`.
   - ~~**R2** cross-tenant invisibility of audit events~~ — **resolved in M6** (private dual-scope RLS on both audit tables; `tests/isolation/test_dual_scope_tables.py`).
   - **R9** (support-session read audited atomically) is not implemented (**M5**).
   - **K3** (concurrency through Nginx/Uvicorn) is not implemented (**M10**); L9 is covered in process only.
-  - **External-I/O guards** (email, storage) are not implemented (**M7**).
+  - ~~**External-I/O guards** (email, storage)~~ — **resolved in M7** (`apps.core.tenancy.keys`; guarded test email backend).
   - **Suspended tenants** deny everyone, owners included, and **offboarding** tenants deny all writes, until M4/M5 add owner roles and the D2 restricted mode.
   - **No tenant RBAC source** exists before M4: on a tenant host only self-service (own account) permissions work.
   - **D4 measurement** was taken on the development stack (debug server settings, shared VM), so absolute numbers are indicative only; see `docs/benchmarks/PHASE_03_CONNECTIONS.md`.
@@ -695,3 +697,13 @@ See `DECISION_LOG.md`.
   - Docker clean-volume bootstrap with both migrations; seeding as the owner under RLS (22 roles, 41 permissions); `smoke_check` passed; the worker registers `audit.anonymize_expired_ips` from its new module; Playwright **31 passed**; gitleaks: no leaks; no dependency change.
 - **Not done:** M7 and later; tenant hosts not enabled; nothing deployed; Dependabot PRs untouched.
 - **Next recommended task:** M7 (`TenantTask`, `@platform_task` declarations, leak detectors, cache and storage key helpers; also the support-session expiry sweep and the external-I/O guards).
+
+### 2026-11-18 — Session 25 (M6 merge; Phase 3 M7 implementation)
+- **M6:** [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) — CI **8/8 success**; squash-merged pinned to `b42e6c4` → **`0b39b39`**.
+- **M7 branch:** `feat/phase-03-m7` from `main` `0b39b39`; owner asked to continue in the same mode.
+- **Implemented (M7 scope only):** declared platform/tenant tasks (C10); `TenantTask` (C1–C4, C7, C9); commit-hook isolation and eager-aware leak detectors (C6); platform tasks never see a tenant (C8); support-session expiry sweep; tenant cache and storage key helpers with a static check; external-I/O guard and guarded test email backend.
+- **Verification (actual results, local):**
+  - backend: **841 passed, 9 skipped**; coverage **95.58%**; ruff, ruff format, mypy (222 files) clean; import-linter 9/9; `makemigrations --check` clean (no migration); OpenAPI unchanged;
+  - Docker clean-volume bootstrap; the worker registers all six declared tasks and ran the support sweep end to end; `smoke_check` passed; Playwright **31 passed**; gitleaks: no leaks; no dependency change.
+- **Not done:** M8 and later; tenant hosts not enabled; nothing deployed; Dependabot PRs untouched.
+- **Next recommended task:** M8 (tenant-host and platform APIs, provisioning P4, suspension P5, OpenAPI and TypeScript client, URL audit with host metadata).

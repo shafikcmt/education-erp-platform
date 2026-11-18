@@ -49,6 +49,7 @@
 - Flaky tests are fixed or quarantined with an issue reference within the same PR — never silently retried forever.
 - **Tenant-host tests (Phase 3 M3):** tenant hosts are off by default in the test settings too. The `tenant_hosts` / `tenant_site` fixtures switch them on, use the reserved domain `{slug}.tenants.test`, and install probe endpoints (`tests.isolation_app.urls`) that exist only in tests.
 - **Durable audit in tests:** `audit_durable` is a real second connection. A test that triggers a durable event lists it in `pytest.mark.django_db(databases=[...])` and reads the events through that alias. Worker-thread tests commit real, append-only audit events, so assertions on audit events must be scoped (by tenant, actor or request), never global counts.
+- **Celery tasks (Phase 3 M7):** every new task is declared with `platform_task` (a catalogued system operation) or `tenant_task`; the declaration test fails otherwise. The test email backend refuses to send inside an open tenant transaction for every test.
 - **Real transactions:** commit, rollback, `on_commit` and connection-reuse behaviour are tested in worker threads on unwrapped connections with committed tenants (`committed_tenant_pair`, `committed_tenant_sites`), which the fixtures remove afterwards.
 
 ## 6. Commands (implemented in Phase 1 — see `Makefile`)
@@ -78,3 +79,4 @@ Each phase summary includes the exact commands run and their results (pass/fail 
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Phase 1: commands implemented; test-role mechanics documented.
 - 2026-11-13 — Phase 3 M3: tenant-host fixtures, durable-audit and real-transaction test conventions.
+- 2026-11-18 — Phase 3 M7: task declaration rule and the guarded email backend.
