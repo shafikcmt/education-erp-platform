@@ -26,7 +26,7 @@ from apps.tenancy.rules import TenantStatus
 from apps.tenancy.selectors import support as support_selectors
 from apps.tenancy.services import support
 from tests.helpers import PASSWORD, Api, Person, make_user
-from tests.isolation.factories import grant_role, seed_tenant_roles, tenant_host
+from tests.isolation.factories import grant_role, seed_tenant_roles, tenant_events, tenant_host
 
 DURABLE = "audit_durable"
 pytestmark = pytest.mark.django_db(databases=["default", DURABLE])
@@ -89,8 +89,7 @@ def _refused(org, person: Person) -> bool:
 
 
 def _events(org, action: str, *, durable: bool = False) -> list[AuditEvent]:
-    qs = AuditEvent.objects.using(DURABLE) if durable else AuditEvent.objects
-    return list(qs.filter(tenant_id=org.tenant.id, action=action))
+    return tenant_events(org.tenant, using=DURABLE if durable else "default", action=action)
 
 
 def _session(org, pk) -> SupportSession:
@@ -357,7 +356,7 @@ def test_only_an_owner_changes_the_approval_setting_and_it_is_audited(
         owner_like = tenant_roles.clone_role(
             actor=org.owner,
             tenant_id=org.tenant.id,
-            source=tenant_roles.system_role(org.tenant.id, "tenant_owner"),
+            source=tenant_roles.system_role(org.tenant.id, "tenant_owner"),  # in the tenant
             code="co-owner",
             name="Co-owner",
         )

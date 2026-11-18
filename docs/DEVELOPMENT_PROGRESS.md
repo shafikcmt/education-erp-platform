@@ -10,8 +10,9 @@
   - **M2 (tenancy data model): Complete** and merged into `main` (PR [#18](https://github.com/shafikcmt/education-erp-platform/pull/18), squash `3616778`; Sessions 16–18).
   - **M3 (host policy, tenant request lifecycle, durable audit): Complete** and merged into `main` (PR [#29](https://github.com/shafikcmt/education-erp-platform/pull/29), squash `066b727`; Sessions 20 and 22). Deferred test items are listed under "Known gaps". **Tenant hosts remain disabled.**
   - **M4 (memberships, invitations, role assignments, tenant roles): Complete** and merged into `main` (PR [#30](https://github.com/shafikcmt/education-erp-platform/pull/30), squash `14a54d6`; Sessions 21–22).
-  - **M5 (support sessions, restricted owner mode): Complete** on `feat/phase-03-m5` (Session 23). Deferred items are listed under "Known gaps".
-  - M6 has not started.
+  - **M5 (support sessions, restricted owner mode): Complete** and merged into `main` (PR [#31](https://github.com/shafikcmt/education-erp-platform/pull/31), squash `cd5d07a`; Session 23).
+  - **M6 (dual-scope RLS on roles and the audit log, P10 in every scope): Complete** on `feat/phase-03-m6` (Session 24).
+  - M7 has not started.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -28,7 +29,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`); `feat/phase-03-m5` (M5) | **M1–M4 Complete (merged); M5 Complete (branch)**; M5–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`); `feat/phase-03-m6` (M6) | **M1–M5 Complete (merged); M6 Complete (branch)**; M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -88,11 +89,11 @@ See `DECISION_LOG.md`.
   - **Invitation acceptance** works for an existing signed-in account only; creating a new account from an invitation is M8.
   - **Provisioning (P4)** and the platform permission codes are M8; the support-session codes and the `support_readable` flag are M5.
   - **MFA enrollment** for a privileged tenant member happens on the platform host until M8 exposes the endpoints on tenant hosts.
-  - **`rbac_role` / `rbac_rolepermission` still have no RLS** (M6). M4 code filters tenant roles by `tenant_id` explicitly everywhere.
+  - ~~`rbac_role` / `rbac_rolepermission` have no RLS~~ — **resolved in M6** (dual-scope RLS). The explicit `tenant_id` filters in M4 code stay as a second layer.
   - **Inviter re-check:** an invitation stays valid if the inviter later loses the right to invite; it can be revoked. Re-validating at acceptance is a possible hardening for M8.
   - **K4** is covered at the primitive level only (M2 test); the service-level test arrives with the institution API (M8).
 - **Phase 3 M3 gaps (recorded, not hidden; `plans/PHASE_03_M3_PLAN.md` §11.4):**
-  - **R2** is proven only for the tenant id of durable events. Cross-tenant invisibility of audit events is untested until the audit tables get RLS (**M6**).
+  - ~~**R2** cross-tenant invisibility of audit events~~ — **resolved in M6** (private dual-scope RLS on both audit tables; `tests/isolation/test_dual_scope_tables.py`).
   - **R9** (support-session read audited atomically) is not implemented (**M5**).
   - **K3** (concurrency through Nginx/Uvicorn) is not implemented (**M10**); L9 is covered in process only.
   - **External-I/O guards** (email, storage) are not implemented (**M7**).
@@ -680,3 +681,17 @@ See `DECISION_LOG.md`.
   - Docker clean-volume bootstrap with the two new migrations (41 permissions seeded), `smoke_check` passed, runtime-secret isolation OK; Playwright **31 passed**; gitleaks: no leaks; no dependency change.
 - **Not done:** M6 and later; tenant hosts not enabled; nothing deployed; Dependabot PRs untouched.
 - **Next recommended task:** M6 (dual-scope RLS on `rbac_role`, `rbac_rolepermission` and the audit tables; tenant audit writes; P10 rewrite), which also completes the R2 invisibility test.
+
+### 2026-11-18 — Session 24 (M5 merge; Phase 3 M6 implementation)
+- **M5:** [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) — CI **8/8 success**; squash-merged pinned to `09d9bd5` → **`cd5d07a`**.
+- **M6 branch:** `feat/phase-03-m6` from `main` `cd5d07a`; owner asked to continue with M6 in the same mode.
+- **Implemented (M6 scope only):**
+  - `rbac.0007_dual_scope_rls`: dual-scope RLS on `rbac_role`, `rbac_rolepermission`;
+  - `audit.0004_tenant_scope`: `audit_auditeventip.tenant_id` (trigger-copied, frozen, backfilled) and private dual-scope RLS on both audit tables (D3);
+  - per-scope iteration under `platform_scope` (`apps/tenancy/iteration.py`); P10 retention task moved to `apps/tenancy/tasks.py` (same name and schedule); erasure, key rotation and index rebuild in every scope (P13);
+  - coverage gate: no table pending RLS any more.
+- **Verification (actual results, local):**
+  - backend: **822 passed, 9 skipped**; coverage **95.51%**; ruff, ruff format, mypy (215 files) clean; import-linter 9/9; `makemigrations --check` clean; OpenAPI unchanged;
+  - Docker clean-volume bootstrap with both migrations; seeding as the owner under RLS (22 roles, 41 permissions); `smoke_check` passed; the worker registers `audit.anonymize_expired_ips` from its new module; Playwright **31 passed**; gitleaks: no leaks; no dependency change.
+- **Not done:** M7 and later; tenant hosts not enabled; nothing deployed; Dependabot PRs untouched.
+- **Next recommended task:** M7 (`TenantTask`, `@platform_task` declarations, leak detectors, cache and storage key helpers; also the support-session expiry sweep and the external-I/O guards).

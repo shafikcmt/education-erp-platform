@@ -68,7 +68,8 @@ def _org(ctx: TenantContext, code: str = "main") -> tuple[Institution, Campus, R
         campus = Campus.objects.create(
             institution=inst, code=f"{code}-c", name="Campus", is_main=True
         )
-    role = Role.objects.create(tenant_id=ctx.id, code=f"r-{code}", name="Role", kind="tenant")
+        # Tenant roles exist only inside their tenant (dual-scope RLS, M6).
+        role = Role.objects.create(tenant_id=ctx.id, code=f"r-{code}", name="Role", kind="tenant")
     return inst, campus, role
 
 

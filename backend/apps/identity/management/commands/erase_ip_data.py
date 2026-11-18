@@ -36,8 +36,16 @@ class Command(BaseCommand):
         before = None
         if options.get("before"):
             before = timezone.make_aware(datetime.strptime(options["before"], "%Y-%m-%d"))
+        from apps.tenancy.iteration import in_every_scope
+
+        # The subject's events can sit in the platform log and in any tenant's log, each
+        # visible only in its own scope (Phase 3 M6): erase in every scope (mechanism I).
+        audit_rows = in_every_scope(
+            lambda: erase_ips_for_actor(user_id, before=before),
+            operation="P13",
+            reason="data-subject IP erasure",
+        ).rows
         with transaction.atomic():
-            audit_rows = erase_ips_for_actor(user_id, before=before)
             session_rows = erase_session_ips(user_id, before=before)
             device_rows = erase_seen_devices(user_id, before=before)
             record(

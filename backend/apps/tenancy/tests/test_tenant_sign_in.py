@@ -16,7 +16,7 @@ from apps.identity import throttling
 from apps.identity.models import SessionRecord
 from apps.tenancy.rules import TenantStatus
 from tests.helpers import PASSWORD, Api, make_user
-from tests.isolation.factories import add_member, tenant_host
+from tests.isolation.factories import add_member, tenant_events, tenant_host
 
 DURABLE = "audit_durable"
 pytestmark = pytest.mark.django_db(databases=["default", DURABLE])
@@ -35,9 +35,7 @@ def _shape(response: Any) -> tuple[int, dict[str, Any], str]:
 
 
 def _reasons(tenant) -> list[str]:
-    events = AuditEvent.objects.using(DURABLE).filter(
-        tenant_id=tenant.id, action="identity.login.failed"
-    )
+    events = tenant_events(tenant, using=DURABLE, action="identity.login.failed")
     return sorted(e.metadata["reason"] for e in events)
 
 
@@ -116,5 +114,6 @@ def test_member_sign_in_creates_a_host_bound_session(tenant_site):
     assert SessionRecord.objects.get(user=person.user).host == tenant_host(a)
     # The same account is not a member of B: its own host refuses the same credentials.
     assert _login(b, person.user.email).status_code == 401
-    succeeded = AuditEvent.objects.filter(action="identity.login.succeeded", tenant_id=a.id)
-    assert succeeded.count() == 1
+    assert len(tenant_events(a, action="identity.login.succeeded")) == 1
+    # Tenant events are not visible without the tenant context (private dual scope, M6).
+    assert not AuditEvent.objects.filter(action="identity.login.succeeded", tenant_id=a.id).exists()

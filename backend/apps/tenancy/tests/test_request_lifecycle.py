@@ -22,7 +22,7 @@ from apps.core.tenancy.transaction import connections_with_tenant_state
 from apps.identity.models import SessionRecord
 from apps.tenancy.rules import TenantStatus
 from tests.helpers import Api, make_user
-from tests.isolation.factories import add_member, tenant_host
+from tests.isolation.factories import add_member, tenant_events, tenant_host
 from tests.isolation_app import views as probe
 from tests.isolation_app.models import ProbeRecord
 
@@ -54,7 +54,7 @@ def _names(tenant) -> set[str]:
 
 
 def _events(tenant, action: str) -> list[AuditEvent]:
-    return list(AuditEvent.objects.using(DURABLE).filter(tenant_id=tenant.id, action=action))
+    return tenant_events(tenant, using=DURABLE, action=action)
 
 
 # --------------------------------------------------------------------------- decision table
