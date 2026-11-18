@@ -1,0 +1,1 @@
+Support access approval was changed for {{ tenant_name }}

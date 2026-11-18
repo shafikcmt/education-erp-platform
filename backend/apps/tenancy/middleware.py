@@ -30,6 +30,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.db import transaction
 from django.http import HttpRequest, HttpResponse
 
+from apps.audit.models import ActorType
 from apps.audit.services import record as audit
 from apps.core import hosts
 from apps.core.exceptions import problem_response, uniform_not_found
@@ -159,6 +160,9 @@ class TenantTransactionMiddleware:
                         request, 500, "internal_error", "Internal server error"
                     )
                 status_code = response.status_code
+                if status_code < 400 and getattr(request, "support_session", None) is not None:
+                    response = self._audit_support_request(request, response)
+                    status_code = response.status_code
                 if status_code >= 400:
                     # A request that failed must leave no data and no "success" audit
                     # events behind; denial evidence was written durably (plan §8.3).
@@ -166,6 +170,7 @@ class TenantTransactionMiddleware:
             return response
         finally:
             self._report_isolation_violation(request, tenant)
+            self._run_followups(request, tenant)
             tx_ms = round((time.perf_counter() - started) * 1000, 2)
             log = logger.warning if tx_ms > settings.TENANT_TX_WARN_MS else logger.info
             log(
@@ -175,6 +180,38 @@ class TenantTransactionMiddleware:
                 status=status_code,
                 slow=tx_ms > settings.TENANT_TX_WARN_MS,
             )
+
+    @staticmethod
+    def _audit_support_request(request: HttpRequest, response: HttpResponse) -> HttpResponse:
+        """S4 / R9: every support request is audited in the SAME transaction as the data it
+        returns. If the audit write fails, the request fails with a 500 and returns nothing."""
+        session = request.support_session  # type: ignore[attr-defined]
+        try:
+            audit(
+                "support.request",
+                actor_user_id=request.user.pk,
+                actor_type=ActorType.SUPPORT,
+                request=request,
+                support_session_id=session.pk,
+                target_type="tenancy.supportsession",
+                target_id=session.pk,
+                metadata={"method": request.method or "", "path": request.path[:200]},
+            )
+        except Exception:
+            logger.exception("tenancy.support_audit_failed", path=request.path)
+            return problem_response(request, 500, "internal_error", "Internal server error")
+        return response
+
+    @staticmethod
+    def _run_followups(request: HttpRequest, tenant: TenantContext) -> None:
+        """Work that must commit although the request was rolled back (support-session
+        expiry). Each runs in a tenant transaction of its own; a failure is logged only."""
+        for followup in request.__dict__.pop("tenant_followups", []):
+            try:
+                with tenant_atomic(tenant):
+                    followup()
+            except Exception:
+                logger.exception("tenancy.followup_failed", tenant_id=str(tenant.id))
 
     def process_exception(self, request: HttpRequest, exception: Exception) -> None:
         # Views outside DRF: remember the cause; Django still builds the 500 response.
@@ -210,6 +247,7 @@ class TenantTransactionMiddleware:
         if kind not in hosts.host_classes_of(view_func):
             return uniform_not_found(request)
         tenant: TenantContext | None = getattr(request, "tenant", None)
-        if tenant is None or getattr(hosts.view_class(view_func), "tenant_auth_flow", False):
+        view_class = hosts.view_class(view_func)
+        if tenant is None or getattr(view_class, "tenant_auth_flow", False):
             return None
-        return access.check_request(request, tenant)
+        return access.check_request(request, tenant, view_class)

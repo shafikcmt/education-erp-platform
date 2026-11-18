@@ -310,6 +310,8 @@ class SupportSession(TenantScopedModel):
     status = models.CharField(max_length=16, choices=Status.choices, default=Status.REQUESTED)
     requested_at = models.DateTimeField()
     approved_by = models.UUIDField(null=True, blank=True)
+    # Requested length (15-120 minutes, plan §11.1). The window starts at approval.
+    duration_minutes = models.PositiveSmallIntegerField(default=60)
     starts_at = models.DateTimeField(null=True, blank=True)
     ends_at = models.DateTimeField(null=True, blank=True)
     ended_at = models.DateTimeField(null=True, blank=True)
@@ -330,6 +332,10 @@ class SupportSession(TenantScopedModel):
             ),
             models.CheckConstraint(
                 condition=models.Q(access_level="read_only"), name="tenancy_support_read_only"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(duration_minutes__gte=15, duration_minutes__lte=120),
+                name="tenancy_support_requested_duration",
             ),
             models.UniqueConstraint(
                 fields=["tenant", "staff_user"],

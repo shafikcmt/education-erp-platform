@@ -1,0 +1,7 @@
+{% autoescape off %}Hello,
+
+A support session for {{ tenant_name }} (ticket {{ ticket_ref }}) is now in use. It is read-only and ends at {{ ends_at }} at the latest. Every request is recorded in your organisation's audit log.
+
+You can revoke it at any time in your organisation's settings.
+
+— Education ERP{% endautoescape %}

@@ -71,6 +71,18 @@ EVENTS: dict[str, frozenset[str]] = {
     "tenancy.invitation.revoked": _NONE,
     "tenancy.invitation.accepted": frozenset({"role_code", "scope_type"}),
     "tenancy.invitation.invalid_attempt": frozenset({"reason"}),
+    # support sessions (Phase 3 M5, ADR-045): tenant log
+    "support.session.requested": frozenset({"minutes", "auto_approved"}),
+    "support.session.approved": frozenset({"minutes"}),
+    "support.session.rejected": _NONE,
+    "support.session.started": _NONE,
+    "support.session.revoked": frozenset({"reason"}),
+    "support.session.ended": _NONE,
+    "support.session.expired": _NONE,
+    "support.request": frozenset({"method", "path"}),
+    "support.access_denied": frozenset({"reason"}),
+    "support.write_rejected": frozenset({"method"}),
+    "tenancy.support_approval.changed": frozenset({"old", "new", "reason"}),
     # audit / authorization
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
@@ -86,7 +98,6 @@ EVENTS: dict[str, frozenset[str]] = {
 
 # Events whose evidence must survive the rollback of a tenant request transaction (Phase 3
 # plan §8.3). Inside a tenant context they are always written through the durable connection.
-# ``support.*`` joins this set with M5.
 DURABLE_ACTIONS: frozenset[str] = frozenset(
     {
         "authz.denied",
@@ -95,6 +106,8 @@ DURABLE_ACTIONS: frozenset[str] = frozenset(
         "identity.login.throttled",
         "identity.mfa.challenge_failed",
         "identity.mfa.locked",
+        "support.access_denied",
+        "support.write_rejected",
         "tenancy.invitation.invalid_attempt",
         "tenancy.isolation.blocked",
     }

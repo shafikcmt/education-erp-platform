@@ -8,7 +8,8 @@ Fail closed:
 * nothing for platform targets, and nothing unless the target's tenant is the one applied to
   the current transaction (so RLS agrees with what is read);
 * the membership must be ``active``; the tenant must be ``active``. While a tenant is
-  ``offboarding`` only its owners keep their grants, and the request gate refuses writes;
+  ``offboarding`` only its owners keep their grants (the request gate refuses writes); while
+  it is ``suspended`` only its owners keep the restricted-mode codes (D2);
 * revoked, not-yet-valid and expired assignments never count (checked at evaluation time).
 
 Loaded by the rbac engine from ``settings.RBAC_PERMISSION_SOURCES``; ``rbac`` never imports
@@ -26,8 +27,8 @@ from django.utils import timezone
 from apps.core.tenancy import current_tenant
 from apps.core.tenancy.transaction import applied_tenant_id
 from apps.rbac.engine import ScopeGrant, ScopeTarget
-from apps.rbac.models import RoleAssignment, RolePermission
-from apps.rbac.role_templates import TENANT_OWNER
+from apps.rbac.models import Permission, RoleAssignment, RolePermission
+from apps.rbac.role_templates import SUSPENDED_OWNER_CODES, TENANT_OWNER
 from apps.tenancy.models import Membership, Tenant
 from apps.tenancy.rules import TenantStatus
 
@@ -51,7 +52,7 @@ class TenantMembershipSource:
         if ctx is None or ctx.id != target.tenant_id or applied_tenant_id(connection) != ctx.id:
             return frozenset()
         status = Tenant.objects.filter(pk=ctx.id).values_list("status", flat=True).first()
-        if status not in (TenantStatus.ACTIVE, TenantStatus.OFFBOARDING):
+        if status not in (TenantStatus.ACTIVE, TenantStatus.OFFBOARDING, TenantStatus.SUSPENDED):
             return frozenset()
         rows = RoleAssignment.objects.filter(
             live_assignments(),
@@ -62,17 +63,50 @@ class TenantMembershipSource:
         )
         role_ids = set()
         for role_id, institution_id, campus_id, is_system, template_code in rows:
-            if status == TenantStatus.OFFBOARDING and not (
-                is_system and template_code == TENANT_OWNER
-            ):
+            is_owner = is_system and template_code == TENANT_OWNER
+            # Offboarding: only owners keep their grants. Suspended: only owners, and only
+            # the restricted-mode codes (D2), applied below.
+            if status != TenantStatus.ACTIVE and not is_owner:
                 continue
             if ScopeGrant(ctx.id, institution_id, campus_id).covers(target):
                 role_ids.add(role_id)
         if not role_ids:
             return frozenset()
-        codes = RolePermission.objects.filter(
-            role_id__in=role_ids,
-            role__tenant_id=ctx.id,  # rbac_role has no RLS before M6: always filter
-            permission__deprecated_at__isnull=True,
-        ).values_list("permission__code", flat=True)
-        return frozenset(codes)
+        codes = frozenset(
+            RolePermission.objects.filter(
+                role_id__in=role_ids,
+                role__tenant_id=ctx.id,  # rbac_role has no RLS before M6: always filter
+                permission__deprecated_at__isnull=True,
+            ).values_list("permission__code", flat=True)
+        )
+        if status == TenantStatus.SUSPENDED:
+            return codes & SUSPENDED_OWNER_CODES
+        return codes
+
+
+class SupportSessionSource:
+    """Read-only grants of an approved support session (Phase 3 M5; plan §9.3, §11.2 S3).
+
+    Only for a usable session of the actor in the tenant applied to the current transaction,
+    only while that tenant is ``active`` (D2: never on a suspended tenant), and only the view
+    codes flagged ``support_readable``. Approval and every other code are never granted, so
+    staff can't approve their own session (S6)."""
+
+    def grants(self, actor: AbstractBaseUser, target: ScopeTarget) -> frozenset[str]:
+        if target.tenant_id is None:
+            return frozenset()
+        ctx = current_tenant()
+        if ctx is None or ctx.id != target.tenant_id or applied_tenant_id(connection) != ctx.id:
+            return frozenset()
+        status = Tenant.objects.filter(pk=ctx.id).values_list("status", flat=True).first()
+        if status != TenantStatus.ACTIVE:
+            return frozenset()
+        from apps.tenancy.support import usable_session
+
+        if usable_session(actor.pk) is None:
+            return frozenset()
+        return frozenset(
+            Permission.objects.filter(
+                support_readable=True, deprecated_at__isnull=True
+            ).values_list("code", flat=True)
+        )

@@ -26,7 +26,14 @@ from apps.rbac.models import Permission, Role, RoleKind, RolePermission
 from apps.rbac.registry import declared_permissions
 from apps.rbac.role_templates import ALL, PLATFORM_ROLES, TEMPLATE_ROLES
 
-_SPEC_FIELDS = ("module_code", "description", "is_sensitive", "requires_mfa", "requires_step_up")
+_SPEC_FIELDS = (
+    "module_code",
+    "description",
+    "is_sensitive",
+    "requires_mfa",
+    "requires_step_up",
+    "support_readable",
+)
 
 
 @dataclass

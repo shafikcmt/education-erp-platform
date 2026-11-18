@@ -1,0 +1,10 @@
+{% autoescape off %}Hello,
+
+A member of the Education ERP support team ({{ staff_email }}) asked for read-only access to {{ tenant_name }} for {{ minutes }} minutes.
+
+Reason: {{ reason }}
+Ticket: {{ ticket_ref }}
+
+{% if auto_approved %}Your organisation does not require approval, so the access was opened at once. You can revoke it at any time.{% else %}Nothing happens until an owner approves the request. You can approve or reject it in your organisation's settings.{% endif %}
+
+— Education ERP{% endautoescape %}

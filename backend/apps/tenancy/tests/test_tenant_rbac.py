@@ -25,7 +25,7 @@ from apps.rbac.engine import (
     user_requires_mfa,
 )
 from apps.rbac.models import Role, RoleAssignment, RoleKind, RolePermission
-from apps.rbac.role_templates import TEMPLATE_ROLES
+from apps.rbac.role_templates import SUSPENDED_OWNER_CODES, TEMPLATE_ROLES
 from apps.rbac.services import GuardRailViolation
 from apps.rbac.sources import SELF_SERVICE_CODES, PlatformRoleSource
 from apps.tenancy.models import Campus, Institution, Membership, Tenant
@@ -384,7 +384,8 @@ def test_tenant_status_gates_all_grants(org):
             row.save()
 
     set_status(TenantStatus.SUSPENDED)
-    assert _perms(org.tenant, org.owner) == SELF
+    # Restricted owner mode (D2, M5): owners keep only the support-session review codes.
+    assert _perms(org.tenant, org.owner) == SELF | SUSPENDED_OWNER_CODES
     assert _perms(org.tenant, org.head, org.t_north) == SELF
     # Offboarding: only owners keep their grants (the request gate refuses every write).
     set_status(TenantStatus.OFFBOARDING)

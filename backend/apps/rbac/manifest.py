@@ -6,7 +6,12 @@ PERMISSIONS = [
         "description": "View the permission catalog",
         "requires_mfa": True,
     },
-    {"code": "rbac.role.view", "description": "View roles", "requires_mfa": True},
+    {
+        "code": "rbac.role.view",
+        "description": "View roles",
+        "requires_mfa": True,
+        "support_readable": True,
+    },
     {
         "code": "rbac.role.create",
         "description": "Create roles",
@@ -42,6 +47,7 @@ PERMISSIONS = [
         "code": "rbac.assignment.view",
         "description": "View role assignments",
         "requires_mfa": True,
+        "support_readable": True,
     },
     {
         "code": "rbac.assignment.manage",

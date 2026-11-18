@@ -28,12 +28,16 @@ class PermissionSpec:
     is_sensitive: bool = False
     requires_mfa: bool = False
     requires_step_up: bool = False
+    support_readable: bool = False
 
 
 def _spec(module_code: str, raw: dict[str, Any]) -> PermissionSpec:
     code = raw["code"]
     if not CODE_PATTERN.match(code) or not code.startswith(f"{module_code}."):
         raise ValueError(f"Invalid permission code {code!r} in module {module_code!r}")
+    # Support sessions are read-only (ADR-045): only view codes may ever be support-readable.
+    if raw.get("support_readable") and not code.endswith(".view"):
+        raise ValueError(f"Only view permissions can be support-readable: {code!r}")
     return PermissionSpec(
         code=code,
         module_code=module_code,
@@ -41,6 +45,7 @@ def _spec(module_code: str, raw: dict[str, Any]) -> PermissionSpec:
         is_sensitive=bool(raw.get("is_sensitive", False)),
         requires_mfa=bool(raw.get("requires_mfa", False)),
         requires_step_up=bool(raw.get("requires_step_up", False)),
+        support_readable=bool(raw.get("support_readable", False)),
     )
 
 
