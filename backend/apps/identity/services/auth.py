@@ -27,7 +27,7 @@ from apps.identity import session_state as state
 from apps.identity.models import SeenDevice, User
 from apps.identity.services import mfa, sessions
 from apps.identity.services.notifications import send_security_email, send_security_notice_once
-from apps.rbac.engine import user_requires_mfa
+from apps.rbac.engine import PLATFORM, user_requires_mfa
 
 
 class LoginStatus(StrEnum):
@@ -110,7 +110,7 @@ def login_with_password(request: HttpRequest, email: str, password: str) -> Logi
         }
         return LoginResult(LoginStatus.MFA_REQUIRED, user)
     _complete_login(request, user, mfa_verified=False, method="password")
-    if user_requires_mfa(user, use_cache=False):
+    if user_requires_mfa(user, use_cache=False, target=getattr(request, "scope_target", PLATFORM)):
         return LoginResult(LoginStatus.MFA_ENROLLMENT_REQUIRED, user)
     return LoginResult(LoginStatus.AUTHENTICATED, user)
 

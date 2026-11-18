@@ -54,6 +54,43 @@ def add_member(tenant: TenantContext, user: Any, *, status: str = "active") -> M
         return Membership.objects.create(user=user, status=status)
 
 
+def seed_tenant_roles(tenant: TenantContext) -> None:
+    """Give the tenant its read-only system role copies (done by provisioning from M8)."""
+    from apps.rbac.tenant_roles import sync_system_copies
+
+    with tenant_atomic(tenant):
+        sync_system_copies(tenant.id)
+
+
+def grant_role(
+    tenant: TenantContext,
+    user: Any,
+    template_code: str,
+    *,
+    institution: Any = None,
+    campus: Any = None,
+) -> Any:
+    """Make ``user`` an active member holding the system copy of ``template_code`` in a scope
+    (tenant scope by default). No actor is authorised: this is test set-up."""
+    from apps.rbac.tenant_roles import system_role
+    from apps.tenancy.services.assignments import create_assignment
+
+    scope = (
+        "campus" if campus is not None else "institution" if institution is not None else "tenant"
+    )
+    with tenant_atomic(tenant):
+        membership = Membership.objects.filter(user=user).first() or Membership.objects.create(
+            user=user, status="active", joined_at=timezone.now()
+        )
+        return create_assignment(
+            membership=membership,
+            role=system_role(tenant.id, template_code),
+            scope_type=scope,
+            institution=institution,
+            campus=campus,
+        )
+
+
 def delete_tenants_as_owner(owner_dsn: dict[str, Any], *tenants: TenantContext) -> None:
     with psycopg.connect(**owner_dsn, autocommit=True) as conn:
         conn.execute("DELETE FROM tenancy_tenant WHERE id = ANY(%s)", [[t.id for t in tenants]])
@@ -61,10 +98,19 @@ def delete_tenants_as_owner(owner_dsn: dict[str, Any], *tenants: TenantContext) 
 
 def _delete_tenant_rows(*tenants: TenantContext) -> None:
     def run() -> None:
+        from apps.rbac.models import Role, RoleAssignment, RolePermission
+        from apps.tenancy.models import Campus, Institution, Invitation
+
         for tenant in tenants:
             with tenant_atomic(tenant):
+                RoleAssignment.objects.all().delete()
+                Invitation.objects.all().delete()
                 Membership.objects.all().delete()
+                Campus.objects.all().delete()
+                Institution.objects.all().delete()
                 TenantDomain.objects.all().delete()
+                RolePermission.objects.filter(role__tenant_id=tenant.id).delete()
+                Role.objects.filter(tenant_id=tenant.id).delete()
 
     in_thread(run)
 

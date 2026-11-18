@@ -21,9 +21,11 @@ def enforce_mfa_gate(request: Request, view: Any) -> None:
     if state.mfa_verified(request):
         return
     from apps.identity.services.mfa import has_mfa
-    from apps.rbac.engine import user_requires_mfa
+    from apps.rbac.engine import PLATFORM, user_requires_mfa
 
-    if not user_requires_mfa(user):  # type: ignore[arg-type]
+    # Phase 3: on a tenant host, privileged tenant roles count too (same rule as at sign-in).
+    target = getattr(request, "scope_target", PLATFORM)
+    if not user_requires_mfa(user, target=target):  # type: ignore[arg-type]
         return
     if has_mfa(user):  # type: ignore[arg-type]
         raise errors.MfaRequired()

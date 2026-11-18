@@ -107,6 +107,27 @@ def bump_cache_version() -> None:
     cache.set(_VERSION_KEY, secrets.token_hex(16), timeout=None)
 
 
+def _tenant_version_key(tenant_id: uuid.UUID) -> str:
+    return f"t:{tenant_id}:perm:version"  # tenant-prefixed (CLAUDE.md §10.7)
+
+
+def tenant_cache_version(tenant_id: uuid.UUID) -> str:
+    """Per-tenant random version token (Phase 3 plan §8.7, §9.6), combined with the global one
+    in every cached tenant permission set."""
+    key = _tenant_version_key(tenant_id)
+    version = cache.get(key)
+    if version is None:
+        cache.add(key, secrets.token_hex(16), timeout=None)
+        version = cache.get(key)
+    return str(version)
+
+
+def bump_tenant_version(tenant_id: uuid.UUID) -> None:
+    """Invalidate the cached permission sets of ONE tenant (membership, assignment or tenant
+    role change). Other tenants and the platform keep their caches."""
+    cache.set(_tenant_version_key(tenant_id), secrets.token_hex(16), timeout=None)
+
+
 def catalog(*, use_cache: bool = True) -> dict[str, PermissionInfo]:
     """Registered, non-deprecated permissions with their flags (from ``rbac_permission``)."""
     key = f"{_CATALOG_KEY}:v{cache_version()}"
@@ -157,6 +178,8 @@ def effective_permissions(
         return frozenset()
     assert actor is not None  # noqa: S101 - narrowed by _is_active_user
     key = f"perm:{target.cache_key()}:{actor.pk}:v{cache_version()}"
+    if target.tenant_id is not None:
+        key = f"{key}:{tenant_cache_version(target.tenant_id)}"
     if use_cache and not extra_sources:
         cached = cache.get(key)
         if cached is not None:
@@ -231,14 +254,23 @@ def assigned_permissions(actor: AbstractBaseUser, target: ScopeTarget = PLATFORM
     return frozenset(code for code in granted if code in known)
 
 
-def user_requires_mfa(actor: AbstractBaseUser, *, use_cache: bool = True) -> bool:
+def user_requires_mfa(
+    actor: AbstractBaseUser, *, use_cache: bool = True, target: ScopeTarget = PLATFORM
+) -> bool:
     """Privileged account (ADR-035): any effective permission flagged ``requires_mfa``, or any
     platform role (all platform roles require MFA, even ones whose Phase 2 permission set is
-    empty, such as ``platform_billing``)."""
+    empty, such as ``platform_billing``).
+
+    ``target`` (Phase 3): on a tenant host, pass the request's scope so that tenant roles with
+    privileged permissions count too. Individual permissions enforce MFA in any case."""
     if not _is_active_user(actor):
         return False
     known = catalog(use_cache=use_cache)
     if any(known[c].requires_mfa for c in effective_permissions(actor, use_cache=use_cache)):
+        return True
+    if not target.is_platform and any(
+        known[c].requires_mfa for c in effective_permissions(actor, target, use_cache=use_cache)
+    ):
         return True
     from apps.rbac.models import PlatformRoleAssignment
 

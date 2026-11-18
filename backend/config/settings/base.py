@@ -184,6 +184,9 @@ SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
     "email_flow_email": (3, 60 * 60),
     "email_flow_ip": (10, 60 * 60),
     "step_up": (5, 15 * 60),
+    # Phase 3 M4: invitations, per tenant and per (tenant, email).
+    "invite_tenant": (env.int("SECURITY_INVITE_TENANT_LIMIT", default=100), 60 * 60),
+    "invite_email": (5, 60 * 60),
 }
 SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
 SECURITY_LOGIN_MAX_DELAY_SECONDS = 30
@@ -197,6 +200,8 @@ SECURITY_SEEN_DEVICE_DAYS = 90
 RBAC_PERMISSION_SOURCES: list[str] = [
     "apps.rbac.sources.SelfServiceSource",
     "apps.rbac.sources.PlatformRoleSource",
+    # Phase 3 M4: role assignments of the tenant applied to the current transaction.
+    "apps.tenancy.rbac_sources.TenantMembershipSource",
 ]
 RBAC_CACHE_TTL_SECONDS = 300
 

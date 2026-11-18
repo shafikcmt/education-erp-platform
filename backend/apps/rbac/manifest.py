@@ -31,4 +31,22 @@ PERMISSIONS = [
         "requires_mfa": True,
         "requires_step_up": True,
     },
+    # Phase 3 M4: tenant-scope role management (plan §12.3).
+    {
+        "code": "rbac.role.clone",
+        "description": "Clone a role into an editable tenant role",
+        "requires_mfa": True,
+        "requires_step_up": True,
+    },
+    {
+        "code": "rbac.assignment.view",
+        "description": "View role assignments",
+        "requires_mfa": True,
+    },
+    {
+        "code": "rbac.assignment.manage",
+        "description": "Grant or revoke tenant role assignments",
+        "requires_mfa": True,
+        "requires_step_up": True,
+    },
 ]

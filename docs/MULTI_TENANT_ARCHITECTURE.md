@@ -72,6 +72,15 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 - **Durable audit:** denial and failure events written inside a tenant context use the `audit_durable` connection and survive the rollback (see `SECURITY.md` §6).
 - **Further reading:** `plans/PHASE_03_M3_PLAN.md` §11, plan §24.6, ADR-048.
 
+### 3.3 Implemented tenant authorization (Phase 3 M4)
+
+- **Role assignments** (`rbac_roleassignment`, tenant-owned, RLS): a member holds a tenant role in a scope (`tenant`, `institution` or `campus`). Composite `(tenant_id, …)` keys make a reference to another tenant's member, role, institution or campus, to a template role, or to a campus of another institution impossible in the database.
+- **Tenant roles:** every tenant has a read-only system copy of each role template, kept in line by `manage.py sync_tenant_roles` (P7). Tenants customise by cloning; clones are never synced.
+- **Evaluation:** `TenantMembershipSource` unions the assignments in force whose scope covers the target (tenant ⊇ institution ⊇ campus, never sideways). It grants nothing outside that tenant's transaction, for an inactive membership, or for a tenant that is not `active` (owners only while `offboarding`). Platform roles never grant anything in a tenant.
+- **Guard rails:** permission in the scope of the change; no granting or revoking above one's own permissions; no acting on a more privileged member; the last active owner cannot be demoted, suspended or removed.
+- **Revocation:** effective on the next request (uncached membership check, per-tenant cache version); suspension and removal end the member's sessions on that tenant's hosts.
+- **Not yet:** HTTP endpoints (M8). Details: plan §24.7.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -208,3 +217,4 @@ A failure blocks merge.
 - 2026-11-08 — Phase 3 M1: §4.1 and §8 now describe the implemented tenant context primitives, RLS tooling and CI checks; items for later milestones are labelled.
 - 2026-11-09 — §3.1: implemented tenancy data model (Phase 3 M2). No design change.
 - 2026-11-13 — Phase 3 M3: §3.2 added (implemented request path: host policy, resolution, tenant transaction, gate). The 2026-11-06 prerequisite about `ScopeTargetMiddleware` is met: it is removed and replaced by host-based resolution; tenant hosts remain disabled.
+- 2026-11-16 — Phase 3 M4: §3.3 added (implemented tenant authorization).

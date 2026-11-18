@@ -59,6 +59,18 @@ EVENTS: dict[str, frozenset[str]] = {
     # owner-only catalogue bootstrap (Phase 3 M1 / O1)
     "rbac.permission_catalog.synced": frozenset({"created", "updated", "deprecated", "declared"}),
     "rbac.system_roles.seeded": frozenset({"roles", "created", "added", "removed"}),
+    # tenant roles, assignments, members and invitations (Phase 3 M4): tenant log
+    "rbac.assignment.granted": frozenset({"role_code", "scope_type"}),
+    "rbac.assignment.revoked": frozenset({"role_code", "scope_type"}),
+    "rbac.tenant_roles.synced": frozenset({"tenants", "changed", "failed"}),
+    "tenancy.member.suspended": _NONE,
+    "tenancy.member.reactivated": _NONE,
+    "tenancy.member.removed": _NONE,
+    "tenancy.invitation.created": frozenset({"role_code", "scope_type"}),
+    "tenancy.invitation.resent": _NONE,
+    "tenancy.invitation.revoked": _NONE,
+    "tenancy.invitation.accepted": frozenset({"role_code", "scope_type"}),
+    "tenancy.invitation.invalid_attempt": frozenset({"reason"}),
     # audit / authorization
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
@@ -74,7 +86,7 @@ EVENTS: dict[str, frozenset[str]] = {
 
 # Events whose evidence must survive the rollback of a tenant request transaction (Phase 3
 # plan §8.3). Inside a tenant context they are always written through the durable connection.
-# ``support.*`` and ``invitation.invalid_attempt`` join this set with M5 and M4.
+# ``support.*`` joins this set with M5.
 DURABLE_ACTIONS: frozenset[str] = frozenset(
     {
         "authz.denied",
@@ -83,6 +95,7 @@ DURABLE_ACTIONS: frozenset[str] = frozenset(
         "identity.login.throttled",
         "identity.mfa.challenge_failed",
         "identity.mfa.locked",
+        "tenancy.invitation.invalid_attempt",
         "tenancy.isolation.blocked",
     }
 )

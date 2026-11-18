@@ -1,0 +1,1 @@
+You are invited to {{ tenant_name }} on Education ERP

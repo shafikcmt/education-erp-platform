@@ -1379,6 +1379,27 @@ M3 is implemented as specified in §8.2–§8.6 and §10, with the owner's answe
 | N34 | §15.3 | K1, K2 and K8 run through the Django test client, whose threads keep one physical connection (forced reuse). K3 remains M10 |
 | N35 | §19.1 | M3 adds no migration, grant, role or `SECURITY DEFINER` function |
 
+### 24.7 M4 — memberships, invitations, role assignments, tenant roles (2026-11-16, branch `feat/phase-03-m4`)
+
+M4 is implemented as specified in §4.1, §4.4, §9 and §12.3 (tenant-scope codes). It is built on top of `feat/phase-03-m3`, which is not merged yet. Notes where the implementation is more specific than, or differs from, the text above:
+
+| # | Section | Note |
+|---|---|---|
+| N36 | §19.1 | The migration is `rbac.0005_roleassignment` (not `rbac.0003`): `rbac_roleassignment` with four composite keys and standard RLS, `rbac_role.template_id` with a trigger that accepts only template rows, a CHECK that only a tenant system copy carries a template, and one copy per template. No other migration |
+| N37 | §4.1 | `RoleAssignment` has two extra columns, `revoked_at` and `revoked_by`. Rows are never deleted: revoking sets `revoked_at`. "No duplicate active assignment" is a partial unique key on rows with `revoked_at IS NULL`; expiry is evaluated from `valid_until` at check time |
+| N38 | §12.3 | Registered now: the 14 tenant-scope `tenancy.*` codes, `rbac.role.clone` and `rbac.assignment.view|manage` (37 codes in total). **Not registered yet:** the platform codes (`tenancy.tenant.view_any|create|update_any|suspend`, `tenancy.limit.override`) → M8, and the support-session codes and the `support_readable` flag → M5. Platform operations that need them still fail closed (N3) |
+| N39 | §12.3 | Templates: `tenant_owner` holds every tenant code plus `rbac.role.*` and `audit.event.view|view_ip`; `institution_admin` and `campus_admin` hold the subsets listed in `apps/rbac/role_templates.py`; every staff template gains `tenancy.tenant.view`; `student` and `guardian` gain nothing. The earlier placeholder codes (`tenancy.tenant.manage`, …) are gone |
+| N40 | §9.1 | Assignment, membership and invitation services live in `apps/tenancy/services/` (tenancy → rbac). `apps/rbac/tenant_roles.py` (copies, clone) takes a tenant id only. The cache helpers are `rbac.engine.tenant_cache_version` / `bump_tenant_version` |
+| N41 | §6.3 P7 | P7 is `manage.py sync_tenant_roles`, run in the compose `migrate` step right after `seed_roles` (rbac cannot import tenancy, so `seed_roles` does not call it). One tenant transaction per tenant; a failure in one tenant is logged, counted and does not stop the others; one platform event `rbac.tenant_roles.synced` per run |
+| N42 | §9.3 | `TenantMembershipSource` grants nothing unless the target's tenant is the one applied to the current transaction. While a tenant is `offboarding`, only assignments of the `tenant_owner` system copy count (the request gate already refuses writes). This replaces the M3 interim rule for offboarding reads |
+| N43 | §9.5 | Guard rails as implemented: permission checked in the scope of the assignment; role permissions must be a subset of the actor's in that scope, for granting **and** revoking; acting on a member requires every permission that member holds; nobody suspends or removes themselves; the last active tenant owner cannot be demoted, suspended or removed (the tenant row is locked while this is checked) |
+| N44 | §9.6 | Suspension and removal revoke the member's sessions on this tenant's domains only. Removal sets the membership to `left` and revokes its assignments; rows are kept |
+| N45 | §13.2 | Invitation acceptance is implemented for an **existing, signed-in account** whose verified email equals the invited email. Creating a new account from an invitation, and the HTTP endpoint, are M8. Every invalid attempt writes a durable `tenancy.invitation.invalid_attempt` event. An old invitation never lifts a suspension |
+| N46 | §12.1 | Invitations are rate-limited per tenant (100 per hour, configurable) and per tenant and address (5 per hour). The email is queued only after the transaction commits |
+| N47 | ADR-035 | On a tenant host, the sign-in status and the MFA enrollment gate take the request scope into account, so an account holding a privileged tenant role needs MFA there. MFA enrollment endpoints are still platform-host only (ADR-048 Q2) until M8 |
+| N48 | §15.3 | K4 is covered by the M2 limit test (`test_concurrent_creation_never_exceeds_the_limit`) at the primitive level; institution and campus services arrive with the APIs (M8). K5 is implemented at request level |
+| N49 | §6.3 P4 | Tenant provisioning (P4) is not part of M4. Tests give a tenant its system copies through `sync_system_copies`, the function provisioning will call |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1401,3 +1422,4 @@ M3 is implemented as specified in §8.2–§8.6 and §10, with the owner's answe
 - 2026-11-09 — §24.4 appended: M2 implementation notes N14–N24. No approved decision changed.
 - 2026-11-09 — §24.5: owner decisions on the M2 review (N14 accepted, N16 lifecycle changed, N18 list expanded to 68, P6 canonical code). §24.4 N16/N18 are superseded by §24.5.
 - 2026-11-13 — §24.6 appended: M3 implementation notes N25–N35 (details in `PHASE_03_M3_PLAN.md` §11; owner decisions in ADR-048). No approved decision changed.
+- 2026-11-16 — §24.7 appended: M4 implementation notes N36–N49. No approved decision changed.
