@@ -70,7 +70,8 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # Fast hashing in tests only; prod/dev keep Argon2 first (asserted in tests).
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
-EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+# In-memory email that refuses to send inside an open tenant transaction (Phase 3 M7).
+EMAIL_BACKEND = "apps.core.testing.GuardedLocmemEmailBackend"
 LOGGING = build_logging_config(level="WARNING", fmt="console")
 SENTRY_DSN = ""
 

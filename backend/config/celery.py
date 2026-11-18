@@ -1,7 +1,8 @@
 """Celery application.
 
-Tasks that touch tenant data must accept ``tenant_id`` explicitly and re-establish tenant
-context (ADR-009). The tenant-aware base task is delivered in Phase 3.
+Every task is declared as a platform task (``apps.core.tasking.platform_task``) or a tenant
+task (``apps.tenancy.tasking.tenant_task``), which takes ``tenant_id`` explicitly and runs in
+that tenant's transaction (ADR-009, Phase 3 M7).
 """
 
 import os

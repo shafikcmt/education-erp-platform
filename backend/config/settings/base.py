@@ -326,6 +326,12 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 24 * 3600.0,
         "options": {"queue": "default"},
     },
+    # Phase 3 M7: end support sessions whose window has passed (fan-out per tenant).
+    "tenancy-support-session-expiry": {
+        "task": "tenancy.sweep_support_sessions",
+        "schedule": 300.0,
+        "options": {"queue": "default"},
+    },
 }
 
 # --------------------------------------------------------------------------- email

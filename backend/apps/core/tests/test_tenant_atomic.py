@@ -307,13 +307,19 @@ def test_request_boundary_detects_and_clears_a_leaked_context(a, caplog):
 
 
 def test_celery_boundary_clears_leaks_before_and_after_a_task(a, caplog):
+    """A worker-side task start (not eager) is a boundary: leaked state is cleared and
+    reported. Eager runs are not boundaries; TenantTask/PlatformTask isolate them (M7, C6)."""
+    from celery.signals import task_postrun, task_prerun
+
     from apps.core.tasks import ping
 
-    ctx_module._CURRENT.set(a)
-    with caplog.at_level(logging.ERROR, logger="apps.core.tenancy"):
-        ping.delay()  # eager in tests; Celery signals log receiver errors instead of raising
-    assert current_tenant() is None
-    assert [r for r in caplog.records if r.getMessage() == "tenancy.context_leak"]
+    for signal in (task_prerun, task_postrun):
+        ctx_module._CURRENT.set(a)
+        with caplog.at_level(logging.ERROR, logger="apps.core.tenancy"):
+            signal.send(sender=ping, task_id="t-1", task=ping, args=(), kwargs={})
+        assert current_tenant() is None
+    leaks = [r for r in caplog.records if r.getMessage() == "tenancy.context_leak"]
+    assert len(leaks) == 2
 
 
 def test_boundary_is_silent_when_clean(caplog):

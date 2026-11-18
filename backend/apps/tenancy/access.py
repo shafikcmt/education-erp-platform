@@ -28,6 +28,7 @@ from apps.audit.models import ActorType
 from apps.audit.services import record as audit
 from apps.core.exceptions import problem_response
 from apps.core.tenancy import TenantContext
+from apps.core.tenancy.keys import tenant_cache_key
 from apps.rbac.models import RoleAssignment
 from apps.rbac.role_templates import TENANT_OWNER
 from apps.tenancy import support
@@ -83,7 +84,9 @@ def _deny(request: HttpRequest, tenant: TenantContext, reason: str) -> HttpRespo
     # Durable (survives the rollback of this request) and bounded like ``authz.denied`` in
     # the permission classes: one event per user, tenant and reason per minute.
     support_reasons = {"support_access_read_only", "support_session_expired"}
-    if cache.add(f"t:{tenant.id}:authz:denied:{request.user.pk}:{reason}", 1, timeout=60):
+    if cache.add(
+        tenant_cache_key("authz", "denied", request.user.pk, reason, tenant=tenant), 1, timeout=60
+    ):
         if reason == "support_access_read_only":
             session = getattr(request, "support_session", None)
             audit(
