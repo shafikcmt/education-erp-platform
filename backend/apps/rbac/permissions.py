@@ -29,6 +29,11 @@ class PermissionCheck(BasePermission):
 
     codes: dict[str, str] = {}
 
+    def holds(self, request: Request, user: Any, code: str) -> bool:
+        """Whether ``user`` holds ``code`` for this request (scope from ``scope_target``).
+        Tenant views whose objects live in narrower scopes override it (Phase 3 M8)."""
+        return has_perm(user, code, target=getattr(request, "scope_target", PLATFORM))
+
     @classmethod
     def code_for(cls, method: str) -> str | None:
         method = method.upper()
@@ -42,8 +47,7 @@ class PermissionCheck(BasePermission):
         code = self.code_for(request.method or "")
         if code is None:
             return False
-        target = getattr(request, "scope_target", PLATFORM)
-        if not has_perm(user, code, target=target):
+        if not self.holds(request, user, code):
             if cache.add(f"authz:denied:{user.pk}:{code}", 1, timeout=60):
                 audit(
                     "authz.denied",
@@ -86,9 +90,8 @@ class AnyPermissionCheck(PermissionCheck):
         if not (user and user.is_authenticated):
             raise NotAuthenticated()
         enforce_mfa_gate(request, view)
-        target = getattr(request, "scope_target", PLATFORM)
         for code in self.any_of:
-            if has_perm(user, code, target=target):
+            if self.holds(request, user, code):
                 info = permission_info(code)
                 if info.requires_mfa and not state.mfa_verified(request):
                     raise errors.MfaRequired()

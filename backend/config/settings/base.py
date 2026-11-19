@@ -187,6 +187,8 @@ SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
     # Phase 3 M4: invitations, per tenant and per (tenant, email).
     "invite_tenant": (env.int("SECURITY_INVITE_TENANT_LIMIT", default=100), 60 * 60),
     "invite_email": (5, 60 * 60),
+    # Phase 3 M8: password attempts when redeeming an invitation for an existing account.
+    "invite_accept": (5, 15 * 60),
 }
 SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
 SECURITY_LOGIN_MAX_DELAY_SECONDS = 30
@@ -229,6 +231,9 @@ IDENTITY_SIGN_IN_GUARDS: list[str] = ["apps.tenancy.access.sign_in_guard"]
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}
+# Phase 3 M8 (plan §12.2, §10.2): when true, provisioning is refused (409
+# ``tenant_hosts_disabled``) while tenant hosts are off. Production sets it; nowhere else does.
+TENANT_PROVISIONING_REQUIRES_HOSTS = False
 # Reversing tenant-isolation migrations (RLS, tenant context function) is refused unless
 # explicitly allowed, and is never allowed in production or staging (plan §19.2).
 ERP_ALLOW_ISOLATION_ROLLBACK: bool = env.bool("ERP_ALLOW_ISOLATION_ROLLBACK", default=False)
@@ -295,6 +300,13 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
     "SCHEMA_PATH_PREFIX": r"/api/v[0-9]+",
+    # Phase 3 M8: several tenancy models have a "status"; name each enum explicitly.
+    "ENUM_NAME_OVERRIDES": {
+        "TenantStatusEnum": "apps.tenancy.rules.TenantStatus.CHOICES",
+        "MembershipStatusEnum": "apps.tenancy.models.Membership.Status",
+        "SupportSessionStatusEnum": "apps.tenancy.models.SupportSession.Status",
+        "MemberStatusChangeEnum": [("active", "Active"), ("suspended", "Suspended")],
+    },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)
 

@@ -78,6 +78,40 @@ def create_user(
     return user
 
 
+@transaction.atomic
+def create_invited_account(
+    *,
+    email: str,
+    password: str,
+    display_name: str = "",
+    locale: str = "en",
+    request: HttpRequest | None = None,
+) -> User:
+    """An account created by redeeming an invitation (Phase 3 M8). The invitation token proved
+    that the caller controls ``email``, so the account is active and its email verified at
+    once. The caller must make sure no account with this email exists."""
+    normalised = UserManager.normalize_email_address(email)
+    user = User(email=normalised, display_name=display_name[:150], locale=locale)
+    _set_password(user, password)
+    now = timezone.now()
+    user.activated_at = now
+    user.email_verified_at = now
+    try:
+        with transaction.atomic():
+            user.save()
+    except IntegrityError as exc:
+        raise ValidationError({"email": "An account with this email already exists."}) from exc
+    audit(
+        "identity.account.created",
+        actor=user,
+        request=request,
+        target_type="identity.user",
+        target_id=user.pk,
+        metadata={"source": "invitation"},
+    )
+    return user
+
+
 def _send_activation(user: User) -> None:
     raw = tokens.issue(user, TokenPurpose.ACTIVATION)
     send_security_email(

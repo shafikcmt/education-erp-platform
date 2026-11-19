@@ -4,6 +4,48 @@
  */
 
 export interface paths {
+    "/api/v1/audit-events/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * This organisation's audit log (cursor pagination)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["tenant_audit_events_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/audit-events/{event_id}/reveal-ip/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reveal an event's IP (step-up; audited)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["audit_events_reveal_ip_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/activate/": {
         parameters: {
             query?: never;
@@ -82,6 +124,29 @@ export interface paths {
          *     authenticated sessions).
          */
         post: operations["auth_email_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/invitations/accept/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Accept an invitation
+         * @description Redeem an invitation: as the signed-in account, or with a password (creating the account
+         *     or proving the existing one; a non-member can't sign in here, D7). Unknown, expired, used
+         *     and revoked tokens get one answer (``invitation_invalid``); every failure leaves durable
+         *     evidence.
+         */
+        post: operations["auth_invitations_accept_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -214,6 +279,220 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/campuses/{campus_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Campus
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["campuses_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a campus or make it the main campus
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["campuses_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/campuses/{campus_id}/archive/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a campus (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["campuses_archive_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/institutions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Institutions I can see
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["institutions_list"];
+        put?: never;
+        /**
+         * Create an institution (limit applies)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["institutions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/institutions/{institution_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["institutions_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["institutions_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/institutions/{institution_id}/archive/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive an institution and its campuses (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["institutions_archive_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/institutions/{institution_id}/campuses/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Campuses of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["institutions_campuses_list"];
+        put?: never;
+        /**
+         * Create a campus (limit applies)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["institutions_campuses_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invitations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open invitations I manage
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["invitations_list"];
+        put?: never;
+        /**
+         * Invite someone with a role in a scope
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["invitations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invitations/{invitation_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke an invitation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["invitations_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/invitations/{invitation_id}/resend/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send an invitation again with a new link
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["invitations_resend_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/": {
         parameters: {
             query?: never;
@@ -240,6 +519,27 @@ export interface paths {
         patch: operations["me_partial_update"];
         trace?: never;
     };
+    "/api/v1/me/context/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My membership, scopes and permissions in this organisation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["me_context_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/email/": {
         parameters: {
             query?: never;
@@ -255,6 +555,26 @@ export interface paths {
          *     authenticated sessions).
          */
         post: operations["me_email_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/memberships/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My organisations (own memberships)
+         * @description P2: "My institutions" through F2, own account only.
+         */
+        get: operations["me_memberships_list"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -492,6 +812,105 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/members/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Members I can see
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["members_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members/{member_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Member
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["members_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Remove a member (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["members_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Suspend or reactivate a member
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["members_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/members/{member_id}/role-assignments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A member's role assignments
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["members_role_assignments_list"];
+        put?: never;
+        /**
+         * Grant a role in a scope (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["members_role_assignments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/members/{member_id}/role-assignments/{assignment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke a role assignment (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["members_role_assignments_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/audit-events/": {
         parameters: {
             query?: never;
@@ -610,6 +1029,187 @@ export interface paths {
          *     authenticated sessions).
          */
         patch: operations["platform_roles_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/support-sessions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My support sessions
+         * @description P6: platform staff request support sessions and list their own (F3).
+         */
+        get: operations["platform_support_sessions_list"];
+        put?: never;
+        /**
+         * Request read-only support access to a tenant (step-up)
+         * @description P6: platform staff request support sessions and list their own (F3).
+         */
+        post: operations["platform_support_sessions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/support-sessions/{session_id}/end/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End my support session early
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_support_sessions_end_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tenant registry (registry fields only)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_tenants_list"];
+        put?: never;
+        /**
+         * Provision a tenant (first institution, main campus, owner invitation)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Tenant registry entry
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_tenants_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update registry fields
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["platform_tenants_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/limits/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Override institution and campus limits (step-up; audited)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        put: operations["platform_tenants_limits_update"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/owner-invitation/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send or replace the owner invitation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_owner_invitation_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/reactivate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reactivate a suspended tenant (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_reactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/suspend/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suspend a tenant (step-up; revokes support sessions)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_suspend_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/platform/users/": {
@@ -816,6 +1416,183 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/tenant/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Public organisation data for the sign-in page
+         * @description Anonymous sign-in page data: name, languages and branding only.
+         */
+        get: operations["public_tenant_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/roles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Roles of this organisation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["roles_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/roles/{role_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Role
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["roles_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete an unused custom role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["roles_destroy"];
+        options?: never;
+        head?: never;
+        /**
+         * Update a custom role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["roles_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/roles/{role_id}/clone/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Clone a role into an editable role (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["roles_clone_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-sessions/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Support access history
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["support_sessions_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-sessions/{session_id}/approve/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve support access (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["support_sessions_approve_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-sessions/{session_id}/reject/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject a support request (step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["support_sessions_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/support-sessions/{session_id}/revoke/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Revoke support access
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["support_sessions_revoke_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/system/health/": {
         parameters: {
             query?: never;
@@ -836,6 +1613,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenant/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Organisation profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["tenant_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update the organisation profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["tenant_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/tenant/support-approval/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Require (or stop requiring) approval of support access
+         * @description D5: owners only, with a reason and a fresh step-up.
+         */
+        post: operations["tenant_support_approval_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -843,6 +1666,11 @@ export interface components {
         Accepted: {
             detail: string;
         };
+        /**
+         * @description * `read_only` - Read only
+         * @enum {string}
+         */
+        AccessLevelEnum: "read_only";
         /**
          * @description * `user` - User
          *     * `system` - System
@@ -889,6 +1717,56 @@ export interface components {
             previous: string | null;
             results: components["schemas"]["AuditEvent"][];
         };
+        Banner: {
+            /** Format: uuid */
+            id: string;
+            status: string;
+            ticket_ref: string;
+            /** Format: date-time */
+            starts_at: string;
+            /** Format: date-time */
+            ends_at: string;
+        };
+        Campus: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly address: unknown;
+            readonly timezone: string;
+            readonly is_main: boolean;
+            /** Format: date-time */
+            readonly archived_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        CampusCreateRequest: {
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            address?: {
+                [key: string]: string;
+            };
+            /** @default  */
+            timezone: string;
+        };
+        Context: {
+            tenant: components["schemas"]["TenantProfile"];
+            membership_status: string | null;
+            is_support_session: boolean;
+            /** Format: date-time */
+            support_session_ends_at: string | null;
+            assignments: components["schemas"]["TenantAssignment"][];
+            scopes: components["schemas"]["ScopePermissions"][];
+            support_banner: components["schemas"]["Banner"][];
+        };
         Csrf: {
             detail: string;
         };
@@ -899,10 +1777,98 @@ export interface components {
         EmailRequestRequest: {
             email: string;
         };
+        FirstInstitutionRequest: {
+            institution_type: components["schemas"]["InstitutionTypeEnum"];
+            code: string;
+            name: string;
+            /** @default main */
+            campus_code: string;
+            /** @default Main campus */
+            campus_name: string;
+        };
         GrantRequest: {
             /** Format: uuid */
             role: string;
             reason: string;
+        };
+        Institution: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly institution_type: components["schemas"]["InstitutionTypeEnum"];
+            readonly settings: unknown;
+            /** Format: date-time */
+            readonly archived_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        InstitutionCreateRequest: {
+            code: string;
+            name: string;
+            institution_type: components["schemas"]["InstitutionTypeEnum"];
+            name_i18n?: {
+                [key: string]: string;
+            };
+        };
+        /**
+         * @description * `school` - School
+         *     * `college` - College
+         *     * `university` - University
+         *     * `madrasa` - Madrasa
+         *     * `coaching_center` - Coaching center
+         *     * `training_institute` - Training institute
+         * @enum {string}
+         */
+        InstitutionTypeEnum: "school" | "college" | "university" | "madrasa" | "coaching_center" | "training_institute";
+        Invitation: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: email */
+            readonly email: string;
+            /** Format: uuid */
+            readonly role: string;
+            readonly role_code: string;
+            readonly scope_type: components["schemas"]["ScopeTypeEnum"];
+            /** Format: uuid */
+            readonly institution: string | null;
+            /** Format: uuid */
+            readonly campus: string | null;
+            /** Format: date-time */
+            readonly expires_at: string;
+            /** Format: date-time */
+            readonly accepted_at: string | null;
+            /** Format: date-time */
+            readonly revoked_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        InvitationAcceptRequest: {
+            token: string;
+            password?: string;
+            display_name?: string;
+            /** @default en */
+            locale: components["schemas"]["LocaleEnum"];
+        };
+        InvitationAccepted: {
+            /** Format: uuid */
+            membership: string;
+            status: string;
+            account_created: boolean;
+        };
+        InvitationCreateRequest: {
+            /** Format: email */
+            email: string;
+            /** Format: uuid */
+            role: string;
+            scope_type: components["schemas"]["ScopeTypeEnum"];
+            /** Format: uuid */
+            institution?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
         };
         /**
          * @description * `platform` - Platform role
@@ -911,6 +1877,11 @@ export interface components {
          * @enum {string}
          */
         KindEnum: "platform" | "template" | "tenant";
+        LimitsRequest: {
+            reason: string;
+            max_institutions: number;
+            max_campuses: number;
+        };
         /**
          * @description * `en` - English
          *     * `bn` - বাংলা
@@ -951,6 +1922,45 @@ export interface components {
             permissions: string[];
             session: components["schemas"]["SessionInfo"];
         };
+        Member: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly user: string;
+            /** Format: email */
+            readonly email: string;
+            readonly display_name: string;
+            readonly status: components["schemas"]["MembershipStatusEnum"];
+            /** Format: date-time */
+            readonly joined_at: string | null;
+            /** Format: date-time */
+            readonly suspended_at: string | null;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        /**
+         * @description * `active` - Active
+         *     * `suspended` - Suspended
+         * @enum {string}
+         */
+        MemberStatusChangeEnum: "active" | "suspended";
+        /**
+         * @description * `invited` - Invited
+         *     * `active` - Active
+         *     * `suspended` - Suspended
+         *     * `left` - Left
+         * @enum {string}
+         */
+        MembershipStatusEnum: "invited" | "active" | "suspended" | "left";
+        MembershipSummary: {
+            /** Format: uuid */
+            tenant_id: string;
+            slug: string;
+            name: string;
+            tenant_status: string;
+            membership_status: string;
+            sign_in_url: string | null;
+        };
         MfaConfirmRequest: {
             /** Format: uuid */
             device_id: string;
@@ -982,19 +1992,85 @@ export interface components {
          * @enum {string}
          */
         OutcomeEnum: "success" | "failure" | "denied";
+        OwnSupportSession: {
+            /** Format: uuid */
+            session_id: string;
+            /** Format: uuid */
+            tenant_id: string;
+            tenant_slug: string;
+            status: string;
+            /** Format: date-time */
+            starts_at: string | null;
+            /** Format: date-time */
+            ends_at: string | null;
+        };
+        OwnerInvitationRequest: {
+            /** Format: email */
+            email: string;
+        };
         PasswordChangeRequest: {
             current_password: string;
             new_password: string;
+        };
+        PatchedCampusUpdateRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            address?: {
+                [key: string]: string;
+            };
+            timezone?: string;
+            /** @default false */
+            make_main: boolean;
+        };
+        PatchedInstitutionUpdateRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            settings?: {
+                [key: string]: unknown;
+            };
         };
         PatchedMeUpdateRequest: {
             display_name?: string;
             locale?: components["schemas"]["LocaleEnum"];
         };
+        PatchedMemberUpdateRequest: {
+            status?: components["schemas"]["MemberStatusChangeEnum"];
+        };
         PatchedPlatformUserUpdateRequest: {
             display_name?: string;
             locale?: components["schemas"]["LocaleEnum"];
         };
+        PatchedRegistryUpdateRequest: {
+            name?: string;
+            default_locale?: string;
+            locales?: string[];
+            timezone?: string;
+            currency?: string;
+            country?: string;
+        };
         PatchedRoleUpdateRequest: {
+            name?: string;
+            description?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            permissions?: string[];
+        };
+        PatchedTenantProfileUpdateRequest: {
+            name?: string;
+            default_locale?: string;
+            locales?: string[];
+            timezone?: string;
+            currency?: string;
+            branding?: {
+                [key: string]: string;
+            };
+        };
+        PatchedTenantRoleUpdateRequest: {
             name?: string;
             description?: string;
             name_i18n?: {
@@ -1064,11 +2140,37 @@ export interface components {
             readonly mfa_enabled: boolean;
             readonly active_sessions: number;
         };
+        ProvisionRequest: {
+            slug: string;
+            name: string;
+            /** Format: email */
+            owner_email: string;
+            institution: components["schemas"]["FirstInstitutionRequest"];
+            default_locale: string;
+            locales?: string[];
+            /** @default UTC */
+            timezone: string;
+            /** @default USD */
+            currency: string;
+            /** @default  */
+            country: string;
+        };
+        PublicTenant: {
+            name: string;
+            default_locale: string;
+            locales: string[];
+            branding: {
+                [key: string]: unknown;
+            };
+        };
         ReasonRequest: {
             reason: string;
         };
         RecoveryCodes: {
             recovery_codes: string[];
+        };
+        RegistryReasonRequest: {
+            reason: string;
         };
         RevealedIp: {
             ip: string;
@@ -1101,6 +2203,21 @@ export interface components {
             };
             permissions: string[];
         };
+        ScopePermissions: {
+            scope_type: string;
+            /** Format: uuid */
+            institution: string | null;
+            /** Format: uuid */
+            campus: string | null;
+            permissions: string[];
+        };
+        /**
+         * @description * `tenant` - Tenant
+         *     * `institution` - Institution
+         *     * `campus` - Campus
+         * @enum {string}
+         */
+        ScopeTypeEnum: "tenant" | "institution" | "campus";
         Session: {
             /** Format: uuid */
             readonly id: string;
@@ -1129,6 +2246,56 @@ export interface components {
         StepUpResult: {
             step_up_expires_at: number;
         };
+        SupportApprovalRequest: {
+            reason: string;
+            requires_approval: boolean;
+        };
+        SupportRequestRequest: {
+            /** Format: uuid */
+            tenant: string;
+            reason: string;
+            ticket_ref: string;
+            minutes: number;
+        };
+        SupportSession: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly status: components["schemas"]["SupportSessionStatusEnum"];
+            /** Format: uuid */
+            readonly staff_user: string;
+            readonly reason: string;
+            readonly ticket_ref: string;
+            readonly access_level: components["schemas"]["AccessLevelEnum"];
+            readonly duration_minutes: number;
+            /** Format: date-time */
+            readonly requested_at: string;
+            /** Format: uuid */
+            readonly approved_by: string | null;
+            /** Format: date-time */
+            readonly starts_at: string | null;
+            /** Format: date-time */
+            readonly ends_at: string | null;
+            /** Format: date-time */
+            readonly ended_at: string | null;
+            /** Format: uuid */
+            readonly revoked_by: string | null;
+        };
+        SupportSessionCreated: {
+            /** Format: uuid */
+            session_id: string;
+            status: string;
+        };
+        /**
+         * @description * `requested` - Requested
+         *     * `approved` - Approved
+         *     * `active` - Active
+         *     * `ended` - Ended
+         *     * `revoked` - Revoked
+         *     * `expired` - Expired
+         *     * `rejected` - Rejected
+         * @enum {string}
+         */
+        SupportSessionStatusEnum: "requested" | "approved" | "active" | "ended" | "revoked" | "expired" | "rejected";
         SystemHealth: {
             status: components["schemas"]["SystemHealthStatusEnum"];
             version: string;
@@ -1140,6 +2307,107 @@ export interface components {
          * @enum {string}
          */
         SystemHealthStatusEnum: "ok" | "degraded";
+        TenantAssignment: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly role: string;
+            readonly role_code: string;
+            readonly role_name: string;
+            readonly scope_type: components["schemas"]["ScopeTypeEnum"];
+            /** Format: uuid */
+            readonly institution: string | null;
+            /** Format: uuid */
+            readonly campus: string | null;
+            /** Format: date-time */
+            readonly valid_from: string;
+            /** Format: date-time */
+            readonly valid_until: string | null;
+            /** Format: date-time */
+            readonly revoked_at: string | null;
+            readonly reason: string;
+        };
+        TenantAssignmentCreateRequest: {
+            /** Format: uuid */
+            role: string;
+            scope_type: components["schemas"]["ScopeTypeEnum"];
+            /** Format: uuid */
+            institution?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
+            /** Format: date-time */
+            valid_until?: string | null;
+            /** @default  */
+            reason: string;
+        };
+        TenantProfile: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly slug: string;
+            readonly name: string;
+            readonly status: components["schemas"]["TenantStatusEnum"];
+            readonly default_locale: string;
+            readonly locales: string[];
+            readonly timezone: string;
+            readonly currency: string;
+            readonly country: string;
+            readonly branding: unknown;
+            readonly support_access_requires_approval: boolean;
+        };
+        /** @description Platform view of a tenant: registry fields only (never ``settings`` or tenant data). */
+        TenantRegistry: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly slug: string;
+            readonly name: string;
+            readonly status: components["schemas"]["TenantStatusEnum"];
+            readonly default_locale: string;
+            readonly locales: string[];
+            readonly timezone: string;
+            readonly currency: string;
+            readonly country: string;
+            readonly limits: {
+                [key: string]: number;
+            };
+            /** Format: date-time */
+            readonly limits_overridden_at: string | null;
+            readonly limits_override_reason: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly updated_at: string;
+        };
+        TenantRegistryPage: {
+            /** Format: uri */
+            next: string | null;
+            /** Format: uri */
+            previous: string | null;
+            results: components["schemas"]["TenantRegistry"][];
+        };
+        TenantRole: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly description: string;
+            readonly is_system: boolean;
+            readonly template_code: string | null;
+            readonly permissions: string[];
+        };
+        TenantRoleCloneRequest: {
+            code: string;
+            name: string;
+        };
+        /**
+         * @description * `provisioning` - Provisioning
+         *     * `active` - Active
+         *     * `suspended` - Suspended
+         *     * `offboarding` - Offboarding
+         *     * `deleted` - Deleted
+         * @enum {string}
+         */
+        TenantStatusEnum: "provisioning" | "active" | "suspended" | "offboarding" | "deleted";
         TokenPasswordRequest: {
             token: string;
             password: string;
@@ -1156,6 +2424,46 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    tenant_audit_events_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuditEventPage"];
+                };
+            };
+        };
+    };
+    audit_events_reveal_ip_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                event_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RevealedIp"];
+                };
+            };
+        };
+    };
     auth_activate_create: {
         parameters: {
             query?: never;
@@ -1239,6 +2547,29 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    auth_invitations_accept_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationAcceptRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InvitationAccepted"];
+                };
             };
         };
     };
@@ -1374,6 +2705,311 @@ export interface operations {
             };
         };
     };
+    campuses_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campus_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campus"];
+                };
+            };
+        };
+    };
+    campuses_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campus_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedCampusUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campus"];
+                };
+            };
+        };
+    };
+    campuses_archive_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                campus_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campus"];
+                };
+            };
+        };
+    };
+    institutions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"][];
+                };
+            };
+        };
+    };
+    institutions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InstitutionCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedInstitutionUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_archive_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Institution"];
+                };
+            };
+        };
+    };
+    institutions_campuses_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campus"][];
+                };
+            };
+        };
+    };
+    institutions_campuses_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                institution_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CampusCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Campus"];
+                };
+            };
+        };
+    };
+    invitations_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"][];
+                };
+            };
+        };
+    };
+    invitations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InvitationCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
+                };
+            };
+        };
+    };
+    invitations_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    invitations_resend_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                invitation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Invitation"];
+                };
+            };
+        };
+    };
     me_retrieve: {
         parameters: {
             query?: never;
@@ -1416,6 +3052,25 @@ export interface operations {
             };
         };
     };
+    me_context_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Context"];
+                };
+            };
+        };
+    };
     me_email_create: {
         parameters: {
             query?: never;
@@ -1435,6 +3090,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Accepted"];
+                };
+            };
+        };
+    };
+    me_memberships_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MembershipSummary"][];
                 };
             };
         };
@@ -1658,6 +3332,158 @@ export interface operations {
             };
         };
     };
+    members_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"][];
+                };
+            };
+        };
+    };
+    members_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
+    members_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    members_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedMemberUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Member"];
+                };
+            };
+        };
+    };
+    members_role_assignments_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantAssignment"][];
+                };
+            };
+        };
+    };
+    members_role_assignments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantAssignmentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantAssignment"];
+                };
+            };
+        };
+    };
+    members_role_assignments_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+                member_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     platform_audit_events_list: {
         parameters: {
             query?: {
@@ -1833,6 +3659,262 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Role"];
+                };
+            };
+        };
+    };
+    platform_support_sessions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnSupportSession"][];
+                };
+            };
+        };
+    };
+    platform_support_sessions_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportRequestRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionCreated"];
+                };
+            };
+        };
+    };
+    platform_support_sessions_end_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSessionCreated"];
+                };
+            };
+        };
+    };
+    platform_tenants_list: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                page_size?: number;
+                /** @description Slug or name contains */
+                q?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistryPage"];
+                };
+            };
+        };
+    };
+    platform_tenants_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProvisionRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedRegistryUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_limits_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LimitsRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_owner_invitation_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerInvitationRequest"];
+            };
+        };
+        responses: {
+            /** @description No response body */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    platform_tenants_reactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistryReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_suspend_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistryReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
                 };
             };
         };
@@ -2105,6 +4187,217 @@ export interface operations {
             };
         };
     };
+    public_tenant_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicTenant"];
+                };
+            };
+        };
+    };
+    roles_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRole"][];
+                };
+            };
+        };
+    };
+    roles_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRole"];
+                };
+            };
+        };
+    };
+    roles_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    roles_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTenantRoleUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRole"];
+                };
+            };
+        };
+    };
+    roles_clone_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantRoleCloneRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRole"];
+                };
+            };
+        };
+    };
+    support_sessions_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSession"][];
+                };
+            };
+        };
+    };
+    support_sessions_approve_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSession"];
+                };
+            };
+        };
+    };
+    support_sessions_reject_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSession"];
+                };
+            };
+        };
+    };
+    support_sessions_revoke_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SupportSession"];
+                };
+            };
+        };
+    };
     system_health: {
         parameters: {
             query?: never;
@@ -2120,6 +4413,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SystemHealth"];
+                };
+            };
+        };
+    };
+    tenant_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+        };
+    };
+    tenant_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedTenantProfileUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+        };
+    };
+    tenant_support_approval_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SupportApprovalRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantProfile"];
                 };
             };
         };

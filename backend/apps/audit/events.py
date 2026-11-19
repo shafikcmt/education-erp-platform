@@ -83,6 +83,23 @@ EVENTS: dict[str, frozenset[str]] = {
     "support.access_denied": frozenset({"reason"}),
     "support.write_rejected": frozenset({"method"}),
     "tenancy.support_approval.changed": frozenset({"old", "new", "reason"}),
+    # tenant registry and structure (Phase 3 M8). Registry events are written to both logs.
+    "tenancy.tenant.provisioned": frozenset({"slug", "tenant_id"}),
+    "tenancy.tenant.provisioning_failed": frozenset({"slug", "tenant_id", "error"}),
+    "tenancy.tenant.updated": frozenset({"fields", "tenant_id"}),
+    "tenancy.tenant.suspended": frozenset({"reason", "tenant_id", "revoked_support_count"}),
+    "tenancy.tenant.reactivated": frozenset({"reason", "tenant_id"}),
+    "tenancy.tenant.limits_overridden": frozenset(
+        {"reason", "tenant_id", "max_institutions", "max_campuses"}
+    ),
+    "tenancy.tenant.owner_invited": frozenset({"tenant_id"}),
+    "tenancy.profile.updated": frozenset({"fields"}),
+    "tenancy.institution.created": frozenset({"object_code"}),
+    "tenancy.institution.updated": frozenset({"fields"}),
+    "tenancy.institution.archived": _NONE,
+    "tenancy.campus.created": frozenset({"object_code"}),
+    "tenancy.campus.updated": frozenset({"fields"}),
+    "tenancy.campus.archived": _NONE,
     # audit / authorization
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),

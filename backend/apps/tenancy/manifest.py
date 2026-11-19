@@ -1,9 +1,9 @@
 """tenancy module manifest: tenant-scope permissions (Phase 3 plan §12.3; M4).
 
 The tenant-scope codes (M4), the support-session codes (M5) and the platform code
-``tenancy.support_session.request`` (P6, M5) are registered here. The remaining platform codes
-(``tenancy.tenant.view_any|create|update_any|suspend``, ``tenancy.limit.override``) arrive with
-M8: until a code exists, every platform operation that needs it fails closed (plan §24.1 N3).
+``tenancy.support_session.request`` (P6, M5) and the registry codes of P4, P5 and P8 (M8:
+``tenancy.tenant.view_any|create|update_any|suspend``, ``tenancy.limit.override``) are
+registered here. Platform codes only ever apply to the platform host (ADR-033).
 
 ``support_readable`` (M5) marks the view codes an approved support session may use.
 
@@ -53,4 +53,11 @@ PERMISSIONS = [
     _p("tenancy.support_session.revoke", "Revoke support sessions", mfa=True),
     # Platform permission (platform operation P6): request, end and list own sessions.
     _p("tenancy.support_session.request", "Request support access to a tenant", step_up=True),
+    # Platform registry permissions (Phase 3 M8; operations P4, P5, P8). Registry fields only:
+    # none of them gives access to tenant data (D8).
+    _p("tenancy.tenant.view_any", "View the tenant registry", mfa=True),
+    _p("tenancy.tenant.create", "Provision tenants and send owner invitations", mfa=True),
+    _p("tenancy.tenant.update_any", "Update tenant registry fields", mfa=True),
+    _p("tenancy.tenant.suspend", "Suspend or reactivate tenants", step_up=True),
+    _p("tenancy.limit.override", "Override tenant institution and campus limits", step_up=True),
 ]

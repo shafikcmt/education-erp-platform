@@ -15,14 +15,14 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.core.exceptions import ValidationError
-from django.db import models, transaction
+from django.db import IntegrityError, models, transaction
 
 from apps.audit.services import record
 from apps.rbac.engine import ScopeTarget, bump_tenant_version, effective_permissions, require_perm
-from apps.rbac.models import Role, RoleKind, RolePermission
+from apps.rbac.models import Permission, Role, RoleAssignment, RoleKind, RolePermission
 from apps.rbac.services import GuardRailViolation
 
 if TYPE_CHECKING:
@@ -166,3 +166,106 @@ def clone_role(
         metadata={"role_code": clone.code},
     )
     return clone
+
+
+def _custom_tenant_role(tenant_id: uuid.UUID, role: Role) -> Role:
+    found = tenant_roles(tenant_id).select_for_update().filter(pk=role.pk).first()
+    if found is None:
+        raise ValidationError({"role": "Unknown role."})
+    if found.is_system:
+        raise GuardRailViolation("system_role_read_only", "System roles are read-only.")
+    return found
+
+
+@transaction.atomic
+def update_tenant_role(
+    *,
+    actor: User,
+    tenant_id: uuid.UUID,
+    role: Role,
+    changes: dict[str, Any],
+    request: HttpRequest | None = None,
+) -> Role:
+    """Edit a custom (cloned) role of this tenant (Phase 3 M8). System copies are read-only.
+    Every permission the role ends up with, and every one it loses, must be held by the actor
+    in the tenant scope (no self-escalation, and no taking away what one can't give)."""
+    target = ScopeTarget(tenant_id=tenant_id)
+    require_perm(actor, "rbac.role.update", target=target, use_cache=False)
+    found = _custom_tenant_role(tenant_id, role)
+    fields = [f for f in ("name", "description", "name_i18n") if f in changes]
+    for field in fields:
+        setattr(found, field, changes[field])
+    if fields:
+        found.save(update_fields=[*fields, "updated_at"])
+        record(
+            "rbac.role.updated",
+            actor=actor,
+            request=request,
+            target_type="rbac.role",
+            target_id=found.pk,
+            metadata={"role_code": found.code, "fields": fields},
+        )
+    if "permissions" in changes:
+        wanted = set(changes["permissions"])
+        known = dict(
+            Permission.objects.filter(code__in=wanted, deprecated_at__isnull=True).values_list(
+                "code", "pk"
+            )
+        )
+        if set(known) != wanted:
+            raise ValidationError({"permissions": "Unknown permission code."})
+        current = role_codes(found)
+        if (wanted ^ current) - effective_permissions(actor, target, use_cache=False):
+            raise GuardRailViolation(
+                "privilege_escalation", "You cannot change permissions you do not hold."
+            )
+        removed = sorted(current - wanted)
+        added = sorted(wanted - current)
+        RolePermission.objects.filter(role=found, permission__code__in=removed).delete()
+        RolePermission.objects.bulk_create(
+            [RolePermission(role=found, permission_id=known[c], tenant_id=tenant_id) for c in added]
+        )
+        if added or removed:
+            bump_tenant_version(tenant_id)
+            record(
+                "rbac.role.permissions_changed",
+                actor=actor,
+                request=request,
+                target_type="rbac.role",
+                target_id=found.pk,
+                metadata={"role_code": found.code, "added": added, "removed": removed},
+            )
+    return found
+
+
+@transaction.atomic
+def delete_tenant_role(
+    *, actor: User, tenant_id: uuid.UUID, role: Role, request: HttpRequest | None = None
+) -> None:
+    """Delete a custom role of this tenant that nobody holds (live or historic assignments and
+    open invitations keep it: composite keys, history)."""
+    target = ScopeTarget(tenant_id=tenant_id)
+    require_perm(actor, "rbac.role.delete", target=target, use_cache=False)
+    found = _custom_tenant_role(tenant_id, role)
+    if role_codes(found) - effective_permissions(actor, target, use_cache=False):
+        raise GuardRailViolation(
+            "privilege_escalation", "You cannot delete a role with permissions you do not hold."
+        )
+    if RoleAssignment.objects.filter(role=found).exists():
+        raise GuardRailViolation("role_in_use", "This role is or was assigned; it can't go.")
+    code, pk = found.code, found.pk
+    try:
+        with transaction.atomic():
+            RolePermission.objects.filter(role=found).delete()
+            found.delete()
+    except IntegrityError:
+        raise GuardRailViolation("role_in_use", "This role is still referenced.") from None
+    bump_tenant_version(tenant_id)
+    record(
+        "rbac.role.deleted",
+        actor=actor,
+        request=request,
+        target_type="rbac.role",
+        target_id=pk,
+        metadata={"role_code": code},
+    )
