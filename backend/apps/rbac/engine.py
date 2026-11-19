@@ -256,6 +256,21 @@ def assigned_permissions(actor: AbstractBaseUser, target: ScopeTarget = PLATFORM
     return frozenset(code for code in granted if code in known)
 
 
+def _scopes_within(actor: AbstractBaseUser, target: ScopeTarget) -> list[ScopeTarget]:
+    """``target`` plus every narrower scope in which a source grants ``actor`` something
+    (sources may offer ``scope_targets(actor, tenant_id)``; Phase 3: role assignments). An
+    institution admin is privileged in the tenant although nothing is granted tenant-wide."""
+    scopes = [target]
+    for source in sources():
+        offer = getattr(source, "scope_targets", None)
+        if offer is None or target.tenant_id is None:
+            continue
+        for scope in offer(actor, target.tenant_id):
+            if scope not in scopes:
+                scopes.append(scope)
+    return scopes
+
+
 def user_requires_mfa(
     actor: AbstractBaseUser, *, use_cache: bool = True, target: ScopeTarget = PLATFORM
 ) -> bool:
@@ -271,7 +286,9 @@ def user_requires_mfa(
     if any(known[c].requires_mfa for c in effective_permissions(actor, use_cache=use_cache)):
         return True
     if not target.is_platform and any(
-        known[c].requires_mfa for c in effective_permissions(actor, target, use_cache=use_cache)
+        known[c].requires_mfa
+        for scope in _scopes_within(actor, target)
+        for c in effective_permissions(actor, scope, use_cache=use_cache)
     ):
         return True
     from apps.rbac.models import PlatformRoleAssignment

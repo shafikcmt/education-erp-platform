@@ -17,7 +17,7 @@ from apps.identity.api.utils import CsrfProtectedView, get_or_404, service_error
 from apps.identity.models import RecoveryCode, User
 from apps.identity.permissions import RequireStepUp
 from apps.identity.services import accounts, mfa, sessions
-from apps.rbac.engine import effective_permissions, user_requires_mfa
+from apps.rbac.engine import PLATFORM, ScopeTarget, effective_permissions, user_requires_mfa
 from apps.rbac.permissions import HasPermission
 
 TAGS = ["me"]
@@ -30,10 +30,15 @@ def _user(request: Request) -> User:
     return user
 
 
+def _target(request: Request) -> ScopeTarget:
+    return getattr(request._request, "scope_target", PLATFORM)
+
+
 def me_payload(request: Request) -> dict[str, Any]:
     user = _user(request)
     django_request = request._request
-    required = user_requires_mfa(user)
+    # Phase 3: on a tenant host, privileged tenant roles count too (any scope of the tenant).
+    required = user_requires_mfa(user, target=_target(request))
     enabled = mfa.has_mfa(user)
     verified = state.mfa_verified(django_request)
     return {
@@ -144,7 +149,7 @@ class MfaStatusView(CsrfProtectedView):
         return Response(
             {
                 "enabled": device is not None,
-                "is_required": user_requires_mfa(user),
+                "is_required": user_requires_mfa(user, target=_target(request)),
                 "confirmed_at": device.confirmed_at if device else None,
                 "recovery_codes_remaining": remaining if device else 0,
             }
@@ -238,7 +243,11 @@ class MfaDisableView(CsrfProtectedView):
     )
     def delete(self, request: Request) -> Response:
         user = _user(request)
-        mfa.disable_mfa(user, request=request._request, required=user_requires_mfa(user))
+        mfa.disable_mfa(
+            user,
+            request=request._request,
+            required=user_requires_mfa(user, target=_target(request)),
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

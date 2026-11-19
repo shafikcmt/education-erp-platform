@@ -223,14 +223,14 @@ def _complete_login(request: HttpRequest, user: User, *, mfa_verified: bool, met
 
 
 # ------------------------------------------------------------------ new sign-in notices
-def _notify_policy_applies(user: User) -> bool:
+def _notify_policy_applies(user: User, request: HttpRequest | None = None) -> bool:
     policy = settings.SECURITY_NOTIFY_NEW_SIGNIN
     if policy == "all":
         return True
     if policy == "platform_staff":
         return user.platform_roles.exists()
     if policy == "privileged":
-        return user_requires_mfa(user)
+        return user_requires_mfa(user, target=getattr(request, "scope_target", PLATFORM))
     return False
 
 
@@ -252,7 +252,7 @@ def _note_device(request: HttpRequest, user: User) -> None:
         device.last_seen_at = now
         device.save(update_fields=["last_seen_at", "updated_at"])
     # The very first sign-in after activation is expected and not reported.
-    if is_new and not first_ever and _notify_policy_applies(user):
+    if is_new and not first_ever and _notify_policy_applies(user, request):
         send_security_email("new_signin", to=user.email, user=user, context={"device": family})
         audit("identity.signin.new_device_notified", actor=user, request=request)
 

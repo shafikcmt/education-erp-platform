@@ -14,8 +14,9 @@
   - **M6 (dual-scope RLS on roles and the audit log, P10 in every scope): Complete** and merged into `main` (PR [#32](https://github.com/shafikcmt/education-erp-platform/pull/32), squash `0b39b39`; Session 24).
   - **M7 (declared Celery tasks, TenantTask, key helpers, I/O guard, support expiry sweep): Complete** and merged into `main` (PR [#33](https://github.com/shafikcmt/education-erp-platform/pull/33), squash `4fbcbcc`; Session 25).
   - **M8 (tenant-host and platform APIs, provisioning, suspension, limits, OpenAPI and client): Complete** and merged into `main` (PR [#34](https://github.com/shafikcmt/education-erp-platform/pull/34), squash `92fcd05`; Session 26).
-  - **M9 (frontend screens of plan §13, en + bn): Complete** on `feat/phase-03-m9` (Session 27); tenant-host E2E follows in M10 (plan N88).
-  - M10 has not started.
+  - **M9 (frontend screens of plan §13, en + bn): Complete** and merged into `main` (PR [#35](https://github.com/shafikcmt/education-erp-platform/pull/35), squash `8b19e76`; Session 27).
+  - **M10 (shared isolation evidence, two-tenant E2E, K3, benchmark): Partial** on `feat/phase-03-m10` (Session 28). Done: two-tenant E2E, K3 through the stack, the tenant-host MFA fix, threat-model and §23 evidence (`docs/security/PHASE_03_ISOLATION_EVIDENCE.md`). **Missing:** the D9 isolation-overhead benchmark, mobile and Bengali tenant-host E2E, prefork K6, and monitoring alerts (plan N93).
+  - M11 has not started.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
 - **Phase 0 status:** Approved (owner merged PR #1 into `main`, 2026-11-05).
@@ -32,7 +33,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`); `feat/phase-03-m9` (M9) | **M1–M8 Complete (merged); M9 Complete (branch)**; M5–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **M1–M9 Complete (merged); M10 Partial (branch)**; M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -100,7 +101,10 @@ See `DECISION_LOG.md`.
   - Tenant lists (institutions, campuses, members, invitations) are filtered in Python after a per-object permission check: fine for Phase 3 sizes (limits 1/3), to be revisited with pagination before large tenants exist.
   - Tenant hosts stay **disabled**; production provisioning is refused until they are enabled (D1).
 - **Phase 3 M9 gaps (recorded, not hidden; plan §24.12 N88):**
-  - **Tenant-host screens are not covered by E2E** (tenant hosts are off in the stack): M10 two-host E2E. They are type-checked and built, and their APIs are covered by backend tests.
+  - ~~**Tenant-host screens are not covered by E2E**~~ — **resolved in M10** for the main journeys (desktop, English).
+- **Phase 3 M10 gaps (recorded, not hidden; plan N93):**
+  - **D9 isolation-overhead benchmark not run.** It needs the §8.4 benchmark settings, a scratch database and a no-RLS control. No numbers are estimated.
+  - Mobile and Bengali tenant-host E2E; prefork K6; Sentry alerts (no Sentry account; none is created without the owner); daily denial report.
   - **K4** is covered at the primitive level only (M2 test); the service-level test arrives with the institution API (M8).
 - **Phase 3 M3 gaps (recorded, not hidden; `plans/PHASE_03_M3_PLAN.md` §11.4):**
   - ~~**R2** cross-tenant invisibility of audit events~~ — **resolved in M6** (private dual-scope RLS on both audit tables; `tests/isolation/test_dual_scope_tables.py`).
@@ -737,3 +741,18 @@ See `DECISION_LOG.md`.
   - Docker clean-volume stack with the web service running the **locally built** frontend (bind-mounted standalone output: the sandbox can't rebuild images); Playwright **33 passed** (new: provisioning wizard, registry, limit override with step-up, My organisations, tenant routes 404 on the platform host; desktop and mobile).
 - **Not done:** M10–M11; tenant hosts not enabled; nothing deployed.
 - **Next recommended task:** M10 (shared isolation suite, two-tenant E2E with tenant hosts in the stack, K3, isolation-overhead benchmark, threat-model test mapping).
+
+### 2026-11-19 — Session 28 (M9 merge; Phase 3 M10, partial)
+- **M9:** [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) — CI **8/8 success**; squash-merged pinned to `c8b80b6` → **`8b19e76`**.
+- **M10 branch:** `feat/phase-03-m10` from `main` `8b19e76`.
+- **Implemented:**
+  - two-tenant E2E on `*.localhost`; tenant hosts are enabled only in the CI/E2E stack's `.env`;
+  - K3 through Nginx and Uvicorn;
+  - fix: the tenant-host MFA requirement now counts every scope (N92);
+  - CI enables tenant hosts and the tenant CSRF origin for its throwaway stack;
+  - evidence document for the threat model and the §23 checklist.
+- **Verification (actual results, local):**
+  - backend **874 passed, 9 skipped**; ruff, format and mypy clean; import-linter 9/9;
+  - Playwright **34 passed, 1 skipped** (the two-tenant journey runs on desktop only). The stack had tenant hosts on and served the locally built frontend through a bind mount.
+- **Status:** M10 **Partial** (see gaps). M11 not started. Tenant hosts stay disabled in every committed default; nothing deployed.
+- **Owner input needed:** whether the D9 benchmark must run before Phase 3 sign-off, or may move to Phase 18 with the production environment, where absolute numbers mean something.
