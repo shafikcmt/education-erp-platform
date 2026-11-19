@@ -104,6 +104,8 @@ permission_classes = [IsAuthenticated, TenantMember, ModuleEntitled("students"),
 ```
 plus a scoped queryset from selectors (`selectors.visible_students(actor=request.actor)`). Services re-check permissions for writes. A CI test enumerates all URL patterns and fails if a tenant endpoint lacks `ModuleEntitled` and `HasPermission` (or an explicit, reviewed exemption).
 
+**Implemented so far (Phase 3 M8):** tenant-host views declare `host_classes = TENANT_ONLY` and use `HasTenantPermission(...)` (the code held in any scope of the tenant) when their objects live in narrower scopes; the view filters lists to the actor's scopes, answers objects outside them with 404, and the service re-checks the exact scope. Platform-host views of tenant registry operations declare `platform_operations = {"METHOD": "P…"}`. `ModuleEntitled` arrives with Phase 4. Reviewed lists in tests: tenant-host routes, anonymous/session-only routes, suspended-tenant routes.
+
 ## 9. Rate limits (proposed defaults, tunable)
 
 | Scope | Limit |
@@ -133,3 +135,4 @@ plus a scoped queryset from selectors (`selectors.visible_students(actor=request
 - 2026-11-06 — Phase 2 implemented: authentication error codes, 401 challenge and `no-store` documented.
 - 2026-11-06 — ADR-040 error codes, step-up `recovery_code` and the API CSP documented.
 - 2026-11-13 — Phase 3 M3: tenant-host error codes, the uniform 404 and the rollback rule documented.
+- 2026-11-19 — Phase 3 M8: what §8 looks like in the implemented tenancy API.
