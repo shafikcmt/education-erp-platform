@@ -1475,6 +1475,16 @@ M9 implements §13 in English and Bengali. Notes:
 | N88 | §13 | Scope switcher on the tenant dashboard ("all my scopes" or one scope; it narrows what the dashboard offers, the API decides each request). Tenant-branded auth pages: organisation name and `branding.primary_color` (only `#rrggbb` is used, so branding can't inject CSS). Tenant-host E2E needs tenant hosts in the stack: M10 |
 | N89 | §12.2 | Found by M9 E2E: provisioning and registry updates refused an empty `country`; the field now allows blank (regression test added) |
 
+### 24.13 M10 — two-tenant E2E, K3 and evidence (2026-11-19, branch `feat/phase-03-m10`; **Partial**)
+
+| # | Section | Note |
+|---|---|---|
+| N90 | §15.1 | Two-tenant E2E (`frontend/e2e/tenants.spec.ts`) on `{slug}.localhost`. It runs when `E2E_TENANT_HOSTS=1`; the CI stack job sets it. Tenant hosts are enabled **only** in that throwaway stack's `.env` (plan §10.2: dev/CI only; production refuses placeholder domains). Covered: provisioning, owner invitation with a new account, MFA enrolment on the tenant host, campus, member invitation with a campus-scoped role, the member's scope, the other tenant out of reach (host-only session, generic sign-in refusal), support approval with the members' banner, then revoke. Desktop and English only (N93) |
+| N91 | §15.3 K3 | K3 runs through the real stack as rounds of 10 interleaved concurrent requests to both tenant hosts, through Nginx and Uvicorn. Each answer must belong to its host. Rounds stay within Nginx's per-IP limit (30 r/s, burst 60). Playwright requests stand in for standard-library threads |
+| N92 | ADR-035, N47 | **Fix:** on a tenant host, `/me/`, the MFA status and the new-sign-in notice did not count privileged roles held at institution or campus scope. Institution and campus admins were reported as not requiring MFA, so the app never sent them to enrolment (their privileged requests were refused, so this was not a bypass). The engine now asks sources for `scope_targets()` (tenant: live assignment scopes) |
+| N93 | M10 scope | **Not done:** the isolation-overhead benchmark (D9, §8.4: benchmark settings, scratch database, no-RLS control); mobile and Bengali tenant-host E2E; prefork K6; Sentry alerts (no account exists); the daily denial report. Evidence and gaps: `docs/security/PHASE_03_ISOLATION_EVIDENCE.md` |
+| N94 | dev/CI | With tenant hosts on locally, `CSRF_TRUSTED_ORIGINS` must include `http://*.localhost:8080`: Nginx forwards the host without the port, so the origin check needs it. Production on the default HTTPS port needs no extra entry |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1503,3 +1513,4 @@ M9 implements §13 in English and Bengali. Notes:
 - 2026-11-18 — §24.10 appended: M7 implementation notes N68–N75. No approved decision changed.
 - 2026-11-19 — §24.11 appended: M8 implementation notes N76–N83. No approved decision changed.
 - 2026-11-19 — §24.12 appended: M9 implementation notes N84–N89. No approved decision changed.
+- 2026-11-19 — §24.13 appended: M10 notes N90–N94 (M10 partial). No approved decision changed.
