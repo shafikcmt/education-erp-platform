@@ -8,7 +8,10 @@
   email must equal the invited email. Unknown, expired, used and revoked tokens are answered
   identically (``invitation_invalid``), and each failed attempt leaves durable evidence.
 * Accepting creates (or re-activates) the membership and the offered assignment in one
-  transaction. Creating a brand-new account from an invitation is part of the API work (M8).
+  transaction.
+* Without a session (M8): :func:`accept_without_session` creates the account (active, email
+  verified: the token proves control of the address) or checks the existing account's
+  password, then accepts in the same transaction.
 """
 
 from __future__ import annotations
@@ -103,6 +106,33 @@ def create_invitation(
     require_perm(actor, INVITE, target=target, use_cache=False)
     tenant_role = common.tenant_role(ctx, role)
     common.assert_no_escalation(actor, tenant_role, target)
+    return issue_invitation(
+        actor=actor,
+        email=email,
+        role=tenant_role,
+        scope_type=scope_type,
+        institution=inst,
+        campus=camp,
+        request=request,
+    )
+
+
+def issue_invitation(
+    *,
+    actor: Any,
+    email: str,
+    role: Any,
+    scope_type: str,
+    institution: Any = None,
+    campus: Any = None,
+    request: HttpRequest | None = None,
+) -> tuple[Invitation, str]:
+    """Store and send an invitation WITHOUT authorising ``actor`` against the tenant. For
+    callers that authorised it already: :func:`create_invitation`, and provisioning (P4),
+    where a platform operator invites the first owner."""
+    ctx = common.tenant_context()
+    tenant_role = common.tenant_role(ctx, role)
+    inst, camp = institution, campus
     address = email.strip().lower()
     if not address or "@" not in address or len(address) > 254:
         raise ValidationError({"email": "Enter a valid email address."})
@@ -119,7 +149,7 @@ def create_invitation(
                 campus=camp,
                 token_hash=token_hash,
                 expires_at=timezone.now() + LIFETIME,
-                invited_by=actor.pk,
+                invited_by=getattr(actor, "pk", None),
             )
     except IntegrityError:
         raise ValidationError(
@@ -189,7 +219,7 @@ def resend_invitation(
     return invitation, raw
 
 
-def _reject(reason: str, request: HttpRequest | None, user: Any) -> InvitationInvalid:
+def _record_attempt(reason: str, request: HttpRequest | None, user: Any) -> None:
     record(
         "tenancy.invitation.invalid_attempt",
         outcome="denied",
@@ -198,6 +228,10 @@ def _reject(reason: str, request: HttpRequest | None, user: Any) -> InvitationIn
         metadata={"reason": reason},
         durable=True,
     )
+
+
+def _reject(reason: str, request: HttpRequest | None, user: Any) -> InvitationInvalid:
+    _record_attempt(reason, request, user)
     return InvitationInvalid()
 
 
@@ -269,3 +303,66 @@ def accept_invitation(*, token: str, user: User, request: HttpRequest | None = N
             metadata={"role_code": invitation.role.code, "scope_type": invitation.scope_type},
         )
     return membership
+
+
+def accept_without_session(
+    *,
+    token: str,
+    password: str,
+    display_name: str = "",
+    locale: str = "en",
+    request: HttpRequest | None = None,
+) -> tuple[Membership, User, bool]:
+    """Redeem ``token`` on the tenant host without a session (Phase 3 M8).
+
+    A non-member can't sign in on a tenant host (D7), so the invitation is redeemed with the
+    password instead:
+
+    * no account for the invited address: one is created, active and with a verified email
+      (the token proves control of the address), in the same transaction as the membership;
+    * an account exists: its password must match. Failures get the generic
+      ``invalid_credentials`` answer, are throttled per invitation and leave durable evidence.
+
+    Returns ``(membership, user, account_created)``."""
+    from apps.identity import errors as identity_errors
+    from apps.identity.models import User
+    from apps.identity.services.accounts import create_invited_account
+
+    common.tenant_context()
+    invitation = Invitation.objects.filter(token_hash=hash_token(token or "")).first()
+    reason = (
+        "unknown"
+        if invitation is None
+        else "revoked"
+        if invitation.revoked_at is not None
+        else "used"
+        if invitation.accepted_at is not None
+        else "expired"
+        if invitation.expires_at <= timezone.now()
+        else ""
+    )
+    if reason:
+        raise _reject(reason, request, None)
+    assert invitation is not None  # noqa: S101 - narrowed above
+    existing = User.objects.filter(email__iexact=invitation.email).first()
+    if existing is None:
+        with transaction.atomic():
+            user = create_invited_account(
+                email=invitation.email,
+                password=password,
+                display_name=display_name,
+                locale=locale,
+                request=request,
+            )
+            membership = accept_invitation(token=token, user=user, request=request)
+        return membership, user, True
+    bucket = throttling.Bucket.named("invite_accept")
+    subject = f"invitation:{invitation.pk}"
+    if bucket.count(subject) >= bucket.limit:
+        raise identity_errors.RateLimited(bucket.retry_after(subject))
+    usable = existing.is_active and existing.activated_at is not None
+    if not (usable and existing.check_password(password)):
+        bucket.hit(subject)
+        _record_attempt("bad_credentials", request, existing)
+        raise identity_errors.InvalidCredentials()
+    return accept_invitation(token=token, user=existing, request=request), existing, False

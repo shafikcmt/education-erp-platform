@@ -1447,6 +1447,21 @@ M7 implements §8.5 (C1–C10), §8.7 and the deferred items of M3 and M5. Notes
 | N74 | §8.4.3 | External-I/O guard: `assert_no_open_tenant_transaction()` refuses email/storage I/O while a tenant transaction is open, except inside a Celery task body. The test email backend applies it to every test (an autouse fixture keeps it, because pytest-django replaces the backend); `tenant_storage()` applies it to storage. This completes the M3 deferred guards |
 | N75 | §11.1, N53 | Support-session expiry sweep: platform task `tenancy.sweep_support_sessions` (P12, registry read) every 5 minutes enqueues `tenancy.expire_support_sessions(tenant_id=…)` per active, suspended or offboarding tenant (mechanism I) |
 
+### 24.11 M8 — tenancy APIs, provisioning, suspension and limits (2026-11-19, branch `feat/phase-03-m8`)
+
+M8 implements §12 (APIs), the P4/P5 registry services and the §6.3 completeness gate. Notes:
+
+| # | Section | Note |
+|---|---|---|
+| N76 | §12.3 | Registered: `tenancy.tenant.view_any` (MFA), `.create` (MFA), `.update_any` (MFA), `.suspend` (step-up), `tenancy.limit.override` (step-up); 46 codes in total. `platform_support` and `platform_onboarding` also get `tenancy.tenant.view_any` (support staff must find the tenant they ask access to). Platform codes never apply on tenant hosts (ADR-033) |
+| N77 | §12.1 | Tenant views are `TENANT_ONLY`. Their permission classes accept a code held **in any scope** of the tenant (an institution admin manages one institution); lists are filtered to the scopes the actor covers; an object outside them is a plain 404 (like another tenant's); every service re-checks the exact object scope uncached. A campus admin sees the institution of their campus read-only |
+| N78 | §6.3 P4 | Provisioning: registry insert (R, `provisioning`, not resolvable) → one tenant transaction (T) for the verified subdomain, system role copies, first institution, main campus, owner invitation and activation. Any failure rolls that transaction back and tombstones the registry row (`deleted`, slug kept) with `tenancy.tenant.provisioning_failed`. Refused with `409 tenant_hosts_disabled` when `TENANT_PROVISIONING_REQUIRES_HOSTS` (production) and tenant hosts are off, and whenever `TENANT_BASE_DOMAIN` is empty |
+| N79 | §6.3 P5, D2 | Registry update, suspension, reactivation and limit override write the platform log (tenant id as metadata) and, in a targeted tenant transaction, the tenant log. Suspension revokes every open support session in that transaction (closes N57). Reasons of 10–200 characters; step-up through the permission flags. Lowering a limit only blocks new creations |
+| N80 | §13.2, N45 | `POST /auth/invitations/accept/` (tenant host): as the signed-in member, or **with a password**: a new account is created (active, email verified, same transaction as the membership), or an existing account proves its password (a non-member can't sign in on a tenant host, D7). Wrong passwords: generic `invalid_credentials`, throttled per invitation (`invite_accept`, 5/15 min), durable `invalid_attempt` evidence |
+| N81 | N47, ADR-048 Q2 | Own step-up and own MFA enrolment endpoints are now also served on tenant hosts, behind the membership gate (needed by step-up permissions and privileged tenant roles). Password, email and session self-service stay platform-only |
+| N82 | §6.3 gate | Every platform-host view of the tenancy API declares `platform_operations` per method; a CI test checks each id is catalogued and enabled and that P2, P4, P5, P6, P8 are all reachable. The host-route list, the URL audit allow-list and the suspended-tenant route list are reviewed lists in tests |
+| N83 | §12 | New: tenant custom roles can be edited (permission changes need every added **and** removed code held at tenant scope) and deleted only if never assigned. Guard-rail conflicts keep the Phase 2 status (409); `limit_exceeded` is 403 with `kind` and `limit` |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1473,3 +1488,4 @@ M7 implements §8.5 (C1–C10), §8.7 and the deferred items of M3 and M5. Notes
 - 2026-11-18 — §24.8 appended: M5 implementation notes N50–N60. No approved decision changed.
 - 2026-11-18 — §24.9 appended: M6 implementation notes N61–N67. No approved decision changed.
 - 2026-11-18 — §24.10 appended: M7 implementation notes N68–N75. No approved decision changed.
+- 2026-11-19 — §24.11 appended: M8 implementation notes N76–N83. No approved decision changed.

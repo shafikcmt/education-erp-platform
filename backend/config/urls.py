@@ -19,6 +19,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.identity.urls")),
     path("api/v1/", include("apps.rbac.urls")),
     path("api/v1/", include("apps.audit.urls")),
+    path("api/v1/", include("apps.tenancy.urls")),
 ]
 
 if settings.API_DOCS_ENABLED:

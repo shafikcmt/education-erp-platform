@@ -106,6 +106,14 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 - Cache keys are `t:{tenant}:…` and object-storage keys `tenants/{tenant}/…`, built only by the helpers in `apps.core.tenancy.keys`; email and storage I/O inside an open tenant transaction is refused in tests.
 - Details: plan §24.10.
 
+### 3.7 Implemented tenancy APIs (Phase 3 M8)
+
+- **Platform host:** registry list and detail (P8), provisioning (P4), registry update, suspension, reactivation and limit overrides (P5), own support sessions (P6) and "my organisations" (P2). Every view declares its catalogue operation; registry fields only, never tenant data (D8).
+- **Tenant host:** every tenancy route is tenant-only (uniform 404 on the platform host). A request passes when the actor holds the code in some scope of the tenant; lists are filtered to the actor's scopes and objects outside them are 404, exactly like another tenant's objects; services re-check the exact scope.
+- **Provisioning** creates the registry row first and everything else in one tenant transaction; a failure tombstones the slug. It is refused while tenant hosts are disabled where production requires them.
+- **Suspension** revokes open support sessions in the tenant's own transaction; members are refused from their next request; owners keep the restricted mode (D2).
+- Details: plan §24.11.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -246,3 +254,4 @@ A failure blocks merge.
 - 2026-11-18 — Phase 3 M5: §3.4 added (implemented support access).
 - 2026-11-18 — Phase 3 M6: §3.5 added (dual-scope RLS on roles and the audit log).
 - 2026-11-18 — Phase 3 M7: §3.6 added (Celery task isolation, key helpers).
+- 2026-11-19 — Phase 3 M8: §3.7 added (tenancy APIs).

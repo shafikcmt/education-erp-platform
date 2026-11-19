@@ -92,6 +92,9 @@ class LogoutView(CsrfProtectedView):
 
 
 class StepUpView(CsrfProtectedView):
+    # Phase 3 M8: step-up of the caller's own session; on a tenant host only after the
+    # membership gate (step-up permissions of tenant APIs need it there).
+    host_classes = PLATFORM_AND_TENANT
     permission_classes = [IsAuthenticatedSession]
     allow_during_mfa_enrollment = True
 

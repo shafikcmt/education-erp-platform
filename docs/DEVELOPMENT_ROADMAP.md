@@ -83,6 +83,8 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **M6 Complete (2026-11-18):** dual-scope RLS on `rbac_role` and `rbac_rolepermission`, private dual-scope RLS on both audit tables (D3, R2 completed), and P10 / IP maintenance in every scope, on `feat/phase-03-m6` (notes: plan §24.9).
 **M6 merged (2026-11-18, PR #32).**
 **M7 Complete (2026-11-18):** every Celery task declared (platform with a catalogue id, or tenant), `TenantTask`, commit-hook isolation, support-session expiry sweep, tenant cache/storage key helpers and the external-I/O guard, on `feat/phase-03-m7` (notes: plan §24.10).
+**M7 merged (2026-11-18, PR #33).**
+**M8 Complete (2026-11-19):** tenant-host and platform APIs, provisioning, suspension, limit overrides, invitation acceptance over HTTP, OpenAPI and TypeScript client, catalogue completeness gate, on `feat/phase-03-m8` (notes: plan §24.11).
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -217,3 +219,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-18 — Phase 3 M4 merged (PR #30); M5 complete on its branch.
 - 2026-11-18 — Phase 3 M5 merged (PR #31); M6 complete on its branch.
 - 2026-11-18 — Phase 3 M6 merged (PR #32); M7 complete on its branch.
+- 2026-11-19 — Phase 3 M7 merged (PR #33); M8 complete on its branch.

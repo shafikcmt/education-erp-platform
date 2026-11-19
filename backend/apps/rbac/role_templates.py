@@ -34,7 +34,7 @@ PLATFORM_ROLES: list[dict[str, Any]] = [
             "audit.event.view",
         ],
         # Phase 3 M5: the canonical code (owner decision P6, plan §24.5).
-        "planned": ["tenancy.support_session.request"],
+        "planned": ["tenancy.support_session.request", "tenancy.tenant.view_any"],
     },
     {
         "code": "platform_billing",
@@ -50,7 +50,7 @@ PLATFORM_ROLES: list[dict[str, Any]] = [
         "bn": "প্ল্যাটফর্ম অনবোর্ডিং",
         "description": "Create and configure new tenants during onboarding.",
         "permissions": ["identity.user.create", "identity.user.view"],
-        "planned": ["tenancy.tenant.create"],
+        "planned": ["tenancy.tenant.create", "tenancy.tenant.view_any"],
     },
 ]
 

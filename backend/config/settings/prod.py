@@ -78,6 +78,8 @@ CSRF_COOKIE_DOMAIN = None
 # The OpenAPI schema/docs must not be public in production (docs/SECURITY.md). It stays off
 # regardless of the environment until platform-staff-only access exists (Phase 2/3).
 API_DOCS_ENABLED = False
+# Phase 3 M8: no tenant can be provisioned while tenant hosts are disabled (plan §10.2, D1).
+TENANT_PROVISIONING_REQUIRES_HOSTS = True
 
 # Security review H3: runtime processes must not hold owner/superuser DB credentials.
 assert_runtime_has_no_owner_credentials(

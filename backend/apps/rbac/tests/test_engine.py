@@ -44,7 +44,8 @@ def test_registry_covers_the_phase_2_catalog_and_seed_is_idempotent():
     """Idempotency of the owner-run bootstrap itself is proven on a throwaway database in
     ``tests/test_permission_catalog.py`` (O1: erp_app can no longer write the catalogue)."""
     codes = set(declared_permissions())
-    assert len(codes) == 41  # 20 (Phase 2) + 17 (M4) + 4 support-session codes (M5)
+    # 20 (Phase 2) + 17 (M4) + 4 support-session codes (M5) + 5 registry codes (M8)
+    assert len(codes) == 46
     assert {"identity.user.view", "audit.event.view_ip", "rbac.platform_role.assign"} <= codes
     assert set(Permission.objects.values_list("code", flat=True)) >= codes
     assert catalog_drift() == []
@@ -68,6 +69,7 @@ def test_super_admin_holds_every_permission_and_others_their_subsets():
         "identity.mfa.reset",
         "audit.event.view",
         "tenancy.support_session.request",  # Phase 3 M5 (P6)
+        "tenancy.tenant.view_any",  # Phase 3 M8: find the tenant to request access to (P8)
     }
 
 

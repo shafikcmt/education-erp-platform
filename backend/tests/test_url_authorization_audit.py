@@ -24,6 +24,9 @@ ANONYMOUS = {
     "identity:auth-activate": "single-use token",
     "identity:auth-activation-resend": "always 202; throttled",
     "identity:auth-email-verify": "single-use token",
+    # Phase 3 M8 (tenant host only)
+    "tenancy:public-tenant": "name, languages and branding for the sign-in page",
+    "tenancy:invitation-accept": "single-use invitation token; enumeration-safe; durable audit",
 }
 SESSION_ONLY = {
     "identity:auth-logout": "ends the caller's own session",

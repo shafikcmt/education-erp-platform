@@ -71,6 +71,17 @@ def make_user(
     return Person(user=user, password=password or "", totp_secret=secret)
 
 
+def enroll_mfa(user: User) -> Person:
+    """Give an existing account a confirmed TOTP device (Phase 3: tenant administrators)."""
+    secret = pyotp.random_base32()
+    device = MFADevice(user=user, kind=MFAKind.TOTP, confirmed_at=timezone.now())
+    device.secret_encrypted = crypto.encrypt_str(
+        secret, purpose=f"identity.mfadevice.secret:{device.pk}"
+    )
+    device.save()
+    return Person(user=user, totp_secret=secret)
+
+
 class Api:
     """JSON client that enforces CSRF like a browser: fetches the cookie, sends the header."""
 

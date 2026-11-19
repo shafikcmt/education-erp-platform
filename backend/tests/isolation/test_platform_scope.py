@@ -15,7 +15,7 @@ from apps.core.tenancy import (
     tenant_atomic,
 )
 from apps.core.tenancy.platform import CATALOGUE, SYSTEM, PlatformOperation, platform_scope
-from apps.rbac.engine import UnknownPermissionError, has_perm
+from apps.rbac.engine import has_perm
 from apps.rbac.models import PlatformRoleAssignment
 from tests.helpers import make_user
 
@@ -225,14 +225,27 @@ def test_ordinary_users_are_denied_and_nothing_runs():
     assert ran == [] and _events("platform.operation.started") == []
 
 
-def test_operations_with_unregistered_permissions_fail_closed(admin):
-    """P4/P5/P6 permission codes arrive with later milestones; until then nothing runs."""
-    with (
-        pytest.raises(UnknownPermissionError),
-        platform_scope(operation="P4", actor=admin.user, reason="provision acme"),
+def test_registry_operations_fail_closed_without_their_permission(admin):
+    """Since M8 every P4/P5/P6 code is registered: a user without it is refused before the
+    scope starts (nothing is audited as started), a holder gets in."""
+    from django.core.exceptions import PermissionDenied
+
+    plain = make_user("plain@example.com").user
+    for operation, permission in (
+        ("P4", None),
+        ("P5", "tenancy.tenant.suspend"),
+        ("P6", None),
+        ("P8", None),
     ):
-        pass
+        with (
+            pytest.raises(PermissionDenied),
+            platform_scope(operation=operation, actor=plain, reason="try", permission=permission),
+        ):
+            pass
     assert _events("platform.operation.started") == []
+    with platform_scope(operation="P4", actor=admin.user, reason="provision acme") as op:
+        assert op.permission == "tenancy.tenant.create"
+    assert len(_events("platform.operation.started")) == 1
 
 
 def test_own_account_and_anonymous_operations_need_no_permission(admin):

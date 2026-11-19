@@ -26,3 +26,17 @@ class InvitationRateLimited(ProblemError):
     problem_code = "rate_limited"
     title = "Too many requests"
     default_detail = "Too many invitations. Please wait and try again."
+
+
+class TenantHostsDisabled(ProblemError):
+    status_code = status.HTTP_409_CONFLICT
+    problem_code = "tenant_hosts_disabled"
+    title = "Tenant hosts are disabled"
+    default_detail = "Tenants can't be provisioned while tenant hosts are disabled."
+
+
+class LimitExceededError(ProblemError):
+    status_code = status.HTTP_403_FORBIDDEN
+    problem_code = "limit_exceeded"
+    title = "Limit reached"
+    default_detail = "The organisation's institution or campus limit is reached."
