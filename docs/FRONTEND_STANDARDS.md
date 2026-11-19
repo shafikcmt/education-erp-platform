@@ -97,6 +97,13 @@ frontend/
 - Tests: Vitest + Testing Library for components/hooks; Playwright for E2E critical flows (login, attendance, marks entry, fee payment, studio publish).
 - Security: no `dangerouslySetInnerHTML` except sanitized (DOMPurify) rich text; no tokens in localStorage; CSP-compatible (no inline scripts without nonce).
 
+## 11. Hosts (implemented, Phase 3 M9)
+
+- The server decides per request whether the page is on the platform host or a tenant host (`getServerHost()` in `src/lib/api/server.ts`). Route groups enforce it: `(app)/(tenant)/…` screens return 404 on the platform host; `(app)/platform/…` and `(app)/me/…` return 404 on tenant hosts.
+- On tenant hosts, navigation and actions follow `/api/v1/me/context/` (`canAnywhere`, `canTenantWide` in `src/lib/tenancy/context.ts`). They only hide what the API already refuses.
+- Privileged actions use `withStepUp` (through `ActionDialog`, `ReasonDialog` or `useAction`); reasons for audited platform actions are 10–200 characters.
+
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
+- 2026-11-19 — Phase 3 M9: §11 (hosts, tenant context, step-up helpers).

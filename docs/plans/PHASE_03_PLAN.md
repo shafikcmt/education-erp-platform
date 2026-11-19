@@ -1462,6 +1462,19 @@ M8 implements §12 (APIs), the P4/P5 registry services and the §6.3 completenes
 | N82 | §6.3 gate | Every platform-host view of the tenancy API declares `platform_operations` per method; a CI test checks each id is catalogued and enabled and that P2, P4, P5, P6, P8 are all reachable. The host-route list, the URL audit allow-list and the suspended-tenant route list are reviewed lists in tests |
 | N83 | §12 | New: tenant custom roles can be edited (permission changes need every added **and** removed code held at tenant scope) and deleted only if never assigned. Guard-rail conflicts keep the Phase 2 status (409); `limit_exceeded` is 403 with `kind` and `limit` |
 
+### 24.12 M9 — frontend screens (2026-11-19, branch `feat/phase-03-m9`)
+
+M9 implements §13 in English and Bengali. Notes:
+
+| # | Section | Note |
+|---|---|---|
+| N84 | §13.1 | The server decides the host kind for each page (`getServerHost()`: a tenant host answers `/public/tenant/`, the platform host 404s). Route groups enforce it: `(tenant)` screens 404 on the platform host, `platform/*` and `me/*` 404 on tenant hosts. The API applies the same rule independently |
+| N85 | §13.1 | Tenant navigation and buttons follow `/me/context/`: a code held in any scope shows the screen; tenant-wide actions (create institution, clone or delete roles, settings, support decisions, IP reveal) need the code at tenant scope. Hiding is never security: every request is checked by the API |
+| N86 | §13.1 | Screens: platform — My organisations, Tenants (list, provisioning wizard, detail with suspend/reactivate, limits and owner invitation), own support sessions (tenant picked from the registry); tenant — dashboard, institutions (+ campuses, main campus, archive), members (+ invitations, assignments with a scope picker, suspend/reactivate/remove), roles (clone, delete custom), settings (profile, D5 approval with reason), support access (approve/reject/revoke), audit log (IP reveal), support banner, accept invitation |
+| N87 | §13.2 | `/[locale]/accept-invitation#token=…` (the path of the invitation emails, not `/invite`): the token is read from the fragment only; the visitor joins with a password (new account, or existing account) as implemented in N80, then signs in. MFA enrolment for privileged roles follows on first sign-in (existing gate) |
+| N88 | §13 | Scope switcher on the tenant dashboard ("all my scopes" or one scope; it narrows what the dashboard offers, the API decides each request). Tenant-branded auth pages: organisation name and `branding.primary_color` (only `#rrggbb` is used, so branding can't inject CSS). Tenant-host E2E needs tenant hosts in the stack: M10 |
+| N89 | §12.2 | Found by M9 E2E: provisioning and registry updates refused an empty `country`; the field now allows blank (regression test added) |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1489,3 +1502,4 @@ M8 implements §12 (APIs), the P4/P5 registry services and the §6.3 completenes
 - 2026-11-18 — §24.9 appended: M6 implementation notes N61–N67. No approved decision changed.
 - 2026-11-18 — §24.10 appended: M7 implementation notes N68–N75. No approved decision changed.
 - 2026-11-19 — §24.11 appended: M8 implementation notes N76–N83. No approved decision changed.
+- 2026-11-19 — §24.12 appended: M9 implementation notes N84–N89. No approved decision changed.
