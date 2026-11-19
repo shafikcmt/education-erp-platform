@@ -113,7 +113,7 @@ jobs:
             enable-cache: true,
             cache-dependency-glob: backend/uv.lock,
           }
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
@@ -176,7 +176,7 @@ jobs:
             'echo "s3.bucket.create -name erp-isolation-probe" | weed shell -master=objectstore:9333'
           docker compose exec -T -e S3_INTEGRATION=1 -e S3_ISOLATION_PROBE_BUCKET=erp-isolation-probe \
             api python -m pytest -p no:cacheprovider -m integration apps/core/tests/test_s3_integration.py
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
