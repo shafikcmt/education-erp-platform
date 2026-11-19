@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 import { AppShell } from "@/components/app/app-shell";
 import { redirect } from "@/i18n/navigation";
-import { getServerMe } from "@/lib/api/server";
+import { getServerHost, getServerMe } from "@/lib/api/server";
 
 type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 
@@ -15,12 +15,16 @@ type Props = { children: ReactNode; params: Promise<{ locale: string }> };
 export default async function AppLayout({ children, params }: Props) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const result = await getServerMe();
+  const [result, host] = await Promise.all([getServerMe(), getServerHost()]);
   if (result.state !== "authenticated") {
     return redirect({ href: "/login", locale });
   }
   if (result.me.mfa_enrollment_required) {
     return redirect({ href: "/login/mfa-setup", locale });
   }
-  return <AppShell me={result.me}>{children}</AppShell>;
+  return (
+    <AppShell me={result.me} host={host.kind === "tenant" ? host : { kind: "platform" }}>
+      {children}
+    </AppShell>
+  );
 }

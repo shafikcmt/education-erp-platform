@@ -10,6 +10,18 @@ type ErrorKey = keyof (typeof en)["errors"];
 
 const KNOWN = new Set<string>([
   "already_activated",
+  "cannot_act_on_self",
+  "invitation_email_mismatch",
+  "invitation_invalid",
+  "last_tenant_owner",
+  "limit_exceeded",
+  "membership_inactive",
+  "not_a_member",
+  "support_access_read_only",
+  "support_session_expired",
+  "tenant_hosts_disabled",
+  "tenant_suspended",
+  "tenant_unavailable",
   "cannot_deactivate_self",
   "invalid_credentials",
   "invalid_mfa_code",

@@ -15,7 +15,8 @@ from contextlib import contextmanager
 from typing import Any
 
 from django.db.models import Q, QuerySet
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound, ValidationError
 from rest_framework.permissions import AllowAny
@@ -825,6 +826,13 @@ class TenantAuditEventsView(TenantView):
     @extend_schema(
         tags=TAGS,
         operation_id="tenant_audit_events_list",
+        parameters=[
+            OpenApiParameter("action", OpenApiTypes.STR),
+            OpenApiParameter("outcome", OpenApiTypes.STR),
+            OpenApiParameter("target_type", OpenApiTypes.STR),
+            OpenApiParameter("cursor", OpenApiTypes.STR),
+            OpenApiParameter("page_size", OpenApiTypes.INT),
+        ],
         summary="This organisation's audit log (cursor pagination)",
         responses=AuditEventPageSerializer,
     )

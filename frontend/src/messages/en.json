@@ -47,7 +47,15 @@
     "users": "Users",
     "roles": "Roles",
     "audit": "Audit log",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "myInstitutions": "My organisations",
+    "tenants": "Tenants",
+    "supportSessions": "Support sessions",
+    "home": "Home",
+    "institutions": "Institutions",
+    "members": "Members",
+    "settings": "Settings",
+    "supportAccess": "Support access"
   },
   "auth": {
     "email": "Email address",
@@ -160,7 +168,19 @@
     "already_activated": "This account is already activated.",
     "mfa_locked": "Too many incorrect codes. Two-factor verification is locked for {seconds} seconds.",
     "insufficient_privilege": "You can't do this to an account with more privileges than yours.",
-    "cannot_reset_own_mfa": "Reset your own two-factor authentication from your account security page."
+    "cannot_reset_own_mfa": "Reset your own two-factor authentication from your account security page.",
+    "invitation_invalid": "This invitation is not valid any more. Ask for a new one.",
+    "invitation_email_mismatch": "This invitation was sent to a different email address.",
+    "limit_exceeded": "Your organisation has reached its limit. Contact the platform team to raise it.",
+    "last_tenant_owner": "The organisation must keep at least one active owner.",
+    "cannot_act_on_self": "You can't do this to your own membership.",
+    "tenant_hosts_disabled": "Organisations can't be created while organisation addresses are disabled.",
+    "tenant_suspended": "This organisation is suspended.",
+    "membership_inactive": "Your membership is not active.",
+    "not_a_member": "You are not a member of this organisation.",
+    "support_access_read_only": "Support access can only read data.",
+    "support_session_expired": "The support session has ended.",
+    "tenant_unavailable": "This organisation no longer accepts changes."
   },
   "dashboard": {
     "title": "Welcome, {name}",
@@ -168,7 +188,15 @@
     "security": "Password, two-factor authentication and active sessions.",
     "users": "Create platform users and manage their access.",
     "roles": "Platform roles, role templates and the permission catalog.",
-    "audit": "Security events across the platform."
+    "audit": "Security events across the platform.",
+    "institutions": "Institutions and their campuses.",
+    "members": "People, their roles and invitations.",
+    "tenantRoles": "Roles of this organisation; clone one to customise it.",
+    "settings": "Organisation profile and support-access approval.",
+    "supportAccess": "Requests from platform support and their history.",
+    "myInstitutions": "Organisations you belong to and where to sign in.",
+    "tenants": "Provision organisations, suspend them and set their limits.",
+    "supportSessions": "Request read-only support access to an organisation."
   },
   "account": {
     "title": "Account security",
@@ -261,5 +289,198 @@
     "ip": "IP",
     "any": "Any",
     "reveal": "Reveal"
+  },
+  "tenancy": {
+    "banner": {
+      "youAreSupport": "You are using read-only support access until {until}.",
+      "supportActive": "Platform support has read-only access until {until}."
+    },
+    "mine": {
+      "title": "My organisations",
+      "subtitle": "Each organisation has its own address and its own sign-in.",
+      "empty": "You are not a member of any organisation yet.",
+      "signIn": "Sign in there",
+      "hostsDisabled": "Sign-in links appear when organisation addresses are enabled."
+    },
+    "status": {
+      "invited": "Invited",
+      "active": "Active",
+      "suspended": "Suspended",
+      "left": "Left"
+    },
+    "tenantStatus": {
+      "provisioning": "Being set up",
+      "active": "Active",
+      "suspended": "Suspended",
+      "offboarding": "Closing",
+      "deleted": "Deleted"
+    },
+    "reason": "Reason",
+    "reasonHint": "10 to 200 characters. It is recorded in the audit log.",
+    "slugHint": "3–32 lower-case letters, digits and hyphens; starts with a letter. It becomes the address and can't change.",
+    "currencyHint": "Three-letter currency code, e.g. BDT or USD.",
+    "codeHint": "Lower-case letters, digits, hyphens or underscores.",
+    "orgName": "Organisation name",
+    "slug": "Address name",
+    "defaultLanguage": "Default language",
+    "timezone": "Time zone",
+    "currency": "Currency",
+    "institutionType": "Institution type",
+    "institutionName": "Institution name",
+    "code": "Code",
+    "mainCampusName": "Main campus name",
+    "ownerEmail": "Owner's email",
+    "ownerEmailHint": "The owner gets an invitation to set a password and two-factor authentication.",
+    "types": {
+      "school": "School",
+      "college": "College",
+      "university": "University",
+      "madrasa": "Madrasa",
+      "coaching_center": "Coaching center",
+      "training_institute": "Training institute"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "subtitle": "Registry of customer organisations. Their data is never shown here.",
+      "provision": "New organisation",
+      "provisionHint": "Creates the organisation, its first institution and main campus, and invites the owner.",
+      "stepOrg": "1. Organisation",
+      "stepInstitution": "2. First institution and main campus",
+      "stepOwner": "3. Owner",
+      "create": "Create organisation",
+      "search": "Search by name or address",
+      "suspend": "Suspend",
+      "suspendHint": "Members lose access at once; only owners can still sign in to review support access. Open support sessions are revoked.",
+      "reactivate": "Reactivate",
+      "reactivateHint": "Members regain access.",
+      "registry": "Registry details",
+      "overrideLimits": "Change limits",
+      "overrideHint": "Overrides the plan limits for this organisation. Lowering a limit only blocks new creations.",
+      "overrideReason": "Last change: {reason}",
+      "ownerInvitation": "Owner invitation",
+      "sendOwnerInvitation": "Send invitation",
+      "ownerInvited": "The invitation was sent."
+    },
+    "statusLabel": "Status",
+    "limits": "Limits",
+    "limitsValue": "{institutions} institutions · {campuses} campuses",
+    "created": "Created",
+    "maxInstitutions": "Institutions",
+    "maxCampuses": "Campuses",
+    "actions": "Actions",
+    "support": {
+      "ownTitle": "My support sessions",
+      "ownSubtitle": "Read-only, time-limited access to one organisation, normally approved by its owners.",
+      "request": "Request access",
+      "tenant": "Organisation",
+      "chooseTenant": "Choose an organisation",
+      "ticket": "Ticket reference",
+      "minutes": "Length",
+      "minutesValue": "{minutes} minutes",
+      "window": "Access window",
+      "end": "End now",
+      "status": {
+        "requested": "Waiting for approval",
+        "approved": "Approved",
+        "active": "Active",
+        "ended": "Ended",
+        "revoked": "Revoked",
+        "expired": "Expired",
+        "rejected": "Rejected"
+      },
+      "title": "Support access",
+      "subtitle": "Platform support can read this organisation's data only through a session you approve. It is read-only, time-limited and audited.",
+      "none": "No support requests yet.",
+      "requestedAt": "Requested {date}",
+      "approve": "Approve",
+      "reject": "Reject",
+      "revoke": "Revoke"
+    },
+    "institutions": {
+      "title": "Institutions",
+      "subtitle": "Institutions you can see in this organisation.",
+      "create": "New institution",
+      "limitHint": "The number of institutions is limited by your plan.",
+      "archiveHint": "The institution and its campuses are archived. Nothing is deleted."
+    },
+    "archived": "Archived",
+    "rename": "Rename",
+    "archive": "Archive",
+    "campuses": {
+      "title": "Campuses",
+      "create": "New campus",
+      "limitHint": "The number of campuses is limited by your plan.",
+      "name": "Campus name",
+      "main": "Main campus",
+      "makeMain": "Make main campus"
+    },
+    "scope": {
+      "label": "Where",
+      "tenant": "Whole organisation",
+      "institution": "Institution",
+      "campus": "Campus",
+      "choose": "Choose…",
+      "switcher": "Show for",
+      "all": "All my scopes"
+    },
+    "roleLabel": "Role",
+    "members": {
+      "invite": "Invite someone",
+      "inviteHint": "They get an email link to join with this role.",
+      "sendInvite": "Send invitation",
+      "title": "Members",
+      "subtitle": "People in your scopes, their status and open invitations.",
+      "person": "Person",
+      "joined": "Joined",
+      "openInvitations": "Open invitations",
+      "noInvitations": "No open invitations.",
+      "expires": "expires {date}",
+      "resend": "Send again",
+      "revoke": "Revoke",
+      "reactivate": "Reactivate",
+      "suspend": "Suspend",
+      "remove": "Remove from organisation",
+      "removeHint": "Their roles end and they are signed out here. The history is kept.",
+      "assignments": "Roles",
+      "grant": "Give a role",
+      "grantHint": "You can only give roles whose permissions you hold where you give them.",
+      "revokedOn": "ended {date}",
+      "since": "since {date}"
+    },
+    "roles": {
+      "title": "Roles",
+      "subtitle": "System roles stay in line with the platform templates and can't be edited. Clone one to customise it.",
+      "clone": "Clone",
+      "cloneHint": "The copy is an editable role of this organisation.",
+      "name": "Role name",
+      "codeHint": "Lower-case letters, digits and underscores; starts with a letter.",
+      "delete": "Delete"
+    },
+    "settings": {
+      "title": "Settings",
+      "subtitle": "Organisation profile and support access.",
+      "saved": "Saved.",
+      "profile": "Profile",
+      "supportApproval": "Approval of support access",
+      "approvalOn": "Platform support needs an owner's approval before reading data (recommended).",
+      "approvalOff": "Support requests are approved automatically. They stay time-limited, visible and revocable.",
+      "turnOff": "Stop requiring approval",
+      "turnOn": "Require approval",
+      "ownerOnly": "Only an owner can change this, with a reason."
+    },
+    "audit": {
+      "subtitle": "Security events of this organisation. IP addresses are masked; revealing one is audited.",
+      "older": "Older events"
+    },
+    "accept": {
+      "title": "Join {name}",
+      "intro": "Enter the password of your account, or choose one to create your account.",
+      "createdDone": "Your account is ready and you have joined. Sign in to continue.",
+      "joinedDone": "You have joined. Sign in to continue.",
+      "weakPassword": "Choose a stronger password.",
+      "passwordHint": "New account: at least {min} characters. Existing account: your current password.",
+      "submit": "Join",
+      "goToSignIn": "Go to sign in"
+    }
   }
 }
