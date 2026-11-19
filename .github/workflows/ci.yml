@@ -150,6 +150,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - run: cp .env.example .env
+      # Phase 3 M10: this throwaway CI stack serves tenant hosts on {slug}.localhost for the
+      # two-tenant E2E (plan §10.2: dev/CI only; production refuses placeholder domains).
+      - name: Enable tenant hosts on *.localhost for the E2E stack
+        run: |
+          sed -i 's/^TENANT_HOSTS_ENABLED=.*/TENANT_HOSTS_ENABLED=true/' .env
+          sed -i 's|^CSRF_TRUSTED_ORIGINS=.*|CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://*.localhost:8080|' .env
+          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS)=' .env
       - name: Owner/superuser DB credentials never reach runtime services (security review H3)
         run: docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py
       - name: Build and start the full stack
@@ -182,6 +189,7 @@ jobs:
             CI: "true",
             E2E_BASE_URL: "http://localhost:8080",
             MAILPIT_URL: "http://localhost:8025",
+            E2E_TENANT_HOSTS: "1",
           }
       - name: Service logs on failure
         if: failure()

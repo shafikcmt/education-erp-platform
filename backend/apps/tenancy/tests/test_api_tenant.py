@@ -392,3 +392,35 @@ def test_tenant_audit_log_shows_only_this_tenant(org, owner, tenant_site):
     events = owner.get(f"{V1}/audit-events/").json()["results"]
     assert events and all(e["action"] != "tenancy.member.suspended" for e in events)
     assert "tenancy.profile.updated" in {e["action"] for e in events}
+
+
+# --------------------------------------------------------------------------- MFA on tenant hosts
+def test_me_reports_the_tenant_mfa_requirement_in_any_scope(org):
+    """An institution admin holds privileged codes only in their institution, yet MFA is
+    required on this tenant's host (and not for a teacher); the platform host is unaffected."""
+    host = tenant_host(org.tenant)
+    head = Api(host=host)
+    head.login(make_person(org.head))
+    me = head.get(f"{V1}/me/").json()
+    assert (me["mfa_required"], me["mfa_enrollment_required"]) == (True, True)
+    blocked = head.get(f"{V1}/institutions/")
+    assert blocked.status_code == 403 and blocked.json()["code"] == "mfa_enrollment_required"
+    teacher = Api(host=host)
+    teacher.login(make_person(org.teacher))
+    assert teacher.get(f"{V1}/me/").json()["mfa_required"] is False
+    platform = Api()
+    platform.login(make_person(org.head))
+    assert platform.get(f"{V1}/me/").json()["mfa_required"] is False
+
+
+def test_turning_mfa_off_is_not_served_on_tenant_hosts(org, owner):
+    """Only enrolment and status are served on tenant hosts (plan N81). Turning MFA off on the
+    platform host is possible for an account without platform roles, but every privileged
+    tenant request then needs a new enrolment (the gate above)."""
+    assert owner.delete(f"{V1}/me/mfa/totp/").status_code == 404
+    assert owner.get(f"{V1}/me/mfa/").json() | {"confirmed_at": None} == {
+        "enabled": True,
+        "is_required": True,
+        "confirmed_at": None,
+        "recovery_codes_remaining": 0,
+    }

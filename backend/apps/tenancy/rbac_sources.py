@@ -83,6 +83,23 @@ class TenantMembershipSource:
             return codes & SUSPENDED_OWNER_CODES
         return codes
 
+    def scope_targets(self, actor: AbstractBaseUser, tenant_id: object) -> list[ScopeTarget]:
+        """The scopes of the actor's live assignments in the applied tenant (for the MFA
+        requirement, which must see institution- and campus-scoped privileges too)."""
+        ctx = current_tenant()
+        if ctx is None or ctx.id != tenant_id or applied_tenant_id(connection) != ctx.id:
+            return []
+        rows = (
+            RoleAssignment.objects.filter(
+                live_assignments(),
+                membership__user_id=actor.pk,
+                membership__status=Membership.Status.ACTIVE,
+            )
+            .values_list("institution_id", "campus_id")
+            .distinct()
+        )
+        return [ScopeTarget(ctx.id, inst, campus) for inst, campus in rows]
+
 
 class SupportSessionSource:
     """Read-only grants of an approved support session (Phase 3 M5; plan §9.3, §11.2 S3).
