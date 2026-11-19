@@ -91,7 +91,7 @@ class ProvisionSerializer(serializers.Serializer[None]):
     locales = _locales()
     timezone = serializers.CharField(max_length=64, required=False, default="UTC")
     currency = serializers.RegexField(r"^[A-Z]{3}$", required=False, default="USD")
-    country = serializers.RegexField(r"^([A-Z]{2})?$", required=False, default="")
+    country = serializers.RegexField(r"^([A-Z]{2})?$", required=False, default="", allow_blank=True)
 
 
 class RegistryUpdateSerializer(serializers.Serializer[None]):
@@ -100,7 +100,7 @@ class RegistryUpdateSerializer(serializers.Serializer[None]):
     locales = _locales()
     timezone = serializers.CharField(max_length=64, required=False)
     currency = serializers.RegexField(r"^[A-Z]{3}$", required=False)
-    country = serializers.RegexField(r"^([A-Z]{2})?$", required=False)
+    country = serializers.RegexField(r"^([A-Z]{2})?$", required=False, allow_blank=True)
 
 
 class RegistryReasonSerializer(serializers.Serializer[None]):

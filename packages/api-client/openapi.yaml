@@ -11,6 +11,27 @@ paths:
         Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
         authenticated sessions).
       summary: This organisation's audit log (cursor pagination)
+      parameters:
+      - in: query
+        name: action
+        schema:
+          type: string
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: query
+        name: outcome
+        schema:
+          type: string
+      - in: query
+        name: page_size
+        schema:
+          type: integer
+      - in: query
+        name: target_type
+        schema:
+          type: string
       tags:
       - tenant
       security:
@@ -3221,9 +3242,11 @@ components:
           minLength: 1
           pattern: ^[A-Z]{3}$
         country:
-          type: string
-          minLength: 1
-          pattern: ^([A-Z]{2})?$
+          oneOf:
+          - type: string
+            pattern: ^([A-Z]{2})?$
+          - type: string
+            maxLength: 0
     PatchedRoleUpdateRequest:
       type: object
       properties:
@@ -3535,10 +3558,12 @@ components:
           default: USD
           pattern: ^[A-Z]{3}$
         country:
-          type: string
-          minLength: 1
-          default: ''
-          pattern: ^([A-Z]{2})?$
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^([A-Z]{2})?$
+          - type: string
+            maxLength: 0
       required:
       - default_locale
       - institution

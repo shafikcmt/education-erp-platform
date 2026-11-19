@@ -2152,8 +2152,7 @@ export interface components {
             timezone: string;
             /** @default USD */
             currency: string;
-            /** @default  */
-            country: string;
+            country?: string;
         };
         PublicTenant: {
             name: string;
@@ -2426,7 +2425,13 @@ export type $defs = Record<string, never>;
 export interface operations {
     tenant_audit_events_list: {
         parameters: {
-            query?: never;
+            query?: {
+                action?: string;
+                cursor?: string;
+                outcome?: string;
+                page_size?: number;
+                target_type?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;

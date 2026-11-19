@@ -94,6 +94,8 @@ def test_provisioning_is_refused_without_permission_and_for_bad_input(admin_api)
     assert admin_api.post(TENANTS, _provision_body("echo")).status_code == 400  # slug taken
     for slug in ("admin", "a", "Bad_Slug", "x--y"):
         assert admin_api.post(TENANTS, _provision_body(slug)).status_code == 400, slug
+    no_country = admin_api.post(TENANTS, _provision_body("golf", country=""))
+    assert no_country.status_code == 201, no_country.content
     mismatch = _provision_body("foxtrot", default_locale="ar")
     assert admin_api.post(TENANTS, mismatch).status_code == 400
     assert not Tenant.objects.filter(slug="foxtrot").exists()

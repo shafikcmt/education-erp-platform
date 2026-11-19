@@ -19,13 +19,18 @@ export type ServerMe =
  * Forwards only the incoming Cookie and the proxy's host/proto headers; Next.js never reads,
  * stores or mints credentials itself. The API stays the authority on every request.
  */
-export async function getServerMe(): Promise<ServerMe> {
+async function forwardedHeaders(): Promise<Record<string, string>> {
   const [jar, incoming] = await Promise.all([cookies(), headers()]);
   const forwarded: Record<string, string> = { cookie: jar.toString(), accept: "application/json" };
   for (const name of ["host", "x-forwarded-host", "x-forwarded-proto", "accept-language"]) {
     const value = incoming.get(name);
     if (value) forwarded[name] = value;
   }
+  return forwarded;
+}
+
+export async function getServerMe(): Promise<ServerMe> {
+  const forwarded = await forwardedHeaders();
   try {
     const response = await fetch(`${baseUrl()}/api/v1/me/`, {
       headers: forwarded,
@@ -37,5 +42,32 @@ export async function getServerMe(): Promise<ServerMe> {
     return { state: "authenticated", me: (await response.json()) as Schemas["Me"] };
   } catch {
     return { state: "unavailable" };
+  }
+}
+
+export type ServerHost =
+  | { kind: "platform" }
+  | { kind: "tenant"; tenant: Schemas["PublicTenant"] }
+  | { kind: "unavailable" };
+
+/**
+ * Which kind of host serves this request (Phase 3 plan §13): a tenant host answers
+ * `/public/tenant/`, the platform host answers 404 there. Only used to choose screens and
+ * navigation; the API decides every request on its own (host policy, ADR-041).
+ */
+export async function getServerHost(): Promise<ServerHost> {
+  const forwarded = await forwardedHeaders();
+  delete forwarded.cookie; // anonymous endpoint: no credentials needed
+  try {
+    const response = await fetch(`${baseUrl()}/api/v1/public/tenant/`, {
+      headers: forwarded,
+      cache: "no-store",
+      redirect: "manual",
+    });
+    if (response.status === 404) return { kind: "platform" };
+    if (!response.ok) return { kind: "unavailable" };
+    return { kind: "tenant", tenant: (await response.json()) as Schemas["PublicTenant"] };
+  } catch {
+    return { kind: "unavailable" };
   }
 }
