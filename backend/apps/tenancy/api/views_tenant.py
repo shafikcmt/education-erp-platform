@@ -32,6 +32,7 @@ from apps.core.tenancy import require_tenant
 from apps.identity.api.utils import CsrfProtectedView, get_or_404, service_errors
 from apps.identity.models import User
 from apps.identity.permissions import RequireStepUp
+from apps.module_registry.entitlements import summary as entitlement_summary
 from apps.module_registry.permissions import ModuleGatedView
 from apps.rbac import tenant_roles
 from apps.rbac.engine import ScopeTarget, effective_permissions, has_perm
@@ -41,7 +42,7 @@ from apps.tenancy.access import membership_status
 from apps.tenancy.api import serializers as s
 from apps.tenancy.api.permissions import HasTenantPermission, actor_targets
 from apps.tenancy.errors import LimitExceededError
-from apps.tenancy.limits import LimitExceeded
+from apps.tenancy.limits import LimitExceeded, limits_usage
 from apps.tenancy.models import Campus, Institution, Invitation, Membership, SupportSession, Tenant
 from apps.tenancy.selectors import support as support_selectors
 from apps.tenancy.services import assignments, invitations, memberships, structure
@@ -152,14 +153,19 @@ class ContextView(TenantView):
                         "permissions": perms,
                     }
                 )
+        tenant = Tenant.objects.get(pk=tenant_id)
         data = {
-            "tenant": Tenant.objects.get(pk=tenant_id),
+            "tenant": tenant,
             "membership_status": membership_status(user.pk),
             "is_support_session": session is not None,
             "support_session_ends_at": getattr(session, "ends_at", None),
             "assignments": list(rows),
             "scopes": scopes,
             "support_banner": support_selectors.banner(),
+            "entitlements": {
+                **entitlement_summary(tenant_id),
+                "limits": limits_usage(tenant),
+            },
         }
         return Response(s.ContextSerializer(data).data)
 

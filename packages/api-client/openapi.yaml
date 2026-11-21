@@ -1135,6 +1135,49 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/platform/addons/:
+    get:
+      operationId: platform_addons_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add-ons
+      tags:
+      - platform-billing
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AddOn'
+          description: ''
+    post:
+      operationId: platform_addons_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create an add-on for a sellable module
+      tags:
+      - platform-billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddOnCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddOn'
+          description: ''
   /api/v1/platform/audit-events/:
     get:
       operationId: platform_audit_events_list
@@ -1222,6 +1265,69 @@ paths:
               schema:
                 $ref: '#/components/schemas/RevealedIp'
           description: ''
+  /api/v1/platform/feature-flags/:
+    get:
+      operationId: platform_feature_flags_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Feature flags
+      tags:
+      - platform-modules
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Flag'
+          description: ''
+    post:
+      operationId: platform_feature_flags_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create or update a feature flag (default, percentage, plans, tenants)
+      tags:
+      - platform-modules
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FlagRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Flag'
+          description: ''
+  /api/v1/platform/modules/:
+    get:
+      operationId: platform_modules_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Module catalogue
+      tags:
+      - platform-modules
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Module'
+          description: ''
   /api/v1/platform/permissions/:
     get:
       operationId: platform_permissions_list
@@ -1241,6 +1347,182 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Permission'
+          description: ''
+  /api/v1/platform/plans/:
+    get:
+      operationId: platform_plans_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Plans
+      tags:
+      - platform-billing
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Plan'
+          description: ''
+    post:
+      operationId: platform_plans_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: 'Create a plan (no prices: those are entered separately)'
+      tags:
+      - platform-billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlanCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+          description: ''
+  /api/v1/platform/plans/{code}/:
+    get:
+      operationId: platform_plans_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Plan
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-billing
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+          description: ''
+    patch:
+      operationId: platform_plans_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Update a plan (name, visibility, limits, trial length, modules, archive)
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPlanUpdateRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Plan'
+          description: ''
+  /api/v1/platform/prices/:
+    get:
+      operationId: platform_prices_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Prices (owner-entered data)
+      parameters:
+      - in: query
+        name: active
+        schema:
+          type: boolean
+      - in: query
+        name: addon
+        schema:
+          type: string
+      - in: query
+        name: plan
+        schema:
+          type: string
+      tags:
+      - platform-billing
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Price'
+          description: ''
+    post:
+      operationId: platform_prices_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add a price (replaces the active one for the same target, currency,
+        interval)
+      tags:
+      - platform-billing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PriceCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
+          description: ''
+  /api/v1/platform/prices/{price_id}/deactivate/:
+    post:
+      operationId: platform_prices_deactivate_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Deactivate a price
+      parameters:
+      - in: path
+        name: price_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-billing
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Price'
           description: ''
   /api/v1/platform/roles/:
     get:
@@ -1617,6 +1899,220 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantRegistry'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/:
+    get:
+      operationId: platform_tenants_subscription_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A tenant's plan, add-ons, overrides and resolved modules
+      parameters:
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/addons/:
+    post:
+      operationId: platform_tenants_subscription_addons_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add an add-on
+      parameters:
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddAddOnRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/addons/{code}/remove/:
+    post:
+      operationId: platform_tenants_subscription_addons_remove_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Remove an add-on
+      parameters:
+      - in: path
+        name: code
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReasonRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/overrides/:
+    post:
+      operationId: platform_tenants_subscription_overrides_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Grant or revoke one module for this tenant
+      parameters:
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SetOverrideRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/overrides/{module}/end/:
+    post:
+      operationId: platform_tenants_subscription_overrides_end_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: End the open override of one module
+      parameters:
+      - in: path
+        name: module
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangeReasonRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/plan/:
+    post:
+      operationId: platform_tenants_subscription_plan_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Assign a plan (ends a trial)
+      parameters:
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignPlanRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+          description: ''
+  /api/v1/platform/tenants/{tenant_id}/subscription/trial/:
+    post:
+      operationId: platform_tenants_subscription_trial_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Start or extend a trial on a plan
+      parameters:
+      - in: path
+        name: tenant_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TrialRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
           description: ''
   /api/v1/platform/tenants/{tenant_id}/suspend/:
     post:
@@ -2243,6 +2739,24 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantProfile'
           description: ''
+  /api/v1/tenant/subscription/:
+    get:
+      operationId: tenant_subscription_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: This organisation's plan, modules and limits (read-only)
+      tags:
+      - tenant
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantSubscription'
+          description: ''
   /api/v1/tenant/support-approval/:
     post:
       operationId: tenant_support_approval_create
@@ -2291,6 +2805,74 @@ components:
         * `system` - System
         * `support` - Support session
         * `ai` - AI assistant
+    AddAddOnRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 200
+        addon:
+          type: string
+          minLength: 1
+          maxLength: 40
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - addon
+      - reason
+    AddOn:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        module:
+          type: string
+          nullable: true
+        archived:
+          type: boolean
+      required:
+      - archived
+      - code
+      - module
+      - name
+    AddOnCreateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_]{1,39}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        module:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 64
+      required:
+      - code
+      - name
+    AssignPlanRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 200
+        plan:
+          type: string
+          minLength: 1
+          maxLength: 40
+      required:
+      - plan
+      - reason
     Assignment:
       type: object
       properties:
@@ -2511,6 +3093,15 @@ components:
       required:
       - code
       - name
+    ChangeReasonRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 200
+      required:
+      - reason
     Context:
       type: object
       properties:
@@ -2537,8 +3128,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Banner'
+        entitlements:
+          $ref: '#/components/schemas/Entitlements'
       required:
       - assignments
+      - entitlements
       - is_support_session
       - membership_status
       - scopes
@@ -2571,6 +3165,27 @@ components:
           maxLength: 254
       required:
       - email
+    Entitlements:
+      type: object
+      description: 'Phase 4 M5: what the UI may show. Hidden is not secure: the server
+        enforces.'
+      properties:
+        modules:
+          type: array
+          items:
+            type: string
+        flags:
+          type: object
+          additionalProperties:
+            type: boolean
+        limits:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/LimitUsage'
+      required:
+      - flags
+      - limits
+      - modules
     FirstInstitutionRequest:
       type: object
       properties:
@@ -2600,6 +3215,41 @@ components:
       - code
       - institution_type
       - name
+    Flag:
+      type: object
+      properties:
+        key:
+          type: string
+          pattern: ^[a-z][a-z0-9_.]{2,79}$
+        description:
+          type: string
+          maxLength: 255
+        default_enabled:
+          type: boolean
+        rules:
+          type: object
+          additionalProperties: {}
+      required:
+      - default_enabled
+      - key
+    FlagRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_.]{2,79}$
+        description:
+          type: string
+          maxLength: 255
+        default_enabled:
+          type: boolean
+        rules:
+          type: object
+          additionalProperties: {}
+      required:
+      - default_enabled
+      - key
     GrantRequest:
       type: object
       properties:
@@ -2697,6 +3347,16 @@ components:
         * `madrasa` - Madrasa
         * `coaching_center` - Coaching center
         * `training_institute` - Training institute
+    IntervalEnum:
+      enum:
+      - month
+      - year
+      - one_time
+      type: string
+      description: |-
+        * `month` - Monthly
+        * `year` - Yearly
+        * `one_time` - One time
     Invitation:
       type: object
       properties:
@@ -2819,16 +3479,16 @@ components:
       - email
       - role
       - scope_type
-    KindEnum:
-      enum:
-      - platform
-      - template
-      - tenant
-      type: string
-      description: |-
-        * `platform` - Platform role
-        * `template` - Tenant role template
-        * `tenant` - Tenant role
+    LimitUsage:
+      type: object
+      properties:
+        limit:
+          type: integer
+        used:
+          type: integer
+      required:
+      - limit
+      - used
     LimitsRequest:
       type: object
       properties:
@@ -3087,6 +3747,49 @@ components:
           type: string
           writeOnly: true
           maxLength: 32
+    Module:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        version:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+        sellable:
+          type: boolean
+        available:
+          type: boolean
+      required:
+      - available
+      - category
+      - code
+      - dependencies
+      - name
+      - sellable
+      - version
+    ModuleState:
+      type: object
+      properties:
+        code:
+          type: string
+        source:
+          type: string
+        enabled:
+          type: boolean
+        reason:
+          type: string
+      required:
+      - code
+      - enabled
+      - reason
+      - source
     OutcomeEnum:
       enum:
       - success
@@ -3097,6 +3800,28 @@ components:
         * `success` - Success
         * `failure` - Failure
         * `denied` - Denied
+    Override:
+      type: object
+      properties:
+        module:
+          type: string
+        kind:
+          type: string
+        reason:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - expires_at
+      - kind
+      - module
+      - reason
     OwnSupportSession:
       type: object
       properties:
@@ -3205,6 +3930,39 @@ components:
       properties:
         status:
           $ref: '#/components/schemas/MemberStatusChangeEnum'
+    PatchedPlanUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 120
+        is_public:
+          type: boolean
+        limits:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+        trial_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          nullable: true
+        archived:
+          type: boolean
+        modules:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
     PatchedPlatformUserUpdateRequest:
       type: object
       properties:
@@ -3355,6 +4113,84 @@ components:
       - module_code
       - requires_mfa
       - requires_step_up
+    Plan:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+        is_public:
+          type: boolean
+        limits:
+          type: object
+          additionalProperties:
+            type: integer
+        trial_days:
+          type: integer
+          nullable: true
+        archived:
+          type: boolean
+        modules:
+          type: array
+          items:
+            type: string
+      required:
+      - archived
+      - code
+      - is_public
+      - limits
+      - modules
+      - name
+      - name_i18n
+      - trial_days
+    PlanCreateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_]{1,39}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        limits:
+          type: object
+          additionalProperties:
+            type: integer
+            minimum: 1
+        modules:
+          type: array
+          items:
+            type: string
+            minLength: 1
+            maxLength: 64
+        is_public:
+          type: boolean
+          default: false
+        trial_days:
+          type: integer
+          maximum: 365
+          minimum: 1
+          nullable: true
+      required:
+      - code
+      - name
+    PlanRef:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+      required:
+      - code
+      - name
     PlatformUser:
       type: object
       properties:
@@ -3515,6 +4351,67 @@ components:
       - locale
       - mfa_enabled
       - platform_roles
+    Price:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plan:
+          type: string
+          nullable: true
+        addon:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        interval:
+          type: string
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+        active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - active
+      - addon
+      - amount
+      - created_at
+      - currency
+      - id
+      - interval
+      - plan
+    PriceCreateRequest:
+      type: object
+      properties:
+        plan:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 40
+        addon:
+          type: string
+          nullable: true
+          minLength: 1
+          maxLength: 40
+        currency:
+          type: string
+          minLength: 1
+          pattern: ^[A-Z]{3}$
+        interval:
+          $ref: '#/components/schemas/IntervalEnum'
+        amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+      required:
+      - amount
+      - currency
+      - interval
     ProvisionRequest:
       type: object
       properties:
@@ -3650,7 +4547,7 @@ components:
           readOnly: true
         kind:
           allOf:
-          - $ref: '#/components/schemas/KindEnum'
+          - $ref: '#/components/schemas/RoleKindEnum'
           readOnly: true
         institution_types:
           type: array
@@ -3717,6 +4614,16 @@ components:
       - code
       - name
       - permissions
+    RoleKindEnum:
+      enum:
+      - platform
+      - template
+      - tenant
+      type: string
+      description: |-
+        * `platform` - Platform role
+        * `template` - Tenant role template
+        * `tenant` - Tenant role
     ScopePermissions:
       type: object
       properties:
@@ -3808,6 +4715,35 @@ components:
       - idle_timeout_seconds
       - mfa_verified
       - step_up_expires_at
+    SetOverrideKindEnum:
+      enum:
+      - grant
+      - revoke
+      type: string
+      description: |-
+        * `grant` - grant
+        * `revoke` - revoke
+    SetOverrideRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 200
+        module:
+          type: string
+          minLength: 1
+          maxLength: 64
+        kind:
+          $ref: '#/components/schemas/SetOverrideKindEnum'
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - kind
+      - module
+      - reason
     StepUpRequest:
       type: object
       properties:
@@ -3833,6 +4769,67 @@ components:
           type: integer
       required:
       - step_up_expires_at
+    SubscribedAddOn:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        valid_from:
+          type: string
+          format: date-time
+        valid_until:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - code
+      - name
+      - valid_from
+      - valid_until
+    Subscription:
+      type: object
+      properties:
+        tenant_id:
+          type: string
+          format: uuid
+        plan:
+          allOf:
+          - $ref: '#/components/schemas/PlanRef'
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        current_period_end:
+          type: string
+          format: date-time
+          nullable: true
+        addons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscribedAddOn'
+        overrides:
+          type: array
+          items:
+            $ref: '#/components/schemas/Override'
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleState'
+      required:
+      - addons
+      - current_period_end
+      - modules
+      - overrides
+      - plan
+      - status
+      - tenant_id
+      - trial_ends_at
     SupportApprovalRequest:
       type: object
       properties:
@@ -4287,6 +5284,44 @@ components:
         * `suspended` - Suspended
         * `offboarding` - Offboarding
         * `deleted` - Deleted
+    TenantSubscription:
+      type: object
+      properties:
+        plan:
+          allOf:
+          - $ref: '#/components/schemas/PlanRef'
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        current_period_end:
+          type: string
+          format: date-time
+          nullable: true
+        addons:
+          type: array
+          items:
+            $ref: '#/components/schemas/SubscribedAddOn'
+        modules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ModuleState'
+        limits:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/LimitUsage'
+      required:
+      - addons
+      - current_period_end
+      - limits
+      - modules
+      - plan
+      - status
+      - trial_ends_at
     TokenPasswordRequest:
       type: object
       properties:
@@ -4313,6 +5348,25 @@ components:
           maxLength: 256
       required:
       - token
+    TrialRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+          maxLength: 200
+        plan:
+          type: string
+          minLength: 1
+          maxLength: 40
+        days:
+          type: integer
+          maximum: 365
+          minimum: 1
+      required:
+      - days
+      - plan
+      - reason
   securitySchemes:
     sessionAuth:
       type: apiKey

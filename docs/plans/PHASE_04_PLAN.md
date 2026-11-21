@@ -189,6 +189,16 @@ The owner approved the plan with the recommended answers:
 | P22 | `tenant_task(module=…)`: a tenant task of a module is refused (`TenantTaskRefused`) for tenants not entitled to it; `require_module()` (M3) remains the service-layer guard |
 | P23 | Every Phase 3 tenant view belongs to a platform module, so no behaviour changes today; the probe view `/_probe/module/` (tests only, module `academics`) exercises the full path. OpenAPI is unchanged (the mixin has no docstring so operation descriptions stay as they were) |
 
+### 13.5 M5 — APIs, OpenAPI and client (2026-11-21, branch `feat/phase-04-m5`)
+
+| # | Note |
+|---|---|
+| P24 | Platform catalogue (P17): `GET /platform/modules/`; `GET,POST /platform/feature-flags/` (upsert); `GET,POST /platform/plans/`, `GET,PATCH /platform/plans/{code}/` (name, visibility, limits, `trial_days`, modules, archive); `GET,POST /platform/addons/`; `GET,POST /platform/prices/` and `POST /platform/prices/{id}/deactivate/` (`billing.price.manage`, step-up). Amounts are validated and stored as entered; nothing is suggested or seeded |
+| P25 | Tenant subscription (P18): `GET /platform/tenants/{id}/subscription/` (plan, add-ons, open overrides, modules resolved live); `POST …/plan/`, `…/trial/`, `…/addons/`, `…/addons/{code}/remove/`, `…/overrides/`, `…/overrides/{module}/end/` with a 10–200 character reason; `billing.subscription.manage` needs a fresh step-up. Unknown tenants and nothing-to-end answer 404 |
+| P26 | Tenant host: `GET /tenant/subscription/` (`billing.subscription.view`, module `billing`): plan, status, add-ons, modules from the stored snapshot (what enforcement uses) and limits with current usage. Not served in restricted owner mode (the Phase 3 D2 list is unchanged) |
+| P27 | `/me/context/` gains `entitlements`: enabled modules, flags evaluated for the tenant, limits with usage. The UI only hides what the server refuses |
+| P28 | Every platform view declares its catalogue operation (P17/P18); the completeness test now covers the billing and module registry APIs. Reads list registry rows only; writes call the services (scope + uncached permission). OpenAPI regenerated with 0 warnings and the TypeScript client regenerated |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
@@ -196,3 +206,4 @@ The owner approved the plan with the recommended answers:
 - 2026-11-21 — §13.2 appended: M2 notes P6–P11.
 - 2026-11-21 — §13.3 appended: M3 notes P12–P17.
 - 2026-11-21 — §13.4 appended: M4 notes P18–P23.
+- 2026-11-21 — §13.5 appended: M5 notes P24–P28.

@@ -54,6 +54,8 @@ TENANT_HOST_ROUTES = {
     "api/v1/support-sessions/<str:session_id>/revoke/": False,
     "api/v1/audit-events/": False,
     "api/v1/audit-events/<str:event_id>/reveal-ip/": False,
+    # Phase 4 M5: the organisation's own plan, modules and limits (read-only)
+    "api/v1/tenant/subscription/": False,
 }
 # Routes served on both kinds of host (everything else on this list is tenant-only).
 BOTH_HOSTS = {
