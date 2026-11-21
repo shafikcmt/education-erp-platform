@@ -191,9 +191,30 @@ Outlined in `MODULE_CATALOG.md`; detailed schemas are defined in the plan of the
 
 `pgvector` (`vector`), `pg_trgm`, `btree_gist`, `citext`, `pgcrypto` (if DB-side UUID/crypto needed).
 
+## Phase 3 implementation (as built)
+
+Implemented in Phase 3 (migrations `tenancy.0001`–`0005`, `rbac.0005`–`0007`, `audit.0004`; plan §4, §5, §7, §24):
+
+| Table | As built | RLS class |
+|---|---|---|
+| `tenancy_tenant` | Registry: slug (immutable, tombstoned, reserved list), status (`provisioning → active ⇄ suspended → offboarding → deleted`, enforced by a trigger), locales, timezone, currency, country, `limits` + override fields (ADR-010), `settings` (support-approval flag), branding. Runtime role has no `DELETE` | Self-scoped: a tenant context sees only its own row; no context sees all |
+| `tenancy_tenantdomain` | domain (unique), kind, is_primary (one per tenant), verified_at | Standard tenant |
+| `tenancy_institution`, `tenancy_campus` | code unique per tenant / institution, `archived_at` (no hard delete), one main campus per institution | Standard tenant |
+| `tenancy_membership` | status invited/active/suspended/left, `UNIQUE (tenant_id, user_id)` | Standard tenant |
+| `tenancy_invitation` | email (lower-case), role, scope, SHA-256 token hash (unique), expiry, accepted/revoked; one open invitation per (email, role, scope) | Standard tenant |
+| `tenancy_supportsession` | read-only access level (CHECK), requested length 15–120 min, window from approval, one open session per staff member and tenant | Standard tenant |
+| `rbac_roleassignment` | scope type tenant/institution/campus with a consistency CHECK, validity window, revocation fields | Standard tenant |
+| `rbac_role`, `rbac_rolepermission` | tenant system copies of templates and clones (`template_id`) | Dual: platform rows visible everywhere, tenant rows only in their tenant |
+| `audit_auditevent`, `audit_auditeventip` | `tenant_id` set from the tenant context; IP side table follows by trigger | Private dual: platform and tenant scopes can't see each other |
+
+- **Composite foreign keys** `(tenant_id, …)` join every tenant table to another (`MATCH SIMPLE`, `ON DELETE RESTRICT`); Django FKs between tenant tables have `db_constraint=False` (plan §4.4).
+- **`SECURITY DEFINER` functions** (owner-only `SELECT` policies, fixed `search_path`): `tenancy_resolve_host` (F1), `tenancy_memberships_of` (F2), `tenancy_support_sessions_of` (F3). Only `apps.tenancy.selectors.platform` calls them.
+- `CONN_MAX_AGE = 0` in every runtime setting (D4); the tenant is set per transaction with `set_config('app.tenant_id', …, true)`.
+
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Updated for owner-approved ADR-009/010/011/012/013/014 (session auth, transaction-scoped RLS context, DB roles, UUIDv7 abstraction, tenant-level subscription with campus limits, uv/pnpm, layout).
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
 - 2026-11-06 — Phase 2 implemented the identity/RBAC/audit tables exactly as designed in `plans/PHASE_02_PLAN.md` §7, plus `identity_sessionrecord.session_key_encrypted` (plan §18 D4). Dual-scope `tenant_id` columns exist on `rbac_role`, `rbac_rolepermission` and `audit_auditevent`; their RLS policies arrive in Phase 3.
 - 2026-11-06 — ADR-040: `audit_auditevent.recorded_tx_at` (set by trigger to the writing transaction's start) and an `audit_auditeventip` guard trigger (runtime role: add IP rows only with their event; clear but never rewrite). **Never reverse the audit migrations in production**: `audit.0003` refuses reversal unless `ERP_ALLOW_AUDIT_ROLLBACK=true` outside production/staging, and reversing `audit.0001`/`0002` would remove the protection and the audit data.
+- 2026-11-21 — Phase 3 M11: "Phase 3 implementation (as built)" added (tables, RLS classes, composite keys, definer functions).

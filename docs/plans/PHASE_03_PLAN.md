@@ -1495,6 +1495,16 @@ M9 implements §13 in English and Bengali. Notes:
 | N98 | CI | The E2E stack raises `SECURITY_LOGIN_IP_LIMIT` to 200, because every browser shares one client address (the Docker gateway). Per-account limits are unchanged |
 | N99 | M10 | Still open: the D9 benchmark (**awaiting the owner's decision**: before Phase 3 sign-off, or Phase 18), prefork K6, and Sentry alerts |
 
+### 24.15 M11 — documentation and security self-review (2026-11-21, branch `feat/phase-03-m11`)
+
+- Updated as built: `DATABASE_DESIGN.md`, `ERD.md`, `SECURITY.md` §6b, `DOCKER_DEPLOYMENT.md` §5, `MULTI_TENANT_ARCHITECTURE.md` §3.8. ADR-009 already carries its amendment note (ADR-043, 2026-11-08).
+- Self-review: `docs/security/PHASE_03_SECURITY_REVIEW.md`, covering defects found and fixed, the attack-surface review and residual risks.
+- **Exit-criteria status (§21):**
+  - criteria 1–10: met, with the evidence in the evidence map;
+  - criterion 11: met **except** the D9 benchmark report (owner decision pending);
+  - criterion 12: this PR is separate and is **not merged without the owner's approval**.
+- Phase 3 therefore stays **In progress / Partial** until the owner decides on D9 and approves.
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1525,3 +1535,4 @@ M9 implements §13 in English and Bengali. Notes:
 - 2026-11-19 — §24.12 appended: M9 implementation notes N84–N89. No approved decision changed.
 - 2026-11-19 — §24.13 appended: M10 notes N90–N94 (M10 partial). No approved decision changed.
 - 2026-11-21 — §24.14 appended: M10 continued, N95–N99. No approved decision changed.
+- 2026-11-21 — §24.15 appended: M11 documentation, self-review and exit-criteria status. No approved decision changed.
