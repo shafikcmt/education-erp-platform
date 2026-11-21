@@ -16,6 +16,8 @@ import { unwrap } from "@/lib/api/errors";
 import { can, useMe } from "@/lib/auth/me";
 import { useErrorMessage } from "@/lib/auth/use-error-message";
 
+import { SubscriptionPanel } from "./subscription-panel";
+
 /** Registry entry of one tenant (plan §13.1): status, limits, owner invitation. Registry
  * fields only; the platform never sees tenant data here (D8). */
 export function TenantDetail({ id = "" }: { id?: string }) {
@@ -193,6 +195,7 @@ export function TenantDetail({ id = "" }: { id?: string }) {
             ) : null}
           </CardContent>
         </Card>
+        {can(me, "billing.subscription.view_any") ? <SubscriptionPanel tenantId={id} /> : null}
         {can(me, "tenancy.tenant.create") && row.status === "active" ? (
           <Card className="md:col-span-2">
             <CardHeader>

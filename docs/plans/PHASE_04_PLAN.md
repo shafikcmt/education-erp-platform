@@ -199,6 +199,16 @@ The owner approved the plan with the recommended answers:
 | P27 | `/me/context/` gains `entitlements`: enabled modules, flags evaluated for the tenant, limits with usage. The UI only hides what the server refuses |
 | P28 | Every platform view declares its catalogue operation (P17/P18); the completeness test now covers the billing and module registry APIs. Reads list registry rows only; writes call the services (scope + uncached permission). OpenAPI regenerated with 0 warnings and the TypeScript client regenerated |
 
+### 13.6 M6 — frontend (2026-11-21, branch `feat/phase-04-m6`)
+
+| # | Note |
+|---|---|
+| P29 | Tenant navigation needs the permission **and** the module in the plan (`isEntitled`, from `/me/context/` entitlements; the module is the permission code's prefix, per the `<module>.<resource>.<action>` rule). Hidden is not secure: the API refuses with `module_not_entitled`, which now has a localised message |
+| P30 | Tenant **Subscription** page (`/subscription`, `billing.subscription.view`): plan, status, trial end, add-ons, limits with usage bars, included and unavailable modules with the reason (coming soon, needs another module, turned off) |
+| P31 | Platform **Plans and pricing** page (`/platform/plans`, `billing.plan.view`): plans (modules, limits, trial length), create plan and add-on (`billing.plan.manage`), prices entered by the owner, replaced and deactivated, never edited (`billing.price.manage`, step-up recovery) |
+| P32 | Platform tenant page: **Subscription** panel (`billing.subscription.view_any`) with assign plan, start trial, add or remove add-ons, grant/revoke and end module overrides; every action asks for a reason and recovers from `step_up_required` |
+| P33 | English and Bengali catalogues (new `billing` block, nav items, error). Module names are shown as codes for now (module `name_i18n` is a later improvement) |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
@@ -207,3 +217,4 @@ The owner approved the plan with the recommended answers:
 - 2026-11-21 — §13.3 appended: M3 notes P12–P17.
 - 2026-11-21 — §13.4 appended: M4 notes P18–P23.
 - 2026-11-21 — §13.5 appended: M5 notes P24–P28.
+- 2026-11-21 — §13.6 appended: M6 notes P29–P33.
