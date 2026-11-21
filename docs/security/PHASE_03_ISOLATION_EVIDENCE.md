@@ -65,3 +65,4 @@
 ### Change notes
 - 2026-11-19 — Created (Phase 3 M10, partial).
 - 2026-11-21 — M10 part 2: daily denial report, Bengali/mobile tenant-host E2E.
+- 2026-11-21 — ADR-049: D9 benchmark moved to Phase 18.

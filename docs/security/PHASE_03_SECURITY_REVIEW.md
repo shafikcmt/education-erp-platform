@@ -34,7 +34,7 @@
 
 ## 3. Residual risks and open items (for the owner)
 
-1. **D9 isolation-overhead benchmark not measured.** Performance risk, not an isolation risk. Owner decision pending: before sign-off, or Phase 18.
+1. **D9 isolation-overhead benchmark not measured.** Performance risk, not an isolation risk. Moved to Phase 18 by the owner (ADR-049).
 2. **No Sentry alerting.** Isolation violations are logged and summarised daily, but nobody is paged. Needs a Sentry account (owner).
 3. **Inviter re-check at acceptance** (above): an invitation outlives the inviter's permission until it expires (7 days) or is revoked.
 4. **Tenant lists are filtered in Python** (institutions, campuses, invitations): correct, but not built for large tenants. Paginate before limits grow.
@@ -43,3 +43,4 @@
 
 ### Change notes
 - 2026-11-21 — Created (Phase 3 M11).
+- 2026-11-21 — ADR-049: D9 benchmark moved to Phase 18.

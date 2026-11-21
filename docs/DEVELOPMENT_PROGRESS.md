@@ -33,7 +33,7 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **M1–M9 Complete (merged); M10 Partial (branch)**; M5–M11 not started |
+| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Complete** (M1–M11; D9 benchmark moved to Phase 18, ADR-049); awaiting the owner's explicit approval; M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Not started | | |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
@@ -106,7 +106,7 @@ See `DECISION_LOG.md`.
   - **D9 isolation-overhead benchmark not run.** It needs the §8.4 benchmark settings, a scratch database and a no-RLS control. No numbers are estimated.
   - ~~Mobile and Bengali tenant-host E2E~~ and ~~daily denial report~~ — **resolved in M10 part 2** (plan §24.14).
   - Prefork K6; Sentry alerts (no Sentry account; none is created without the owner).
-  - **D9 benchmark: Blocked** — awaiting the owner's decision (before sign-off, or Phase 18).
+  - ~~**D9 benchmark**~~ — **moved to Phase 18** by the owner (ADR-049, 2026-11-21).
   - **K4** is covered at the primitive level only (M2 test); the service-level test arrives with the institution API (M8).
 - **Phase 3 M3 gaps (recorded, not hidden; `plans/PHASE_03_M3_PLAN.md` §11.4):**
   - ~~**R2** cross-tenant invisibility of audit events~~ — **resolved in M6** (private dual-scope RLS on both audit tables; `tests/isolation/test_dual_scope_tables.py`).
@@ -779,3 +779,11 @@ See `DECISION_LOG.md`.
   2. approval of Phase 3 (and of the M11 PR);
   3. later, the production domain plus the security review before tenant hosts are enabled.
 - Phase 4 does **not** start without the owner's approval.
+
+### 2026-11-21 — Session 29 (continued): owner decision
+- The owner accepted the recommendation: the D9 benchmark moves to Phase 18 (**ADR-049**). Phase 3 exit criteria are met → **Phase 3: Complete** (not yet *Approved*).
+- Open items carried forward:
+  - **Phase 18:** D9 benchmark, prefork K6, Sentry alerting (needs an account), pagination of tenant lists;
+  - **owner decision:** inviter re-check at acceptance (hardening);
+  - **production enablement of tenant hosts:** domain plus approved security review (D1).
+- Next: the Phase 4 plan (module registry and feature entitlement engine) as **Proposed**. Implementation waits for the owner's approval.

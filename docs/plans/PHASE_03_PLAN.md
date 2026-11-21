@@ -1501,9 +1501,9 @@ M9 implements §13 in English and Bengali. Notes:
 - Self-review: `docs/security/PHASE_03_SECURITY_REVIEW.md`, covering defects found and fixed, the attack-surface review and residual risks.
 - **Exit-criteria status (§21):**
   - criteria 1–10: met, with the evidence in the evidence map;
-  - criterion 11: met **except** the D9 benchmark report (owner decision pending);
-  - criterion 12: this PR is separate and is **not merged without the owner's approval**.
-- Phase 3 therefore stays **In progress / Partial** until the owner decides on D9 and approves.
+  - criterion 11: met; the D9 benchmark moved to Phase 18 (**ADR-049**, owner, 2026-11-21);
+  - criterion 12: separate PR, merged on the owner's instruction of 2026-11-21.
+- Phase 3 is **Complete**. It becomes **Approved** when the owner approves the phase explicitly.
 
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
@@ -1536,3 +1536,4 @@ M9 implements §13 in English and Bengali. Notes:
 - 2026-11-19 — §24.13 appended: M10 notes N90–N94 (M10 partial). No approved decision changed.
 - 2026-11-21 — §24.14 appended: M10 continued, N95–N99. No approved decision changed.
 - 2026-11-21 — §24.15 appended: M11 documentation, self-review and exit-criteria status. No approved decision changed.
+- 2026-11-21 — §24.15 updated: ADR-049 moves the D9 benchmark to Phase 18; Phase 3 Complete.

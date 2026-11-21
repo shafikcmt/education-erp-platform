@@ -118,7 +118,7 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 
 - Implemented: §3.1–§3.7, plus two-tenant E2E on `*.localhost` (CI only), K3 through the stack, a daily denial summary and unknown-host 404s in the frontend.
 - **Tenant hosts remain disabled** in every committed configuration. Enabling them in production needs the production domain and the approved security review (D1).
-- Open: the D9 isolation-overhead benchmark (owner decision pending), prefork K6, Sentry alerts.
+- Open: the D9 isolation-overhead benchmark (moved to Phase 18, ADR-049), prefork K6, Sentry alerts.
 
 ## 4. Enforcement layers
 
@@ -262,3 +262,4 @@ A failure blocks merge.
 - 2026-11-18 — Phase 3 M7: §3.6 added (Celery task isolation, key helpers).
 - 2026-11-19 — Phase 3 M8: §3.7 added (tenancy APIs).
 - 2026-11-21 — Phase 3 M11: §3.8 status summary.
+- 2026-11-21 — ADR-049: D9 benchmark moved to Phase 18.
