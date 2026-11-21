@@ -140,6 +140,30 @@ CATALOGUE: dict[str, PlatformOperationSpec] = {
             "",
             disabled_reason="Planned for Phase 18; not available in Phase 3.",
         ),
+        # Phase 4 (plan §5; ADR-051): billing and entitlements.
+        _op(
+            "P17",
+            "Manage modules, plans, add-ons, prices and feature flags",
+            "user",
+            "R",
+            ("billing.plan.manage", "billing.price.manage", "module_registry.flag.manage"),
+        ),
+        _op(
+            "P18",
+            "Change a tenant's plan, add-ons, trial and module overrides",
+            "user",
+            "RT",
+            ("billing.subscription.manage",),
+        ),
+        _op("P19", "Entitlement and trial expiry sweep", "system", "I"),
+        _op(
+            "P20",
+            "Module catalogue sync",
+            "system",
+            "R",
+            audited=False,
+            disabled_reason="Owner-run bootstrap (sync_modules), not a runtime platform scope.",
+        ),
         _op(
             "P16",
             "Incident break-glass",

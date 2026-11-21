@@ -40,9 +40,10 @@ def _events(action: str) -> list[AuditEvent]:
 
 
 def test_catalogue_matches_plan_and_disables_what_phase_3_forbids():
-    assert sorted(CATALOGUE, key=lambda k: int(k[1:])) == [f"P{i}" for i in range(1, 17)]
+    # P1-P16: Phase 3 plan §6.3; P17-P20: Phase 4 plan §5 (ADR-051).
+    assert sorted(CATALOGUE, key=lambda k: int(k[1:])) == [f"P{i}" for i in range(1, 21)]
     disabled = {k for k, spec in CATALOGUE.items() if not spec.enabled}
-    assert disabled == {"P3", "P11", "P15", "P16"}
+    assert disabled == {"P3", "P11", "P15", "P16", "P20"}
     assert "D6" in CATALOGUE["P16"].disabled_reason  # no break-glass in Phase 3
     for spec in CATALOGUE.values():
         assert spec.mechanisms <= {"R", "T", "I", "D"}

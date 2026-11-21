@@ -41,7 +41,13 @@ DUAL_SCOPE_TABLES: dict[str, str] = {
 
 # Registry tables keyed by their own id (plan §5.1). tenancy_tenant: the platform sees every
 # row, a tenant context only its own (M2, ``EnableSelfScopedRLS``).
-SELF_SCOPED_TABLES: dict[str, str] = {"tenancy_tenant": "id"}
+SELF_SCOPED_TABLES: dict[str, str] = {
+    "tenancy_tenant": "id",
+    # Phase 4 M2 (ADR-051): per-tenant registry rows; tenant contexts read their own only.
+    "billing_subscription": "tenant_id",
+    "billing_subscriptionitem": "tenant_id",
+    "module_registry_override": "tenant_id",
+}
 
 
 @dataclass(frozen=True)
@@ -128,6 +134,24 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
             "apps/module_registry/tests/test_registry.py::test_sync_refuses_the_runtime_role",
         ),
     ),
+    **{
+        table: AllowEntry(
+            "Platform billing catalogue (Phase 4, ADR-051): plans, plan modules, add-ons, "
+            "prices and feature flags hold no tenant data. Written only inside platform "
+            "operation P17 by holders of the billing/flag permissions (uncached check).",
+            (
+                "apps/billing/tests/test_catalogue.py::test_catalogue_changes_need_the_platform_permission",
+                "apps/billing/tests/test_catalogue.py::test_prices_are_never_edited_only_replaced",
+            ),
+        )
+        for table in (
+            "billing_plan",
+            "billing_planmodule",
+            "billing_addon",
+            "billing_price",
+            "module_registry_featureflag",
+        )
+    },
     "rbac_platformroleassignment": AllowEntry(
         "Platform staff roles; platform permissions never apply to tenant targets (ADR-033).",
         (

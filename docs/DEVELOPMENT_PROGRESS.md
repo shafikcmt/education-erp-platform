@@ -808,3 +808,15 @@ See `DECISION_LOG.md`.
   - backend **887 passed, 9 skipped**; ruff, format and mypy (247 files) clean; import-linter 9/9; `makemigrations --check` clean; OpenAPI unchanged;
   - `docker compose run --rm migrate` synced 34 modules.
 - **Next:** M2 (billing data model with RLS classes, catalogue P17–P20).
+
+### 2026-11-21 — Session 30 (continued): Phase 4 M2
+- **M1:** [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) — CI **8/8 success**; squash-merged pinned to `99000ed` → **`10d3365`**.
+- **M2 (`feat/phase-04-m2`):**
+  - billing data model; overrides and feature flags;
+  - self-scoped, tenant-read-only RLS on subscriptions, items and overrides;
+  - catalogue P17–P20 with uncached permission checks and both logs;
+  - prices never seeded or edited; data-only flag evaluation; 7 new permission codes.
+- **Verification (local):**
+  - backend **893 passed, 9 skipped**; mypy (255 files) clean; import-linter 9/9; migrations check clean; OpenAPI unchanged;
+  - `docker compose run --rm migrate` applied the new migrations and synced permissions and roles.
+- **Next:** M3 (entitlement resolution, snapshot, cache, expiry sweep, limits from the plan, trial at provisioning).

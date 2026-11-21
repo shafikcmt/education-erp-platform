@@ -196,7 +196,9 @@ class InstallTenantContextFunction(migrations.operations.base.Operation):
         return "Install app_tenant_id() (transaction-local tenant context)"
 
 
-def tenant_policy_expressions(kind: str) -> dict[str, tuple[str | None, str | None]]:
+def tenant_policy_expressions(
+    kind: str, *, key: str = "id", tenant_writes: bool = True
+) -> dict[str, tuple[str | None, str | None]]:
     """``{command: (USING, WITH CHECK)}`` for a policy class (plan §5.1).
 
     * ``standard``: ``tenant_id = ctx``.
@@ -204,19 +206,20 @@ def tenant_policy_expressions(kind: str) -> dict[str, tuple[str | None, str | No
       only rows of the current scope (``IS NOT DISTINCT FROM``: platform context writes
       platform rows, tenant context its own rows).
     * ``dual_private``: reads and writes only the current scope.
-    * ``self_scoped``: registry table keyed by ``id``; all rows without a context, only the
-      tenant's own row inside one.
+    * ``self_scoped``: registry table keyed by ``key`` (``id`` for ``tenancy_tenant``,
+      ``tenant_id`` for per-tenant registry rows such as subscriptions); all rows without a
+      context, only the tenant's own rows inside one. With ``tenant_writes=False`` a tenant
+      context may only read: every write needs the platform (no context; Phase 4, ADR-051).
     """
     ctx = TENANT_CONTEXT_EXPR
     if kind == "self_scoped":
-        # Registry table keyed by its own id (tenancy_tenant): the platform (no context) sees
-        # every row; a tenant context sees only its own row (plan §5.1).
-        own = f"({ctx} IS NULL OR id = {ctx})"
+        own = f"({ctx} IS NULL OR {key} = {ctx})"
+        write = own if tenant_writes else f"({ctx} IS NULL)"
         return {
             "select": (own, None),
-            "insert": (None, own),
-            "update": (own, own),
-            "delete": (own, None),
+            "insert": (None, write),
+            "update": (write, write),
+            "delete": (write, None),
         }
     if kind == "standard":
         own = f"(tenant_id = {ctx})"
@@ -246,6 +249,9 @@ class _EnableRLS(migrations.operations.base.Operation):
     def __init__(self, table: str) -> None:
         self.table = table
 
+    def policy_options(self) -> dict[str, Any]:
+        return {}
+
     def deconstruct(self) -> tuple[str, list[Any], dict[str, Any]]:
         return (self.__class__.__name__, [], {"table": self.table})
 
@@ -262,7 +268,9 @@ class _EnableRLS(migrations.operations.base.Operation):
         table = schema_editor.quote_name(self.table)
         schema_editor.execute(f"ALTER TABLE {table} ENABLE ROW LEVEL SECURITY")
         schema_editor.execute(f"ALTER TABLE {table} FORCE ROW LEVEL SECURITY")
-        for command, (using, check) in tenant_policy_expressions(self.kind).items():
+        for command, (using, check) in tenant_policy_expressions(
+            self.kind, **self.policy_options()
+        ).items():
             sql = f"CREATE POLICY {policy_name(command)} ON {table} FOR {command.upper()}"
             if using:
                 sql += f" USING {using}"
@@ -312,9 +320,28 @@ class EnableDualScopeRLS(_EnableRLS):
 
 
 class EnableSelfScopedRLS(_EnableRLS):
-    """ENABLE + FORCE RLS on the tenant registry (``tenancy_tenant``): self-scoped by ``id``."""
+    """ENABLE + FORCE RLS on a registry table, self-scoped by ``key`` (``tenancy_tenant``:
+    ``id``). ``tenant_writes=False``: tenant contexts read their own rows only (ADR-051)."""
 
     kind = "self_scoped"
+
+    def __init__(self, table: str, key: str = "id", tenant_writes: bool = True) -> None:
+        super().__init__(table)
+        if key not in {"id", "tenant_id"}:
+            raise ValueError("Self-scoped registry tables are keyed by id or tenant_id.")
+        self.key = key
+        self.tenant_writes = tenant_writes
+
+    def policy_options(self) -> dict[str, Any]:
+        return {"key": self.key, "tenant_writes": self.tenant_writes}
+
+    def deconstruct(self) -> tuple[str, list[Any], dict[str, Any]]:
+        kwargs: dict[str, Any] = {"table": self.table}
+        if self.key != "id":
+            kwargs["key"] = self.key
+        if not self.tenant_writes:
+            kwargs["tenant_writes"] = False
+        return (self.__class__.__name__, [], kwargs)
 
     def describe(self) -> str:
         return f"Enable self-scoped registry RLS on {self.table}"

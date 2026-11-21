@@ -291,7 +291,15 @@ def check_models(dual: Iterable[str] = (), pending: Iterable[str] = ()) -> list[
 
     from apps.core.tenancy.models import TenantManager, TenantScopedModel
 
-    exempt = set(dual) | set(pending) | set(registry.DUAL_SCOPE_TABLES) | set(registry.PENDING_RLS)
+    # Self-scoped registry rows (Phase 4: subscriptions, items, overrides) are read by the
+    # platform without a context by design; their RLS is checked by check_table_classes.
+    exempt = (
+        set(dual)
+        | set(pending)
+        | set(registry.DUAL_SCOPE_TABLES)
+        | set(registry.PENDING_RLS)
+        | set(registry.SELF_SCOPED_TABLES)
+    )
     problems = []
     for model in apps.get_models():
         meta = model._meta

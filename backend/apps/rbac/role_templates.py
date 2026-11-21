@@ -42,7 +42,18 @@ PLATFORM_ROLES: list[dict[str, Any]] = [
         "bn": "প্ল্যাটফর্ম বিলিং",
         "description": "Plans, subscriptions and SaaS invoices; no tenant academic data.",
         "permissions": [],
-        "planned": ["billing.plan.view", "billing.subscription.view", "billing.invoice.view"],
+        # Phase 4 (ADR-054 Q4): plans, add-ons, prices, flags and subscriptions.
+        "planned": [
+            "billing.plan.view",
+            "billing.plan.manage",
+            "billing.price.manage",
+            "billing.subscription.view_any",
+            "billing.subscription.manage",
+            "module_registry.module.view",
+            "module_registry.flag.manage",
+            "tenancy.tenant.view_any",
+            "billing.invoice.view",
+        ],
     },
     {
         "code": "platform_onboarding",
@@ -110,6 +121,8 @@ _OWNER_CODES = [
     "tenancy.support_session.view",
     "tenancy.support_session.approve",
     "tenancy.support_session.revoke",
+    # Phase 4: the organisation's own subscription (read-only).
+    "billing.subscription.view",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.

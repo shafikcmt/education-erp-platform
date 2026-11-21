@@ -61,6 +61,20 @@ EVENTS: dict[str, frozenset[str]] = {
     "rbac.system_roles.seeded": frozenset({"roles", "created", "added", "removed"}),
     # module catalogue bootstrap (Phase 4 M1, ADR-050)
     "module_registry.catalog.synced": frozenset({"created", "updated", "deprecated", "declared"}),
+    # billing and entitlements (Phase 4 M2): platform log; P18 changes also in the tenant log
+    "billing.plan.created": frozenset({"plan_code"}),
+    "billing.plan.updated": frozenset({"plan_code", "fields"}),
+    "billing.plan.modules_changed": frozenset({"plan_code", "added", "removed"}),
+    "billing.addon.created": frozenset({"addon_code", "module_code"}),
+    "billing.price.added": frozenset({"target", "currency", "interval", "amount"}),
+    "billing.price.deactivated": frozenset({"target", "currency", "interval"}),
+    "billing.subscription.plan_changed": frozenset({"tenant_id", "old", "new", "reason"}),
+    "billing.subscription.trial_set": frozenset({"tenant_id", "days", "reason"}),
+    "billing.subscription.addon_added": frozenset({"tenant_id", "addon_code", "reason"}),
+    "billing.subscription.addon_removed": frozenset({"tenant_id", "addon_code", "reason"}),
+    "module_registry.override.set": frozenset({"tenant_id", "module_code", "kind", "reason"}),
+    "module_registry.override.ended": frozenset({"tenant_id", "module_code", "reason"}),
+    "module_registry.flag.changed": frozenset({"flag_key", "default_enabled"}),
     # tenant roles, assignments, members and invitations (Phase 3 M4): tenant log
     "rbac.assignment.granted": frozenset({"role_code", "scope_type"}),
     "rbac.assignment.revoked": frozenset({"role_code", "scope_type"}),
