@@ -52,6 +52,10 @@
 | 045 | Support sessions: tenant approval by default (owner-only waiver), read-only, ≤ 2 h, audited in the same transaction, no RLS bypass, no use while the tenant is suspended | **Accepted** (owner final approval; D2, D5) | 2026-11-08 |
 | 046 | RLS policy catalogue (standard, dual-scope, private dual-scope, self-scoped registry) + CI-enforced registry allow-list with justification and tests | **Accepted** (owner final approval) | 2026-11-08 |
 | 047 | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | **Accepted** (owner final approval) | 2026-11-08 |
+| 050 | Module manifest format and owner-run registry sync | Proposed (Phase 4 plan) | 2026-11-21 |
+| 051 | Billing tables as platform registry; tenant reads own subscription (self-scoped RLS); writes via catalogued operations P17–P20 | Proposed (Phase 4 plan) | 2026-11-21 |
+| 052 | Entitlement resolution: dependency closure, tenant snapshot, versioned cache, `403 module_not_entitled` | Proposed (Phase 4 plan) | 2026-11-21 |
+| 053 | Feature flags as data-driven rollout controls, separate from entitlements | Proposed (Phase 4 plan) | 2026-11-21 |
 | 049 | D9 isolation-overhead benchmark deferred from Phase 3 M10 to Phase 18 (production-like environment); D9 thresholds unchanged | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
 
@@ -751,3 +755,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-08 — Owner final approval: ADR-041 to ADR-047 **Accepted** (with `plans/PHASE_03_PLAN.md` rev. 3 Approved). ADR-009 stays Accepted; its §5 third bullet is amended by ADR-043, recorded in an append-only note. No other ADR changed.
 - 2026-11-13 — Added ADR-048 (Accepted): the owner's answers to the seven M3 questions. No existing ADR changed.
 - 2026-11-21 — Added ADR-049 (Accepted): the D9 benchmark moves to Phase 18. No existing ADR changed; D9 thresholds unchanged.
+- 2026-11-21 — ADR-050 to ADR-053 listed as Proposed with `plans/PHASE_04_PLAN.md`. They are detailed in the plan §10 and are not built on before approval. No existing ADR changed.
