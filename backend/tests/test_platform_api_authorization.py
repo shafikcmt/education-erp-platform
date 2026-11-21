@@ -5,7 +5,7 @@ import uuid
 import pytest
 
 from apps.audit.services import record
-from apps.rbac.models import PlatformRoleAssignment, Role
+from apps.rbac.models import PlatformRoleAssignment, Role, RoleKind
 from tests.helpers import Api, make_user
 
 pytestmark = pytest.mark.django_db
@@ -49,7 +49,13 @@ def _endpoints(target_id, role_id, assignment_id, event_id):
 
 
 def _fixtures(target):
-    role = Role.objects.get(code="platform_billing", tenant_id__isnull=True)
+    # A platform role without permissions (platform_billing holds billing codes since Phase 4,
+    # so the H2 rule would rightly stop platform support from acting on its holders).
+    role, _ = Role.objects.get_or_create(
+        code="audit_test_empty",
+        tenant_id=None,
+        defaults={"name": "Empty test role", "kind": RoleKind.PLATFORM, "is_system": False},
+    )
     assignment = PlatformRoleAssignment.objects.create(
         user=target.user, role=role, granted_at=role.created_at
     )

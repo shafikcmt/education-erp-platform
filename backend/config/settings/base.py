@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "apps.audit",
     "apps.tenancy",
     "apps.module_registry",
+    "apps.billing",
 ]
 
 MIDDLEWARE = [

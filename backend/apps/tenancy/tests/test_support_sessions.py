@@ -41,6 +41,7 @@ READABLE = {
     "rbac.role.view",
     "rbac.assignment.view",
     "audit.event.view",
+    "billing.subscription.view",  # Phase 4: the organisation's own subscription
 }
 
 

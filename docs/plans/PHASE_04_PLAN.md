@@ -156,7 +156,19 @@ The owner approved the plan with the recommended answers:
 | P4 | Validation fails the sync and CI: canonical code format, known categories, `MAJOR.MINOR.PATCH`, known dependencies, no cycles, platform modules never sellable and never depending on sellable ones |
 | P5 | `sync_modules` is owner-only and audited (`module_registry.catalog.synced`). It runs in the compose `migrate` step after `seed_roles` and in the test bootstrap. `catalog_drift()` is the read-only check. Permission added: `module_registry.module.view` (47 codes) |
 
+### 13.2 M2 — billing data model, overrides, flags (2026-11-21, branch `feat/phase-04-m2`)
+
+| # | Note |
+|---|---|
+| P6 | New app `apps.billing`: `Plan`, `PlanModule`, `AddOn` and `Price` are platform registry tables (allow-list, with access tests). `Subscription` (one per tenant) and `SubscriptionItem` are per-tenant registry rows. `FeatureFlag` and `ModuleOverride` live in `module_registry` |
+| P7 | `EnableSelfScopedRLS` takes `key` (`id` or `tenant_id`) and `tenant_writes`. Subscriptions, items and overrides use `key="tenant_id", tenant_writes=False`: a tenant context reads only its own rows and can never write, and the platform (no context) writes. `tenancy_tenant` is unchanged. Self-scoped registry models are exempt from the `TenantScopedModel` check because the platform reads them without a context |
+| P8 | Catalogue additions: **P17** (catalogue management: `billing.plan.manage`, `billing.price.manage` (step-up), `module_registry.flag.manage`), **P18** (tenant subscription and overrides: `billing.subscription.manage`, step-up, reason 10–200 characters, both logs), **P19** (expiry sweep, system, I; used from M3), **P20** (catalogue sync: disabled as a runtime scope, because it is the owner bootstrap) |
+| P9 | **Prices are never seeded or edited:** adding a price deactivates the previous active one for the same target, currency and interval. Amounts are `NUMERIC(18,2)` with an ISO-4217 check and are never negative. No plan rows are created by code (the `trial` plan is owner data; M3 assigns it at provisioning only if it exists) |
+| P10 | Permissions: `billing.plan.view|manage`, `billing.price.manage`, `billing.subscription.view_any|manage`, `billing.subscription.view` (tenant, support-readable) and `module_registry.flag.manage`, 54 codes in total. `platform_billing` holds the billing and flag codes (ADR-054 Q4); `tenant_owner` gets `billing.subscription.view`. The H2 rule now protects `platform_billing` holders from `platform_support` (the authorization test fixture uses an empty role) |
+| P11 | Feature flags are evaluated from data only (ADR-053): tenant list, then plan list, then a stable percentage bucket of `sha256(key:tenant)`, then the default |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
 - 2026-11-21 — §13.1 appended: M1 notes P1–P5.
+- 2026-11-21 — §13.2 appended: M2 notes P6–P11.
