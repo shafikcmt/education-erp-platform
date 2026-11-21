@@ -1485,6 +1485,16 @@ M9 implements §13 in English and Bengali. Notes:
 | N93 | M10 scope | **Not done:** the isolation-overhead benchmark (D9, §8.4: benchmark settings, scratch database, no-RLS control); mobile and Bengali tenant-host E2E; prefork K6; Sentry alerts (no account exists); the daily denial report. Evidence and gaps: `docs/security/PHASE_03_ISOLATION_EVIDENCE.md` |
 | N94 | dev/CI | With tenant hosts on locally, `CSRF_TRUSTED_ORIGINS` must include `http://*.localhost:8080`: Nginx forwards the host without the port, so the origin check needs it. Production on the default HTTPS port needs no extra entry |
 
+### 24.14 M10 continued (2026-11-21, branch `feat/phase-03-m10b`)
+
+| # | Section | Note |
+|---|---|---|
+| N95 | §14 monitoring | Daily platform task `tenancy.report_isolation_denials` (P14, registry and platform log only) counts the last 24 h of `tenancy.isolation.blocked` events per tenant and reason. It writes one structured log line (`tenancy.isolation.daily_report`), at warning level when anything was blocked. Sentry alerting is still open: there is no Sentry account |
+| N96 | §15.1 | Tenant-host E2E now also runs a Bengali owner journey on the mobile project: invitation, new account, MFA enrolment, organisation home, and the unknown-host 404. Labels are read from the message catalogues |
+| N97 | §10.1, ADR-041 | Found by E2E: on an unknown tenant host, Next.js rendered the platform sign-in page (the API refused everything there, so nothing leaked). `getServerHost()` now tells platform from unknown hosts: `/system/health/` is platform-only, and the API's uniform 404 means unknown. The locale layout returns 404 for unknown hosts |
+| N98 | CI | The E2E stack raises `SECURITY_LOGIN_IP_LIMIT` to 200, because every browser shares one client address (the Docker gateway). Per-account limits are unchanged |
+| N99 | M10 | Still open: the D9 benchmark (**awaiting the owner's decision**: before Phase 3 sign-off, or Phase 18), prefork K6, and Sentry alerts |
+
 ### Change notes
 - 2026-11-08 — Rev. 1 drafted (Proposed; awaiting owner approval). Documentation only.
 - 2026-11-08 — Rev. 2: the owner approved Q1–Q12 in principle, rejected runtime BYPASSRLS, and set ten additional requirements.
@@ -1514,3 +1524,4 @@ M9 implements §13 in English and Bengali. Notes:
 - 2026-11-19 — §24.11 appended: M8 implementation notes N76–N83. No approved decision changed.
 - 2026-11-19 — §24.12 appended: M9 implementation notes N84–N89. No approved decision changed.
 - 2026-11-19 — §24.13 appended: M10 notes N90–N94 (M10 partial). No approved decision changed.
+- 2026-11-21 — §24.14 appended: M10 continued, N95–N99. No approved decision changed.

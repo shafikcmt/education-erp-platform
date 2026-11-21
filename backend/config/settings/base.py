@@ -344,6 +344,12 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": 300.0,
         "options": {"queue": "default"},
     },
+    # Phase 3 M10 (plan §14, P14): daily summary of blocked isolation violations.
+    "tenancy-isolation-daily-report": {
+        "task": "tenancy.report_isolation_denials",
+        "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
 }
 
 # --------------------------------------------------------------------------- email

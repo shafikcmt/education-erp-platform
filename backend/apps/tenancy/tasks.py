@@ -5,6 +5,10 @@
   because covering tenants needs the registry and ``audit`` sits below ``tenancy``.
 * ``tenancy.sweep_support_sessions`` — platform task (P12 housekeeping, registry read only)
   that fans out one ``tenancy.expire_support_sessions`` tenant task per tenant (mechanism I).
+* ``tenancy.report_isolation_denials`` — platform task **P14** (registry/platform log read
+  only): a daily summary of blocked isolation violations (``tenancy.isolation.blocked`` platform
+  events, tenant id as metadata) per tenant and reason, as one structured log line. No tenant
+  data is read (plan §14 "security monitoring").
 * ``tenancy.expire_support_sessions`` — tenant task: marks the tenant's lapsed support
   sessions ``expired`` and ends the staff sign-ins on its hosts. Runs for active and suspended
   tenants (a suspended tenant's sessions still have to end).
@@ -13,9 +17,14 @@
 from __future__ import annotations
 
 import uuid
+from collections import Counter
+from datetime import timedelta
+from typing import Any
 
+import structlog
 from django.utils import timezone
 
+from apps.audit.models import AuditEvent
 from apps.audit.services import anonymize_expired_ips as _anonymize
 from apps.core.tasking import platform_task
 from apps.tenancy.iteration import in_every_scope
@@ -31,6 +40,33 @@ def anonymize_expired_ips() -> int:
         _anonymize, operation="P10", reason="anonymise expired security-event IPs"
     )
     return totals.rows
+
+
+logger = structlog.get_logger("erp.tenancy")
+
+
+@platform_task(name="tenancy.report_isolation_denials", operation="P14")
+def report_isolation_denials(hours: int = 24) -> dict[str, Any]:
+    """Count the platform log's ``tenancy.isolation.blocked`` events of the last ``hours`` per
+    tenant and reason (P14). Logged at warning level when anything was blocked."""
+    since = timezone.now() - timedelta(hours=hours)
+    by_tenant: Counter[str] = Counter()
+    by_reason: Counter[str] = Counter()
+    for metadata in AuditEvent.objects.filter(
+        tenant_id__isnull=True, action="tenancy.isolation.blocked", occurred_at__gte=since
+    ).values_list("metadata", flat=True):
+        data = metadata if isinstance(metadata, dict) else {}
+        by_tenant[str(data.get("tenant_id") or "platform")] += 1
+        by_reason[str(data.get("reason") or "unknown")] += 1
+    total = sum(by_tenant.values())
+    report = {
+        "hours": hours,
+        "total": total,
+        "by_tenant": dict(by_tenant.most_common(50)),
+        "by_reason": dict(by_reason),
+    }
+    (logger.warning if total else logger.info)("tenancy.isolation.daily_report", **report)
+    return report
 
 
 @platform_task(name="tenancy.sweep_support_sessions", operation="P12")

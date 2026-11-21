@@ -1,5 +1,6 @@
 import type { paths, Schemas } from "@erp/api-client";
 import { cookies, headers } from "next/headers";
+import { cache } from "react";
 import type { Client } from "openapi-fetch";
 
 import { createApiClient } from "./client";
@@ -48,26 +49,31 @@ export async function getServerMe(): Promise<ServerMe> {
 export type ServerHost =
   | { kind: "platform" }
   | { kind: "tenant"; tenant: Schemas["PublicTenant"] }
+  | { kind: "unknown" }
   | { kind: "unavailable" };
 
 /**
  * Which kind of host serves this request (Phase 3 plan §13): a tenant host answers
- * `/public/tenant/`, the platform host answers 404 there. Only used to choose screens and
- * navigation; the API decides every request on its own (host policy, ADR-041).
+ * `/public/tenant/`; the platform host answers `/system/health/` (platform-only); any other
+ * host gets the API's uniform 404 for both and is "unknown" (no screen at all). Only used to
+ * choose screens; the API decides every request on its own (host policy, ADR-041).
+ * Memoised per request (React `cache`), so layouts can all ask.
  */
-export async function getServerHost(): Promise<ServerHost> {
+export const getServerHost = cache(async (): Promise<ServerHost> => {
   const forwarded = await forwardedHeaders();
-  delete forwarded.cookie; // anonymous endpoint: no credentials needed
+  delete forwarded.cookie; // anonymous endpoints: no credentials needed
+  const get = (path: string) =>
+    fetch(`${baseUrl()}${path}`, { headers: forwarded, cache: "no-store", redirect: "manual" });
   try {
-    const response = await fetch(`${baseUrl()}/api/v1/public/tenant/`, {
-      headers: forwarded,
-      cache: "no-store",
-      redirect: "manual",
-    });
-    if (response.status === 404) return { kind: "platform" };
-    if (!response.ok) return { kind: "unavailable" };
-    return { kind: "tenant", tenant: (await response.json()) as Schemas["PublicTenant"] };
+    const tenant = await get("/api/v1/public/tenant/");
+    if (tenant.ok) {
+      return { kind: "tenant", tenant: (await tenant.json()) as Schemas["PublicTenant"] };
+    }
+    if (tenant.status !== 404) return { kind: "unavailable" };
+    const platform = await get("/api/v1/system/health/");
+    if (platform.status === 404) return { kind: "unknown" };
+    return platform.ok ? { kind: "platform" } : { kind: "unavailable" };
   } catch {
     return { kind: "unavailable" };
   }
-}
+});

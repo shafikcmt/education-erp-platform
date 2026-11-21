@@ -15,7 +15,7 @@
   - **M7 (declared Celery tasks, TenantTask, key helpers, I/O guard, support expiry sweep): Complete** and merged into `main` (PR [#33](https://github.com/shafikcmt/education-erp-platform/pull/33), squash `4fbcbcc`; Session 25).
   - **M8 (tenant-host and platform APIs, provisioning, suspension, limits, OpenAPI and client): Complete** and merged into `main` (PR [#34](https://github.com/shafikcmt/education-erp-platform/pull/34), squash `92fcd05`; Session 26).
   - **M9 (frontend screens of plan §13, en + bn): Complete** and merged into `main` (PR [#35](https://github.com/shafikcmt/education-erp-platform/pull/35), squash `8b19e76`; Session 27).
-  - **M10 (shared isolation evidence, two-tenant E2E, K3, benchmark): Partial** on `feat/phase-03-m10` (Session 28). Done: two-tenant E2E, K3 through the stack, the tenant-host MFA fix, threat-model and §23 evidence (`docs/security/PHASE_03_ISOLATION_EVIDENCE.md`). **Missing:** the D9 isolation-overhead benchmark, mobile and Bengali tenant-host E2E, prefork K6, and monitoring alerts (plan N93).
+  - **M10 (shared isolation evidence, two-tenant E2E, K3, benchmark): Partial**. Part 1 merged (PR [#36](https://github.com/shafikcmt/education-erp-platform/pull/36), squash `e3c89da`; Session 28); part 2 on `feat/phase-03-m10b` (Session 29: daily denial report, Bengali/mobile tenant-host E2E, unknown-host 404). Done: two-tenant E2E, K3 through the stack, the tenant-host MFA fix, threat-model and §23 evidence (`docs/security/PHASE_03_ISOLATION_EVIDENCE.md`). **Missing:** the D9 isolation-overhead benchmark, mobile and Bengali tenant-host E2E, prefork K6, and monitoring alerts (plan N93).
   - M11 has not started.
 - **Phase 2 status:** **Approved**. The owner authorized the merge, and PR #15 was squash-merged into `main` as `2d61e83` on 2026-11-07. The merged tree is identical to the reviewed head `2cf3670`, and CI was 8/8 green (see Session 10).
 - **Phase 1 status:** **Approved** by the owner on 2026-11-06 (see Session 8). The history below is kept as written.
@@ -104,7 +104,9 @@ See `DECISION_LOG.md`.
   - ~~**Tenant-host screens are not covered by E2E**~~ — **resolved in M10** for the main journeys (desktop, English).
 - **Phase 3 M10 gaps (recorded, not hidden; plan N93):**
   - **D9 isolation-overhead benchmark not run.** It needs the §8.4 benchmark settings, a scratch database and a no-RLS control. No numbers are estimated.
-  - Mobile and Bengali tenant-host E2E; prefork K6; Sentry alerts (no Sentry account; none is created without the owner); daily denial report.
+  - ~~Mobile and Bengali tenant-host E2E~~ and ~~daily denial report~~ — **resolved in M10 part 2** (plan §24.14).
+  - Prefork K6; Sentry alerts (no Sentry account; none is created without the owner).
+  - **D9 benchmark: Blocked** — awaiting the owner's decision (before sign-off, or Phase 18).
   - **K4** is covered at the primitive level only (M2 test); the service-level test arrives with the institution API (M8).
 - **Phase 3 M3 gaps (recorded, not hidden; `plans/PHASE_03_M3_PLAN.md` §11.4):**
   - ~~**R2** cross-tenant invisibility of audit events~~ — **resolved in M6** (private dual-scope RLS on both audit tables; `tests/isolation/test_dual_scope_tables.py`).
@@ -756,3 +758,16 @@ See `DECISION_LOG.md`.
   - Playwright **34 passed, 1 skipped** (the two-tenant journey runs on desktop only). The stack had tenant hosts on and served the locally built frontend through a bind mount.
 - **Status:** M10 **Partial** (see gaps). M11 not started. Tenant hosts stay disabled in every committed default; nothing deployed.
 - **Owner input needed:** whether the D9 benchmark must run before Phase 3 sign-off, or may move to Phase 18 with the production environment, where absolute numbers mean something.
+
+### 2026-11-21 — Session 29 (M10 part 1 merged; M10 part 2)
+- **M10 part 1:** [PR #36](https://github.com/shafikcmt/education-erp-platform/pull/36) — CI **8/8 success**; squash-merged pinned to `9b349f9` → **`e3c89da`**.
+- **M10 part 2 (`feat/phase-03-m10b`):**
+  - daily isolation denial report (P14);
+  - Bengali owner journey on mobile in the tenant-host E2E;
+  - fix: unknown hosts now get a 404 from the frontend too (N97);
+  - CI E2E stack per-IP sign-in limit (N98).
+- **Verification (actual results, local):**
+  - backend **876 passed, 9 skipped**; ruff, format and mypy (234 files) clean;
+  - frontend `tsc`, ESLint and Prettier clean; Vitest 38 passed; `next build` OK;
+  - Playwright **35 passed, 2 skipped** (the two-tenant journey runs on desktop, the Bengali journey on mobile). Tenant hosts were on in the stack, which served the locally built frontend.
+- **Open:** D9 benchmark (owner decision), prefork K6, Sentry alerts. Next: M11 (docs, security self-review, Phase 3 PR for owner approval).
