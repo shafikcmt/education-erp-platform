@@ -25,6 +25,8 @@ class Plan(BaseModel):
     is_public = models.BooleanField(default=False)
     # max_institutions / max_campuses (ADR-010) and later limits; the tenant override wins.
     limits = models.JSONField(default=dict, blank=True)
+    # Trial length when this plan is used as the provisioning trial (owner data, ADR-054 Q2).
+    trial_days = models.PositiveSmallIntegerField(null=True, blank=True)
     archived_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:

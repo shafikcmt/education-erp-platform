@@ -346,7 +346,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
-| 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **in progress**: M1 merged in PR #44; M2 billing data model on `feat/phase-04-m2`) |
+| 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **in progress**: M1 merged in PR #44; M2 merged in PR #45; M3 entitlement resolution on `feat/phase-04-m3`) |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
 | 7 | Student, teacher and parent management |
@@ -457,3 +457,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-21 — Owner approved Phase 3 and the Phase 4 plan (ADR-050 to ADR-054 Accepted); phase table and last-updated line updated. No rule changed.
 - 2026-11-21 — Phase 4 M1 on its branch; phase table updated. No rule changed.
 - 2026-11-21 — Phase 4 M1 merged (PR #44); M2 on its branch; phase table updated. No rule changed.
+- 2026-11-21 — Phase 4 M2 merged (PR #45); M3 on its branch; phase table updated. No rule changed.
