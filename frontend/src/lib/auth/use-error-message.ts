@@ -16,6 +16,7 @@ const KNOWN = new Set<string>([
   "last_tenant_owner",
   "limit_exceeded",
   "membership_inactive",
+  "module_not_entitled",
   "not_a_member",
   "support_access_read_only",
   "support_session_expired",

@@ -3,10 +3,12 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
+  CreditCard,
   Eye,
   Headset,
   LayoutDashboard,
   LogOut,
+  Package,
   School,
   ScrollText,
   Settings,
@@ -25,6 +27,7 @@ import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api/browser";
 import { can, type Me, useMe } from "@/lib/auth/me";
 import { canAnywhere, type TenantContext, useTenantContext } from "@/lib/tenancy/context";
+import { isEntitled } from "@/lib/tenancy/entitlements";
 import { type HostInfo, HostProvider } from "@/lib/tenancy/host";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +42,12 @@ function platformNav(me: Me): NavItem[] {
       key: "tenants",
       icon: Building2,
       show: can(me, "tenancy.tenant.view_any"),
+    },
+    {
+      href: "/platform/plans",
+      key: "plans",
+      icon: Package,
+      show: can(me, "billing.plan.view"),
     },
     {
       href: "/platform/support-sessions",
@@ -57,8 +66,10 @@ function platformNav(me: Me): NavItem[] {
   ];
 }
 
+/** Each item needs its permission AND its module in the organisation's plan (Phase 4). */
 function tenantNav(context: TenantContext | undefined): NavItem[] {
-  const has = (code: string) => canAnywhere(context, code);
+  const has = (code: string) =>
+    canAnywhere(context, code) && isEntitled(context, code.split(".")[0] ?? "");
   return [
     { href: "/dashboard", key: "home", icon: LayoutDashboard, show: true },
     {
@@ -77,6 +88,12 @@ function tenantNav(context: TenantContext | undefined): NavItem[] {
       show: has("tenancy.support_session.view"),
     },
     { href: "/audit", key: "audit", icon: ScrollText, show: has("audit.event.view") },
+    {
+      href: "/subscription",
+      key: "subscription",
+      icon: CreditCard,
+      show: has("billing.subscription.view"),
+    },
     { href: "/account/security", key: "security", icon: ShieldCheck, show: true },
   ];
 }

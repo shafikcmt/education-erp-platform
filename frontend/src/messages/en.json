@@ -55,7 +55,9 @@
     "institutions": "Institutions",
     "members": "Members",
     "settings": "Settings",
-    "supportAccess": "Support access"
+    "supportAccess": "Support access",
+    "plans": "Plans",
+    "subscription": "Subscription"
   },
   "auth": {
     "email": "Email address",
@@ -180,7 +182,8 @@
     "not_a_member": "You are not a member of this organisation.",
     "support_access_read_only": "Support access can only read data.",
     "support_session_expired": "The support session has ended.",
-    "tenant_unavailable": "This organisation no longer accepts changes."
+    "tenant_unavailable": "This organisation no longer accepts changes.",
+    "module_not_entitled": "Your organisation's plan doesn't include this module."
   },
   "dashboard": {
     "title": "Welcome, {name}",
@@ -481,6 +484,99 @@
       "passwordHint": "New account: at least {min} characters. Existing account: your current password.",
       "submit": "Join",
       "goToSignIn": "Go to sign in"
+    }
+  },
+  "billing": {
+    "plan": "Plan",
+    "plans": "Plans",
+    "addon": "Add-on",
+    "addons": "Add-ons",
+    "prices": "Prices",
+    "subscription": "Subscription",
+    "noPlan": "No plan",
+    "status": "Status",
+    "trialEnds": "Trial ends",
+    "limits": "Limits",
+    "modules": "Modules",
+    "enabledModules": "Included modules",
+    "unavailableModules": "Not available",
+    "overrides": "Module overrides",
+    "usage": "{used} of {limit}",
+    "archived": "Archived",
+    "inactive": "inactive",
+    "noModules": "No modules",
+    "planLimits": "Up to {institutions} institutions and {campuses} campuses",
+    "trialDays": "{days}-day trial",
+    "code": "Code",
+    "codeHint": "Lowercase letters, digits and underscores",
+    "name": "Name",
+    "module": "Module",
+    "kind": "Type",
+    "choose": "Choose…",
+    "trialLength": "Trial length (days)",
+    "trialLengthHint": "Leave empty for no automatic trial",
+    "priceFor": "Price for",
+    "currency": "Currency",
+    "amount": "Amount",
+    "interval": "Billing interval",
+    "statuses": {
+      "trialing": "Trial",
+      "active": "Active",
+      "past_due": "Payment overdue",
+      "suspended": "Suspended",
+      "canceled": "Cancelled",
+      "expired": "Expired"
+    },
+    "limitNames": {
+      "max_institutions": "Institutions",
+      "max_campuses": "Campuses"
+    },
+    "reasons": {
+      "not_built": "coming soon",
+      "missing_dependency": "needs another module",
+      "revoked": "turned off by the platform"
+    },
+    "intervals": {
+      "month": "Monthly",
+      "year": "Yearly",
+      "one_time": "One time"
+    },
+    "kinds": {
+      "grant": "Grant",
+      "revoke": "Revoke"
+    },
+    "tenant": {
+      "title": "Subscription",
+      "subtitle": "Your organisation's plan, modules and limits.",
+      "planHint": "Contact the platform team to change your plan.",
+      "limitsHint": "New institutions or campuses can't be added beyond these limits.",
+      "modulesHint": "Screens of modules your plan doesn't include are hidden and refused."
+    },
+    "platform": {
+      "title": "Plans and pricing",
+      "subtitle": "Plans, add-ons and prices. Prices are entered by the owner and are never edited, only replaced.",
+      "noPlans": "No plans yet.",
+      "noAddons": "No add-ons yet.",
+      "noPrices": "No prices entered.",
+      "pricesHint": "A new price replaces the active one for the same plan, currency and interval.",
+      "createPlan": "Create plan",
+      "createPlanHint": "Prices are added separately.",
+      "createAddon": "Create add-on",
+      "addPrice": "Add price",
+      "addPriceHint": "Enter the amount exactly as approved by the owner.",
+      "deactivate": "Deactivate",
+      "deactivateHint": "The price stays in the history but can no longer be used.",
+      "subscriptionHint": "Every change needs a reason and is recorded in both audit logs.",
+      "assignPlan": "Assign plan",
+      "assignPlanHint": "The organisation moves to this plan now; a running trial ends.",
+      "startTrial": "Start trial",
+      "startTrialHint": "The organisation uses this plan until the trial ends.",
+      "addAddon": "Add add-on",
+      "addAddonHint": "The add-on's module is included from now on.",
+      "removeAddon": "Remove",
+      "setOverride": "Override a module",
+      "setOverrideHint": "Grant or revoke one module for this organisation only.",
+      "endOverride": "End override"
     }
   }
 }
