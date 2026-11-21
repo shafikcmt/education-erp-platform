@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-21 (Phase 3 in progress: M1–M9 and M10 merged (PRs #17, #18, #29–#36, #41); M10 part 2 merged (PR #41); M11 docs/self-review on `feat/phase-03-m11` awaiting owner approval; D9 benchmark awaiting owner decision; tenant hosts disabled)
+- **Last updated:** 2026-11-21 (Phase 3 in progress: M1–M9 and M10 (partial) merged (PRs #17, #18, #29–#36, #41); M11 docs/self-review on `feat/phase-03-m11` awaiting owner approval; D9 benchmark awaiting owner decision; tenant hosts disabled)
 
 ---
 
