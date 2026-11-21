@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "apps.rbac",
     "apps.audit",
     "apps.tenancy",
+    "apps.module_registry",
 ]
 
 MIDDLEWARE = [

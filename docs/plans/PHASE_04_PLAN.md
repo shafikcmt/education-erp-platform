@@ -144,6 +144,19 @@ The owner approved the plan with the recommended answers:
 | Q4 | Plans, add-ons, prices and flags are managed by `platform_billing` and Super Admin, with MFA (step-up for prices and subscription changes) |
 | Q5 | Institution and campus limits stay **hard**; student tiers (later) will be **soft** |
 
+## 13. Implementation notes (appended during implementation)
+
+### 13.1 M1 — module manifests and registry (2026-11-21, branch `feat/phase-04-m1`)
+
+| # | Note |
+|---|---|
+| P1 | New app `apps.module_registry` with `Module` (`module_registry_module`): a global catalogue, **SELECT-only** for `erp_app` (migration 0002), on the registry allow-list with access tests |
+| P2 | Each installed app declares `MODULE` in its `manifest.py` (core, identity, rbac, audit, tenancy, module_registry). The code must equal the app label |
+| P3 | Modules not built yet live in `apps/module_registry/catalog.py` with dependencies from `MODULE_CATALOG.md` §1. They are synced with `available = False`, so they can be packaged but never entitled until their code ships. `fees` depends on `students` only, because the ledger posting engine is always installed (ADR-025, Proposed, not built on) |
+| P4 | Validation fails the sync and CI: canonical code format, known categories, `MAJOR.MINOR.PATCH`, known dependencies, no cycles, platform modules never sellable and never depending on sellable ones |
+| P5 | `sync_modules` is owner-only and audited (`module_registry.catalog.synced`). It runs in the compose `migrate` step after `seed_roles` and in the test bootstrap. `catalog_drift()` is the read-only check. Permission added: `module_registry.module.view` (47 codes) |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
+- 2026-11-21 — §13.1 appended: M1 notes P1–P5.

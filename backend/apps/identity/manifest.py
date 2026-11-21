@@ -39,3 +39,13 @@ PERMISSIONS = [
         "requires_step_up": True,
     },
 ]
+
+# Phase 4 M1 (ADR-050): this app's entry in the module catalogue.
+MODULE = {
+    "code": "identity",
+    "name": "Identity",
+    "category": "platform",
+    "version": "1.0.0",
+    "dependencies": ["core"],
+    "sellable": False,
+}

@@ -120,6 +120,14 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
             "tests/test_permission_catalog.py::test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused",
         ),
     ),
+    "module_registry_module": AllowEntry(
+        "Global, code-defined module catalogue (Phase 4, ADR-050); no tenant data. SELECT "
+        "only for the runtime role; written only by the owner-run sync_modules bootstrap.",
+        (
+            "apps/module_registry/tests/test_registry.py::test_runtime_role_can_only_read_the_module_catalogue",
+            "apps/module_registry/tests/test_registry.py::test_sync_refuses_the_runtime_role",
+        ),
+    ),
     "rbac_platformroleassignment": AllowEntry(
         "Platform staff roles; platform permissions never apply to tenant targets (ADR-033).",
         (

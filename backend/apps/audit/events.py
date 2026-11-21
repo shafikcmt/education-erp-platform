@@ -59,6 +59,8 @@ EVENTS: dict[str, frozenset[str]] = {
     # owner-only catalogue bootstrap (Phase 3 M1 / O1)
     "rbac.permission_catalog.synced": frozenset({"created", "updated", "deprecated", "declared"}),
     "rbac.system_roles.seeded": frozenset({"roles", "created", "added", "removed"}),
+    # module catalogue bootstrap (Phase 4 M1, ADR-050)
+    "module_registry.catalog.synced": frozenset({"created", "updated", "deprecated", "declared"}),
     # tenant roles, assignments, members and invitations (Phase 3 M4): tenant log
     "rbac.assignment.granted": frozenset({"role_code", "scope_type"}),
     "rbac.assignment.revoked": frozenset({"role_code", "scope_type"}),
