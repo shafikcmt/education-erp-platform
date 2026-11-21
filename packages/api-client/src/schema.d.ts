@@ -911,6 +911,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/addons/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Add-ons
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_addons_list"];
+        put?: never;
+        /**
+         * Create an add-on for a sellable module
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_addons_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/audit-events/": {
         parameters: {
             query?: never;
@@ -953,6 +979,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/feature-flags/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Feature flags
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_feature_flags_list"];
+        put?: never;
+        /**
+         * Create or update a feature flag (default, percentage, plans, tenants)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_feature_flags_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/modules/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Module catalogue
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_modules_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/permissions/": {
         parameters: {
             query?: never;
@@ -968,6 +1041,105 @@ export interface paths {
         get: operations["platform_permissions_list"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/plans/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plans
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_plans_list"];
+        put?: never;
+        /**
+         * Create a plan (no prices: those are entered separately)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_plans_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/plans/{code}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Plan
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_plans_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update a plan (name, visibility, limits, trial length, modules, archive)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["platform_plans_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/prices/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Prices (owner-entered data)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_prices_list"];
+        put?: never;
+        /**
+         * Add a price (replaces the active one for the same target, currency, interval)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_prices_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/prices/{price_id}/deactivate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deactivate a price
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_prices_deactivate_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1185,6 +1357,153 @@ export interface paths {
          *     authenticated sessions).
          */
         post: operations["platform_tenants_reactivate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A tenant's plan, add-ons, overrides and resolved modules
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_tenants_subscription_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/addons/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add an add-on
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_addons_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/addons/{code}/remove/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove an add-on
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_addons_remove_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/overrides/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Grant or revoke one module for this tenant
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_overrides_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/overrides/{module}/end/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * End the open override of one module
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_overrides_end_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/plan/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign a plan (ends a trial)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_plan_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/tenants/{tenant_id}/subscription/trial/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start or extend a trial on a plan
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_tenants_subscription_trial_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1639,6 +1958,27 @@ export interface paths {
         patch: operations["tenant_partial_update"];
         trace?: never;
     };
+    "/api/v1/tenant/subscription/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * This organisation's plan, modules and limits (read-only)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["tenant_subscription_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenant/support-approval/": {
         parameters: {
             query?: never;
@@ -1679,6 +2019,27 @@ export interface components {
          * @enum {string}
          */
         ActorTypeEnum: "user" | "system" | "support" | "ai";
+        AddAddOnRequest: {
+            reason: string;
+            addon: string;
+            /** Format: date-time */
+            valid_until?: string | null;
+        };
+        AddOn: {
+            code: string;
+            name: string;
+            module: string | null;
+            archived: boolean;
+        };
+        AddOnCreateRequest: {
+            code: string;
+            name: string;
+            module?: string | null;
+        };
+        AssignPlanRequest: {
+            reason: string;
+            plan: string;
+        };
         Assignment: {
             /** Format: uuid */
             readonly id: string;
@@ -1757,6 +2118,9 @@ export interface components {
             /** @default  */
             timezone: string;
         };
+        ChangeReasonRequest: {
+            reason: string;
+        };
         Context: {
             tenant: components["schemas"]["TenantProfile"];
             membership_status: string | null;
@@ -1766,6 +2130,7 @@ export interface components {
             assignments: components["schemas"]["TenantAssignment"][];
             scopes: components["schemas"]["ScopePermissions"][];
             support_banner: components["schemas"]["Banner"][];
+            entitlements: components["schemas"]["Entitlements"];
         };
         Csrf: {
             detail: string;
@@ -1777,6 +2142,16 @@ export interface components {
         EmailRequestRequest: {
             email: string;
         };
+        /** @description Phase 4 M5: what the UI may show. Hidden is not secure: the server enforces. */
+        Entitlements: {
+            modules: string[];
+            flags: {
+                [key: string]: boolean;
+            };
+            limits: {
+                [key: string]: components["schemas"]["LimitUsage"];
+            };
+        };
         FirstInstitutionRequest: {
             institution_type: components["schemas"]["InstitutionTypeEnum"];
             code: string;
@@ -1785,6 +2160,22 @@ export interface components {
             campus_code: string;
             /** @default Main campus */
             campus_name: string;
+        };
+        Flag: {
+            key: string;
+            description?: string;
+            default_enabled: boolean;
+            rules?: {
+                [key: string]: unknown;
+            };
+        };
+        FlagRequest: {
+            key: string;
+            description?: string;
+            default_enabled: boolean;
+            rules?: {
+                [key: string]: unknown;
+            };
         };
         GrantRequest: {
             /** Format: uuid */
@@ -1824,6 +2215,13 @@ export interface components {
          * @enum {string}
          */
         InstitutionTypeEnum: "school" | "college" | "university" | "madrasa" | "coaching_center" | "training_institute";
+        /**
+         * @description * `month` - Monthly
+         *     * `year` - Yearly
+         *     * `one_time` - One time
+         * @enum {string}
+         */
+        IntervalEnum: "month" | "year" | "one_time";
         Invitation: {
             /** Format: uuid */
             readonly id: string;
@@ -1870,13 +2268,10 @@ export interface components {
             /** Format: uuid */
             campus?: string | null;
         };
-        /**
-         * @description * `platform` - Platform role
-         *     * `template` - Tenant role template
-         *     * `tenant` - Tenant role
-         * @enum {string}
-         */
-        KindEnum: "platform" | "template" | "tenant";
+        LimitUsage: {
+            limit: number;
+            used: number;
+        };
         LimitsRequest: {
             reason: string;
             max_institutions: number;
@@ -1985,6 +2380,21 @@ export interface components {
             code?: string;
             recovery_code?: string;
         };
+        Module: {
+            code: string;
+            name: string;
+            category: string;
+            version: string;
+            dependencies: string[];
+            sellable: boolean;
+            available: boolean;
+        };
+        ModuleState: {
+            code: string;
+            source: string;
+            enabled: boolean;
+            reason: string;
+        };
         /**
          * @description * `success` - Success
          *     * `failure` - Failure
@@ -1992,6 +2402,15 @@ export interface components {
          * @enum {string}
          */
         OutcomeEnum: "success" | "failure" | "denied";
+        Override: {
+            module: string;
+            kind: string;
+            reason: string;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
         OwnSupportSession: {
             /** Format: uuid */
             session_id: string;
@@ -2040,6 +2459,19 @@ export interface components {
         PatchedMemberUpdateRequest: {
             status?: components["schemas"]["MemberStatusChangeEnum"];
         };
+        PatchedPlanUpdateRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            is_public?: boolean;
+            limits?: {
+                [key: string]: number;
+            };
+            trial_days?: number | null;
+            archived?: boolean;
+            modules?: string[];
+        };
         PatchedPlatformUserUpdateRequest: {
             display_name?: string;
             locale?: components["schemas"]["LocaleEnum"];
@@ -2085,6 +2517,35 @@ export interface components {
             readonly is_sensitive: boolean;
             readonly requires_mfa: boolean;
             readonly requires_step_up: boolean;
+        };
+        Plan: {
+            code: string;
+            name: string;
+            name_i18n: {
+                [key: string]: string;
+            };
+            is_public: boolean;
+            limits: {
+                [key: string]: number;
+            };
+            trial_days: number | null;
+            archived: boolean;
+            modules: string[];
+        };
+        PlanCreateRequest: {
+            code: string;
+            name: string;
+            limits?: {
+                [key: string]: number;
+            };
+            modules?: string[];
+            /** @default false */
+            is_public: boolean;
+            trial_days?: number | null;
+        };
+        PlanRef: {
+            code: string;
+            name: string;
         };
         PlatformUser: {
             /** Format: uuid */
@@ -2140,6 +2601,27 @@ export interface components {
             readonly mfa_enabled: boolean;
             readonly active_sessions: number;
         };
+        Price: {
+            /** Format: uuid */
+            id: string;
+            plan: string | null;
+            addon: string | null;
+            currency: string;
+            interval: string;
+            /** Format: decimal */
+            amount: string;
+            active: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        PriceCreateRequest: {
+            plan?: string | null;
+            addon?: string | null;
+            currency: string;
+            interval: components["schemas"]["IntervalEnum"];
+            /** Format: decimal */
+            amount: string;
+        };
         ProvisionRequest: {
             slug: string;
             name: string;
@@ -2184,7 +2666,7 @@ export interface components {
             readonly name: string;
             readonly name_i18n: unknown;
             readonly description: string;
-            readonly kind: components["schemas"]["KindEnum"];
+            readonly kind: components["schemas"]["RoleKindEnum"];
             readonly institution_types: string[];
             readonly is_system: boolean;
             readonly permissions: string[];
@@ -2202,6 +2684,13 @@ export interface components {
             };
             permissions: string[];
         };
+        /**
+         * @description * `platform` - Platform role
+         *     * `template` - Tenant role template
+         *     * `tenant` - Tenant role
+         * @enum {string}
+         */
+        RoleKindEnum: "platform" | "template" | "tenant";
         ScopePermissions: {
             scope_type: string;
             /** Format: uuid */
@@ -2237,6 +2726,19 @@ export interface components {
             step_up_expires_at: number | null;
             idle_timeout_seconds: number;
         };
+        /**
+         * @description * `grant` - grant
+         *     * `revoke` - revoke
+         * @enum {string}
+         */
+        SetOverrideKindEnum: "grant" | "revoke";
+        SetOverrideRequest: {
+            reason: string;
+            module: string;
+            kind: components["schemas"]["SetOverrideKindEnum"];
+            /** Format: date-time */
+            expires_at?: string | null;
+        };
         StepUpRequest: {
             password: string;
             code?: string;
@@ -2244,6 +2746,27 @@ export interface components {
         };
         StepUpResult: {
             step_up_expires_at: number;
+        };
+        SubscribedAddOn: {
+            code: string;
+            name: string;
+            /** Format: date-time */
+            valid_from: string;
+            /** Format: date-time */
+            valid_until: string | null;
+        };
+        Subscription: {
+            /** Format: uuid */
+            tenant_id: string;
+            plan: components["schemas"]["PlanRef"] | null;
+            status: string | null;
+            /** Format: date-time */
+            trial_ends_at: string | null;
+            /** Format: date-time */
+            current_period_end: string | null;
+            addons: components["schemas"]["SubscribedAddOn"][];
+            overrides: components["schemas"]["Override"][];
+            modules: components["schemas"]["ModuleState"][];
         };
         SupportApprovalRequest: {
             reason: string;
@@ -2407,12 +2930,30 @@ export interface components {
          * @enum {string}
          */
         TenantStatusEnum: "provisioning" | "active" | "suspended" | "offboarding" | "deleted";
+        TenantSubscription: {
+            plan: components["schemas"]["PlanRef"] | null;
+            status: string | null;
+            /** Format: date-time */
+            trial_ends_at: string | null;
+            /** Format: date-time */
+            current_period_end: string | null;
+            addons: components["schemas"]["SubscribedAddOn"][];
+            modules: components["schemas"]["ModuleState"][];
+            limits: {
+                [key: string]: components["schemas"]["LimitUsage"];
+            };
+        };
         TokenPasswordRequest: {
             token: string;
             password: string;
         };
         TokenRequest: {
             token: string;
+        };
+        TrialRequest: {
+            reason: string;
+            plan: string;
+            days: number;
         };
     };
     responses: never;
@@ -3489,6 +4030,48 @@ export interface operations {
             };
         };
     };
+    platform_addons_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddOn"][];
+                };
+            };
+        };
+    };
+    platform_addons_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddOnCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AddOn"];
+                };
+            };
+        };
+    };
     platform_audit_events_list: {
         parameters: {
             query?: {
@@ -3541,6 +4124,67 @@ export interface operations {
             };
         };
     };
+    platform_feature_flags_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Flag"][];
+                };
+            };
+        };
+    };
+    platform_feature_flags_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FlagRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Flag"];
+                };
+            };
+        };
+    };
+    platform_modules_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Module"][];
+                };
+            };
+        };
+    };
     platform_permissions_list: {
         parameters: {
             query?: never;
@@ -3556,6 +4200,161 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Permission"][];
+                };
+            };
+        };
+    };
+    platform_plans_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"][];
+                };
+            };
+        };
+    };
+    platform_plans_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"];
+                };
+            };
+        };
+    };
+    platform_plans_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"];
+                };
+            };
+        };
+    };
+    platform_plans_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedPlanUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Plan"];
+                };
+            };
+        };
+    };
+    platform_prices_list: {
+        parameters: {
+            query?: {
+                active?: boolean;
+                addon?: string;
+                plan?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Price"][];
+                };
+            };
+        };
+    };
+    platform_prices_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PriceCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Price"];
+                };
+            };
+        };
+    };
+    platform_prices_deactivate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                price_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Price"];
                 };
             };
         };
@@ -3895,6 +4694,179 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_addons_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddAddOnRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_addons_remove_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_overrides_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetOverrideRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_overrides_end_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                module: string;
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_plan_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignPlanRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
+                };
+            };
+        };
+    };
+    platform_tenants_subscription_trial_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                tenant_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrialRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subscription"];
                 };
             };
         };
@@ -4460,6 +5432,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantProfile"];
+                };
+            };
+        };
+    };
+    tenant_subscription_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantSubscription"];
                 };
             };
         };

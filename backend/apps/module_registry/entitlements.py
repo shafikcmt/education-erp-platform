@@ -119,6 +119,25 @@ def recompute(tenant_id: uuid.UUID) -> dict[str, tuple[str, bool, str]]:
     return resolved
 
 
+def snapshot(tenant_id: uuid.UUID) -> dict[str, tuple[str, bool, str]]:
+    """The stored snapshot of the current tenant (what enforcement uses). Before the first
+    recompute, the built platform modules."""
+    ctx = require_tenant()
+    if tenant_id != ctx.id:
+        raise TenantContextNotApplied("The snapshot is read for the current tenant only.")
+    rows = {
+        str(r.module_id): (r.source, r.enabled, r.disabled_reason)
+        for r in TenantModule.objects.all()
+    }
+    if rows:
+        return rows
+    return {
+        code: ("platform", True, "")
+        for code, m in _modules().items()
+        if m.category == Module.Category.PLATFORM and m.available
+    }
+
+
 def _cache_key(tenant_id: uuid.UUID) -> str:
     return tenant_cache_key("entitlements", tenant_cache_version(tenant_id), tenant=tenant_id)
 
@@ -143,6 +162,21 @@ def enabled_modules(tenant_id: uuid.UUID | None = None) -> frozenset[str]:
     result = frozenset(platform | {str(c) for c in snapshot})
     cache.set(key, sorted(result), timeout=_CACHE_TTL)
     return result
+
+
+def summary(tenant_id: uuid.UUID) -> dict[str, Any]:
+    """For ``/me/context/``: enabled modules and the flags evaluated for this tenant."""
+    from apps.billing.models import Subscription
+    from apps.module_registry.models import FeatureFlag
+    from apps.module_registry.services import flag_enabled
+
+    sub = Subscription.objects.filter(tenant_id=tenant_id).select_related("plan").first()
+    plan_code = sub.plan.code if sub else ""
+    flags = {
+        key: flag_enabled(key, tenant_id=tenant_id, plan_code=plan_code)
+        for key in FeatureFlag.objects.order_by("key").values_list("key", flat=True)
+    }
+    return {"modules": sorted(enabled_modules(tenant_id)), "flags": flags}
 
 
 def is_entitled(code: str) -> bool:

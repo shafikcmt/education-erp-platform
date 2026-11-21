@@ -1,8 +1,10 @@
 """Completeness gate of the platform operation catalogue (Phase 3 plan §6.3, §12.2; M8).
 
-* Every platform-host view of the tenancy API declares, for each HTTP method it implements, the
-  catalogue operation it performs (``platform_operations``); each id must exist and be enabled.
-* Every user-facing platform operation of plan §12.2 (P2, P4, P5, P6, P8) is reachable through
+* Every platform-host view of the tenancy, billing and module registry APIs declares, for each
+  HTTP method it implements, the catalogue operation it performs (``platform_operations``);
+  each id must exist and be enabled.
+* Every user-facing platform operation of plan §12.2 (P2, P4, P5, P6, P8) and of the Phase 4
+  plan §5 (P17, P18) is reachable through
   at least one declared view, so the catalogue and the API can't drift apart.
 * Disabled operations (P3, P11, P15, P16) are never declared by a view.
 """
@@ -16,7 +18,8 @@ from apps.core import hosts
 from apps.core.tenancy.platform import CATALOGUE
 
 METHODS = ("get", "post", "put", "patch", "delete")
-EXPECTED = {"P2", "P4", "P5", "P6", "P8"}
+EXPECTED = {"P2", "P4", "P5", "P6", "P8", "P17", "P18"}  # P17/P18: Phase 4 M5
+API_MODULES = ("apps.tenancy.api", "apps.billing.api", "apps.module_registry.api")
 
 
 def _views(patterns=None):
@@ -33,7 +36,7 @@ def test_tenancy_platform_views_declare_enabled_catalogue_operations():
     declared: set[str] = set()
     problems = []
     for route, view in _views():
-        if not view.__module__.startswith("apps.tenancy.api"):
+        if not view.__module__.startswith(API_MODULES):
             continue
         if hosts.PLATFORM not in hosts.host_classes_of(view):
             assert not hasattr(view, "platform_operations"), route

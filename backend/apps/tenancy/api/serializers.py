@@ -455,6 +455,19 @@ class ScopePermissionsSerializer(serializers.Serializer[None]):
     permissions = serializers.ListField(child=serializers.CharField())
 
 
+class LimitUsageSerializer(serializers.Serializer[Any]):
+    limit = serializers.IntegerField()
+    used = serializers.IntegerField()
+
+
+class EntitlementsSerializer(serializers.Serializer[Any]):
+    """Phase 4 M5: what the UI may show. Hidden is not secure: the server enforces."""
+
+    modules = serializers.ListField(child=serializers.CharField())
+    flags = serializers.DictField(child=serializers.BooleanField())
+    limits = serializers.DictField(child=LimitUsageSerializer())
+
+
 class ContextSerializer(serializers.Serializer[Any]):
     tenant = TenantProfileSerializer()
     membership_status = serializers.CharField(allow_null=True)
@@ -463,3 +476,4 @@ class ContextSerializer(serializers.Serializer[Any]):
     assignments = TenantAssignmentSerializer(many=True)
     scopes = ScopePermissionsSerializer(many=True)
     support_banner = BannerSerializer(many=True)
+    entitlements = EntitlementsSerializer()

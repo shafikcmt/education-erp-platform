@@ -57,6 +57,16 @@ def effective_limits(tenant: Tenant) -> dict[str, int]:
     return limits
 
 
+def limits_usage(tenant: Tenant) -> dict[str, dict[str, int]]:
+    """Effective limits with the current counts (inside the tenant's transaction)."""
+    limits = effective_limits(tenant)
+    used = {
+        "max_institutions": Institution.objects.filter(archived_at__isnull=True).count(),
+        "max_campuses": Campus.objects.filter(archived_at__isnull=True).count(),
+    }
+    return {key: {"limit": limits[key], "used": used.get(key, 0)} for key in LIMIT_KEYS}
+
+
 def assert_capacity(kind: LimitKind) -> Tenant:
     """Lock the current tenant's registry row and refuse if ``kind`` is at its limit.
 
