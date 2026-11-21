@@ -52,6 +52,7 @@
 | 045 | Support sessions: tenant approval by default (owner-only waiver), read-only, ≤ 2 h, audited in the same transaction, no RLS bypass, no use while the tenant is suspended | **Accepted** (owner final approval; D2, D5) | 2026-11-08 |
 | 046 | RLS policy catalogue (standard, dual-scope, private dual-scope, self-scoped registry) + CI-enforced registry allow-list with justification and tests | **Accepted** (owner final approval) | 2026-11-08 |
 | 047 | Phase 3 scope decisions (owner answers Q1–Q12 and D1–D9) | **Accepted** (owner final approval) | 2026-11-08 |
+| 049 | D9 isolation-overhead benchmark deferred from Phase 3 M10 to Phase 18 (production-like environment); D9 thresholds unchanged | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
 
 ---
@@ -722,6 +723,16 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 
 **Implementation notes (M3):** recorded in `plans/PHASE_03_M3_PLAN.md` §11 and `plans/PHASE_03_PLAN.md` §24.6.
 
+## ADR-049 — D9 benchmark moves to Phase 18
+
+**Status:** Accepted (owner, 2026-11-21: "continue develop with ur recommendation"). **Context:** plan §8.4 and M10 asked for an isolation-overhead benchmark against the D9 target (at most 20% p95 overhead attributable to tenant isolation). The only environment available is a shared development container. Its absolute and relative timings would say little about production, and the methodology needs a benchmark-only settings module, a scratch database and a no-RLS control copy.
+
+**Decision:** the benchmark is **not** a Phase 3 exit criterion. It runs in Phase 18 (security, performance and production readiness) on a production-like environment, with the §8.4 methodology unchanged.
+
+**Unchanged:** the D9 thresholds (`lock_timeout` 5 s, warning at 2 s, ≤ 20% p95 overhead) and the existing safeguards: the `tx_ms` log with the 2 s warning, transaction timeouts, and `CONN_MAX_AGE = 0`.
+
+**Consequence:** Phase 3 exit criterion 11 no longer waits for the benchmark report. `DEVELOPMENT_ROADMAP.md` lists the benchmark under Phase 18.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -739,3 +750,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-08 — ADR-041 to ADR-047 marked **approved in principle** (owner) and updated with decisions D1–D9. They become Accepted on final approval of the Phase 3 plan. ADR-009 stays Accepted: an append-only note records the pending §5 amendment by ADR-043 with its exact wording, and the original text is unchanged.
 - 2026-11-08 — Owner final approval: ADR-041 to ADR-047 **Accepted** (with `plans/PHASE_03_PLAN.md` rev. 3 Approved). ADR-009 stays Accepted; its §5 third bullet is amended by ADR-043, recorded in an append-only note. No other ADR changed.
 - 2026-11-13 — Added ADR-048 (Accepted): the owner's answers to the seven M3 questions. No existing ADR changed.
+- 2026-11-21 — Added ADR-049 (Accepted): the D9 benchmark moves to Phase 18. No existing ADR changed; D9 thresholds unchanged.

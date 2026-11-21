@@ -140,6 +140,39 @@ Audit records: never updated or deleted by application code; DB role for app has
 - **Views are platform-only by default.** Only login, MFA verify, logout, CSRF and `me` are reachable on tenant hosts (reviewed allow-list test).
 - **Fail-closed states (until M4/M5):** a suspended tenant denies every signed-in request and every sign-in, owners included; an offboarding tenant accepts no writes; platform staff have no access on tenant hosts.
 
+## 6b. Tenant isolation and tenant administration (Phase 3, as built)
+
+- **Isolation layers:**
+  - the tenant comes from the host only (F1);
+  - one transaction per tenant request with `set_config` (transaction-local);
+  - fail-closed managers and a query guard;
+  - RLS `ENABLE` + `FORCE` on every tenant table;
+  - composite keys;
+  - no runtime `BYPASSRLS` (ADR-043).
+
+  Evidence map: `docs/security/PHASE_03_ISOLATION_EVIDENCE.md`.
+- **Tenant API authorization:**
+  - a request passes when the actor holds the code in some scope of the tenant;
+  - lists are filtered to the actor's scopes, and objects outside them are 404;
+  - every service re-checks the exact scope, uncached.
+
+  Platform registry operations run inside `platform_scope` with catalogued ids (P4, P5, P6, P8) and registry fields only (D8).
+- **MFA on tenant hosts:** privileged codes held in **any** scope of the tenant (tenant, institution or campus) require MFA there. Own MFA enrolment and step-up are served on tenant hosts behind the membership gate.
+- **Invitations:**
+  - hashed single-use tokens, read from the URL fragment only;
+  - acceptance creates a verified account, or checks the existing account's password (throttled per invitation; durable `invalid_attempt` evidence);
+  - unknown, expired, used and revoked tokens get one answer.
+- **Provisioning and suspension:**
+  - provisioning is refused while tenant hosts are disabled in production;
+  - a failed provisioning tombstones the slug;
+  - suspension revokes open support sessions in the tenant's own transaction;
+  - every registry change is written to the platform log and the tenant log.
+- **Unknown hosts:** the API and the frontend both answer 404. No tenant is looked up while tenant hosts are disabled (D1).
+- **Monitoring:**
+  - `tenancy.isolation.blocked` events, and a daily per-tenant summary (P14);
+  - Sentry alerting is not configured yet (no account).
+- **Self-review:** `docs/security/PHASE_03_SECURITY_REVIEW.md`.
+
 ## 7. Secrets & configuration
 
 - 12-factor: configuration via environment variables; `.env.example` documents keys with dummy values; real `.env` files are git-ignored.
@@ -221,3 +254,4 @@ Verify sign-in with MFA, then remove the old key.
 - 2026-11-13 — Phase 3 M3: durable security events (§6) and host policy / tenant hosts (§6a) documented. Tenant hosts remain disabled.
 - 2026-11-18 — Phase 3 M5: support sessions implemented as described in `MULTI_TENANT_ARCHITECTURE.md` §3.4 and plan §24.8 (read-only, tenant-approved by default, ≤ 2 h, audited per request, no access to suspended tenants).
 - 2026-11-18 — Phase 3 M6: the audit log is now separated per scope in the database (private dual-scope RLS): platform staff cannot read tenant audit events from the platform host (D3), and IP retention and erasure run in every scope.
+- 2026-11-21 — Phase 3 M11: §6b (tenant isolation and tenant administration as built), pointers to the evidence map and the self-review.

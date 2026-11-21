@@ -70,6 +70,14 @@ docker-compose.prod.yml, cd.yml          production overrides + CD (Phase 19)
 | `TENANT_HOSTS_ENABLED` | `false` | **`false`.** `true` is refused without a real base domain; enabling it also needs the approved security review |
 | `DATABASE_CONN_MAX_AGE` | `0` | Must be `0` (settings refuse anything else, D4). The override exists only for non-production measurements |
 
+| `TENANT_PROVISIONING_REQUIRES_HOSTS` | `false` (settings) | `true` in production settings: provisioning answers `409 tenant_hosts_disabled` while tenant hosts are off (Phase 3 M8) |
+| `CSRF_TRUSTED_ORIGINS` | `http://localhost:8080` | The platform origin. **Local tenant hosts** (`TENANT_HOSTS_ENABLED=true`) also need `http://*.localhost:8080`: Nginx forwards the host without the port (Phase 3 M10) |
+| `SECURITY_LOGIN_IP_LIMIT` | `20` per 5 min | Default. The CI E2E stack raises it, because every test browser shares one client address |
+
+**Tenant hosts in local E2E (Phase 3 M10):** start the stack with `TENANT_HOSTS_ENABLED=true` and the CSRF origin above, then run `E2E_TENANT_HOSTS=1 make e2e`. Production never accepts `localhost` as a tenant domain.
+
+**Scheduled tasks (Celery beat):** `core.ping` (heartbeat), `audit.anonymize_expired_ips` (daily, P10), `identity.housekeeping`, `tenancy.sweep_support_sessions` (every 5 min), and `tenancy.report_isolation_denials` (daily, P14).
+
 The API service must be reachable only through Nginx and the web service: Django trusts the proxy headers they set (`SECURITY.md` §6a).
 
 `.env.example` contains **dummy values only**. Real values never enter git.
@@ -144,3 +152,4 @@ Branch protection on `main` (owner to configure): required checks green, ≥1 ap
 - 2026-11-09 — Phase 3 M1 / O1: the `migrate` service now runs **both** `migrate` and `seed_roles` as the owner role (`export DATABASE_URL="$DATABASE_MIGRATION_URL"`). `erp_app` only reads `rbac_permission`; `seed_roles`/`sync_permissions` refuse to run as `erp_app`; `create_platform_admin` (run in `api`) only checks that the catalogue is synchronized. This supersedes the 2026-11-06 note that seeding ran as `erp_app`.
 - 2026-11-13 — Phase 3 M3: host-policy and connection variables documented (§5). Tenant hosts stay disabled.
 - 2026-11-16 — Phase 3 M4: the one-shot `migrate` step now runs `migrate`, `seed_roles` and `sync_tenant_roles` (tenant system role copies, P7), all as the owner role.
+- 2026-11-21 — Phase 3 M11: provisioning guard, tenant-host CSRF origin, local tenant-host E2E and the beat schedule documented.

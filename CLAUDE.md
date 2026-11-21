@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-21 (Phase 3 in progress: M1–M9 and M10 part 1 merged (PRs #17, #18, #29–#36); M10 part 2 on `feat/phase-03-m10b`; D9 benchmark awaiting owner decision; tenant hosts disabled; M11 not started)
+- **Last updated:** 2026-11-21 (Phase 3 **Complete**: M1–M11 merged (PRs #17, #18, #29–#36, #41, #42); D9 benchmark moved to Phase 18 (ADR-049); tenant hosts disabled; awaiting owner approval; Phase 4 plan proposed, not started)
 
 ---
 
@@ -345,7 +345,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
-| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–047 Accepted; **in progress**: M1 merged in PR #17; M2 tenancy data model merged in PR #18; M3 (host policy, tenant request lifecycle) merged in PR #29; M4 (memberships, invitations, role assignments) merged in PR #30; M5 (support sessions) merged in PR #31; M6 (dual-scope RLS on roles and audit) merged in PR #32; M7 (Celery task isolation, key helpers) merged in PR #33; M8 (tenancy APIs, provisioning, suspension, limits) merged in PR #34; M9 (frontend screens) merged in PR #35; M10 (isolation evidence, two-tenant E2E) partial: part 1 merged in PR #36, part 2 on `feat/phase-03-m10b`; M11 not started) |
+| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); awaiting the owner's approval of the phase) |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
@@ -451,3 +451,5 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-19 — Phase 3 M8 merged (PR #34, `92fcd05`); M9 complete on its branch; phase table and last-updated line updated. No rule changed.
 - 2026-11-19 — Phase 3 M9 merged (PR #35, `8b19e76`); M10 partial on its branch; phase table and last-updated line updated. No rule changed.
 - 2026-11-21 — Phase 3 M10 part 1 merged (PR #36, `e3c89da`); part 2 on its branch; phase table and last-updated line updated. No rule changed.
+- 2026-11-21 — Phase 3 M11 on its branch (docs, security self-review); phase table and last-updated line updated. No rule changed.
+- 2026-11-21 — Phase 3 Complete (M11 merged on the owner's instruction; ADR-049 moves the D9 benchmark to Phase 18); phase table and last-updated line updated. No rule changed.

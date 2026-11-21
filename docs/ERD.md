@@ -31,6 +31,20 @@ erDiagram
   ROLE_ASSIGNMENT { uuid id PK  uuid membership_id FK  uuid role_id FK  string scope_type }
 ```
 
+**As built in Phase 3** (plan §4.2). Additional entities: `INVITATION` (tenant, role, scope, token hash) and `TENANT_DOMAIN`. `ROLE` rows with a tenant are system copies (`template_id`) or clones. Every reference between tenant tables is a composite `(tenant_id, …)` key. `SUPPORT_SESSION` is tenant-owned and read-only by construction.
+
+```mermaid
+erDiagram
+  TENANT ||--o{ INVITATION : "has"
+  ROLE ||--o{ INVITATION : "offers"
+  INSTITUTION |o--o{ INVITATION : "scope"
+  CAMPUS |o--o{ INVITATION : "scope"
+  ROLE |o--o{ ROLE : "template of (system copies)"
+  INVITATION { uuid id PK  uuid tenant_id FK  string email  string scope_type  string token_hash UK  datetime expires_at }
+  SUPPORT_SESSION { uuid id PK  uuid tenant_id FK  uuid staff_user_id FK  string status  int duration_minutes  datetime ends_at }
+  TENANT_DOMAIN { uuid id PK  uuid tenant_id FK  string domain UK  bool is_primary  datetime verified_at }
+```
+
 ## 2. Module registry, billing, customization
 
 ```mermaid
@@ -179,3 +193,4 @@ erDiagram
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-06 — Phase 2 implemented the identity/RBAC/audit tables exactly as designed in `plans/PHASE_02_PLAN.md` §7, plus `identity_sessionrecord.session_key_encrypted` (plan §18 D4). Dual-scope `tenant_id` columns exist on `rbac_role`, `rbac_rolepermission` and `audit_auditevent`; their RLS policies arrive in Phase 3.
+- 2026-11-21 — Phase 3 M11: as-built additions to §1 (invitations, domains, system role copies).

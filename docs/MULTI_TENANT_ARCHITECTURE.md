@@ -114,6 +114,12 @@ RequestID → Security → HostPolicy → Session → Common → CSRF → Auth �
 - **Suspension** revokes open support sessions in the tenant's own transaction; members are refused from their next request; owners keep the restricted mode (D2).
 - Details: plan §24.11.
 
+### 3.8 Phase 3 status (M11)
+
+- Implemented: §3.1–§3.7, plus two-tenant E2E on `*.localhost` (CI only), K3 through the stack, a daily denial summary and unknown-host 404s in the frontend.
+- **Tenant hosts remain disabled** in every committed configuration. Enabling them in production needs the production domain and the approved security review (D1).
+- Open: the D9 isolation-overhead benchmark (moved to Phase 18, ADR-049), prefork K6, Sentry alerts.
+
 ## 4. Enforcement layers
 
 | Layer | Mechanism |
@@ -255,3 +261,5 @@ A failure blocks merge.
 - 2026-11-18 — Phase 3 M6: §3.5 added (dual-scope RLS on roles and the audit log).
 - 2026-11-18 — Phase 3 M7: §3.6 added (Celery task isolation, key helpers).
 - 2026-11-19 — Phase 3 M8: §3.7 added (tenancy APIs).
+- 2026-11-21 — Phase 3 M11: §3.8 status summary.
+- 2026-11-21 — ADR-049: D9 benchmark moved to Phase 18.
