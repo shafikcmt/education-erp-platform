@@ -61,3 +61,13 @@ PERMISSIONS = [
     _p("tenancy.tenant.suspend", "Suspend or reactivate tenants", step_up=True),
     _p("tenancy.limit.override", "Override tenant institution and campus limits", step_up=True),
 ]
+
+# Phase 4 M1 (ADR-050): this app's entry in the module catalogue.
+MODULE = {
+    "code": "tenancy",
+    "name": "Tenancy",
+    "category": "platform",
+    "version": "1.0.0",
+    "dependencies": ["identity", "rbac"],
+    "sellable": False,
+}

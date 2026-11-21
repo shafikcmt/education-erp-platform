@@ -795,3 +795,16 @@ See `DECISION_LOG.md`.
 ### 2026-11-21 — Owner approval
 - **Phase 3: Approved** (owner, 2026-11-21: "approved and continue develop same").
 - **Phase 4 plan: Approved** with the recommended answers (ADR-054). ADR-050 to ADR-053 Accepted. Phase 4 is **In progress**; M1 starts next.
+
+### 2026-11-21 — Session 30 (Phase 4 M1)
+- **Phase 4 plan:** [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) merged (`b73ca76`); Phase 3 Approved.
+- **M1 (`feat/phase-04-m1`):**
+  - `module_registry` app; the module catalogue model is SELECT-only for the runtime role;
+  - `MODULE` manifests in the installed apps;
+  - planned-module catalogue (34 modules in total);
+  - validation (cycles, dependencies, categories);
+  - owner-only audited `sync_modules`, wired into the migrate step and the test bootstrap.
+- **Verification (local):**
+  - backend **887 passed, 9 skipped**; ruff, format and mypy (247 files) clean; import-linter 9/9; `makemigrations --check` clean; OpenAPI unchanged;
+  - `docker compose run --rm migrate` synced 34 modules.
+- **Next:** M2 (billing data model with RLS classes, catalogue P17–P20).

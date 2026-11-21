@@ -56,3 +56,13 @@ PERMISSIONS = [
         "requires_step_up": True,
     },
 ]
+
+# Phase 4 M1 (ADR-050): this app's entry in the module catalogue.
+MODULE = {
+    "code": "rbac",
+    "name": "Roles and permissions",
+    "category": "platform",
+    "version": "1.0.0",
+    "dependencies": ["identity"],
+    "sellable": False,
+}

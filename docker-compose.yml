@@ -159,7 +159,7 @@ services:
       [
         "/bin/sh",
         "-c",
-        'export DATABASE_URL="$$DATABASE_MIGRATION_URL" && python manage.py migrate --noinput && python manage.py seed_roles && python manage.py sync_tenant_roles',
+        'export DATABASE_URL="$$DATABASE_MIGRATION_URL" && python manage.py migrate --noinput && python manage.py seed_roles && python manage.py sync_modules && python manage.py sync_tenant_roles',
       ]
     depends_on:
       postgres:

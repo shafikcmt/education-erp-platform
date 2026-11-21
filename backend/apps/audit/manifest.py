@@ -17,3 +17,13 @@ PERMISSIONS = [
         "is_sensitive": True,
     },
 ]
+
+# Phase 4 M1 (ADR-050): this app's entry in the module catalogue.
+MODULE = {
+    "code": "audit",
+    "name": "Audit log",
+    "category": "platform",
+    "version": "1.0.0",
+    "dependencies": ["core"],
+    "sellable": False,
+}
