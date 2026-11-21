@@ -119,7 +119,7 @@ EVENTS: dict[str, frozenset[str]] = {
     # audit / authorization
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
-    "authz.denied": frozenset({"permission", "reason"}),
+    "authz.denied": frozenset({"permission", "module", "reason"}),
     # tenant isolation monitoring (Phase 3 M3, P14): platform log, tenant id as metadata only
     "tenancy.isolation.blocked": frozenset({"reason", "tenant_id", "host_kind"}),
     # platform operations (Phase 3, ADR-043): platform_scope start/end

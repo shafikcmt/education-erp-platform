@@ -56,3 +56,9 @@ def platform_sees() -> dict[str, Any]:
 @platform_task(name="probe.platform_tenant_query", operation="P12")
 def platform_tenant_query() -> int:
     return ProbeRecord.objects.count()  # no tenant context: TenantManager raises
+
+
+@tenant_task(name="probe.academics_only", module="academics")
+def academics_only(*, tenant_id: uuid.UUID) -> str:
+    """Phase 4 M4: refused for tenants not entitled to ``academics``."""
+    return str(tenant_id)

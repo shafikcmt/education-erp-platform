@@ -14,6 +14,7 @@ urlpatterns = [
     path("_probe/tenant-protected/", views.TenantProtected.as_view()),
     path("_probe/tenant-write/", views.TenantProtectedWrite.as_view()),
     path("_probe/support-review/", views.SupportReview.as_view()),
+    path("_probe/module/", views.ModuleProbe.as_view()),
     path("_probe/platform-only/", views.PlatformOnly.as_view()),
     path("_probe/tenant-only/", views.TenantOnly.as_view()),
     *real_urlpatterns,

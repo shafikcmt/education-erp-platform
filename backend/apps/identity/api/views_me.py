@@ -71,6 +71,7 @@ class MeView(CsrfProtectedView):
     ]
     allow_during_mfa_enrollment = True
     host_classes = PLATFORM_AND_TENANT  # own account only; members pass the tenant gate first
+    module_code = "identity"
 
     @extend_schema(
         tags=TAGS, summary="Current user, permissions and session", responses=s.MeSerializer
@@ -138,6 +139,7 @@ class EmailChangeView(CsrfProtectedView):
 class MfaStatusView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA]
     allow_during_mfa_enrollment = True
 
@@ -159,6 +161,7 @@ class MfaStatusView(CsrfProtectedView):
 class MfaSetupView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA]
     allow_during_mfa_enrollment = True
 
@@ -183,6 +186,7 @@ class MfaSetupView(CsrfProtectedView):
 class MfaManualKeyView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA]
     allow_during_mfa_enrollment = True
 
@@ -200,6 +204,7 @@ class MfaManualKeyView(CsrfProtectedView):
 class MfaSetupCancelView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA]
     allow_during_mfa_enrollment = True
 
@@ -212,6 +217,7 @@ class MfaSetupCancelView(CsrfProtectedView):
 class MfaConfirmView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA]
     allow_during_mfa_enrollment = True
 
@@ -254,6 +260,7 @@ class MfaDisableView(CsrfProtectedView):
 class RecoveryCodesView(CsrfProtectedView):
     # Phase 3 M8: tenant administrators enrol MFA on their tenant host (plan N47).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [OWN_MFA, RequireStepUp]
 
     @extend_schema(

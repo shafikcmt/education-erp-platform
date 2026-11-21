@@ -18,6 +18,7 @@ from rest_framework.views import APIView
 
 from apps.core.hosts import PLATFORM_AND_TENANT, TENANT_ONLY
 from apps.core.tenancy import current_tenant
+from apps.module_registry.permissions import ModuleGatedView
 from apps.rbac.permissions import HasPermission
 from tests.isolation_app.models import ProbeRecord
 
@@ -117,6 +118,17 @@ class TenantProtectedWrite(APIView):
     host_classes = TENANT_ONLY
 
     def post(self, request: Request) -> Response:
+        return Response({"ok": True})
+
+
+class ModuleProbe(ModuleGatedView, APIView):
+    """Phase 4 M4: a view of a sellable module (``academics``) behind its entitlement."""
+
+    module_code = "academics"
+    permission_classes = [HasPermission("tenancy.member.view")]
+    host_classes = TENANT_ONLY
+
+    def get(self, request: Request) -> Response:
         return Response({"ok": True})
 
 
