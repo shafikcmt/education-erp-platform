@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-21 (Phase 3 in progress: M1–M9 and M10 part 1 merged (PRs #17, #18, #29–#36); M10 part 2 on `feat/phase-03-m10b`; M11 docs/self-review on `feat/phase-03-m11` awaiting owner approval; D9 benchmark awaiting owner decision; tenant hosts disabled)
+- **Last updated:** 2026-11-21 (Phase 3 in progress: M1–M9 and M10 merged (PRs #17, #18, #29–#36, #41); M10 part 2 merged (PR #41); M11 docs/self-review on `feat/phase-03-m11` awaiting owner approval; D9 benchmark awaiting owner decision; tenant hosts disabled)
 
 ---
 
@@ -345,7 +345,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 0 | Documentation and architecture baseline (approved; merged in PR #1) |
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
-| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–047 Accepted; **in progress**: M1 merged in PR #17; M2 tenancy data model merged in PR #18; M3 (host policy, tenant request lifecycle) merged in PR #29; M4 (memberships, invitations, role assignments) merged in PR #30; M5 (support sessions) merged in PR #31; M6 (dual-scope RLS on roles and audit) merged in PR #32; M7 (Celery task isolation, key helpers) merged in PR #33; M8 (tenancy APIs, provisioning, suspension, limits) merged in PR #34; M9 (frontend screens) merged in PR #35; M10 (isolation evidence, two-tenant E2E) partial: part 1 merged in PR #36, part 2 on `feat/phase-03-m10b`; M11 (docs, security self-review) on `feat/phase-03-m11`, awaiting owner approval) |
+| 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–047 Accepted; **in progress**: M1 merged in PR #17; M2 tenancy data model merged in PR #18; M3 (host policy, tenant request lifecycle) merged in PR #29; M4 (memberships, invitations, role assignments) merged in PR #30; M5 (support sessions) merged in PR #31; M6 (dual-scope RLS on roles and audit) merged in PR #32; M7 (Celery task isolation, key helpers) merged in PR #33; M8 (tenancy APIs, provisioning, suspension, limits) merged in PR #34; M9 (frontend screens) merged in PR #35; M10 (isolation evidence, two-tenant E2E) partial: part 1 merged in PR #36, part 2 merged in PR #41; M11 (docs, security self-review) on `feat/phase-03-m11`, awaiting owner approval) |
 | 4 | Module registry and feature entitlement engine |
 | 5 | Customization Studio and institution configuration |
 | 6 | Academic structure and student admission |
