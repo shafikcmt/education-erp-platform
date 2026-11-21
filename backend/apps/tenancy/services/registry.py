@@ -30,6 +30,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
+from django.utils.module_loading import import_string
 
 from apps.audit.services import record
 from apps.core.tenancy import tenant_atomic
@@ -146,6 +147,8 @@ def provision_tenant(
             _mark_failed(tenant, actor, request, exc)
             raise
         tenant.refresh_from_db()
+        for hook in getattr(settings, "TENANCY_PROVISIONING_HOOKS", []):
+            import_string(hook)(tenant, actor, request)  # e.g. the trial plan (Phase 4)
         _platform_log(
             "tenancy.tenant.provisioned",
             tenant,

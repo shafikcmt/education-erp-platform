@@ -5,7 +5,8 @@
 
 ## Current state
 
-- **Current phase:** Phase 3 — SaaS tenants, institutions & campuses: **In progress**.
+- **Current phase:** Phase 4 — Module registry & feature entitlement engine: **In progress** (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44) and M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) merged; M3 on `feat/phase-04-m3`). **Tenant hosts remain disabled.**
+- **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
   - **M2 (tenancy data model): Complete** and merged into `main` (PR [#18](https://github.com/shafikcmt/education-erp-platform/pull/18), squash `3616778`; Sessions 16–18).
   - **M3 (host policy, tenant request lifecycle, durable audit): Complete** and merged into `main` (PR [#29](https://github.com/shafikcmt/education-erp-platform/pull/29), squash `066b727`; Sessions 20 and 22). Deferred test items are listed under "Known gaps". **Tenant hosts remain disabled.**
@@ -33,8 +34,8 @@
 | 0 | Documentation & architecture baseline | Approved | [PR #1](https://github.com/shafikcmt/education-erp-platform/pull/1) | Merged into `main` by owner |
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
-| 3 | SaaS tenants, institutions & campuses | In progress | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
-| 4 | Module registry & feature entitlement engine | Not started | | |
+| 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
+| 4 | Module registry & feature entitlement engine | In progress | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`); `feat/phase-04-m3` (M3) | Plan Approved (ADR-050–054) |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
 | 7 | Student, teacher & parent management | Not started | | |
@@ -820,3 +821,17 @@ See `DECISION_LOG.md`.
   - backend **893 passed, 9 skipped**; mypy (255 files) clean; import-linter 9/9; migrations check clean; OpenAPI unchanged;
   - `docker compose run --rm migrate` applied the new migrations and synced permissions and roles.
 - **Next:** M3 (entitlement resolution, snapshot, cache, expiry sweep, limits from the plan, trial at provisioning).
+
+### 2026-11-21 — Session 30 (continued): Phase 4 M3
+- **M2:** [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) — CI **8/8 success**; squash-merged pinned to `99fa5c3` → **`e1465f5`** (tree identical to the head).
+- **M3 (`feat/phase-04-m3`):**
+  - entitlement resolution with dependency closure, `not_built` / `missing_dependency` / `revoked`; snapshot table with standard tenant RLS; versioned cache; `require_module()` → `403 module_not_entitled`;
+  - P19 hourly expiry sweep (trials, add-ons, overrides) with per-tenant recompute tasks;
+  - limits from the plan with the ADR-010 override on top (settings hook, no tenancy → billing import);
+  - trial plan at provisioning only when the owner has created a `trial` plan with `trial_days` (new nullable field).
+  - Fix found by the tests: the cached reader counted unbuilt platform modules as enabled; it now agrees with the resolver.
+- **Verification (local):**
+  - backend **905 passed, 9 skipped** (12 new tests); ruff and format clean; mypy (228 files) clean; import-linter 9/9; `makemigrations --check` clean; OpenAPI unchanged;
+  - `docker compose run --rm migrate` applied `billing.0003`, `module_registry.0005`/`0006`; 34 modules in sync.
+- **Next:** M4 (`ModuleEntitled` permission class, URL audit `module_code`).
+

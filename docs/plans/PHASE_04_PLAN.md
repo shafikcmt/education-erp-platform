@@ -167,8 +167,20 @@ The owner approved the plan with the recommended answers:
 | P10 | Permissions: `billing.plan.view|manage`, `billing.price.manage`, `billing.subscription.view_any|manage`, `billing.subscription.view` (tenant, support-readable) and `module_registry.flag.manage`, 54 codes in total. `platform_billing` holds the billing and flag codes (ADR-054 Q4); `tenant_owner` gets `billing.subscription.view`. The H2 rule now protects `platform_billing` holders from `platform_support` (the authorization test fixture uses an empty role) |
 | P11 | Feature flags are evaluated from data only (ADR-053): tenant list, then plan list, then a stable percentage bucket of `sha256(key:tenant)`, then the default |
 
+### 13.3 M3 — entitlement resolution, snapshot, expiry sweep, plan limits (2026-11-21, branch `feat/phase-04-m3`)
+
+| # | Note |
+|---|---|
+| P12 | `module_registry_tenantmodule` (standard tenant RLS) stores the resolved snapshot: module, source (`platform`/`plan`/`addon`/`override`), enabled, `disabled_reason` (`not_built`, `missing_dependency`, `revoked`). `entitlements.resolve()` computes it; `recompute()` rewrites it only inside the tenant's own transaction (mechanism T) and bumps the tenant cache version |
+| P13 | Plan modules count while the subscription is `trialing` (trial not ended), `active` or `past_due`; `suspended`, `canceled` and `expired` keep only platform modules (ADR-054 Q3). A broken dependency disables the dependent module and never enables the dependency. Unbuilt modules (`available = False`) are never enabled, including unbuilt platform modules (`files`, `notifications_core`) |
+| P14 | `enabled_modules()` reads the snapshot through a cache keyed by the tenant version (TTL 300 s); `require_module()` raises `403 module_not_entitled` (`ModuleNotEntitledError`). Every P18 change and override recomputes synchronously, so the next request sees it |
+| P15 | **P19 sweep** `module_registry.sweep_entitlements` (hourly beat, audited platform scope): ends lapsed trials (`expired`), add-on items and overrides, then fans out `module_registry.recompute_entitlements` per affected tenant |
+| P16 | Limits: defaults → the plan's `limits` (hook `TENANCY_PLAN_LIMITS`, so tenancy does not import billing) → the audited ADR-010 override, which always wins. Without a plan and an override, the Phase 3 behaviour is unchanged. Limits stay hard (ADR-054 Q5) |
+| P17 | Trial at provisioning (ADR-054 Q2): hook `TENANCY_PROVISIONING_HOOKS` starts the `trial` plan inside the P4 scope **only if the owner created a `trial` plan with `trial_days`** (new nullable `Plan.trial_days`, 1–365). No plan rows are created by code; a hook failure is logged and the tenant keeps platform modules |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
 - 2026-11-21 — §13.1 appended: M1 notes P1–P5.
 - 2026-11-21 — §13.2 appended: M2 notes P6–P11.
+- 2026-11-21 — §13.3 appended: M3 notes P12–P17.

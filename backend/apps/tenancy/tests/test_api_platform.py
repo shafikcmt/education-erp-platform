@@ -313,3 +313,29 @@ def test_tenant_owners_decide_support_requests_over_http(tenant_site):
     assert approved.status_code == 200 and approved.json()["status"] == "approved"
     revoked = owner.post(f"{V1}/support-sessions/{session_id}/revoke/")
     assert revoked.status_code == 200 and revoked.json()["status"] == "revoked"
+
+
+def test_provisioning_starts_the_trial_plan_when_the_owner_created_one(
+    admin, admin_api, django_capture_on_commit_callbacks
+):
+    """Phase 4 M3 (ADR-054 Q2): the provisioning hook puts the new tenant on ``trial``."""
+    from apps.billing import services as billing
+    from apps.billing.models import Subscription
+
+    billing.create_plan(
+        actor=admin.user,
+        code="trial",
+        name="Trial",
+        trial_days=14,
+        limits={"max_institutions": 1, "max_campuses": 2},
+    )
+    with django_capture_on_commit_callbacks(execute=True):
+        response = admin_api.post(TENANTS, _provision_body(slug="trialco"))
+    assert response.status_code == 201, response.content
+    assert response.json()["limits"] == {"max_institutions": 1, "max_campuses": 2}
+    sub = Subscription.objects.get(tenant__slug="trialco")
+    assert (sub.plan.code, sub.status) == ("trial", "trialing")
+    tenant = Tenant.objects.get(slug="trialco").as_context()
+    assert [
+        e.metadata["days"] for e in tenant_events(tenant, action="billing.subscription.trial_set")
+    ] == [14]

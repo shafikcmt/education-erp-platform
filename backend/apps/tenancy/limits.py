@@ -14,7 +14,9 @@ from __future__ import annotations
 
 from typing import Literal
 
+from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.utils.module_loading import import_string
 
 from apps.core.tenancy import require_tenant
 from apps.core.tenancy.transaction import applied_tenant_id
@@ -35,11 +37,23 @@ class LimitExceeded(PermissionDenied):
 
 
 def effective_limits(tenant: Tenant) -> dict[str, int]:
+    """Defaults → the plan's limits (Phase 4, ``TENANCY_PLAN_LIMITS`` hook) → the audited
+    Super Admin override on the tenant row (ADR-010). Without a plan and an override the
+    tenant row's stored values (the defaults copied at creation) apply, as in Phase 3."""
     limits = default_limits()
-    stored = tenant.limits if isinstance(tenant.limits, dict) else {}
-    for key in LIMIT_KEYS:
-        if isinstance(stored.get(key), int) and not isinstance(stored.get(key), bool):
-            limits[key] = int(stored[key])
+    layers: list[object] = []
+    if tenant.limits_overridden_at is None:
+        hook = getattr(settings, "TENANCY_PLAN_LIMITS", "")
+        plan = import_string(hook)(tenant.pk) if hook else {}
+        layers.append(plan if plan else tenant.limits)
+    else:
+        layers.append(tenant.limits)
+    for layer in layers:
+        stored = layer if isinstance(layer, dict) else {}
+        for key in LIMIT_KEYS:
+            value = stored.get(key)
+            if isinstance(value, int) and not isinstance(value, bool):
+                limits[key] = int(value)
     return limits
 
 

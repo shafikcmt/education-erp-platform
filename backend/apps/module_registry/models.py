@@ -11,6 +11,7 @@ from django.contrib.postgres.fields import ArrayField
 from django.db import models
 
 from apps.core.models import BaseModel
+from apps.core.tenancy.models import TenantScopedModel
 
 
 class Module(BaseModel):
@@ -84,4 +85,32 @@ class ModuleOverride(BaseModel):
                 condition=models.Q(ended_at__isnull=True),
                 name="module_registry_override_one_open",
             )
+        ]
+
+
+class TenantModule(TenantScopedModel):
+    """Resolved entitlement snapshot of one tenant (ADR-052): one row per candidate module,
+    with the source that brought it and whether it is enabled. Standard tenant RLS. Rewritten
+    in the tenant's transaction on every subscription or override change and by the sweep."""
+
+    class Source(models.TextChoices):
+        PLATFORM = "platform", "Platform"
+        PLAN = "plan", "Plan"
+        ADDON = "addon", "Add-on"
+        OVERRIDE = "override", "Override"
+
+    # DO_NOTHING: a platform row never walks tenant tables (as Phase 3); modules are only
+    # ever deprecated, never deleted, and the database FK keeps integrity.
+    module = models.ForeignKey(
+        Module, on_delete=models.DO_NOTHING, to_field="code", related_name="+"
+    )
+    source = models.CharField(max_length=16, choices=Source.choices)
+    enabled = models.BooleanField(default=True)
+    # Why a candidate is disabled: not_built, missing_dependency, revoked.
+    disabled_reason = models.CharField(max_length=32, blank=True, default="")
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "module_registry_tenantmodule"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant", "module"], name="module_registry_tm_unique")
         ]

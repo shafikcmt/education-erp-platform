@@ -57,6 +57,15 @@ def _limits(value: dict[str, Any]) -> dict[str, int]:
     return limits
 
 
+def _trial_days(value: Any) -> int | None:
+    """Trial length is data (ADR-054 Q2): empty, or 1 to 365 days."""
+    if value is None:
+        return None
+    if not isinstance(value, int) or isinstance(value, bool) or not 1 <= value <= 365:
+        raise ValidationError({"trial_days": "Choose 1 to 365 days, or leave it empty."})
+    return value
+
+
 def _modules(codes: list[str]) -> list[Module]:
     found = {m.code: m for m in Module.objects.filter(code__in=codes, deprecated_at__isnull=True)}
     unknown = sorted(set(codes) - set(found))
@@ -79,8 +88,10 @@ def create_plan(
     limits: dict[str, Any] | None = None,
     modules: list[str] | None = None,
     is_public: bool = False,
+    trial_days: int | None = None,
     request: HttpRequest | None = None,
 ) -> Plan:
+    trial_days = _trial_days(trial_days)
     with platform_scope(
         operation="P17", actor=actor, reason=f"create plan {code}", permission=PLAN_MANAGE
     ):
@@ -88,7 +99,11 @@ def create_plan(
         try:
             with transaction.atomic():
                 plan = Plan.objects.create(
-                    code=code, name=name, limits=_limits(limits or {}), is_public=is_public
+                    code=code,
+                    name=name,
+                    limits=_limits(limits or {}),
+                    is_public=is_public,
+                    trial_days=trial_days,
                 )
                 PlanModule.objects.bulk_create([PlanModule(plan=plan, module=m) for m in wanted])
         except IntegrityError:
@@ -123,10 +138,12 @@ def update_plan(
         plan = Plan.objects.select_for_update().get(pk=plan.pk)
         fields = []
         for key, value in changes.items():
-            if key not in {"name", "name_i18n", "is_public", "limits", "archived"}:
+            if key not in {"name", "name_i18n", "is_public", "limits", "archived", "trial_days"}:
                 raise ValidationError({key: "This field can't be changed."})
             if key == "limits":
                 value = _limits(value)
+            if key == "trial_days":
+                value = _trial_days(value)
             if key == "archived":
                 key, value = "archived_at", (timezone.now() if value else None)
             if getattr(plan, key) != value:
@@ -298,7 +315,11 @@ def _both_logs(
 
 
 def after_subscription_change(tenant_id: uuid.UUID) -> None:
-    """Hook inside the tenant transaction of every P18 change (entitlements from M3)."""
+    """Inside the tenant transaction of every P18 change: recompute the entitlement snapshot
+    (ADR-052)."""
+    from apps.module_registry.entitlements import recompute
+
+    recompute(tenant_id)
 
 
 def assign_plan(

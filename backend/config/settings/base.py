@@ -230,6 +230,9 @@ TENANT_TX_WARN_MS = 2000
 # Sign-in guards (callables ``(request, user) -> reason | None``): a non-None reason turns a
 # correct password into the generic invalid-credentials error (D7).
 IDENTITY_SIGN_IN_GUARDS: list[str] = ["apps.tenancy.access.sign_in_guard"]
+# Phase 4 M3 (ADR-052, ADR-054): plan limits for tenancy, and provisioning hooks (trial plan).
+TENANCY_PLAN_LIMITS = "apps.billing.selectors.plan_limits"
+TENANCY_PROVISIONING_HOOKS: list[str] = ["apps.billing.provisioning.start_trial_plan"]
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}
@@ -347,6 +350,12 @@ CELERY_BEAT_SCHEDULE = {
         "options": {"queue": "default"},
     },
     # Phase 3 M10 (plan §14, P14): daily summary of blocked isolation violations.
+    # Phase 4 M3 (P19): end lapsed trials, add-ons and overrides; recompute entitlements.
+    "module-registry-entitlement-sweep": {
+        "task": "module_registry.sweep_entitlements",
+        "schedule": 60 * 60.0,
+        "options": {"queue": "default"},
+    },
     "tenancy-isolation-daily-report": {
         "task": "tenancy.report_isolation_denials",
         "schedule": 24 * 60 * 60.0,
