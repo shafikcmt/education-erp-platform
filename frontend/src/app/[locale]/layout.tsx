@@ -11,6 +11,7 @@ import type { ReactNode } from "react";
 
 import { getDirection } from "@/i18n/direction";
 import { routing } from "@/i18n/routing";
+import { getServerHost } from "@/lib/api/server";
 
 import { Providers } from "./providers";
 
@@ -36,6 +37,8 @@ export default async function LocaleLayout({ children, params }: Props) {
   await connection();
   const { locale } = await params;
   if (!hasLocale(routing.locales, locale)) notFound();
+  // Hosts the API doesn't serve (unknown or disabled tenant hosts) show nothing (ADR-041).
+  if ((await getServerHost()).kind === "unknown") notFound();
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: "common" });
 

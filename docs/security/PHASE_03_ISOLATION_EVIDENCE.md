@@ -41,7 +41,7 @@
 | `tenancy.isolation.blocked` platform events for guard violations, conflicts and session host mismatches (P14) | Implemented and tested (`apps/tenancy/tests/test_request_lifecycle.py`) |
 | Structured logs with `tenant_id` and `tx_ms`; warning above 2 s (D9) | Implemented (`TenantTransactionMiddleware`) |
 | Sentry alerts on `TenantContextNotApplied` / `TenantContextConflict` | **Not configured**: no Sentry project or DSN exists yet. Accounts are not created without the owner (sprint rules) |
-| Daily platform report of denials per tenant | **Not implemented** |
+| Daily platform report of denials per tenant | Implemented: `tenancy.report_isolation_denials` (P14), tested in `apps/tenancy/tests/test_isolation_report.py` |
 
 ## 3. Final approval checklist (plan §23) → evidence
 
@@ -57,10 +57,11 @@
 ## 4. Not done in M10 (recorded, not hidden)
 
 1. **Isolation-overhead benchmark (D9, plan §8.4).** Not run. The methodology needs a benchmark-only settings module, a scratch database with a no-RLS control copy, and a seeded workload. Numbers are never estimated.
-2. **Two-tenant E2E** runs once per CI run: desktop, English. Mobile and Bengali on tenant hosts are not covered. Bengali is covered by message-parity tests and the Phase 2 Bengali E2E.
+2. **Tenant-host E2E** runs the full two-tenant journey on desktop in English, and a Bengali owner journey (invitation, MFA enrolment, home, unknown-host 404) on mobile. The full journey is not repeated in Bengali on mobile.
 3. **K3** is implemented as concurrent Playwright requests through Nginx and the ASGI server. It sends rounds of 10, within Nginx's per-IP rate limit. The plan's standard-library-threads variant is not implemented; the property tested is the same.
 4. **Prefork K6** through the compose worker: not run.
-5. **Monitoring:** Sentry alerts and the daily denial report (§2 above).
+5. **Monitoring:** Sentry alerts (§2 above). The daily denial report exists since M10 part 2.
 
 ### Change notes
 - 2026-11-19 — Created (Phase 3 M10, partial).
+- 2026-11-21 — M10 part 2: daily denial report, Bengali/mobile tenant-host E2E.

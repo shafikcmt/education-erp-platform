@@ -89,6 +89,7 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **M9 Complete (2026-11-19):** platform and tenant screens of plan §13 in English and Bengali, invitation acceptance, host-guarded routes, on `feat/phase-03-m9` (notes and deferrals: plan §24.12).
 **M9 merged (2026-11-19, PR #35).**
 **M10 Partial (2026-11-19):** two-tenant E2E, K3 through the stack, tenant-host MFA fix and isolation evidence on `feat/phase-03-m10`. The D9 benchmark and the remaining items are open (plan §24.13 N93).
+**M10 part 1 merged (PR #36); part 2 (2026-11-21):** denial report, Bengali/mobile tenant-host E2E, unknown-host 404 on `feat/phase-03-m10b` (plan §24.14). D9 benchmark awaiting the owner's decision.
 
 ## Phase 4 — Module registry & feature entitlement engine
 **Depends on:** Phase 3.
@@ -226,3 +227,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-19 — Phase 3 M7 merged (PR #33); M8 complete on its branch.
 - 2026-11-19 — Phase 3 M8 merged (PR #34); M9 complete on its branch.
 - 2026-11-19 — Phase 3 M9 merged (PR #35); M10 partial on its branch.
+- 2026-11-21 — Phase 3 M10 part 1 merged (PR #36); part 2 on its branch.

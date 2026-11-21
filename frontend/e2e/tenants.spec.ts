@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
+
 import AxeBuilder from "@axe-core/playwright";
 import {
   type APIRequestContext,
@@ -27,6 +30,20 @@ import {
  * reach → support session approved by the owner (banner) and revoked.
  */
 const ENABLED = Boolean(process.env.E2E_TENANT_HOSTS);
+
+/** Labels come straight from the message catalogues, so the journey runs in both languages. */
+type Messages = Record<string, Record<string, unknown>>;
+const catalog = (locale: "en" | "bn"): Messages =>
+  JSON.parse(
+    readFileSync(path.join(import.meta.dirname, `../src/messages/${locale}.json`), "utf8"),
+  ) as Messages;
+function label(messages: Messages, dotted: string, values: Record<string, string> = {}): string {
+  const value = dotted.split(".").reduce<unknown>((node, key) => (node as Messages)[key], messages);
+  return Object.entries(values).reduce(
+    (text, [key, v]) => text.replace(`{${key}}`, v),
+    String(value),
+  );
+}
 const PORT = new URL(BASE_URL).port || "80";
 const hostUrl = (slug: string) => `http://${slug}.localhost:${PORT}`;
 
@@ -71,38 +88,56 @@ async function apiPost(api: APIRequestContext, url: string, data: object) {
 }
 
 /** Accept an emailed invitation on the tenant host with a new account, then sign in. */
-async function joinAndSignIn(page: Page, slug: string, email: string, tenantName: string) {
+async function joinAndSignIn(
+  page: Page,
+  slug: string,
+  email: string,
+  tenantName: string,
+  locale: "en" | "bn" = "en",
+) {
+  const m = catalog(locale);
   const password = strongPassword();
   const mail = await waitForMail(email, new RegExp(tenantName));
-  await page.goto(hostUrl(slug) + linkFrom(mail, "accept-invitation"));
+  const link = linkFrom(mail, "accept-invitation").replace(/^\/(en|bn)\//, `/${locale}/`);
+  await page.goto(hostUrl(slug) + link);
   await expect(page).not.toHaveURL(/#token=/);
-  await expect(page.getByRole("heading", { name: `Join ${tenantName}` })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: label(m, "tenancy.accept.title", { name: tenantName }) }),
+  ).toBeVisible();
   await expect(page.getByTestId("brand")).toHaveText(tenantName);
   await noSeriousA11yIssues(page);
-  await page.getByLabel("Display name").fill(email.split("@")[0]!);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Join" }).click();
-  await expect(page.getByText("Your account is ready")).toBeVisible();
-  await page.getByRole("link", { name: "Go to sign in" }).click();
-  await page.getByLabel("Email address").fill(email);
-  await page.getByLabel("Password").fill(password);
-  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await page.getByLabel(label(m, "account.displayName")).fill(email.split("@")[0]!);
+  await page.getByLabel(label(m, "auth.password")).fill(password);
+  await page.getByRole("button", { name: label(m, "tenancy.accept.submit") }).click();
+  await expect(page.getByText(label(m, "tenancy.accept.createdDone"))).toBeVisible();
+  await page.getByRole("link", { name: label(m, "tenancy.accept.goToSignIn") }).click();
+  await page.getByLabel(label(m, "auth.email")).fill(email);
+  await page.getByLabel(label(m, "auth.password")).fill(password);
+  await page.getByRole("button", { name: label(m, "auth.login.submit"), exact: true }).click();
   return password;
 }
 
 /** Privileged tenant role → MFA enrolment on the tenant host (manual key behind a step-up). */
-async function enrollMfa(page: Page, password: string): Promise<string> {
-  await expect(page).toHaveURL(/\/en\/login\/mfa-setup$/);
-  await page.getByRole("button", { name: /Can't scan/ }).click();
-  await page.getByRole("dialog").getByLabel("Password").fill(password);
-  await page.getByRole("dialog").getByRole("button", { name: "Confirm" }).click();
+async function enrollMfa(
+  page: Page,
+  password: string,
+  locale: "en" | "bn" = "en",
+): Promise<string> {
+  const m = catalog(locale);
+  await expect(page).toHaveURL(new RegExp(`/${locale}/login/mfa-setup$`));
+  await page.getByRole("button", { name: label(m, "mfaSetup.cantScan") }).click();
+  await page.getByRole("dialog").getByLabel(label(m, "auth.password")).fill(password);
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: label(m, "stepUp.submit") })
+    .click();
   const secret = (await page.getByTestId("manual-key").textContent())!.replaceAll(" ", "");
-  await page.getByLabel("6-digit code from the app").fill(totp(secret));
-  await page.getByRole("button", { name: "Confirm and turn on" }).click();
+  await page.getByLabel(label(m, "mfaSetup.codeLabel")).fill(totp(secret));
+  await page.getByRole("button", { name: label(m, "mfaSetup.confirm") }).click();
   await expect(page.getByTestId("recovery-codes").locator("li")).toHaveCount(10);
-  await page.getByLabel(/I have saved my recovery codes/).check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await expect(page).toHaveURL(/\/en\/dashboard$/);
+  await page.getByLabel(label(m, "mfaSetup.ack")).check();
+  await page.getByRole("button", { name: label(m, "mfaSetup.continue") }).click();
+  await expect(page).toHaveURL(new RegExp(`/${locale}/dashboard$`));
   return secret;
 }
 
@@ -276,6 +311,48 @@ test.describe("two tenants on their own hosts", () => {
 
     expect(await cspViolations()).toEqual([]);
     await member.context.close();
+    await admin.dispose();
+  });
+
+  test("Bengali owner journey on a phone: invitation, MFA enrolment, organisation home", async ({
+    page,
+  }, info) => {
+    test.skip(info.project.name !== "mobile-chromium", "the Bengali journey runs on mobile");
+    test.setTimeout(180_000);
+    const cspViolations = await trackCspViolations(page);
+    const run = Date.now().toString(36);
+    const tenant = { slug: `tc${run}`, name: `Gamma ${run}`, owner: `owner-c-${run}@example.test` };
+    const codes = loadAdmin().recoveryCodes;
+    const admin = await platformAdmin(codes[6]!, codes[7]!);
+    await apiPost(admin, "/api/v1/platform/tenants/", {
+      slug: tenant.slug,
+      name: tenant.name,
+      owner_email: tenant.owner,
+      default_locale: "bn",
+      locales: ["bn", "en"],
+      timezone: "Asia/Dhaka",
+      currency: "BDT",
+      country: "BD",
+      institution: {
+        institution_type: "madrasa",
+        code: "main",
+        name: `${tenant.name} Madrasa`,
+        campus_code: "main",
+        campus_name: "Main",
+      },
+    });
+    const bn = catalog("bn");
+    const password = await joinAndSignIn(page, tenant.slug, tenant.owner, tenant.name, "bn");
+    await enrollMfa(page, password, "bn");
+    await expect(page.getByTestId("brand")).toHaveText(tenant.name);
+    const nav = page.getByRole("navigation", { name: label(bn, "nav.main") });
+    await expect(nav.getByRole("link", { name: label(bn, "nav.institutions") })).toBeVisible();
+    await expect(nav.getByRole("link", { name: label(bn, "nav.supportAccess") })).toBeVisible();
+    await noSeriousA11yIssues(page);
+    // An unknown organisation address is the uniform 404, never another tenant.
+    const unknown = await page.goto(`${hostUrl(`tz${run}`)}/bn/login`);
+    expect(unknown?.status()).toBe(404);
+    expect(await cspViolations()).toEqual([]);
     await admin.dispose();
   });
 });

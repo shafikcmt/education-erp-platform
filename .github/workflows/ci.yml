@@ -156,7 +156,10 @@ jobs:
         run: |
           sed -i 's/^TENANT_HOSTS_ENABLED=.*/TENANT_HOSTS_ENABLED=true/' .env
           sed -i 's|^CSRF_TRUSTED_ORIGINS=.*|CSRF_TRUSTED_ORIGINS=http://localhost:8080,http://*.localhost:8080|' .env
-          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS)=' .env
+          # Every E2E browser reaches the API from one client address (the Docker gateway),
+          # so the per-IP sign-in limit is raised for this stack only; per-account limits stay.
+          echo 'SECURITY_LOGIN_IP_LIMIT=200' >> .env
+          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS|SECURITY_LOGIN_IP_LIMIT)=' .env
       - name: Owner/superuser DB credentials never reach runtime services (security review H3)
         run: docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py
       - name: Build and start the full stack
