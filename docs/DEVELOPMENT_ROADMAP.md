@@ -92,7 +92,7 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 **M10 part 1 merged (PR #36); part 2 (2026-11-21):** denial report, Bengali/mobile tenant-host E2E, unknown-host 404 on `feat/phase-03-m10b` (plan §24.14). D9 benchmark awaiting the owner's decision.
 
 ## Phase 4 — Module registry & feature entitlement engine
-**Depends on:** Phase 3. **Plan:** `plans/PHASE_04_PLAN.md` (Proposed, 2026-11-21).
+**Depends on:** Phase 3. **Plan:** `plans/PHASE_04_PLAN.md` (**Approved**, 2026-11-21; ADR-050–054).
 **Deliverables:** `module_registry` (manifests, dependency validation, TenantModule resolution + cache, feature flags), `billing` foundations (Plan, Price, AddOn, Subscription, SubscriptionItem, UsageRecord; trial; Super Admin plan management; limits enforcement), `ModuleEntitled` permission class, `/api/v1/me/context/` (entitlements + permissions + terminology placeholder), entitlement-driven navigation in frontend, CI URL-pattern audit.
 **Deferred:** live payment gateway integration (needs ADR-017) — may be built later in Phase 10/19.
 **Exit:** non-entitled module calls rejected in tests; plan changes update entitlements.
@@ -231,3 +231,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-21 — Phase 3 M11 (docs, self-review) on its branch; Phase 3 awaiting the owner decision on D9 and approval.
 - 2026-11-21 — ADR-049: the Phase 3 isolation-overhead benchmark (D9, plan §8.4) is a Phase 18 deliverable. Phase 3 Complete.
 - 2026-11-21 — Phase 4 plan proposed (`plans/PHASE_04_PLAN.md`).
+- 2026-11-21 — Phase 3 approved; Phase 4 plan approved (in progress).

@@ -1,6 +1,6 @@
 # Phase 4 Plan — Module Registry and Feature Entitlement Engine
 
-- **Status:** **Proposed** (2026-11-21). Implementation starts only after the owner approves this plan and Phase 3.
+- **Status:** **Approved** (owner, 2026-11-21: "approved and continue develop same"). Phase 3 approved the same day. ADR-050 to ADR-054 Accepted.
 - **Depends on:** Phase 3 (Complete; owner approval pending). Accepted ADRs: ADR-009/043 (tenancy and platform operations), ADR-010 (limits), ADR-035 (MFA), ADR-046 (RLS catalogue).
 - **Roadmap scope (`DEVELOPMENT_ROADMAP.md` Phase 4):**
   - `module_registry`: manifests, dependency validation, tenant module resolution and cache, feature flags;
@@ -132,5 +132,18 @@ ADR-017 (gateways) and ADR-024 (pricing numbers) stay **Proposed** and are not b
 4. **Who manages plans:** `platform_billing` with MFA + step-up, or Super Admin only? Recommendation: `platform_billing` and Super Admin.
 5. **Limit types:** confirm institutions and campuses stay **hard** limits; student tiers (later) **soft**. Recommendation: as in `SUBSCRIPTION_AND_BILLING.md` §3.
 
+## 12. Owner decisions (2026-11-21, ADR-054)
+
+The owner approved the plan with the recommended answers:
+
+| # | Decision |
+|---|---|
+| Q1 | Self-service sign-up is **Phase 5**. Phase 4 keeps provisioning Super Admin only |
+| Q2 | New tenants start on the `trial` plan at provisioning; a Super Admin can change it |
+| Q3 | A module that is no longer entitled answers `403 module_not_entitled` (no read-only grace); data is kept |
+| Q4 | Plans, add-ons, prices and flags are managed by `platform_billing` and Super Admin, with MFA (step-up for prices and subscription changes) |
+| Q5 | Institution and campus limits stay **hard**; student tiers (later) will be **soft** |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
+- 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
