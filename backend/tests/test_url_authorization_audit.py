@@ -84,3 +84,39 @@ def test_every_api_view_is_authorized_or_reviewed():
 def test_allow_list_entries_still_exist():
     names = {name for name, _ in _api_views()}
     assert set(ANONYMOUS) | set(SESSION_ONLY) <= names
+
+
+def test_every_tenant_host_view_declares_its_module():
+    """Phase 4 M4 (plan §4): every view reachable on a tenant host declares ``module_code``,
+    an installed module. Views of non-platform modules must enforce ``ModuleEntitled`` for
+    that code before the permission check. Platform-only views are exempt."""
+    from apps.core.hosts import TENANT, host_classes_of
+    from apps.module_registry.permissions import ModuleCheck, ModuleGatedView
+    from apps.module_registry.registry import installed_manifests
+
+    installed = installed_manifests()
+    problems, tenant_views = [], 0
+    for name, pattern in _walk(get_resolver().url_patterns):
+        view = getattr(pattern.callback, "view_class", None)
+        if view is None or not issubclass(view, APIView):
+            continue
+        if TENANT not in host_classes_of(pattern.callback):
+            continue
+        tenant_views += 1
+        code = getattr(view, "module_code", "")
+        if not code:
+            problems.append(f"{name}: no module_code")
+            continue
+        if code not in installed:
+            problems.append(f"{name}: unknown or uninstalled module {code!r}")
+            continue
+        if installed[code].category == "platform":
+            continue
+        gated = issubclass(view, ModuleGatedView) or any(
+            isinstance(c, type) and issubclass(c, ModuleCheck) and c.module_code == code
+            for c in view.permission_classes
+        )
+        if not gated:
+            problems.append(f"{name}: module {code!r} is not enforced with ModuleEntitled")
+    assert tenant_views >= 30  # guards against the walk silently finding nothing
+    assert not problems, "\n".join(problems)

@@ -178,9 +178,21 @@ The owner approved the plan with the recommended answers:
 | P16 | Limits: defaults → the plan's `limits` (hook `TENANCY_PLAN_LIMITS`, so tenancy does not import billing) → the audited ADR-010 override, which always wins. Without a plan and an override, the Phase 3 behaviour is unchanged. Limits stay hard (ADR-054 Q5) |
 | P17 | Trial at provisioning (ADR-054 Q2): hook `TENANCY_PROVISIONING_HOOKS` starts the `trial` plan inside the P4 scope **only if the owner created a `trial` plan with `trial_days`** (new nullable `Plan.trial_days`, 1–365). No plan rows are created by code; a hook failure is logged and the tenant keeps platform modules |
 
+### 13.4 M4 — enforcement (2026-11-21, branch `feat/phase-04-m4`)
+
+| # | Note |
+|---|---|
+| P18 | `ModuleEntitled("<code>")` (`apps/module_registry/permissions.py`) is a DRF permission class evaluated before the permission check: on a tenant request for a module the tenant lacks it raises `403 module_not_entitled`. Platform modules pass without a lookup; platform-host requests and anonymous callers are left to the view's other classes (anonymous callers get `401` and learn nothing about entitlements). Unknown codes fail at declaration |
+| P19 | `ModuleGatedView` prepends the class from the view's required `module_code`. `TenantView` uses it (`tenancy` by default; role and assignment views `rbac`, audit views `audit`); identity views reachable on tenant hosts declare `identity` |
+| P20 | **URL audit:** every view reachable on a tenant host must declare an installed `module_code`; a non-platform module must be enforced with `ModuleEntitled`. Platform-only views are exempt |
+| P21 | Denials are audited as `authz.denied` (`module`, `reason: module_not_entitled`), aggregated per actor and module per minute, written durably on tenant hosts so they survive the rolled-back request |
+| P22 | `tenant_task(module=…)`: a tenant task of a module is refused (`TenantTaskRefused`) for tenants not entitled to it; `require_module()` (M3) remains the service-layer guard |
+| P23 | Every Phase 3 tenant view belongs to a platform module, so no behaviour changes today; the probe view `/_probe/module/` (tests only, module `academics`) exercises the full path. OpenAPI is unchanged (the mixin has no docstring so operation descriptions stay as they were) |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
 - 2026-11-21 — §13.1 appended: M1 notes P1–P5.
 - 2026-11-21 — §13.2 appended: M2 notes P6–P11.
 - 2026-11-21 — §13.3 appended: M3 notes P12–P17.
+- 2026-11-21 — §13.4 appended: M4 notes P18–P23.

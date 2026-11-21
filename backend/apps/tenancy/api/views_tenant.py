@@ -32,6 +32,7 @@ from apps.core.tenancy import require_tenant
 from apps.identity.api.utils import CsrfProtectedView, get_or_404, service_errors
 from apps.identity.models import User
 from apps.identity.permissions import RequireStepUp
+from apps.module_registry.permissions import ModuleGatedView
 from apps.rbac import tenant_roles
 from apps.rbac.engine import ScopeTarget, effective_permissions, has_perm
 from apps.rbac.models import Role, RoleAssignment
@@ -49,8 +50,11 @@ from apps.tenancy.services import support as support_services
 TAGS = ["tenant"]
 
 
-class TenantView(CsrfProtectedView):
+# Tenant-host view: ``module_code`` is checked before the permission (ADR-052). A comment, not
+# a docstring: drf-spectacular would publish it as every operation's description.
+class TenantView(ModuleGatedView, CsrfProtectedView):
     host_classes = TENANT_ONLY
+    module_code = "tenancy"
 
 
 def _actor(request: Request) -> User:
@@ -480,6 +484,7 @@ class MemberDetailView(TenantView):
 
 
 class MemberAssignmentsView(TenantView):
+    module_code = "rbac"
     permission_classes = [
         HasTenantPermission({"GET": "rbac.assignment.view", "POST": "rbac.assignment.manage"})
     ]
@@ -534,6 +539,7 @@ class MemberAssignmentsView(TenantView):
 
 
 class MemberAssignmentDetailView(TenantView):
+    module_code = "rbac"
     permission_classes = [HasTenantPermission({"DELETE": "rbac.assignment.manage"})]
 
     @extend_schema(tags=TAGS, summary="Revoke a role assignment (step-up)", responses={204: None})
@@ -553,6 +559,7 @@ def _roles(request: Request) -> QuerySet[Role]:
 
 
 class TenantRolesView(TenantView):
+    module_code = "rbac"
     permission_classes = [HasTenantPermission({"GET": "rbac.role.view"})]
 
     @extend_schema(
@@ -563,6 +570,7 @@ class TenantRolesView(TenantView):
 
 
 class TenantRoleDetailView(TenantView):
+    module_code = "rbac"
     permission_classes = [
         HasPermission(
             {"GET": "rbac.role.view", "PATCH": "rbac.role.update", "DELETE": "rbac.role.delete"}
@@ -609,6 +617,7 @@ class TenantRoleDetailView(TenantView):
 
 
 class TenantRoleCloneView(TenantView):
+    module_code = "rbac"
     permission_classes = [HasPermission({"POST": "rbac.role.clone"})]
 
     @extend_schema(
@@ -821,6 +830,7 @@ class SupportRevokeView(_SupportDecisionView):
 
 # --------------------------------------------------------------------------- audit log
 class TenantAuditEventsView(TenantView):
+    module_code = "audit"
     permission_classes = [HasPermission("audit.event.view")]
 
     @extend_schema(
@@ -848,6 +858,7 @@ class TenantAuditEventsView(TenantView):
 
 
 class TenantRevealIpView(TenantView):
+    module_code = "audit"
     permission_classes = [HasPermission("audit.event.view_ip")]
 
     @extend_schema(

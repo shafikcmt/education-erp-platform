@@ -30,6 +30,7 @@ _ACCEPTED = {"detail": "If the account is eligible, an email is on its way."}
 class CsrfView(CsrfProtectedView):
     permission_classes = [AllowAny]
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(tags=TAGS, summary="Set the CSRF cookie", responses=s.CsrfSerializer)
@@ -40,6 +41,7 @@ class CsrfView(CsrfProtectedView):
 class LoginView(CsrfProtectedView):
     permission_classes = [AllowAny]
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(
@@ -60,6 +62,7 @@ class LoginView(CsrfProtectedView):
 class MfaVerifyView(CsrfProtectedView):
     permission_classes = [AllowAny]
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     tenant_auth_flow = True  # reaches the view without the membership gate (D7)
 
     @extend_schema(
@@ -82,6 +85,7 @@ class MfaVerifyView(CsrfProtectedView):
 class LogoutView(CsrfProtectedView):
     permission_classes = [IsAuthenticatedSession]
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     tenant_auth_flow = True  # ending one's own session is always allowed
     allow_during_mfa_enrollment = True
 
@@ -95,6 +99,7 @@ class StepUpView(CsrfProtectedView):
     # Phase 3 M8: step-up of the caller's own session; on a tenant host only after the
     # membership gate (step-up permissions of tenant APIs need it there).
     host_classes = PLATFORM_AND_TENANT
+    module_code = "identity"
     permission_classes = [IsAuthenticatedSession]
     allow_during_mfa_enrollment = True
 
