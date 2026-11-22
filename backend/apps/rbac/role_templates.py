@@ -123,6 +123,10 @@ _OWNER_CODES = [
     "tenancy.support_session.revoke",
     # Phase 4: the organisation's own subscription (read-only).
     "billing.subscription.view",
+    # Phase 5: Customization Studio (configuration of the whole organisation).
+    "customization.config.view",
+    "customization.config.edit",
+    "customization.config.publish",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -147,6 +151,10 @@ _INSTITUTION_ADMIN_CODES = [
     "rbac.role.view",
     "rbac.assignment.view",
     "rbac.assignment.manage",
+    # Phase 5: Studio configuration of their own institution (and its campuses).
+    "customization.config.view",
+    "customization.config.edit",
+    "customization.config.publish",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,

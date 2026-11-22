@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     "apps.tenancy",
     "apps.module_registry",
     "apps.billing",
+    "apps.customization",
 ]
 
 MIDDLEWARE = [

@@ -200,6 +200,20 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 4. **Preset content:** I draft the six presets (terminology en/bn, labels, capability flags, suggested modules) from the docs. Will you or real institutions review the content before Phase 6? **Recommendation:** ship as `v1` drafts and refine with feedback (new versions are opt-in).
 5. **Quotas per plan** for Studio artefacts (custom fields per entity, forms, workflows, templates): add them as plan limit keys with platform defaults? **Recommendation:** yes. These limits are soft, warn first and then block new items, and are configurable per plan.
 
+## 13. Implementation notes (appended during implementation)
+
+### 13.1 M1 — configuration foundation (2026-11-22, branch `feat/phase-05-m1`)
+
+| # | Note |
+|---|---|
+| C1 | New app `apps.customization` (platform module; moved from the planned catalogue to installed). Manifests may declare `SETTINGS` beside `PERMISSIONS`: key `<module>.<name>`, JSON Schema, a validating default, allowed scopes and a merge strategy (`replace`, or `deep` for objects). The catalogue is validated at load (bad keys, schemas, defaults, scopes or merges fail) |
+| C2 | Declared keys so far: `customization.terminology` (per-locale overrides, deep merge, all scopes), `tenancy.week_start` (ISO 1–7, default 1) and `tenancy.academic_year_start_month` (1–12, default 1, tenant and institution). No country-specific defaults |
+| C3 | `customization_configversion` (standard tenant RLS; composite `(tenant_id, …)` keys to institution and campus; reversal refused). Partial unique constraints: one draft and one published version per scope; version numbers unique per scope |
+| C4 | Services: `save_draft` (full document of the scope), `discard_draft`, `publish` (archives the previous version), `rollback` (publishes a copy of an older version as a new version). Each checks the permission in the exact scope, uncached; validates declared keys, scope and schema (64 KiB maximum); serialises per scope with an advisory lock; and writes a tenant audit event with the changed key names (never values) |
+| C5 | Resolver: defaults → preset layer (M2 hook `CUSTOMIZATION_PRESET_LAYER`) → tenant → institution → campus, published only. Keys removed from the catalogue are ignored. Cache per tenant and scope under a generation token replaced on publish, immediately and after commit |
+| C6 | Permissions `customization.config.view|edit|publish` (edit: MFA; publish: MFA + step-up), 57 codes in total; `tenant_owner` holds them tenant-wide and `institution_admin` in their institution. `jsonschema` promoted from a transitive to a direct dependency (already locked; no stub package: two targeted `type: ignore` imports) |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
+- 2026-11-22 — §13.1 appended: M1 notes C1–C6.

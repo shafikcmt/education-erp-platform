@@ -22,6 +22,7 @@ dependencies = [
     "pyotp>=2.10,<3",                     # TOTP RFC 6238 (Phase 2, owner-approved)
     "cryptography>=50.0.2,<51",           # AES-GCM field encryption + HMAC (ADR-031/036)
     "segno>=1.6.6,<2",                    # server-side SVG QR codes (Phase 2, ADR-037 Q5)
+    "jsonschema>=4.23,<5",                # config/custom-field validation (ADR-057; was transitive)
 ]
 
 [dependency-groups]
