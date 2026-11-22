@@ -261,7 +261,7 @@ class InstitutionsView(TenantView):
         rows = [
             i for i in Institution.objects.order_by("code") if _sees_institution(request.user, i)
         ]
-        return Response(s.InstitutionSerializer(rows, many=True).data)
+        return Response(s.InstitutionSerializer(rows, many=True, context={"request": request}).data)
 
     @extend_schema(
         tags=TAGS,
@@ -276,7 +276,10 @@ class InstitutionsView(TenantView):
             institution = structure.create_institution(
                 actor=_actor(request), request=request._request, **data.validated_data
             )
-        return Response(s.InstitutionSerializer(institution).data, status=status.HTTP_201_CREATED)
+        return Response(
+            s.InstitutionSerializer(institution, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class InstitutionDetailView(TenantView):
@@ -289,7 +292,7 @@ class InstitutionDetailView(TenantView):
     @extend_schema(tags=TAGS, summary="Institution", responses=s.InstitutionSerializer)
     def get(self, request: Request, institution_id: str) -> Response:
         institution = _institution(request, institution_id)
-        return Response(s.InstitutionSerializer(institution).data)
+        return Response(s.InstitutionSerializer(institution, context={"request": request}).data)
 
     @extend_schema(
         tags=TAGS,
@@ -308,7 +311,7 @@ class InstitutionDetailView(TenantView):
                 changes=dict(data.validated_data),
                 request=request._request,
             )
-        return Response(s.InstitutionSerializer(institution).data)
+        return Response(s.InstitutionSerializer(institution, context={"request": request}).data)
 
 
 class InstitutionArchiveView(TenantView):
@@ -326,7 +329,7 @@ class InstitutionArchiveView(TenantView):
             institution = structure.archive_institution(
                 actor=_actor(request), institution=institution, request=request._request
             )
-        return Response(s.InstitutionSerializer(institution).data)
+        return Response(s.InstitutionSerializer(institution, context={"request": request}).data)
 
 
 # --------------------------------------------------------------------------- campuses
@@ -352,7 +355,7 @@ class CampusesView(TenantView):
             for c in Campus.objects.filter(institution=institution).order_by("code")
             if _covered(request.user, "tenancy.campus.view", structure.campus_target(c))
         ]
-        return Response(s.CampusSerializer(rows, many=True).data)
+        return Response(s.CampusSerializer(rows, many=True, context={"request": request}).data)
 
     @extend_schema(
         tags=TAGS,
@@ -376,7 +379,10 @@ class CampusesView(TenantView):
                 timezone_name=values.get("timezone", ""),
                 request=request._request,
             )
-        return Response(s.CampusSerializer(campus).data, status=status.HTTP_201_CREATED)
+        return Response(
+            s.CampusSerializer(campus, context={"request": request}).data,
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class CampusDetailView(TenantView):
@@ -386,7 +392,9 @@ class CampusDetailView(TenantView):
 
     @extend_schema(tags=TAGS, summary="Campus", responses=s.CampusSerializer)
     def get(self, request: Request, campus_id: str) -> Response:
-        return Response(s.CampusSerializer(_campus(request, campus_id)).data)
+        return Response(
+            s.CampusSerializer(_campus(request, campus_id), context={"request": request}).data
+        )
 
     @extend_schema(
         tags=TAGS,
@@ -408,7 +416,7 @@ class CampusDetailView(TenantView):
                 make_main=make_main,
                 request=request._request,
             )
-        return Response(s.CampusSerializer(campus).data)
+        return Response(s.CampusSerializer(campus, context={"request": request}).data)
 
 
 class CampusArchiveView(TenantView):
@@ -423,7 +431,7 @@ class CampusArchiveView(TenantView):
             campus = structure.archive_campus(
                 actor=_actor(request), campus=campus, request=request._request
             )
-        return Response(s.CampusSerializer(campus).data)
+        return Response(s.CampusSerializer(campus, context={"request": request}).data)
 
 
 # --------------------------------------------------------------------------- members

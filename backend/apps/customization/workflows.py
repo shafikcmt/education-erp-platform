@@ -124,6 +124,7 @@ def save_workflow_draft(
     if current is not None and current.subject != subject:
         raise ValidationError({"subject": "A workflow keeps its subject."})
     validate_spec(subject, spec)
+    versioning.check_new_key_quota(WorkflowDefinition, key, "max_workflows")
     draft = versioning.draft_for(WorkflowDefinition, key, actor.pk)
     draft.subject, draft.name, draft.spec, draft.updated_by = subject, name, spec, actor.pk
     try:

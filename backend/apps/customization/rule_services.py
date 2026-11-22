@@ -96,6 +96,7 @@ def save_rule_draft(
     current = versioning.published(RuleDefinition, key)
     if current is not None and current.namespace != namespace_code:
         raise ValidationError({"namespace": "A rule keeps its namespace."})
+    versioning.check_new_key_quota(RuleDefinition, key, "max_rules")
     draft = versioning.draft_for(RuleDefinition, key, actor.pk)
     draft.namespace, draft.name, draft.rule, draft.test_cases = namespace_code, name, rule, cases
     draft.updated_by = actor.pk

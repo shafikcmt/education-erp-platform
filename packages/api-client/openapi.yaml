@@ -389,6 +389,768 @@ paths:
               schema:
                 $ref: '#/components/schemas/Campus'
           description: ''
+  /api/v1/customization/catalog/:
+    get:
+      operationId: customization_catalog_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: What the Studio can configure
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Catalog'
+          description: ''
+  /api/v1/customization/config/:
+    get:
+      operationId: customization_config_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Configuration of a scope
+      parameters:
+      - in: query
+        name: campus
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: institution
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigState'
+          description: ''
+    put:
+      operationId: customization_config_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save the draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigDraftRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigState'
+          description: ''
+    delete:
+      operationId: customization_config_destroy
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Discard the draft
+      parameters:
+      - in: query
+        name: campus
+        schema:
+          type: string
+          format: uuid
+      - in: query
+        name: institution
+        schema:
+          type: string
+          format: uuid
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/customization/config/publish/:
+    post:
+      operationId: customization_config_publish_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish the draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigPublishRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigState'
+          description: ''
+  /api/v1/customization/config/rollback/:
+    post:
+      operationId: customization_config_rollback_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish a copy of an earlier version
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConfigRollbackRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConfigState'
+          description: ''
+  /api/v1/customization/fields/:
+    get:
+      operationId: customization_fields_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Custom field definitions
+      parameters:
+      - in: query
+        name: entity
+        schema:
+          type: string
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Field'
+          description: ''
+    post:
+      operationId: customization_fields_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Define a custom field
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FieldCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Field'
+          description: ''
+  /api/v1/customization/fields/{field_id}/:
+    patch:
+      operationId: customization_fields_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Change a custom field (never its key or type)
+      parameters:
+      - in: path
+        name: field_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedFieldUpdateRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Field'
+          description: ''
+  /api/v1/customization/fields/{field_id}/deprecate/:
+    post:
+      operationId: customization_fields_deprecate_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Deprecate a custom field
+      parameters:
+      - in: path
+        name: field_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Field'
+          description: ''
+  /api/v1/customization/forms/:
+    get:
+      operationId: customization_forms_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Forms (every version)
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtefactList'
+          description: ''
+    post:
+      operationId: customization_forms_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save a form draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormDraftRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/forms/{key}/publish/:
+    post:
+      operationId: studio_form_publish
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish a form draft
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/forms/{key}/render/:
+    get:
+      operationId: customization_forms_render_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Published form for the renderer
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/customization/forms/{key}/validate/:
+    post:
+      operationId: customization_forms_validate_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Validate a submission (server-side)
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormValuesRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormValidated'
+          description: ''
+  /api/v1/customization/forms/{key}/visibility/:
+    post:
+      operationId: customization_forms_visibility_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Sections visible for these values
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FormValuesRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FormVisibility'
+          description: ''
+  /api/v1/customization/numbering/:
+    get:
+      operationId: customization_numbering_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Numbering sequences
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Sequence'
+          description: ''
+    post:
+      operationId: customization_numbering_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Define a numbering sequence
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SequenceCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sequence'
+          description: ''
+  /api/v1/customization/rules/:
+    get:
+      operationId: customization_rules_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Rules (every version)
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtefactList'
+          description: ''
+    post:
+      operationId: customization_rules_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save a rule draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleDraftRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/rules/{key}/publish/:
+    post:
+      operationId: studio_rule_publish
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish a rule draft
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/rules/test/:
+    post:
+      operationId: customization_rules_test_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Test a rule with sample data
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleTestRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleTestResult'
+          description: ''
+  /api/v1/customization/templates/:
+    get:
+      operationId: customization_templates_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Templates (every version)
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtefactList'
+          description: ''
+    post:
+      operationId: customization_templates_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save a template draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplateDraftRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/templates/{key}/publish/:
+    post:
+      operationId: studio_template_publish
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish a template draft
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/templates/preview/:
+    post:
+      operationId: customization_templates_preview_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Preview a template
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TemplatePreviewRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TemplateRendered'
+          description: ''
+  /api/v1/customization/workflow-requests/{instance_id}/:
+    get:
+      operationId: customization_workflow_requests_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A request and its history
+      parameters:
+      - in: path
+        name: instance_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowInstance'
+          description: ''
+  /api/v1/customization/workflow-requests/{instance_id}/transition/:
+    post:
+      operationId: customization_workflow_requests_transition_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Act on a request (needs the action's permission)
+      parameters:
+      - in: path
+        name: instance_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowTransitionRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowInstance'
+          description: ''
+  /api/v1/customization/workflows/:
+    get:
+      operationId: customization_workflows_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Workflows (every version)
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArtefactList'
+          description: ''
+    post:
+      operationId: customization_workflows_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save a workflow draft
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowDraftRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/workflows/{key}/publish/:
+    post:
+      operationId: studio_workflow_publish
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish a workflow draft
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Artefact'
+          description: ''
+  /api/v1/customization/workflows/{key}/start/:
+    post:
+      operationId: customization_workflows_start_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Start a request (needs the workflow's start permission)
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - studio
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkflowStartRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkflowInstance'
+          description: ''
   /api/v1/institutions/:
     get:
       operationId: institutions_list
@@ -1135,6 +1897,48 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/notifications/:
+    get:
+      operationId: notifications_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: My latest notifications
+      tags:
+      - notifications
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inbox'
+          description: ''
+  /api/v1/notifications/read/:
+    post:
+      operationId: notifications_read_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Mark my notifications as read
+      tags:
+      - notifications
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkReadRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inbox'
+          description: ''
   /api/v1/platform/addons/:
     get:
       operationId: platform_addons_list
@@ -1442,6 +2246,26 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Plan'
+          description: ''
+  /api/v1/platform/presets/:
+    get:
+      operationId: platform_presets_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Institution-type presets
+      tags:
+      - platform-tenants
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Preset'
           description: ''
   /api/v1/platform/prices/:
     get:
@@ -2859,6 +3683,45 @@ components:
       required:
       - code
       - name
+    Artefact:
+      type: object
+      description: A version of a rule, form, workflow or template.
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        number:
+          type: integer
+        status:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        body: {}
+      required:
+      - body
+      - id
+      - key
+      - name
+      - number
+      - published_at
+      - status
+    ArtefactList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Artefact'
+        quota: {}
+      required:
+      - items
+      - quota
     AssignPlanRequest:
       type: object
       properties:
@@ -3012,6 +3875,9 @@ components:
       - ticket_ref
     Campus:
       type: object
+      description: |-
+        Custom field values, masked by each field's view permission (Phase 5 M6). Without a
+        request in the context nothing is shown (fail closed).
       properties:
         id:
           type: string
@@ -3037,6 +3903,10 @@ components:
         is_main:
           type: boolean
           readOnly: true
+        extra:
+          type: object
+          additionalProperties: {}
+          readOnly: true
         archived_at:
           type: string
           format: date-time
@@ -3055,6 +3925,7 @@ components:
       - archived_at
       - code
       - created_at
+      - extra
       - id
       - institution
       - is_main
@@ -3093,6 +3964,24 @@ components:
       required:
       - code
       - name
+    Catalog:
+      type: object
+      properties:
+        settings: {}
+        entities: {}
+        core_fields: {}
+        rule_namespaces: {}
+        template_kinds: {}
+        workflow_subjects: {}
+        quotas: {}
+      required:
+      - core_fields
+      - entities
+      - quotas
+      - rule_namespaces
+      - settings
+      - template_kinds
+      - workflow_subjects
     ChangeReasonRequest:
       type: object
       properties:
@@ -3102,6 +3991,109 @@ components:
           maxLength: 200
       required:
       - reason
+    ConfigDraftRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+          nullable: true
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+        data:
+          type: object
+          additionalProperties: {}
+        note:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - data
+    ConfigPublishRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+          nullable: true
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+        note:
+          type: string
+          default: ''
+          maxLength: 200
+    ConfigRollbackRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+          nullable: true
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+        number:
+          type: integer
+          minimum: 1
+        note:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - number
+    ConfigState:
+      type: object
+      properties:
+        scope:
+          type: string
+        published:
+          allOf:
+          - $ref: '#/components/schemas/ConfigVersion'
+          nullable: true
+        draft:
+          allOf:
+          - $ref: '#/components/schemas/ConfigVersion'
+          nullable: true
+        effective: {}
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConfigVersion'
+      required:
+      - draft
+      - effective
+      - history
+      - published
+      - scope
+    ConfigVersion:
+      type: object
+      properties:
+        number:
+          type: integer
+        status:
+          type: string
+        data: {}
+        note:
+          type: string
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        based_on:
+          type: integer
+          nullable: true
+      required:
+      - based_on
+      - data
+      - note
+      - number
+      - published_at
+      - status
     Context:
       type: object
       properties:
@@ -3202,6 +4194,96 @@ components:
       - flags
       - limits
       - modules
+    Field:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entity:
+          type: string
+        key:
+          type: string
+        field_type:
+          type: string
+        labels: {}
+        required:
+          type: boolean
+        options: {}
+        validation: {}
+        visibility:
+          type: string
+        view_permission:
+          type: string
+        edit_permission:
+          type: string
+        pii:
+          type: boolean
+        order:
+          type: integer
+        deprecated_at:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+      - deprecated_at
+      - edit_permission
+      - entity
+      - field_type
+      - id
+      - key
+      - labels
+      - options
+      - order
+      - pii
+      - required
+      - validation
+      - view_permission
+      - visibility
+    FieldCreateRequest:
+      type: object
+      properties:
+        entity:
+          type: string
+          minLength: 1
+          maxLength: 80
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        field_type:
+          type: string
+          minLength: 1
+          maxLength: 16
+        labels:
+          type: object
+          additionalProperties: {}
+        required:
+          type: boolean
+        options:
+          type: array
+          items: {}
+        validation:
+          type: object
+          additionalProperties: {}
+        visibility:
+          type: string
+          minLength: 1
+        view_permission:
+          type: string
+        edit_permission:
+          type: string
+        pii:
+          type: boolean
+        order:
+          type: integer
+          maximum: 1000
+          minimum: 0
+      required:
+      - entity
+      - field_type
+      - key
+      - labels
     FirstInstitutionRequest:
       type: object
       properties:
@@ -3266,6 +4348,52 @@ components:
       required:
       - default_enabled
       - key
+    FormDraftRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        entity:
+          type: string
+          minLength: 1
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        layout: {}
+      required:
+      - entity
+      - key
+      - layout
+      - name
+    FormValidated:
+      type: object
+      properties:
+        core: {}
+        custom: {}
+      required:
+      - core
+      - custom
+    FormValuesRequest:
+      type: object
+      properties:
+        values:
+          type: object
+          additionalProperties: {}
+      required:
+      - values
+    FormVisibility:
+      type: object
+      properties:
+        sections:
+          type: array
+          items:
+            type: string
+      required:
+      - sections
     GrantRequest:
       type: object
       properties:
@@ -3279,8 +4407,23 @@ components:
       required:
       - reason
       - role
+    Inbox:
+      type: object
+      properties:
+        unread:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Notification'
+      required:
+      - items
+      - unread
     Institution:
       type: object
+      description: |-
+        Custom field values, masked by each field's view permission (Phase 5 M6). Without a
+        request in the context nothing is shown (fail closed).
       properties:
         id:
           type: string
@@ -3300,6 +4443,10 @@ components:
           readOnly: true
         settings:
           readOnly: true
+        extra:
+          type: object
+          additionalProperties: {}
+          readOnly: true
         archived_at:
           type: string
           format: date-time
@@ -3317,6 +4464,7 @@ components:
       - archived_at
       - code
       - created_at
+      - extra
       - id
       - institution_type
       - name
@@ -3572,6 +4720,17 @@ components:
           description: Shown once (ADR-038); then 410.
       required:
       - manual_key
+    MarkReadRequest:
+      type: object
+      properties:
+        ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+          maxItems: 200
+      required:
+      - ids
     Me:
       type: object
       properties:
@@ -3806,6 +4965,35 @@ components:
       - enabled
       - reason
       - source
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        kind:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        link:
+          type: string
+        read_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - body
+      - created_at
+      - id
+      - kind
+      - link
+      - read_at
+      - title
     OutcomeEnum:
       enum:
       - success
@@ -3917,6 +5105,36 @@ components:
         make_main:
           type: boolean
           default: false
+        extra:
+          type: object
+          additionalProperties: {}
+    PatchedFieldUpdateRequest:
+      type: object
+      properties:
+        labels:
+          type: object
+          additionalProperties: {}
+        required:
+          type: boolean
+        options:
+          type: array
+          items: {}
+        validation:
+          type: object
+          additionalProperties: {}
+        visibility:
+          type: string
+          minLength: 1
+        view_permission:
+          type: string
+        edit_permission:
+          type: string
+        pii:
+          type: boolean
+        order:
+          type: integer
+          maximum: 1000
+          minimum: 0
     PatchedInstitutionUpdateRequest:
       type: object
       properties:
@@ -3931,6 +5149,9 @@ components:
             minLength: 1
             maxLength: 200
         settings:
+          type: object
+          additionalProperties: {}
+        extra:
           type: object
           additionalProperties: {}
     PatchedMeUpdateRequest:
@@ -4367,6 +5588,26 @@ components:
       - locale
       - mfa_enabled
       - platform_roles
+    Preset:
+      type: object
+      properties:
+        code:
+          type: string
+        institution_type:
+          type: string
+        version:
+          type: integer
+        is_default:
+          type: boolean
+        name: {}
+        content: {}
+      required:
+      - code
+      - content
+      - institution_type
+      - is_default
+      - name
+      - version
     Price:
       type: object
       properties:
@@ -4640,6 +5881,51 @@ components:
         * `platform` - Platform role
         * `template` - Tenant role template
         * `tenant` - Tenant role
+    RuleDraftRequest:
+      type: object
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+          maxLength: 80
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        rule: {}
+        test_cases:
+          type: array
+          items: {}
+      required:
+      - key
+      - name
+      - namespace
+      - rule
+    RuleTestRequest:
+      type: object
+      properties:
+        namespace:
+          type: string
+          minLength: 1
+          maxLength: 80
+        rule: {}
+        test_cases:
+          type: array
+          items: {}
+      required:
+      - namespace
+      - rule
+      - test_cases
+    RuleTestResult:
+      type: object
+      properties:
+        results: {}
+      required:
+      - results
     ScopePermissions:
       type: object
       properties:
@@ -4672,6 +5958,56 @@ components:
         * `tenant` - Tenant
         * `institution` - Institution
         * `campus` - Campus
+    Sequence:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        key:
+          type: string
+        name:
+          type: string
+        pattern:
+          type: string
+        scope:
+          type: string
+        reset:
+          type: string
+      required:
+      - id
+      - key
+      - name
+      - pattern
+      - reset
+      - scope
+    SequenceCreateRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        pattern:
+          type: string
+          minLength: 1
+          maxLength: 64
+        scope:
+          type: string
+          minLength: 1
+          default: tenant
+        reset:
+          type: string
+          minLength: 1
+          default: never
+      required:
+      - key
+      - name
+      - pattern
     Session:
       type: object
       properties:
@@ -5002,6 +6338,59 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    TemplateDraftRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        kind:
+          type: string
+          minLength: 1
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        content:
+          type: object
+          additionalProperties: {}
+      required:
+      - content
+      - key
+      - kind
+      - name
+    TemplatePreviewRequest:
+      type: object
+      properties:
+        kind:
+          type: string
+          minLength: 1
+          maxLength: 80
+        content:
+          type: object
+          additionalProperties: {}
+        locale:
+          type: string
+          minLength: 1
+          maxLength: 5
+        data:
+          type: object
+          additionalProperties: {}
+      required:
+      - content
+      - kind
+      - locale
+    TemplateRendered:
+      type: object
+      properties:
+        body:
+          type: string
+        subject:
+          type: string
+      required:
+      - body
     TenantAssignment:
       type: object
       properties:
@@ -5383,6 +6772,120 @@ components:
       - days
       - plan
       - reason
+    WorkflowDraftRequest:
+      type: object
+      properties:
+        key:
+          type: string
+          minLength: 1
+          maxLength: 64
+        subject:
+          type: string
+          minLength: 1
+          maxLength: 80
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        spec: {}
+      required:
+      - key
+      - name
+      - spec
+      - subject
+    WorkflowInstance:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        workflow:
+          type: string
+        version:
+          type: integer
+        subject:
+          type: string
+        subject_id:
+          type: string
+          format: uuid
+        state:
+          type: string
+        sla_due_at:
+          type: string
+          format: date-time
+          nullable: true
+        sla_breached_at:
+          type: string
+          format: date-time
+          nullable: true
+        finished_at:
+          type: string
+          format: date-time
+          nullable: true
+        actions:
+          type: array
+          items:
+            type: string
+        steps:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkflowStep'
+      required:
+      - actions
+      - finished_at
+      - id
+      - sla_breached_at
+      - sla_due_at
+      - state
+      - steps
+      - subject
+      - subject_id
+      - version
+      - workflow
+    WorkflowStartRequest:
+      type: object
+      properties:
+        subject_id:
+          type: string
+          format: uuid
+        context:
+          type: object
+          additionalProperties: {}
+      required:
+      - subject_id
+    WorkflowStep:
+      type: object
+      properties:
+        transition:
+          type: string
+        from_state:
+          type: string
+        to_state:
+          type: string
+        note:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required:
+      - created_at
+      - from_state
+      - note
+      - to_state
+      - transition
+    WorkflowTransitionRequest:
+      type: object
+      properties:
+        transition:
+          type: string
+          minLength: 1
+          maxLength: 40
+        note:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - transition
   securitySchemes:
     sessionAuth:
       type: apiKey

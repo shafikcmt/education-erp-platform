@@ -326,6 +326,550 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/customization/catalog/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What the Studio can configure
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_catalog_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/config/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Configuration of a scope
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_config_retrieve"];
+        /**
+         * Save the draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        put: operations["customization_config_update"];
+        post?: never;
+        /**
+         * Discard the draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["customization_config_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/config/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish the draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_config_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/config/rollback/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish a copy of an earlier version
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_config_rollback_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/fields/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Custom field definitions
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_fields_list"];
+        put?: never;
+        /**
+         * Define a custom field
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_fields_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/fields/{field_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a custom field (never its key or type)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["customization_fields_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/customization/fields/{field_id}/deprecate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Deprecate a custom field
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_fields_deprecate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/forms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Forms (every version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_forms_retrieve"];
+        put?: never;
+        /**
+         * Save a form draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_forms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/forms/{key}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish a form draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["studio_form_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/forms/{key}/render/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Published form for the renderer
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_forms_render_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/forms/{key}/validate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Validate a submission (server-side)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_forms_validate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/forms/{key}/visibility/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sections visible for these values
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_forms_visibility_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/numbering/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Numbering sequences
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_numbering_list"];
+        put?: never;
+        /**
+         * Define a numbering sequence
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_numbering_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/rules/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rules (every version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_rules_retrieve"];
+        put?: never;
+        /**
+         * Save a rule draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_rules_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/rules/{key}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish a rule draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["studio_rule_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/rules/test/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Test a rule with sample data
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_rules_test_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/templates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Templates (every version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_templates_retrieve"];
+        put?: never;
+        /**
+         * Save a template draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_templates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/templates/{key}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish a template draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["studio_template_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/templates/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a template
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_templates_preview_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/workflow-requests/{instance_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A request and its history
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_workflow_requests_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/workflow-requests/{instance_id}/transition/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Act on a request (needs the action's permission)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_workflow_requests_transition_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/workflows/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Workflows (every version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["customization_workflows_retrieve"];
+        put?: never;
+        /**
+         * Save a workflow draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_workflows_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/workflows/{key}/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish a workflow draft
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["studio_workflow_publish"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customization/workflows/{key}/start/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a request (needs the workflow's start permission)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["customization_workflows_start_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/institutions/": {
         parameters: {
             query?: never;
@@ -911,6 +1455,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/notifications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My latest notifications
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["notifications_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/notifications/read/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark my notifications as read
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["notifications_read_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/addons/": {
         parameters: {
             query?: never;
@@ -1097,6 +1683,27 @@ export interface paths {
          *     authenticated sessions).
          */
         patch: operations["platform_plans_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/platform/presets/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Institution-type presets
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_presets_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/platform/prices/": {
@@ -2036,6 +2643,22 @@ export interface components {
             name: string;
             module?: string | null;
         };
+        /** @description A version of a rule, form, workflow or template. */
+        Artefact: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+            number: number;
+            status: string;
+            /** Format: date-time */
+            published_at: string | null;
+            body: unknown;
+        };
+        ArtefactList: {
+            items: components["schemas"]["Artefact"][];
+            quota: unknown;
+        };
         AssignPlanRequest: {
             reason: string;
             plan: string;
@@ -2088,6 +2711,10 @@ export interface components {
             /** Format: date-time */
             ends_at: string;
         };
+        /**
+         * @description Custom field values, masked by each field's view permission (Phase 5 M6). Without a
+         *     request in the context nothing is shown (fail closed).
+         */
         Campus: {
             /** Format: uuid */
             readonly id: string;
@@ -2099,6 +2726,9 @@ export interface components {
             readonly address: unknown;
             readonly timezone: string;
             readonly is_main: boolean;
+            readonly extra: {
+                [key: string]: unknown;
+            };
             /** Format: date-time */
             readonly archived_at: string | null;
             /** Format: date-time */
@@ -2118,8 +2748,61 @@ export interface components {
             /** @default  */
             timezone: string;
         };
+        Catalog: {
+            settings: unknown;
+            entities: unknown;
+            core_fields: unknown;
+            rule_namespaces: unknown;
+            template_kinds: unknown;
+            workflow_subjects: unknown;
+            quotas: unknown;
+        };
         ChangeReasonRequest: {
             reason: string;
+        };
+        ConfigDraftRequest: {
+            /** Format: uuid */
+            institution?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
+            data: {
+                [key: string]: unknown;
+            };
+            /** @default  */
+            note: string;
+        };
+        ConfigPublishRequest: {
+            /** Format: uuid */
+            institution?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
+            /** @default  */
+            note: string;
+        };
+        ConfigRollbackRequest: {
+            /** Format: uuid */
+            institution?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
+            number: number;
+            /** @default  */
+            note: string;
+        };
+        ConfigState: {
+            scope: string;
+            published: components["schemas"]["ConfigVersion"] | null;
+            draft: components["schemas"]["ConfigVersion"] | null;
+            effective: unknown;
+            history: components["schemas"]["ConfigVersion"][];
+        };
+        ConfigVersion: {
+            number: number;
+            status: string;
+            data: unknown;
+            note: string;
+            /** Format: date-time */
+            published_at: string | null;
+            based_on: number | null;
         };
         Context: {
             tenant: components["schemas"]["TenantProfile"];
@@ -2164,6 +2847,42 @@ export interface components {
                 [key: string]: components["schemas"]["LimitUsage"];
             };
         };
+        Field: {
+            /** Format: uuid */
+            id: string;
+            entity: string;
+            key: string;
+            field_type: string;
+            labels: unknown;
+            required: boolean;
+            options: unknown;
+            validation: unknown;
+            visibility: string;
+            view_permission: string;
+            edit_permission: string;
+            pii: boolean;
+            order: number;
+            /** Format: date-time */
+            deprecated_at: string | null;
+        };
+        FieldCreateRequest: {
+            entity: string;
+            key: string;
+            field_type: string;
+            labels: {
+                [key: string]: unknown;
+            };
+            required?: boolean;
+            options?: unknown[];
+            validation?: {
+                [key: string]: unknown;
+            };
+            visibility?: string;
+            view_permission?: string;
+            edit_permission?: string;
+            pii?: boolean;
+            order?: number;
+        };
         FirstInstitutionRequest: {
             institution_type: components["schemas"]["InstitutionTypeEnum"];
             code: string;
@@ -2189,11 +2908,37 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        FormDraftRequest: {
+            key: string;
+            entity: string;
+            name: string;
+            layout: unknown;
+        };
+        FormValidated: {
+            core: unknown;
+            custom: unknown;
+        };
+        FormValuesRequest: {
+            values: {
+                [key: string]: unknown;
+            };
+        };
+        FormVisibility: {
+            sections: string[];
+        };
         GrantRequest: {
             /** Format: uuid */
             role: string;
             reason: string;
         };
+        Inbox: {
+            unread: number;
+            items: components["schemas"]["Notification"][];
+        };
+        /**
+         * @description Custom field values, masked by each field's view permission (Phase 5 M6). Without a
+         *     request in the context nothing is shown (fail closed).
+         */
         Institution: {
             /** Format: uuid */
             readonly id: string;
@@ -2202,6 +2947,9 @@ export interface components {
             readonly name_i18n: unknown;
             readonly institution_type: components["schemas"]["InstitutionTypeEnum"];
             readonly settings: unknown;
+            readonly extra: {
+                [key: string]: unknown;
+            };
             /** Format: date-time */
             readonly archived_at: string | null;
             /** Format: date-time */
@@ -2313,6 +3061,9 @@ export interface components {
             /** @description Shown once (ADR-038); then 410. */
             manual_key: string;
         };
+        MarkReadRequest: {
+            ids: string[];
+        };
         Me: {
             /** Format: uuid */
             id: string;
@@ -2407,6 +3158,18 @@ export interface components {
             enabled: boolean;
             reason: string;
         };
+        Notification: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            title: string;
+            body: string;
+            link: string;
+            /** Format: date-time */
+            read_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
         /**
          * @description * `success` - Success
          *     * `failure` - Failure
@@ -2454,6 +3217,24 @@ export interface components {
             timezone?: string;
             /** @default false */
             make_main: boolean;
+            extra?: {
+                [key: string]: unknown;
+            };
+        };
+        PatchedFieldUpdateRequest: {
+            labels?: {
+                [key: string]: unknown;
+            };
+            required?: boolean;
+            options?: unknown[];
+            validation?: {
+                [key: string]: unknown;
+            };
+            visibility?: string;
+            view_permission?: string;
+            edit_permission?: string;
+            pii?: boolean;
+            order?: number;
         };
         PatchedInstitutionUpdateRequest: {
             name?: string;
@@ -2461,6 +3242,9 @@ export interface components {
                 [key: string]: string;
             };
             settings?: {
+                [key: string]: unknown;
+            };
+            extra?: {
                 [key: string]: unknown;
             };
         };
@@ -2613,6 +3397,14 @@ export interface components {
             readonly mfa_enabled: boolean;
             readonly active_sessions: number;
         };
+        Preset: {
+            code: string;
+            institution_type: string;
+            version: number;
+            is_default: boolean;
+            name: unknown;
+            content: unknown;
+        };
         Price: {
             /** Format: uuid */
             id: string;
@@ -2703,6 +3495,21 @@ export interface components {
          * @enum {string}
          */
         RoleKindEnum: "platform" | "template" | "tenant";
+        RuleDraftRequest: {
+            namespace: string;
+            key: string;
+            name: string;
+            rule: unknown;
+            test_cases?: unknown[];
+        };
+        RuleTestRequest: {
+            namespace: string;
+            rule: unknown;
+            test_cases: unknown[];
+        };
+        RuleTestResult: {
+            results: unknown;
+        };
         ScopePermissions: {
             scope_type: string;
             /** Format: uuid */
@@ -2718,6 +3525,24 @@ export interface components {
          * @enum {string}
          */
         ScopeTypeEnum: "tenant" | "institution" | "campus";
+        Sequence: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+            pattern: string;
+            scope: string;
+            reset: string;
+        };
+        SequenceCreateRequest: {
+            key: string;
+            name: string;
+            pattern: string;
+            /** @default tenant */
+            scope: string;
+            /** @default never */
+            reset: string;
+        };
         Session: {
             /** Format: uuid */
             readonly id: string;
@@ -2841,6 +3666,28 @@ export interface components {
          * @enum {string}
          */
         SystemHealthStatusEnum: "ok" | "degraded";
+        TemplateDraftRequest: {
+            key: string;
+            kind: string;
+            name: string;
+            content: {
+                [key: string]: unknown;
+            };
+        };
+        TemplatePreviewRequest: {
+            kind: string;
+            content: {
+                [key: string]: unknown;
+            };
+            locale: string;
+            data?: {
+                [key: string]: unknown;
+            };
+        };
+        TemplateRendered: {
+            body: string;
+            subject?: string;
+        };
         TenantAssignment: {
             /** Format: uuid */
             readonly id: string;
@@ -2966,6 +3813,50 @@ export interface components {
             reason: string;
             plan: string;
             days: number;
+        };
+        WorkflowDraftRequest: {
+            key: string;
+            subject: string;
+            name: string;
+            spec: unknown;
+        };
+        WorkflowInstance: {
+            /** Format: uuid */
+            id: string;
+            workflow: string;
+            version: number;
+            subject: string;
+            /** Format: uuid */
+            subject_id: string;
+            state: string;
+            /** Format: date-time */
+            sla_due_at: string | null;
+            /** Format: date-time */
+            sla_breached_at: string | null;
+            /** Format: date-time */
+            finished_at: string | null;
+            actions: string[];
+            steps: components["schemas"]["WorkflowStep"][];
+        };
+        WorkflowStartRequest: {
+            /** Format: uuid */
+            subject_id: string;
+            context?: {
+                [key: string]: unknown;
+            };
+        };
+        WorkflowStep: {
+            transition: string;
+            from_state: string;
+            to_state: string;
+            note: string;
+            /** Format: date-time */
+            created_at: string;
+        };
+        WorkflowTransitionRequest: {
+            transition: string;
+            /** @default  */
+            note: string;
         };
     };
     responses: never;
@@ -3326,6 +4217,711 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Campus"];
+                };
+            };
+        };
+    };
+    customization_catalog_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalog"];
+                };
+            };
+        };
+    };
+    customization_config_retrieve: {
+        parameters: {
+            query?: {
+                campus?: string;
+                institution?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigState"];
+                };
+            };
+        };
+    };
+    customization_config_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfigDraftRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigState"];
+                };
+            };
+        };
+    };
+    customization_config_destroy: {
+        parameters: {
+            query?: {
+                campus?: string;
+                institution?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    customization_config_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["ConfigPublishRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigState"];
+                };
+            };
+        };
+    };
+    customization_config_rollback_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfigRollbackRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigState"];
+                };
+            };
+        };
+    };
+    customization_fields_list: {
+        parameters: {
+            query?: {
+                entity?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Field"][];
+                };
+            };
+        };
+    };
+    customization_fields_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Field"];
+                };
+            };
+        };
+    };
+    customization_fields_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                field_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedFieldUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Field"];
+                };
+            };
+        };
+    };
+    customization_fields_deprecate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                field_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Field"];
+                };
+            };
+        };
+    };
+    customization_forms_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtefactList"];
+                };
+            };
+        };
+    };
+    customization_forms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormDraftRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    studio_form_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    customization_forms_render_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    customization_forms_validate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormValuesRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormValidated"];
+                };
+            };
+        };
+    };
+    customization_forms_visibility_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormValuesRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormVisibility"];
+                };
+            };
+        };
+    };
+    customization_numbering_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sequence"][];
+                };
+            };
+        };
+    };
+    customization_numbering_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SequenceCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Sequence"];
+                };
+            };
+        };
+    };
+    customization_rules_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtefactList"];
+                };
+            };
+        };
+    };
+    customization_rules_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleDraftRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    studio_rule_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    customization_rules_test_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RuleTestRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RuleTestResult"];
+                };
+            };
+        };
+    };
+    customization_templates_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtefactList"];
+                };
+            };
+        };
+    };
+    customization_templates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateDraftRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    studio_template_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    customization_templates_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplatePreviewRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateRendered"];
+                };
+            };
+        };
+    };
+    customization_workflow_requests_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                instance_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowInstance"];
+                };
+            };
+        };
+    };
+    customization_workflow_requests_transition_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                instance_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowTransitionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowInstance"];
+                };
+            };
+        };
+    };
+    customization_workflows_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ArtefactList"];
+                };
+            };
+        };
+    };
+    customization_workflows_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowDraftRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    studio_workflow_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Artefact"];
+                };
+            };
+        };
+    };
+    customization_workflows_start_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowStartRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowInstance"];
                 };
             };
         };
@@ -4042,6 +5638,48 @@ export interface operations {
             };
         };
     };
+    notifications_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inbox"];
+                };
+            };
+        };
+    };
+    notifications_read_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkReadRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inbox"];
+                };
+            };
+        };
+    };
     platform_addons_list: {
         parameters: {
             query?: never;
@@ -4300,6 +5938,25 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Plan"];
+                };
+            };
+        };
+    };
+    platform_presets_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Preset"][];
                 };
             };
         };

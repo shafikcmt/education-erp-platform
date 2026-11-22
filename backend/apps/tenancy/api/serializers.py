@@ -6,6 +6,8 @@ from __future__ import annotations
 from typing import Any
 
 from django.conf import settings
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.rbac.models import Role, RoleAssignment
@@ -202,7 +204,32 @@ class SupportApprovalSerializer(RegistryReasonSerializer):
     requires_approval = serializers.BooleanField()
 
 
-class InstitutionSerializer(serializers.ModelSerializer[Institution]):
+class _ExtraMixin:
+    """Custom field values, masked by each field's view permission (Phase 5 M6). Without a
+    request in the context nothing is shown (fail closed)."""
+
+    entity = ""
+
+    def _visible(self, obj: Any, target: Any) -> dict[str, Any]:
+        from apps.tenancy.services.common import custom_fields_hook
+
+        request = getattr(self, "context", {}).get("request")
+        hook = custom_fields_hook("visible_values")
+        if request is None or hook is None:
+            return {}
+        return dict(hook(self.entity, obj.extra, request.user, target))
+
+
+class InstitutionSerializer(_ExtraMixin, serializers.ModelSerializer[Institution]):
+    entity = "tenancy.institution"
+    extra = serializers.SerializerMethodField()
+
+    @extend_schema_field(OpenApiTypes.OBJECT)
+    def get_extra(self, obj: Institution) -> dict[str, Any]:
+        from apps.rbac.engine import ScopeTarget
+
+        return self._visible(obj, ScopeTarget(obj.tenant_id, obj.pk))
+
     class Meta:
         model = Institution
         fields = (
@@ -212,6 +239,7 @@ class InstitutionSerializer(serializers.ModelSerializer[Institution]):
             "name_i18n",
             "institution_type",
             "settings",
+            "extra",
             "archived_at",
             "created_at",
             "updated_at",
@@ -230,10 +258,19 @@ class InstitutionUpdateSerializer(serializers.Serializer[None]):
     name = serializers.CharField(max_length=200, required=False)
     name_i18n = _i18n()
     settings = serializers.DictField(required=False)
+    extra = serializers.DictField(required=False, allow_empty=True)
 
 
-class CampusSerializer(serializers.ModelSerializer[Campus]):
+class CampusSerializer(_ExtraMixin, serializers.ModelSerializer[Campus]):
+    entity = "tenancy.campus"
     institution = serializers.UUIDField(source="institution_id", read_only=True)
+    extra = serializers.SerializerMethodField()
+
+    @extend_schema_field(OpenApiTypes.OBJECT)
+    def get_extra(self, obj: Campus) -> dict[str, Any]:
+        from apps.rbac.engine import ScopeTarget
+
+        return self._visible(obj, ScopeTarget(obj.tenant_id, obj.institution_id, obj.pk))
 
     class Meta:
         model = Campus
@@ -246,6 +283,7 @@ class CampusSerializer(serializers.ModelSerializer[Campus]):
             "address",
             "timezone",
             "is_main",
+            "extra",
             "archived_at",
             "created_at",
             "updated_at",
@@ -267,6 +305,7 @@ class CampusUpdateSerializer(serializers.Serializer[None]):
     address = serializers.DictField(child=serializers.CharField(max_length=200), required=False)
     timezone = serializers.CharField(max_length=64, required=False, allow_blank=True)
     make_main = serializers.BooleanField(required=False, default=False)
+    extra = serializers.DictField(required=False, allow_empty=True)
 
 
 class TenantAssignmentSerializer(serializers.ModelSerializer[RoleAssignment]):

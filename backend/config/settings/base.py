@@ -239,6 +239,16 @@ TENANCY_PROVISIONING_HOOKS: list[str] = ["apps.billing.provisioning.start_trial_
 # preset layer of the effective configuration.
 TENANCY_INSTITUTION_PRESET = "apps.customization.presets.default_preset_for"
 CUSTOMIZATION_PRESET_LAYER = "apps.customization.presets.layer"
+# Phase 5 M6: custom field values on tenancy entities (validation, edit checks, masking) and
+# the platform defaults of the per-plan Studio quotas (ADR-060 Q5; plans may set these keys).
+TENANCY_CUSTOM_FIELDS = "apps.customization.fields"
+STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
+    "max_custom_fields_per_entity": 50,
+    "max_forms": 20,
+    "max_workflows": 20,
+    "max_rules": 50,
+    "max_templates": 50,
+}
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}

@@ -141,3 +141,19 @@ def institution_preset(institution_type: str) -> dict[str, str]:
     hook = getattr(settings, "TENANCY_INSTITUTION_PRESET", "")
     code, version = import_string(hook)(institution_type) if hook else ("", "")
     return {"preset_code": code, "preset_version": version}
+
+
+def custom_fields_hook(name: str) -> Any:
+    """A function of the custom field module (``TENANCY_CUSTOM_FIELDS``), or ``None``."""
+    from django.conf import settings
+    from django.utils.module_loading import import_string
+
+    module = getattr(settings, "TENANCY_CUSTOM_FIELDS", "")
+    return import_string(f"{module}.{name}") if module else None
+
+
+def merge_extra(entity: str, current: Any, incoming: Any, actor: Any, target: Any) -> Any:
+    hook = custom_fields_hook("merge_for_update")
+    if hook is None:
+        raise ValidationError({"extra": "Custom fields are not available."})
+    return hook(entity, current, incoming, actor, target)

@@ -40,3 +40,12 @@ def activate[M: Model](model: type[M], draft: M, actor_id: Any) -> M:
     draft.status, draft.published_at, draft.published_by = Lifecycle.PUBLISHED, now, actor_id  # type: ignore[attr-defined]
     draft.save(update_fields=["status", "published_at", "published_by", "updated_at"])
     return draft
+
+
+def check_new_key_quota(model: type[Model], key: str, quota_key: str) -> None:
+    """A new key counts against the plan's Studio quota; new versions of a key don't."""
+    from apps.customization import quotas
+
+    if not model.objects.filter(key=key).exists():  # type: ignore[attr-defined]
+        used = model.objects.values("key").distinct().count()  # type: ignore[attr-defined]
+        quotas.check(quota_key, used)

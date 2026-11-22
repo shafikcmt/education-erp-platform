@@ -22,6 +22,8 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.tenancy.urls")),
     path("api/v1/", include("apps.module_registry.urls")),
     path("api/v1/", include("apps.billing.urls")),
+    path("api/v1/", include("apps.customization.urls")),
+    path("api/v1/", include("apps.notifications_core.urls")),
 ]
 
 if settings.API_DOCS_ENABLED:

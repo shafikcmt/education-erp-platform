@@ -101,6 +101,7 @@ def save_template_draft(
     if current is not None and current.kind != kind_code:
         raise ValidationError({"kind": "A template keeps its kind."})
     _check_content(kind, content)
+    versioning.check_new_key_quota(TemplateDefinition, key, "max_templates")
     draft = versioning.draft_for(TemplateDefinition, key, actor.pk)
     draft.kind, draft.name, draft.content, draft.updated_by = kind_code, name, content, actor.pk
     try:

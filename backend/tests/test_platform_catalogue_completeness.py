@@ -19,7 +19,12 @@ from apps.core.tenancy.platform import CATALOGUE
 
 METHODS = ("get", "post", "put", "patch", "delete")
 EXPECTED = {"P2", "P4", "P5", "P6", "P8", "P17", "P18"}  # P17/P18: Phase 4 M5
-API_MODULES = ("apps.tenancy.api", "apps.billing.api", "apps.module_registry.api")
+API_MODULES = (
+    "apps.tenancy.api",
+    "apps.billing.api",
+    "apps.module_registry.api",
+    "apps.customization.api",
+)
 
 
 def _views(patterns=None):
