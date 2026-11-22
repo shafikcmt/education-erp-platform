@@ -210,7 +210,7 @@ Django apps live in `backend/apps/<module_code>/` (module codes as in `CLAUDE.md
 **Status:** **Accepted** — approved by owner 2026-11-05 (with the Phase 1 plan). REST under `/api/v1`, OpenAPI via drf-spectacular, generated TS types/client (`openapi-typescript`). GraphQL rejected for now (complexity, authorization surface).
 
 ## ADR-016 — Rules engine
-**Status:** Proposed. Declarative JSON expression AST (JSONLogic-style) evaluated by a sandboxed, allow-listed evaluator (library or small in-house evaluator — decide in Phase 5 after security review). Tenant-supplied executable code is forbidden.
+**Status:** Decided by ADR-055 (Accepted 2026-11-22): in-house allow-listed evaluator. Original text: Declarative JSON expression AST (JSONLogic-style) evaluated by a sandboxed, allow-listed evaluator (library or small in-house evaluator — decide in Phase 5 after security review). Tenant-supplied executable code is forbidden.
 
 ## ADR-017 — Payment gateways
 **Status:** Proposed (provider choice open). `PaymentGateway` abstraction. Candidates: Stripe (SaaS billing, international), SSLCommerz / bKash / Nagad (Bangladesh fee collection & local SaaS billing). Selection requires verification of merchant eligibility, fees, recurring support, settlement terms — **owner input required before Phase 10**.
@@ -748,6 +748,17 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **ADR-053:** feature flags are data-driven rollout controls (default, percentage, plans, tenant allow-list), separate from entitlements.
 - **ADR-054:** owner answers Q1–Q5 (plan §12).
 
+## ADR-055 to ADR-059 — Phase 5 (Customization Studio)
+
+**Status:** **Accepted** (owner, 2026-11-22, with `plans/PHASE_05_PLAN.md`). Full text: plan §3–§5, §11 and §12. ADR-055 decides ADR-016.
+
+- **ADR-055 (would decide ADR-016):** in-house, allow-listed JSONLogic-style rules evaluator (no new dependency), with depth/node/step limits, `Decimal` arithmetic and mandatory test cases per namespace.
+- **ADR-056:** template engine = Jinja2 `SandboxedEnvironment` (new dependency) with plain-dict contexts, autoescape, allow-listed filters and render limits; alternative: restricted Django engine.
+- **ADR-057:** declared `settings_schema` keys; scoped config versions (draft/published/archived); resolution core → preset → tenant → institution → campus; cache keyed by config version.
+- **ADR-058:** presets as repo files (YAML via `pyyaml`, promoted from transitive to direct dependency) synced by an owner-run bootstrap; institutions pin preset versions; upgrades are opt-in.
+- **ADR-059:** minimal `notifications_core` (in-app + email through the existing mail path); SMS and push in Phase 14.
+- **ADR-060 (Accepted):** owner answers to plan §12. Q1: Jinja2 `SandboxedEnvironment`. Q2: in-house rules evaluator. Q3: self-service sign-up built behind a feature flag that is off by default (email verification, rate limits, honeypot, 48-hour expiry, optional Super Admin approval; no external CAPTCHA). Q4: six v1 draft presets, refined with real institutions; new versions opt-in. Q5: per-plan Studio quotas as soft limits (warn, then block new items).
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -768,3 +779,5 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-21 — Added ADR-049 (Accepted): the D9 benchmark moves to Phase 18. No existing ADR changed; D9 thresholds unchanged.
 - 2026-11-21 — ADR-050 to ADR-053 listed as Proposed with `plans/PHASE_04_PLAN.md`. They are detailed in the plan §10 and are not built on before approval. No existing ADR changed.
 - 2026-11-21 — Owner approved Phase 3 and the Phase 4 plan: ADR-050 to ADR-053 **Accepted**; ADR-054 added (Accepted).
+- 2026-11-22 — Owner approved Phase 4 (no ADR changed). ADR-055 to ADR-059 listed as Proposed with `plans/PHASE_05_PLAN.md`; ADR-016 stays Proposed until ADR-055 is decided.
+- 2026-11-22 — Owner approved the Phase 5 plan: ADR-055 to ADR-059 **Accepted**; ADR-060 added (Accepted); ADR-016 decided by ADR-055 (its original text kept).

@@ -69,7 +69,7 @@ Layout of core + custom fields into sections/steps, conditional visibility (safe
 ### 4.4 Workflows
 Declarative state machine: states, transitions, guards (rules), required permission per transition, approver resolution (role in scope, specific user, guardian), SLA/escalation timers (Celery beat), actions on transition (emit domain event, notify). Instances pin the definition version they started with.
 
-### 4.5 Rules (ADR-016 — Proposed)
+### 4.5 Rules (ADR-016, decided by ADR-055: in-house evaluator)
 - Safe, side-effect-free expressions stored as JSON (JSONLogic-style AST) evaluated by a vetted, sandboxed evaluator with an allow-listed operation set and a fixed set of context variables per rule namespace (e.g. `fees.late_fine` gets `invoice.due_date`, `today`, `invoice.balance`).
 - No loops, no I/O, no imports, execution time/size limits.
 - Used for: late fines, discount eligibility, promotion criteria, pass/fail, attendance thresholds, hostel eligibility, form visibility, workflow guards, payroll components.
@@ -131,3 +131,4 @@ These are proposed defaults to be validated with real institutions before Phase 
 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
+- 2026-11-22 — §4.5 heading: ADR-016 decided by ADR-055; templates use Jinja2 `SandboxedEnvironment` (ADR-056). Implementation status: `plans/PHASE_05_PLAN.md`.
