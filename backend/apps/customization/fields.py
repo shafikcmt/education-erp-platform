@@ -119,6 +119,12 @@ def define_field(
     if unknown:
         raise ValidationError(dict.fromkeys(unknown, "Unknown attribute."))
     # Options are always checked on creation: a choice field needs them, other types none.
+    from apps.customization import quotas
+
+    quotas.check(
+        "max_custom_fields_per_entity",
+        FieldDefinition.objects.filter(entity=entity, deprecated_at__isnull=True).count(),
+    )
     values = _clean_definition(
         field_type, {"labels": labels, "options": options.pop("options", []), **options}
     )
@@ -275,3 +281,55 @@ def validate_values(entity: str, values: Any, *, partial: bool = False) -> dict[
     if errors:
         raise ValidationError(errors)
     return dict(values)
+
+
+def _holds(actor: Any, code: str, target: Any) -> bool:
+    from apps.rbac.engine import has_perm
+
+    return not code or has_perm(actor, code, target=target)
+
+
+def merge_for_update(
+    entity: str, current: Any, incoming: Any, actor: Any, target: Any
+) -> dict[str, Any]:
+    """``TENANCY_CUSTOM_FIELDS`` hook: merge ``incoming`` into an entity's ``extra``.
+
+    Keys are validated against the active definitions; ``None`` clears a value (refused for
+    required fields); a field with an ``edit_permission`` needs it in the object's scope."""
+    if not isinstance(incoming, dict):
+        raise ValidationError({"extra": "Custom field values are an object."})
+    fields = {f.key: f for f in FieldDefinition.objects.filter(entity=entity)}
+    denied = [
+        key
+        for key in incoming
+        if key in fields and not _holds(actor, fields[key].edit_permission, target)
+    ]
+    if denied:
+        raise ValidationError(dict.fromkeys(denied, "You can't change this field."))
+    validate_values(entity, {k: v for k, v in incoming.items() if v is not None}, partial=True)
+    cleared = [k for k, v in incoming.items() if v is None]
+    for key in cleared:
+        if key not in fields:
+            raise ValidationError({key: "Unknown field."})
+        if fields[key].required and fields[key].deprecated_at is None:
+            raise ValidationError({key: "This field is required."})
+    merged = dict(current or {})
+    merged.update({k: v for k, v in incoming.items() if v is not None})
+    for key in cleared:
+        merged.pop(key, None)
+    return merged
+
+
+def visible_values(entity: str, values: Any, actor: Any, target: Any) -> dict[str, Any]:
+    """Field-level masking: drop values whose ``view_permission`` the viewer lacks."""
+    if not values:
+        return {}
+    restricted = {
+        f.key: f.view_permission
+        for f in FieldDefinition.objects.filter(entity=entity).exclude(view_permission="")
+    }
+    return {
+        key: value
+        for key, value in values.items()
+        if key not in restricted or _holds(actor, restricted[key], target)
+    }

@@ -56,6 +56,33 @@ TENANT_HOST_ROUTES = {
     "api/v1/audit-events/<str:event_id>/reveal-ip/": False,
     # Phase 4 M5: the organisation's own plan, modules and limits (read-only)
     "api/v1/tenant/subscription/": False,
+    # Phase 5 M6: Customization Studio and the notification inbox (signed-in members only)
+    "api/v1/customization/catalog/": False,
+    "api/v1/customization/config/": False,
+    "api/v1/customization/config/publish/": False,
+    "api/v1/customization/config/rollback/": False,
+    "api/v1/customization/fields/": False,
+    "api/v1/customization/fields/<str:field_id>/": False,
+    "api/v1/customization/fields/<str:field_id>/deprecate/": False,
+    "api/v1/customization/rules/": False,
+    "api/v1/customization/rules/test/": False,
+    "api/v1/customization/rules/<str:key>/publish/": False,
+    "api/v1/customization/forms/": False,
+    "api/v1/customization/forms/<str:key>/publish/": False,
+    "api/v1/customization/forms/<str:key>/render/": False,
+    "api/v1/customization/forms/<str:key>/visibility/": False,
+    "api/v1/customization/forms/<str:key>/validate/": False,
+    "api/v1/customization/workflows/": False,
+    "api/v1/customization/workflows/<str:key>/publish/": False,
+    "api/v1/customization/workflows/<str:key>/start/": False,
+    "api/v1/customization/workflow-requests/<str:instance_id>/": False,
+    "api/v1/customization/workflow-requests/<str:instance_id>/transition/": False,
+    "api/v1/customization/templates/": False,
+    "api/v1/customization/templates/preview/": False,
+    "api/v1/customization/templates/<str:key>/publish/": False,
+    "api/v1/customization/numbering/": False,
+    "api/v1/notifications/": False,
+    "api/v1/notifications/read/": False,
 }
 # Routes served on both kinds of host (everything else on this list is tenant-only).
 BOTH_HOSTS = {

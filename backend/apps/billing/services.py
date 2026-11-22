@@ -16,6 +16,7 @@ from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from typing import TYPE_CHECKING, Any
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -49,7 +50,7 @@ def _reason(reason: str) -> str:
 def _limits(value: dict[str, Any]) -> dict[str, int]:
     limits: dict[str, int] = {}
     for key, raw in (value or {}).items():
-        if key not in LIMIT_KEYS:
+        if key not in LIMIT_KEYS and key not in getattr(settings, "STUDIO_QUOTA_DEFAULTS", {}):
             raise ValidationError({"limits": f"Unknown limit {key!r}."})
         if not isinstance(raw, int) or isinstance(raw, bool) or not 1 <= raw <= 10_000:
             raise ValidationError({"limits": f"{key} must be a whole number from 1 to 10000."})

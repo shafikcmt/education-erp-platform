@@ -98,6 +98,7 @@ def save_form_draft(
     if current is not None and current.entity != entity:
         raise ValidationError({"entity": "A form keeps its entity."})
     validate_layout(entity, layout)
+    versioning.check_new_key_quota(FormDefinition, key, "max_forms")
     draft = versioning.draft_for(FormDefinition, key, actor.pk)
     draft.entity, draft.name, draft.layout, draft.updated_by = entity, name, layout, actor.pk
     try:

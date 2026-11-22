@@ -164,6 +164,7 @@ class Institution(TenantScopedModel):
     preset_code = models.CharField(max_length=64, blank=True, default="")
     preset_version = models.CharField(max_length=32, blank=True, default="")
     settings = models.JSONField(default=dict, blank=True)
+    extra = models.JSONField(default=dict, blank=True)  # custom field values (Phase 5 M6)
     archived_at = models.DateTimeField(null=True, blank=True)
 
     class Meta(TenantScopedModel.Meta):
@@ -187,6 +188,7 @@ class Campus(TenantScopedModel):
     address = models.JSONField(default=dict, blank=True)
     timezone = models.CharField(max_length=64, blank=True, default="")
     is_main = models.BooleanField(default=False)
+    extra = models.JSONField(default=dict, blank=True)  # custom field values (Phase 5 M6)
     archived_at = models.DateTimeField(null=True, blank=True)
 
     class Meta(TenantScopedModel.Meta):

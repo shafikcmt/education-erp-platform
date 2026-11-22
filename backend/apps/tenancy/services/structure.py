@@ -37,8 +37,8 @@ if TYPE_CHECKING:
     from apps.identity.models import User
 
 PROFILE_FIELDS = ("name", "default_locale", "locales", "timezone", "currency", "branding")
-INSTITUTION_FIELDS = ("name", "name_i18n", "settings")
-CAMPUS_FIELDS = ("name", "name_i18n", "address", "timezone")
+INSTITUTION_FIELDS = ("name", "name_i18n", "settings", "extra")
+CAMPUS_FIELDS = ("name", "name_i18n", "address", "timezone", "extra")
 
 
 def institution_target(institution: Institution) -> ScopeTarget:
@@ -140,6 +140,15 @@ def update_institution(
     )
     if institution.archived_at is not None:
         raise ValidationError({"institution": "An archived institution can't be changed."})
+    changes = dict(changes)
+    if "extra" in changes:  # Phase 5 M6: custom field values, validated by the Studio module
+        changes["extra"] = common.merge_extra(
+            "tenancy.institution",
+            institution.extra,
+            changes["extra"],
+            actor,
+            institution_target(institution),
+        )
     fields = _changed(institution, changes, INSTITUTION_FIELDS)
     if fields:
         institution.save(update_fields=[*fields, "updated_at"])
@@ -252,6 +261,11 @@ def update_campus(
     require_perm(actor, "tenancy.campus.update", target=campus_target(campus), use_cache=False)
     if campus.archived_at is not None:
         raise ValidationError({"campus": "An archived campus can't be changed."})
+    changes = dict(changes)
+    if "extra" in changes:  # Phase 5 M6: custom field values, validated by the Studio module
+        changes["extra"] = common.merge_extra(
+            "tenancy.campus", campus.extra, changes["extra"], actor, campus_target(campus)
+        )
     fields = _changed(campus, changes, CAMPUS_FIELDS)
     if make_main and not campus.is_main:
         # Moving "main" changes the institution, so it needs the institution-level permission.

@@ -256,6 +256,17 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C28 | **Numbering sequences** (`customization_numberingsequence`, `…numbercounter`, standard RLS, composite key counter → sequence): tokens `{INST}`, `{CAMPUS}`, `{YYYY}`, `{YY}`, `{AY}` (from the academic-year start month setting), exactly one `{SEQ:n}`; scope tenant / institution / campus; reset never / yearly / academic year. `allocate()` locks the counter row inside the business transaction: gap-free (a rollback returns the number) and concurrency-tested (4 parallel transactions get 1-4) |
 | C29 | Permissions `customization.template.view|manage`, `customization.numbering.view|manage` (69 codes) |
 
+### 13.6 M6 — APIs, OpenAPI and client (2026-11-22, branch `feat/phase-05-m6`)
+
+| # | Note |
+|---|---|
+| C30 | Tenant-host Studio API (module `customization`, `/api/v1/customization/…`): `catalog/` (declared settings, entities, core fields, namespaces, template kinds, workflow subjects, quotas); `config/` (GET state of a scope, PUT draft, DELETE draft), `config/publish/`, `config/rollback/`; `fields/` (+ PATCH, `deprecate/`); `rules/` (+ `test/`, `{key}/publish/`); `forms/` (+ `publish/`, `render/`, `visibility/`, `validate/`); `workflows/` (+ `publish/`, `start/`), `workflow-requests/{id}/` (+ `transition/`); `templates/` (+ `preview/`, `{key}/publish/`); `numbering/` |
+| C31 | Permission classes are the first gate; the services re-check the exact scope uncached. Publishing uses `customization.config.publish` (MFA + fresh step-up). A configuration scope outside the viewer's scopes answers 404 (indistinguishable from unknown). Workflow start and transitions are open to signed-in members at the gate; the workflow's own permissions are enforced by the engine |
+| C32 | Notification inbox (module `notifications_core`): `GET /notifications/` (own latest 50 + unread count), `POST /notifications/read/`. Platform host: `GET /platform/presets/` (`tenancy.tenant.view_any`, catalogue P8) |
+| C33 | Custom field values: `extra` JSONB on `tenancy_institution` and `tenancy_campus` (additive, with a database default so SQL paths keep working). Updates go through the `TENANCY_CUSTOM_FIELDS` hook (validation, `edit_permission` in the object scope, `null` clears); reads mask values whose `view_permission` the viewer lacks (no request context: nothing shown). Member values follow with member profiles (Phase 7) |
+| C34 | Per-plan Studio quotas (ADR-060 Q5, soft): plan limit keys `max_custom_fields_per_entity`, `max_forms`, `max_workflows`, `max_rules`, `max_templates` (billing accepts them; defaults in `STUDIO_QUOTA_DEFAULTS`). Lists report `{used, limit}`; a new artefact at the limit is refused (`quota`); new versions of an existing key never count |
+| C35 | A test found and fixed a gap: the rule test endpoint skipped the static check when no test cases were given. OpenAPI regenerated (0 warnings) and TypeScript client regenerated; host-route review list and catalogue completeness cover the new views |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
@@ -264,3 +275,4 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 - 2026-11-22 — §13.3 appended: M3 notes C13–C18.
 - 2026-11-22 — §13.4 appended: M4 notes C19–C24.
 - 2026-11-22 — §13.5 appended: M5 notes C25–C29.
+- 2026-11-22 — §13.6 appended: M6 notes C30–C35.
