@@ -477,3 +477,5 @@ class ContextSerializer(serializers.Serializer[Any]):
     scopes = ScopePermissionsSerializer(many=True)
     support_banner = BannerSerializer(many=True)
     entitlements = EntitlementsSerializer()
+    # Phase 5 (Customization Studio) fills this; until then it is always empty.
+    terminology = serializers.DictField(child=serializers.CharField())

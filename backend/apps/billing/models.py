@@ -16,6 +16,7 @@ from __future__ import annotations
 from django.db import models
 
 from apps.core.models import BaseModel
+from apps.core.tenancy.models import TenantScopedModel
 
 
 class Plan(BaseModel):
@@ -162,5 +163,26 @@ class SubscriptionItem(BaseModel):
                 fields=["subscription", "addon"],
                 condition=models.Q(ended_at__isnull=True),
                 name="billing_item_one_open",
+            )
+        ]
+
+
+class UsageRecord(TenantScopedModel):
+    """Daily usage of one metric for one tenant (Phase 4: institutions and campuses only;
+    plan §2). Tenant data under standard RLS, written by the tenant metering task."""
+
+    class Metric(models.TextChoices):
+        INSTITUTIONS = "institutions", "Institutions"
+        CAMPUSES = "campuses", "Campuses"
+
+    metric = models.CharField(max_length=32, choices=Metric.choices)
+    value = models.PositiveIntegerField()
+    period = models.DateField()
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "billing_usagerecord"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "metric", "period"], name="billing_usage_unique_period"
             )
         ]

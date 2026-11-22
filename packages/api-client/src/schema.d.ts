@@ -2131,6 +2131,9 @@ export interface components {
             scopes: components["schemas"]["ScopePermissions"][];
             support_banner: components["schemas"]["Banner"][];
             entitlements: components["schemas"]["Entitlements"];
+            terminology: {
+                [key: string]: string;
+            };
         };
         Csrf: {
             detail: string;

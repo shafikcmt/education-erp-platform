@@ -3130,6 +3130,10 @@ components:
             $ref: '#/components/schemas/Banner'
         entitlements:
           $ref: '#/components/schemas/Entitlements'
+        terminology:
+          type: object
+          additionalProperties:
+            type: string
       required:
       - assignments
       - entitlements
@@ -3139,6 +3143,7 @@ components:
       - support_banner
       - support_session_ends_at
       - tenant
+      - terminology
     Csrf:
       type: object
       properties:

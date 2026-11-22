@@ -166,6 +166,7 @@ class ContextView(TenantView):
                 **entitlement_summary(tenant_id),
                 "limits": limits_usage(tenant),
             },
+            "terminology": {},
         }
         return Response(s.ContextSerializer(data).data)
 
