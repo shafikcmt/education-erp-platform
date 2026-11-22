@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 5 — Customization Studio & institution configuration: **Planned** (plan `docs/plans/PHASE_05_PLAN.md` **Proposed**, five owner questions; no Phase 5 code before approval).
+- **Current phase:** Phase 5 — Customization Studio & institution configuration: **In progress** (plan **Approved** 2026-11-22; ADR-055 to ADR-060 Accepted). History of this line: plan Proposed with five owner questions.
 - **Phase 4:** **Approved** by the owner (2026-11-22); M1–M7 merged (PRs #44–#50). History of this line: (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
 - **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
@@ -37,7 +37,7 @@
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Approved | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`), [PR #50](https://github.com/shafikcmt/education-erp-platform/pull/50) (M7, merged `983a9e4`) | **Approved** (owner, 2026-11-22) |
-| 5 | Customization Studio & institution configuration | Planned | `docs/phase-05-plan` (plan, Proposed) | ADR-055–059 Proposed; five owner questions |
+| 5 | Customization Studio & institution configuration | In progress | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan) | Plan Approved (ADR-055–060) |
 | 6 | Academic structure & student admission | Not started | | |
 | 7 | Student, teacher & parent management | Not started | | |
 | 8 | Attendance management | Not started | | |
@@ -889,4 +889,5 @@ See `DECISION_LOG.md`.
 - **Phase 4: Approved** by the owner ("approve and continue").
 - **Phase 5 plan:** `docs/plans/PHASE_05_PLAN.md` (**Proposed**) with ADR-055 to ADR-059 (Proposed) and five questions (template engine, rules evaluator, self-service sign-up behind a flag, preset content review, Studio quotas). No Phase 5 code is written before approval.
 - **Still open from Phase 3:** re-checking the inviter's permission at invitation acceptance.
+- **Phase 5 plan: Approved** by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted. Phase 5 is **In progress**; M1 starts next.
 

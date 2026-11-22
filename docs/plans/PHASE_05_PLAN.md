@@ -1,6 +1,6 @@
 # Phase 5 Plan — Customization Studio and Institution Configuration
 
-- **Status:** **Proposed** (2026-11-22). Implementation starts only after the owner approves this plan.
+- **Status:** **Approved** (owner, 2026-11-22) with the recommended answers to Q1–Q5 (ADR-060). ADR-055 to ADR-059 Accepted.
 - **Depends on:**
   - Phase 4 (**Approved** by the owner, 2026-11-22).
   - ADR-016 (rules engine), which this plan proposes to decide (ADR-055).
@@ -202,3 +202,4 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 
 ### Change notes
 - 2026-11-22 — Created (Proposed).
+- 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.

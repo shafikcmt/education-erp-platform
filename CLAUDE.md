@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-22 (Phase 4 **Approved**; Phase 5 plan **Proposed** (ADR-055–059); tenant hosts disabled)
+- **Last updated:** 2026-11-22 (Phase 4 **Approved**; Phase 5 plan **Approved** (ADR-055–060), in progress; tenant hosts disabled)
 
 ---
 
@@ -87,7 +87,7 @@ The institution type selects a **preset (configuration pack)**; it never selects
 - Never create separate codebases, branches or forks per institution or tenant.
 - Never put `if tenant == "X"` logic in code. Tenant differences are expressed in configuration or entitlements.
 - Institution-type differences are expressed through presets and capability flags (e.g. `academics.credit_based`), not `if institution_type == ...` scattered across code. Where code must branch, branch on a **capability flag**, centrally.
-- L3 extensions are **declarative only** (no tenant-supplied executable code). Rules use a safe expression format (see ADR-016).
+- L3 extensions are **declarative only** (no tenant-supplied executable code). Rules use a safe expression format (ADR-016, decided by ADR-055: in-house allow-listed evaluator); templates use a sandboxed engine (ADR-056).
 - Configuration resolution order (later overrides earlier): **Core defaults → Institution-type preset → Tenant → Institution → Campus**.
 - All configuration is **versioned** (draft → published → archived) with rollback and audit.
 
@@ -347,7 +347,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
-| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Proposed**; ADR-055–059 Proposed) |
+| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–060 Accepted; **in progress**) |
 | 6 | Academic structure and student admission |
 | 7 | Student, teacher and parent management |
 | 8 | Attendance management |
@@ -463,3 +463,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-21 — Phase 4 M5 merged (PR #48); M6 on its branch; phase table updated. No rule changed.
 - 2026-11-22 — Phase 4 M6 merged (PR #49); M7 on its branch; Phase 4 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.
 - 2026-11-22 — Phase 4 M7 merged (PR #50) and Phase 4 approved by the owner; Phase 5 plan proposed (ADR-055 to ADR-059 Proposed); phase table and last-updated line updated. No rule changed.
+- 2026-11-22 — Owner approved the Phase 5 plan (ADR-055 to ADR-060 Accepted); §4 rules line names ADR-055/056; phase table and last-updated line updated.
