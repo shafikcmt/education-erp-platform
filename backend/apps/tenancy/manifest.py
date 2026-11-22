@@ -87,3 +87,11 @@ SETTINGS = {
         "scopes": ["tenant", "institution"],
     },
 }
+
+# Entities that accept custom fields (Phase 5 M3; CUSTOMIZATION_ENGINE.md §4.2). Values are
+# stored in the entity's ``extra`` JSONB and validated against the active definitions.
+CUSTOM_FIELD_ENTITIES = {
+    "tenancy.institution": {"label": "Institution"},
+    "tenancy.campus": {"label": "Campus"},
+    "tenancy.member": {"label": "Member"},
+}

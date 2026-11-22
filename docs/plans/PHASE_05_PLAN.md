@@ -224,8 +224,20 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C11 | Pinning: new institutions (provisioning and the tenant-host create) store their type's default preset through the `TENANCY_INSTITUTION_PRESET` hook (tenancy does not import customization). No separate platform scope is needed (planned P22 runs inside the existing P4 / tenant transaction), so P22 is not added to the catalogue |
 | C12 | Preset layer (`CUSTOMIZATION_PRESET_LAYER`): an institution scope inherits its pinned preset's settings below the tenant's own values; the tenant scope has no preset. `/me/context/` returns `terminology` (organisation) and `institution_terminology` (each active institution) |
 
+### 13.3 M3 — rules sandbox and custom fields (2026-11-22, branch `feat/phase-05-m3`)
+
+| # | Note |
+|---|---|
+| C13 | **Rules sandbox** (`apps/customization/rules.py`, ADR-055): JSON AST `{"op": [args]}`, 22 allow-listed operators (comparison, boolean, `if`, `+ - * /`, `min`/`max`, `round`, `in`, `var`, `missing`, `date`, `days_between`). Static check before evaluation: operators, namespace variables (exact or `prefix.*`), ≤ 500 nodes, ≤ 32 levels, strings ≤ 1,000 characters, lists ≤ 200 items. Evaluation: ≤ 10,000 steps, `Decimal` arithmetic (JSON numbers never stay floats), boolean-only conditions, `today` from the context (no clock), every error a `RuleError` |
+| C14 | **Security tests** (exit criterion): code-execution and introspection payloads (`__import__`, `eval`, `exec`, `getattr`, `__class__`, `lambda`, `map`, `reduce`), variables outside the namespace, malformed operations, nesting/size/step limits, arithmetic and type errors, result types, determinism |
+| C15 | **Namespaces** are declared in manifests (`RULE_NAMESPACES`): `customization.form_visibility` and `customization.workflow_guard` (boolean). Later modules add theirs (e.g. `fees.late_fine`) |
+| C16 | `customization_ruledefinition` (standard RLS): versioned per key, one draft and one published version; saving checks the rule; publishing needs `customization.config.publish`, at least one test case and all cases passing; the namespace of a key never changes. `evaluate_published()` is the entry point for forms and workflows |
+| C17 | **Custom fields:** entities declared in manifests (`CUSTOM_FIELD_ENTITIES`: `tenancy.institution`, `tenancy.campus`, `tenancy.member`). `customization_fielddefinition` (standard RLS): ten types, i18n labels, options for choice fields, per-type limits, visibility, view/edit permissions (must exist), PII flag, order. Key and type never change (deprecate and create). `validate_values()` refuses unknown and deprecated keys, enforces required fields and fixed per-type schemas (decimals as strings, real calendar dates, ranges) |
+| C18 | Permissions `customization.rule.view|manage`, `customization.field.view|manage` (manage: MFA), 61 codes in total; tenant owners hold them. **Not yet built:** storing values on the tenancy entities (`extra` columns, wired with the APIs in M6) and per-plan Studio quotas (ADR-060 Q5; planned with the APIs in M6). A test found and fixed a missing check: a choice field could be created without options |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
 - 2026-11-22 — §13.1 appended: M1 notes C1–C6.
 - 2026-11-22 — §13.2 appended: M2 notes C7–C12.
+- 2026-11-22 — §13.3 appended: M3 notes C13–C18.
