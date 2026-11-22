@@ -267,6 +267,17 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C34 | Per-plan Studio quotas (ADR-060 Q5, soft): plan limit keys `max_custom_fields_per_entity`, `max_forms`, `max_workflows`, `max_rules`, `max_templates` (billing accepts them; defaults in `STUDIO_QUOTA_DEFAULTS`). Lists report `{used, limit}`; a new artefact at the limit is refused (`quota`); new versions of an existing key never count |
 | C35 | A test found and fixed a gap: the rule test endpoint skipped the static check when no test cases were given. OpenAPI regenerated (0 warnings) and TypeScript client regenerated; host-route review list and catalogue completeness cover the new views |
 
+### 13.7 M7 — Studio UI, DynamicForm renderer, notifications, onboarding (2026-11-22, branch `feat/phase-05-m7`)
+
+| # | Note |
+|---|---|
+| C36 | Tenant route `/studio` (nav item and dashboard card need `customization.config.view` in some scope **and** the `customization` module). Tabs follow the member's permissions: settings, custom fields, forms, rules, workflows, templates, numbering. Hidden is not secure: every call is decided by the API (C31) |
+| C37 | **Settings tab:** scope selector (whole organisation or one institution), week start, academic-year start month, terminology rows (language, term, label); save draft, publish (fresh step-up through `useAction`), discard, history with restore. Saving keeps keys the screen does not edit (for example capability flags) and removes cleared keys so the scope inherits them (unit-tested) |
+| C38 | **Deviation (recorded): Studio v1 edits rules, forms, workflows and templates as JSON** with validated starter examples (each starter was saved and published through the real services once during M7), a list per key with draft/published versions and quotas, a rule test runner and a template preview. Visual builders are a known gap for a later phase |
+| C39 | **DynamicForm renderer:** loads the published form, asks the server which sections are visible on every change (debounced; a failed check hides conditional sections: fail closed), sends only fields of visible sections and shows the server's field errors inline. The browser never evaluates rules. Used as the form preview in the Studio; modules will reuse it |
+| C40 | **Notification bell** in the header on tenant hosts (own inbox, unread count, mark all as read; polls every minute). **Deviation (recorded): the onboarding wizard is a dashboard checklist** computed from server state (institution, published settings, custom fields, invited team), shown to members who can edit the configuration tenant-wide, until every step is done |
+| C41 | **Deviation (recorded): self-service sign-up (P23, behind its off-by-default flag) moves to M8** together with the E2E tests, to keep this PR reviewable. en + bn catalogue keys (`studio`, `notifications`, `onboarding`); 6 new unit tests |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
@@ -276,3 +287,4 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 - 2026-11-22 — §13.4 appended: M4 notes C19–C24.
 - 2026-11-22 — §13.5 appended: M5 notes C25–C29.
 - 2026-11-22 — §13.6 appended: M6 notes C30–C35.
+- 2026-11-22 — §13.7 appended: M7 notes C36–C41 (deviations: JSON editors in v1, onboarding checklist, sign-up moved to M8).
