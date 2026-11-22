@@ -50,6 +50,19 @@ PERMISSIONS = [
         "description": "Design approval workflows",
         "requires_mfa": True,
     },
+    # Phase 5 M5: templates and numbering sequences.
+    {"code": "customization.template.view", "description": "View templates"},
+    {
+        "code": "customization.template.manage",
+        "description": "Design templates",
+        "requires_mfa": True,
+    },
+    {"code": "customization.numbering.view", "description": "View numbering sequences"},
+    {
+        "code": "customization.numbering.manage",
+        "description": "Define numbering sequences",
+        "requires_mfa": True,
+    },
 ]
 
 # Declared configuration keys (ADR-057). Every key belongs to the module whose code prefixes
@@ -130,5 +143,39 @@ RULE_NAMESPACES = {
         "description": "Allow a workflow transition when the rule is true",
         "variables": ["subject.*", "today"],
         "result": "boolean",
+    },
+}
+
+# Template kinds (ADR-056): output format, the variables a template may use, a sample context
+# for previews and an output limit. Modules add theirs (receipts, report cards, ID cards …).
+TEMPLATE_KINDS = {
+    "customization.email": {
+        "format": "text",
+        "subject": True,
+        "max_output": 20_000,
+        "variables": {
+            "organisation": "Organisation name",
+            "recipient": "Recipient name",
+            "link": "A link",
+        },
+        "sample": {"organisation": "Example Academy", "recipient": "A. Rahman", "link": "/x"},
+    },
+    "customization.sms": {
+        "format": "text",
+        "subject": False,
+        "max_output": 480,
+        "variables": {"organisation": "Organisation name", "recipient": "Recipient name"},
+        "sample": {"organisation": "Example Academy", "recipient": "A. Rahman"},
+    },
+    "customization.notice": {
+        "format": "html",
+        "subject": False,
+        "max_output": 100_000,
+        "variables": {
+            "organisation": "Organisation name",
+            "title": "Title",
+            "items": "List of lines",
+        },
+        "sample": {"organisation": "Example Academy", "title": "Notice", "items": ["One", "Two"]},
     },
 }

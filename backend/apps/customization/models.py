@@ -339,3 +339,105 @@ class WorkflowStep(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"{self.from_state} -> {self.to_state}"
+
+
+class TemplateDefinition(TenantScopedModel):
+    """A versioned template of a declared kind (ADR-056); ``content`` holds one subject/body
+    per locale: ``{"en": {"subject": "...", "body": "..."}, "bn": {...}}``."""
+
+    key = models.CharField(max_length=64)
+    kind = models.CharField(max_length=80)
+    name = models.CharField(max_length=120)
+    content = models.JSONField(default=dict)
+    number = models.PositiveIntegerField()
+    status = models.CharField(max_length=16, choices=Lifecycle.choices, default=Lifecycle.DRAFT)
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.UUIDField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_templatedefinition"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_template_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key", "number"], name="customization_template_number_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="draft"),
+                name="customization_template_one_draft",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="published"),
+                name="customization_template_one_published",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"template {self.key} v{self.number}"
+
+
+class NumberingSequence(TenantScopedModel):
+    """A numbering pattern (CUSTOMIZATION_ENGINE.md §4.7), e.g. ``RCP-{INST}-{YYYY}-{SEQ:5}``.
+    Counters are allocated gap-free under a row lock inside the business transaction."""
+
+    class Scope(models.TextChoices):
+        TENANT = "tenant", "Organisation"
+        INSTITUTION = "institution", "Institution"
+        CAMPUS = "campus", "Campus"
+
+    class Reset(models.TextChoices):
+        NEVER = "never", "Never"
+        YEARLY = "yearly", "Every calendar year"
+        ACADEMIC_YEAR = "academic_year", "Every academic year"
+
+    key = models.CharField(max_length=64)
+    name = models.CharField(max_length=120)
+    pattern = models.CharField(max_length=64)
+    scope = models.CharField(max_length=16, choices=Scope.choices, default=Scope.TENANT)
+    reset = models.CharField(max_length=16, choices=Reset.choices, default=Reset.NEVER)
+    archived_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_numberingsequence"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_numbering_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"], name="customization_numbering_key_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "id"], name="customization_numbering_tenant_key"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"sequence {self.key}"
+
+
+class NumberCounter(TenantScopedModel):
+    sequence = models.ForeignKey(
+        NumberingSequence, on_delete=models.PROTECT, related_name="+", db_constraint=False
+    )
+    institution_id = models.UUIDField(null=True, blank=True)
+    campus_id = models.UUIDField(null=True, blank=True)
+    period = models.CharField(max_length=16, blank=True, default="")
+    value = models.PositiveBigIntegerField(default=0)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_numbercounter"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "sequence", "institution_id", "campus_id", "period"],
+                nulls_distinct=False,
+                name="customization_counter_unique",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"counter {self.sequence_id} {self.period} = {self.value}"

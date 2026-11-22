@@ -110,3 +110,4 @@ Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml
 - 2026-11-05 — Phase 2 owner-approved libraries recorded with version ranges (installed at implementation).
 - 2026-11-06 — `@hookform/resolvers` 7.0.x approved and recorded (ADR-039).
 - 2026-11-06 — Phase 2 libraries installed at the approved pins. `server-only` and PyYAML were deliberately not added (not approved).
+- 2026-11-22 — Phase 5: Jinja2 3.1.x (sandboxed Studio templates, ADR-056) added; `jsonschema` and `pyyaml` promoted from transitive to direct dependencies (ADR-057/058).
