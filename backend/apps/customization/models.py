@@ -113,3 +113,102 @@ class Preset(BaseModel):
 
     def __str__(self) -> str:
         return self.code
+
+
+class Lifecycle(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    PUBLISHED = "published", "Published"
+    ARCHIVED = "archived", "Archived"
+
+
+class RuleDefinition(TenantScopedModel):
+    """A versioned rule (ADR-055): a JSON AST of a declared namespace with its test cases.
+    Publishing runs every test case; published versions are immutable."""
+
+    namespace = models.CharField(max_length=80)
+    key = models.CharField(max_length=64)
+    name = models.CharField(max_length=120)
+    rule = models.JSONField()
+    test_cases = models.JSONField(default=list, blank=True)
+    number = models.PositiveIntegerField()
+    status = models.CharField(max_length=16, choices=Lifecycle.choices, default=Lifecycle.DRAFT)
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.UUIDField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_ruledefinition"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_rule_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key", "number"], name="customization_rule_number_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="draft"),
+                name="customization_rule_one_draft",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="published"),
+                name="customization_rule_one_published",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"rule {self.key} v{self.number}"
+
+
+class FieldDefinition(TenantScopedModel):
+    """A custom field of a declared entity (CUSTOMIZATION_ENGINE.md §4.2). ``key`` and
+    ``field_type`` never change: a field is deprecated and a new one created instead."""
+
+    class FieldType(models.TextChoices):
+        TEXT = "text", "Text"
+        LONG_TEXT = "long_text", "Long text"
+        NUMBER = "number", "Whole number"
+        DECIMAL = "decimal", "Decimal"
+        DATE = "date", "Date"
+        BOOLEAN = "boolean", "Yes / no"
+        SINGLE_SELECT = "single_select", "Single choice"
+        MULTI_SELECT = "multi_select", "Multiple choice"
+        EMAIL = "email", "Email"
+        PHONE = "phone", "Phone"
+
+    class Visibility(models.TextChoices):
+        INTERNAL = "internal", "Staff only"
+        PORTAL = "portal", "Portal"
+        PUBLIC = "public", "Public forms"
+
+    entity = models.CharField(max_length=80)
+    key = models.CharField(max_length=64)
+    field_type = models.CharField(max_length=16, choices=FieldType.choices)
+    labels = models.JSONField(default=dict)  # locale -> label
+    required = models.BooleanField(default=False)
+    options = models.JSONField(default=list, blank=True)  # selects: [{value, labels}]
+    validation = models.JSONField(default=dict, blank=True)  # min/max, min/max_length
+    visibility = models.CharField(
+        max_length=16, choices=Visibility.choices, default=Visibility.INTERNAL
+    )
+    view_permission = models.CharField(max_length=100, blank=True, default="")
+    edit_permission = models.CharField(max_length=100, blank=True, default="")
+    pii = models.BooleanField(default=False)
+    order = models.PositiveSmallIntegerField(default=0)
+    deprecated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_fielddefinition"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_field_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "entity", "key"], name="customization_field_key_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.entity}.{self.key}"

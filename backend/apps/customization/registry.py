@@ -13,13 +13,16 @@ import re
 from dataclasses import dataclass
 from functools import cache
 from importlib import import_module
-from typing import Any
-
-from django.apps import apps
 
 # jsonschema ships no type information (no stub package added: ADR-057 keeps dependencies lean).
+from typing import TYPE_CHECKING, Any
+
+from django.apps import apps
 from jsonschema import Draft202012Validator  # type: ignore[import-untyped]
 from jsonschema.exceptions import SchemaError  # type: ignore[import-untyped]
+
+if TYPE_CHECKING:
+    from apps.customization.rules import Namespace
 
 SCOPES = ("tenant", "institution", "campus")
 MERGES = ("replace", "deep")
@@ -96,3 +99,51 @@ def declared_settings() -> dict[str, SettingSpec]:
 @cache
 def _validator(key: str) -> Draft202012Validator:
     return Draft202012Validator(declared_settings()[key].schema)
+
+
+def _manifest_items(attribute: str) -> list[tuple[str, str, Any]]:
+    out: list[tuple[str, str, Any]] = []
+    for config in apps.get_app_configs():
+        if not config.name.startswith("apps."):
+            continue
+        try:
+            manifest = import_module(f"{config.name}.manifest")
+        except ModuleNotFoundError as exc:
+            if exc.name == f"{config.name}.manifest":
+                continue
+            raise
+        out.extend(
+            (config.label, key, raw) for key, raw in getattr(manifest, attribute, {}).items()
+        )
+    return out
+
+
+@cache
+def declared_namespaces() -> dict[str, Namespace]:
+    """Rule namespaces of the installed modules (ADR-055)."""
+    from apps.customization.rules import Namespace
+
+    out: dict[str, Namespace] = {}
+    for module, code, raw in _manifest_items("RULE_NAMESPACES"):
+        if not KEY_PATTERN.match(code) or not code.startswith(f"{module}."):
+            raise InvalidSettingsCatalogError(f"{code!r}: namespaces are '<module>.<name>'.")
+        if raw.get("result") not in ("boolean", "number", "any") or not raw.get("variables"):
+            raise InvalidSettingsCatalogError(f"{code}: result type and variables are required.")
+        out[code] = Namespace(
+            code=code,
+            variables=tuple(raw["variables"]),
+            result=raw["result"],
+            description=str(raw.get("description", "")),
+        )
+    return out
+
+
+@cache
+def declared_entities() -> dict[str, str]:
+    """Entities that accept custom fields: code -> label (owned by the declaring module)."""
+    out: dict[str, str] = {}
+    for module, code, raw in _manifest_items("CUSTOM_FIELD_ENTITIES"):
+        if not KEY_PATTERN.match(code) or not code.startswith(f"{module}."):
+            raise InvalidSettingsCatalogError(f"{code!r}: entities are '<module>.<name>'.")
+        out[code] = str(raw.get("label", code))
+    return out

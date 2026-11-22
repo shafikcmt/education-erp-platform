@@ -127,6 +127,10 @@ _OWNER_CODES = [
     "customization.config.view",
     "customization.config.edit",
     "customization.config.publish",
+    "customization.rule.view",
+    "customization.rule.manage",
+    "customization.field.view",
+    "customization.field.manage",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.

@@ -27,6 +27,20 @@ PERMISSIONS = [
         "requires_mfa": True,
         "requires_step_up": True,
     },
+    # Phase 5 M3: rules and custom fields (drafted with ``manage``; going live needs
+    # ``customization.config.publish``).
+    {"code": "customization.rule.view", "description": "View rules"},
+    {
+        "code": "customization.rule.manage",
+        "description": "Create and test rules",
+        "requires_mfa": True,
+    },
+    {"code": "customization.field.view", "description": "View custom field definitions"},
+    {
+        "code": "customization.field.manage",
+        "description": "Define and deprecate custom fields",
+        "requires_mfa": True,
+    },
 ]
 
 # Declared configuration keys (ADR-057). Every key belongs to the module whose code prefixes
@@ -92,5 +106,20 @@ SETTINGS = {
         "default": {},
         "scopes": ["tenant", "institution"],
         "merge": "deep",
+    },
+}
+
+# Rule namespaces (ADR-055): where rules run, which variables they may read, what they return.
+# Modules add theirs (e.g. ``fees.late_fine`` in Phase 10).
+RULE_NAMESPACES = {
+    "customization.form_visibility": {
+        "description": "Show a form section or field when the rule is true",
+        "variables": ["field.*", "today"],
+        "result": "boolean",
+    },
+    "customization.workflow_guard": {
+        "description": "Allow a workflow transition when the rule is true",
+        "variables": ["subject.*", "today"],
+        "result": "boolean",
     },
 }
