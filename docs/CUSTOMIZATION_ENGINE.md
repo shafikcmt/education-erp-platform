@@ -132,3 +132,4 @@ These are proposed defaults to be validated with real institutions before Phase 
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-22 — §4.5 heading: ADR-016 decided by ADR-055; templates use Jinja2 `SandboxedEnvironment` (ADR-056). Implementation status: `plans/PHASE_05_PLAN.md`.
+- 2026-11-22 — Phase 5 M2: the six v1 presets are implemented as draft data (`backend/apps/customization/presets/`); the table in §3 remains illustrative.

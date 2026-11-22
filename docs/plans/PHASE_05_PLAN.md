@@ -213,7 +213,19 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C5 | Resolver: defaults → preset layer (M2 hook `CUSTOMIZATION_PRESET_LAYER`) → tenant → institution → campus, published only. Keys removed from the catalogue are ignored. Cache per tenant and scope under a generation token replaced on publish, immediately and after commit |
 | C6 | Permissions `customization.config.view|edit|publish` (edit: MFA; publish: MFA + step-up), 57 codes in total; `tenant_owner` holds them tenant-wide and `institution_admin` in their institution. `jsonschema` promoted from a transitive to a direct dependency (already locked; no stub package: two targeted `type: ignore` imports) |
 
+### 13.2 M2 — presets (2026-11-22, branch `feat/phase-05-m2`)
+
+| # | Note |
+|---|---|
+| C7 | Six v1 **draft** presets in `backend/apps/customization/presets/*.yaml` (ADR-060 Q4: to be validated with real institutions): `school.general.v1`, `college.general.v1`, `university.credit.v1`, `madrasa.general.v1`, `coaching.general.v1`, `training.general.v1`. Each holds en + bn terminology, structure levels, capability flags, role labels and suggested modules. Madrasa conventions are data, not code |
+| C8 | New declared keys: `customization.capabilities` (flag → bool, deep merge, institution scope), `customization.structure_levels` (institution scope) and `customization.role_labels` (deep merge, tenant and institution). Code branches on capability flags, never on the institution type |
+| C9 | Validation at load: code `<type>.<variant>.v<N>` of its type, version matching the code, known non-platform suggested modules, preset settings valid against the declared keys at institution scope, exactly one default per institution type, file named after its code |
+| C10 | `customization_preset` (registry allow-list; SELECT only for the runtime role) written by the owner-run `sync_presets` (compose `migrate` step and test bootstrap; catalogue entry **P21**, disabled as a runtime scope). Synced presets are immutable (a changed file for an existing code is refused); removed presets are deprecated, never deleted. Audited (`customization.presets.synced`) |
+| C11 | Pinning: new institutions (provisioning and the tenant-host create) store their type's default preset through the `TENANCY_INSTITUTION_PRESET` hook (tenancy does not import customization). No separate platform scope is needed (planned P22 runs inside the existing P4 / tenant transaction), so P22 is not added to the catalogue |
+| C12 | Preset layer (`CUSTOMIZATION_PRESET_LAYER`): an institution scope inherits its pinned preset's settings below the tenant's own values; the tenant scope has no preset. `/me/context/` returns `terminology` (organisation) and `institution_terminology` (each active institution) |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
 - 2026-11-22 — §13.1 appended: M1 notes C1–C6.
+- 2026-11-22 — §13.2 appended: M2 notes C7–C12.

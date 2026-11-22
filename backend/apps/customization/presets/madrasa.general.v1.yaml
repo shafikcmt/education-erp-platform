@@ -1,0 +1,25 @@
+# Draft v1 (ADR-060 Q4): to be validated with real institutions; a new version is opt-in.
+# Qawmi, Alia and Hifz conventions differ: expressed as data and overridable, never one board's
+# rules in code.
+code: madrasa.general.v1
+institution_type: madrasa
+version: 1
+default_for_type: true
+name: {en: Madrasa (general), bn: মাদ্রাসা (সাধারণ)}
+suggested_modules: [academics, students, staff, attendance, examinations, fees, hostel, ext_hifz_tracking]
+settings:
+  customization.structure_levels:
+    - {key: session}
+    - {key: marhala}
+    - {key: jamaat}
+    - {key: kitab}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.semester_based: false
+    hostel.residential_default: true
+  customization.terminology:
+    en: {unit.session: Session, unit.level: Marhala, unit.class: Jamaat, unit.section: Jamaat, unit.subject: Kitab, unit.teacher: Ustad, unit.student: Student, unit.head: Muhtamim}
+    bn: {unit.session: শিক্ষাবর্ষ, unit.level: মারহালা, unit.class: জামাত, unit.section: জামাত, unit.subject: কিতাব, unit.teacher: উস্তাদ, unit.student: ছাত্র/ছাত্রী, unit.head: মুহতামিম}
+  customization.role_labels:
+    en: {institution_admin: Muhtamim, hostel_warden: Nazim, teacher: Ustad}
+    bn: {institution_admin: মুহতামিম, hostel_warden: নাজিম, teacher: উস্তাদ}

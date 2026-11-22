@@ -347,7 +347,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
-| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–060 Accepted; **in progress**: plan merged in PR #51; M1 configuration foundation on `feat/phase-05-m1`) |
+| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–060 Accepted; **in progress**: plan merged in PR #51; M1 merged in PR #52; M2 presets on `feat/phase-05-m2`) |
 | 6 | Academic structure and student admission |
 | 7 | Student, teacher and parent management |
 | 8 | Attendance management |
@@ -465,3 +465,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-22 — Phase 4 M7 merged (PR #50) and Phase 4 approved by the owner; Phase 5 plan proposed (ADR-055 to ADR-059 Proposed); phase table and last-updated line updated. No rule changed.
 - 2026-11-22 — Owner approved the Phase 5 plan (ADR-055 to ADR-060 Accepted); §4 rules line names ADR-055/056; phase table and last-updated line updated.
 - 2026-11-22 — Phase 5 plan merged (PR #51); M1 on its branch; phase table updated. No rule changed.
+- 2026-11-22 — Phase 5 M1 merged (PR #52); M2 on its branch; phase table updated. No rule changed.

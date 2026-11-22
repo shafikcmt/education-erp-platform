@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from django.db import models
 
+from apps.core.models import BaseModel
 from apps.core.tenancy.models import TenantScopedModel
 
 
@@ -85,3 +86,30 @@ class ConfigVersion(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"config {self.scope_type} v{self.number} ({self.status})"
+
+
+class Preset(BaseModel):
+    """Synced institution-type preset (platform registry, no tenant data; owner-written)."""
+
+    code = models.CharField(max_length=64, unique=True)
+    institution_type = models.CharField(max_length=32)
+    version = models.PositiveIntegerField()
+    is_default = models.BooleanField(default=False)
+    name = models.JSONField(default=dict)
+    content = models.JSONField(default=dict)  # suggested_modules + settings
+    checksum = models.CharField(max_length=64)
+    deprecated_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "customization_preset"
+        ordering = ("institution_type", "code")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["institution_type"],
+                condition=models.Q(is_default=True, deprecated_at__isnull=True),
+                name="customization_preset_one_default",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return self.code

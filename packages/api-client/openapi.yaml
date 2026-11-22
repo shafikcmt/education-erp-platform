@@ -3133,10 +3133,21 @@ components:
         terminology:
           type: object
           additionalProperties:
-            type: string
+            type: object
+            additionalProperties:
+              type: string
+        institution_terminology:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: object
+              additionalProperties:
+                type: string
       required:
       - assignments
       - entitlements
+      - institution_terminology
       - is_support_session
       - membership_status
       - scopes

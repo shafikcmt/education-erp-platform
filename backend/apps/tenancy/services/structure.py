@@ -103,7 +103,11 @@ def create_institution(
     try:
         with transaction.atomic():
             institution = Institution.objects.create(
-                code=code, name=name, institution_type=institution_type, name_i18n=name_i18n or {}
+                code=code,
+                name=name,
+                institution_type=institution_type,
+                name_i18n=name_i18n or {},
+                **common.institution_preset(institution_type),
             )
     except IntegrityError:
         raise ValidationError({"code": "An institution with this code already exists."}) from None

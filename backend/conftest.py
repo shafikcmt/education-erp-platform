@@ -50,6 +50,9 @@ def django_db_setup(django_db_setup: Any, django_db_blocker: Any) -> Iterator[No
         from apps.module_registry.sync import sync_modules
 
         sync_modules()
+        from apps.customization.sync import sync_presets
+
+        sync_presets()
         _switch_default_connection(settings.TEST_APP_DB_USER, settings.TEST_APP_DB_PASSWORD)
     yield
     with django_db_blocker.unblock():

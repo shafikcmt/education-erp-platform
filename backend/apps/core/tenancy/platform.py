@@ -165,6 +165,14 @@ CATALOGUE: dict[str, PlatformOperationSpec] = {
             disabled_reason="Owner-run bootstrap (sync_modules), not a runtime platform scope.",
         ),
         _op(
+            "P21",
+            "Preset catalogue sync",
+            "system",
+            "R",
+            audited=False,
+            disabled_reason="Owner-run bootstrap (sync_presets), not a runtime platform scope.",
+        ),
+        _op(
             "P16",
             "Incident break-glass",
             "user",

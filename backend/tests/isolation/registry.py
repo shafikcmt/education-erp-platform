@@ -126,6 +126,14 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
             "tests/test_permission_catalog.py::test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused",
         ),
     ),
+    "customization_preset": AllowEntry(
+        "Global, repo-defined institution-type presets (Phase 5, ADR-058); no tenant data. "
+        "SELECT only for the runtime role; written only by the owner-run sync_presets bootstrap.",
+        (
+            "apps/customization/tests/test_presets.py::test_runtime_role_can_only_read_presets",
+            "tests/test_permission_catalog.py::test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused",
+        ),
+    ),
     "module_registry_module": AllowEntry(
         "Global, code-defined module catalogue (Phase 4, ADR-050); no tenant data. SELECT "
         "only for the runtime role; written only by the owner-run sync_modules bootstrap.",

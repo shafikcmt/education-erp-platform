@@ -1,0 +1,24 @@
+# Draft v1 (ADR-060 Q4): to be validated with real institutions; a new version is opt-in.
+code: college.general.v1
+institution_type: college
+version: 1
+default_for_type: true
+name: {en: College (general), bn: কলেজ (সাধারণ)}
+suggested_modules: [academics, admissions, students, staff, attendance, examinations, fees]
+settings:
+  customization.structure_levels:
+    - {key: session}
+    - {key: group}
+    - {key: year}
+    - {key: section}
+    - {key: subject}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.session: Academic session, unit.group: Group, unit.class: Year, unit.section: Section, unit.subject: Subject, unit.teacher: Teacher, unit.student: Student, unit.head: Principal}
+    bn: {unit.session: শিক্ষাবর্ষ, unit.group: বিভাগ, unit.class: বর্ষ, unit.section: শাখা, unit.subject: বিষয়, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: অধ্যক্ষ}
+  customization.role_labels:
+    en: {institution_admin: Principal}
+    bn: {institution_admin: অধ্যক্ষ}
