@@ -12,6 +12,7 @@ import {
   School,
   ScrollText,
   Settings,
+  SlidersHorizontal,
   ShieldCheck,
   UserCog,
   Users,
@@ -22,6 +23,7 @@ import type { ReactNode } from "react";
 import { IdleWarning } from "@/components/auth/idle-warning";
 import { StepUpProvider } from "@/components/auth/step-up";
 import { LocaleSwitcher } from "@/components/locale-switcher";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { Button } from "@/components/ui/button";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { api } from "@/lib/api/browser";
@@ -81,6 +83,12 @@ function tenantNav(context: TenantContext | undefined): NavItem[] {
     { href: "/members", key: "members", icon: Users, show: has("tenancy.member.view") },
     { href: "/roles", key: "roles", icon: UserCog, show: has("rbac.role.view") },
     { href: "/settings", key: "settings", icon: Settings, show: has("tenancy.tenant.view") },
+    {
+      href: "/studio",
+      key: "studio",
+      icon: SlidersHorizontal,
+      show: has("customization.config.view"),
+    },
     {
       href: "/support-access",
       key: "supportAccess",
@@ -156,6 +164,7 @@ export function AppShell({
               {isTenant ? host.tenant.name : t("common.appName")}
             </Link>
             <div className="flex items-center gap-2">
+              {isTenant ? <NotificationBell /> : null}
               <LocaleSwitcher pathname={pathname} />
               <span className="text-muted-foreground hidden text-sm sm:inline" data-testid="whoami">
                 {me.display_name || me.email}

@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/app/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { can, useMe } from "@/lib/auth/me";
+import { OnboardingChecklist } from "@/components/studio/onboarding-checklist";
 import { ScopeSwitcher, scopePermissions } from "@/components/tenancy/scope-switcher";
 import { useTenantContext } from "@/lib/tenancy/context";
 import { useHost } from "@/lib/tenancy/host";
@@ -45,6 +46,12 @@ export function Dashboard() {
       title: t("nav.settings"),
       body: t("dashboard.settings"),
       show: has("tenancy.tenant.view"),
+    },
+    {
+      href: "/studio",
+      title: t("nav.studio"),
+      body: t("dashboard.studio"),
+      show: has("customization.config.view"),
     },
     {
       href: "/support-access",
@@ -116,6 +123,7 @@ export function Dashboard() {
         title={t("dashboard.title", { name: me.display_name || me.email })}
         description={t("dashboard.subtitle")}
       />
+      {isTenant && context ? <OnboardingChecklist context={context} /> : null}
       {isTenant && context ? (
         <ScopeSwitcher context={context} value={scope} onChange={setScope} />
       ) : null}

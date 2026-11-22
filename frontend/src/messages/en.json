@@ -57,7 +57,8 @@
     "settings": "Settings",
     "supportAccess": "Support access",
     "plans": "Plans",
-    "subscription": "Subscription"
+    "subscription": "Subscription",
+    "studio": "Studio"
   },
   "auth": {
     "email": "Email address",
@@ -199,7 +200,8 @@
     "supportAccess": "Requests from platform support and their history.",
     "myInstitutions": "Organisations you belong to and where to sign in.",
     "tenants": "Provision organisations, suspend them and set their limits.",
-    "supportSessions": "Request read-only support access to an organisation."
+    "supportSessions": "Request read-only support access to an organisation.",
+    "studio": "Terminology, custom fields, forms, rules, workflows, templates and numbering."
   },
   "account": {
     "title": "Account security",
@@ -577,6 +579,150 @@
       "setOverride": "Override a module",
       "setOverrideHint": "Grant or revoke one module for this organisation only.",
       "endOverride": "End override"
+    }
+  },
+  "studio": {
+    "title": "Customization Studio",
+    "subtitle": "Configure your organisation without code. Drafts change nothing until you publish them.",
+    "scope": "Scope",
+    "wholeOrganisation": "Whole organisation",
+    "noAccess": "You have no Studio permissions.",
+    "invalidJson": "This is not valid JSON.",
+    "quota": "{used} of {limit} used",
+    "remove": "Remove",
+    "saveDraft": "Save draft",
+    "publish": "Publish",
+    "discard": "Discard draft",
+    "history": "History",
+    "version": "Version {number}",
+    "draftVersion": "Draft {number}",
+    "publishedVersion": "published: {number}",
+    "rollback": "Restore",
+    "noHistory": "Nothing has been published yet.",
+    "empty": "Nothing here yet.",
+    "editor": "Editor",
+    "key": "Key",
+    "keyHint": "Lowercase letters, digits and _; it cannot change later.",
+    "name": "Name",
+    "definition": "Definition (JSON)",
+    "test": "Run tests",
+    "preview": "Preview",
+    "tryForm": "Try",
+    "formPreview": "Form preview: {key}",
+    "statuses": {
+      "draft": "Draft",
+      "published": "Published",
+      "archived": "Archived"
+    },
+    "weekdays": {
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday",
+      "7": "Sunday"
+    },
+    "sections": {
+      "settings": "Settings",
+      "fields": "Custom fields",
+      "forms": "Forms",
+      "rules": "Rules",
+      "workflows": "Workflows",
+      "templates": "Templates",
+      "numbering": "Numbering"
+    },
+    "hints": {
+      "rules": "namespace, rule (allow-listed operators only) and test_cases. A rule is published only when every test passes.",
+      "forms": "entity and layout: sections with core or custom fields and an optional visible_when rule.",
+      "workflows": "subject and spec: states, initial, transitions with permissions, optional guards and sla_hours.",
+      "templates": "kind and content per locale (subject and body). Only the documented variables are available."
+    },
+    "settings": {
+      "title": "Organisation settings",
+      "draftOpen": "A draft is open. Publish it to apply the changes.",
+      "noDraft": "No draft: you are viewing the published settings.",
+      "weekStart": "First day of the week",
+      "yearStart": "Academic year starts in",
+      "effective": "In effect: {value}",
+      "inherit": "Inherit",
+      "terminology": "Terminology",
+      "terminologyHint": "Rename terms in the interface, e.g. Class → Grade.",
+      "locale": "Language",
+      "term": "Term",
+      "label": "Label",
+      "addTerm": "Add term"
+    },
+    "fields": {
+      "add": "Add field",
+      "addHint": "The key and type cannot change after the field is created.",
+      "type": "Type",
+      "labelEn": "Label (English)",
+      "labelBn": "Label (Bengali)",
+      "options": "Options",
+      "optionsHint": "One per line: value = label",
+      "required": "Required",
+      "entity": "Record type",
+      "deprecate": "Retire",
+      "deprecated": "Retired"
+    },
+    "fieldTypes": {
+      "text": "Text",
+      "long_text": "Long text",
+      "number": "Number",
+      "decimal": "Decimal",
+      "date": "Date",
+      "boolean": "Yes/no",
+      "single_select": "Choice",
+      "multi_select": "Multiple choice",
+      "email": "Email",
+      "phone": "Phone"
+    },
+    "entities": {
+      "tenancy_institution": "Institution",
+      "tenancy_campus": "Campus",
+      "tenancy_member": "Member"
+    },
+    "numbering": {
+      "add": "Add sequence",
+      "pattern": "Pattern",
+      "reset": "Restart",
+      "tokens": "Tokens: '{INST} {CAMPUS} {YYYY} {YY} {AY} {SEQ:n}'. Numbers are gap-free.",
+      "scopes": {
+        "tenant": "Whole organisation",
+        "institution": "Per institution",
+        "campus": "Per campus"
+      },
+      "resets": {
+        "never": "Never",
+        "yearly": "Every calendar year",
+        "academic_year": "Every academic year"
+      }
+    },
+    "form": {
+      "loading": "Loading the form…",
+      "unavailable": "This form is not available.",
+      "check": "Check",
+      "valid": "Everything is valid.",
+      "failed": "The form could not be checked. Try again."
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "open": "Notifications, {count} unread",
+    "markAll": "Mark all as read",
+    "empty": "No notifications."
+  },
+  "onboarding": {
+    "title": "Set up your organisation",
+    "progress": "{done} of {total} steps done",
+    "done": "Done:",
+    "todo": "To do:",
+    "steps": {
+      "institution": "Add your institution",
+      "settings": "Publish your settings and terminology",
+      "fields": "Add the custom fields you need",
+      "members": "Invite your team"
     }
   }
 }

@@ -37,7 +37,7 @@
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Approved | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`), [PR #50](https://github.com/shafikcmt/education-erp-platform/pull/50) (M7, merged `983a9e4`) | **Approved** (owner, 2026-11-22) |
-| 5 | Customization Studio & institution configuration | In progress | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`); `feat/phase-05-m6` (M6) | Plan Approved (ADR-055–060) |
+| 5 | Customization Studio & institution configuration | In progress | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`), [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) (M6, merged `940ec47`); `feat/phase-05-m7` (M7) | Plan Approved (ADR-055–060) |
 | 6 | Academic structure & student admission | Not started | | |
 | 7 | Student, teacher & parent management | Not started | | |
 | 8 | Attendance management | Not started | | |
@@ -77,6 +77,13 @@ See `DECISION_LOG.md`.
   - ADR-041 to ADR-047 are Proposed, awaiting final approval.
   - Remaining decisions are D1–D9 (plan §17.2). The production platform domain (D1) is needed before tenant hosts can be enabled in production.
 
+### 2026-11-22 — Session 31 (continued): Phase 5 M7
+- **M6:** [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) — CI **8/8 success**; squash-merged → **`940ec47`** (tree identical to the head).
+- **M7 (`feat/phase-05-m7`):** Customization Studio UI at `/studio` (settings and terminology with draft/publish/restore; custom fields; JSON editors for rules, forms, workflows and templates with test runner and preview; numbering); DynamicForm renderer (server-decided visibility and validation); notification bell; onboarding checklist on the dashboard; en + bn.
+- **Deviations (plan §13.7):** visual builders are not built (JSON editors in v1); the onboarding wizard is a checklist; self-service sign-up moves to M8.
+- **Verification (local):** frontend `tsc`, ESLint, Prettier clean; Vitest **46 passed** (6 new); `next build` succeeded (route `/[locale]/studio`); the four starter bodies were saved and published through the real services once (scratch test, not committed). No backend change in M7, so the backend suite was not re-run beyond that check. The Studio UI has **not** yet been exercised end to end in a browser: that is the M8 E2E work.
+- **Next:** M8 (self-service sign-up behind its flag; E2E for presets per institution type and publish/rollback; security self-review; Phase 5 completion).
+
 ## Known gaps / open questions
 
 - Price points, tier boundaries, trial length (ADR-024).
@@ -85,6 +92,12 @@ See `DECISION_LOG.md`.
 - Legal/compliance review for minors' data, retention periods, VAT/tax invoicing.
 - **Security-event IP retention (ADR-036):** default 365 days and lawful basis are **pending legal review before production**. Nginx access logs contain plaintext client IPs; set their retention and rotation policy in Phase 19.
 - Numeric NFR targets (latency, availability, RPO/RTO) are proposed, not approved.
+- **Phase 5 gaps (recorded, not hidden; plan §13):**
+  - Preset content is a draft for review with real institutions (ADR-060 Q4).
+  - Studio v1 edits rules, forms, workflows and templates as JSON; visual builders are not built (§13.7 C38).
+  - The onboarding wizard is a dashboard checklist, not a separate flow (C40).
+  - Self-service sign-up moved from M7 to M8 (C41).
+  - Custom field values on members wait for member profiles (Phase 7).
 - **Phase 3 M5 gaps (recorded, not hidden; plan §24.8):**
   - ~~**No HTTP endpoints** for support sessions and the approval setting~~ — **resolved in M8**.
   - ~~**Suspension service (P5)**~~ — **resolved in M8** (revokes open support sessions).
