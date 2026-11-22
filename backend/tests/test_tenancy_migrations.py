@@ -81,10 +81,13 @@ def test_tenancy_migrations_rehearse_forward_reverse_forward(owner_dsn):
             DATABASE_MIGRATION_URL=app_url,
         )
         phase2 = query(PHASE2_FINGERPRINT)
-        assert query(TENANCY_OBJECTS) == (7, 4)  # 7 tables; F1-F3 + guard trigger function
+        # 8 tables (sign-up requests since Phase 5 M8); F1-F3 + guard trigger function
+        assert query(TENANCY_OBJECTS) == (8, 4)
 
         refused = manage("migrate", "tenancy", "zero", "--noinput", ok=False)
         assert "Refusing to reverse" in refused
+        # Ordinary migrations after the isolation ones reverse until the guard refuses: the
+        # sign-up registry table (0007, no RLS) is gone, every isolation object stays.
         assert query(TENANCY_OBJECTS) == (7, 4)
 
         manage("migrate", "tenancy", "zero", "--noinput", ERP_ALLOW_ISOLATION_ROLLBACK="true")
@@ -92,7 +95,7 @@ def test_tenancy_migrations_rehearse_forward_reverse_forward(owner_dsn):
         assert query(PHASE2_FINGERPRINT) == phase2
 
         manage("migrate", "--noinput")
-        assert query(TENANCY_OBJECTS) == (7, 4)
+        assert query(TENANCY_OBJECTS) == (8, 4)
         assert query(PHASE2_FINGERPRINT) == phase2
         assert "No migrations to apply" in manage("migrate", "--noinput")
     finally:

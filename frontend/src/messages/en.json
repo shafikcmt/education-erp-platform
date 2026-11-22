@@ -58,7 +58,8 @@
     "supportAccess": "Support access",
     "plans": "Plans",
     "subscription": "Subscription",
-    "studio": "Studio"
+    "studio": "Studio",
+    "signups": "Sign-ups"
   },
   "auth": {
     "email": "Email address",
@@ -723,6 +724,44 @@
       "settings": "Publish your settings and terminology",
       "fields": "Add the custom fields you need",
       "members": "Invite your team"
+    }
+  },
+  "signup": {
+    "title": "Create your organisation",
+    "intro": "Tell us about your institution. We confirm your email, review the request and then invite you as the owner.",
+    "create": "Create an organisation",
+    "closed": "Self-service sign-up is not open. Contact us to get started.",
+    "organisation": "Organisation name",
+    "slug": "Web address",
+    "slugHint": "3-32 lower-case letters, digits and hyphens. It becomes your organisation's address.",
+    "institutionType": "Institution type",
+    "institutionName": "Institution name",
+    "currency": "Currency",
+    "currencyHint": "Three-letter code, for example BDT or USD.",
+    "emailHint": "You will be the owner. We send the confirmation link here.",
+    "submit": "Send request",
+    "approvalNote": "Every request is reviewed by our team before the organisation is created.",
+    "sent": "Thank you. If the details are valid, a confirmation email is on its way. The link works for 48 hours.",
+    "verifyTitle": "Confirm your sign-up",
+    "verifyIntro": "Confirm that you asked to create this organisation.",
+    "confirm": "Confirm",
+    "verified": "Confirmed. Our team now reviews your request; you receive an invitation by email when it is approved.",
+    "admin": {
+      "title": "Sign-up requests",
+      "subtitle": "Approve verified requests to create the organisation and invite its owner, or reject them with a reason.",
+      "status": "Status",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reason": "Reason",
+      "reasonHint": "10 to 200 characters; kept with the request.",
+      "empty": "No requests with this status.",
+      "statuses": {
+        "verified": "Waiting for approval",
+        "pending": "Waiting for email confirmation",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "expired": "Expired"
+      }
     }
   }
 }

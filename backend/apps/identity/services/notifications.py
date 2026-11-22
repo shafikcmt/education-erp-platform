@@ -41,6 +41,7 @@ TEMPLATES = frozenset(
         "support_session_requested",
         "support_session_started",
         "support_approval_changed",
+        "signup_verify",  # Phase 5 M8: sent by apps.tenancy.services.signup
     }
 )
 
@@ -58,11 +59,17 @@ def _locale(user: User | None, fallback: str = "en") -> str:
 
 
 def send_security_email(
-    template: str, *, to: str, user: User | None, context: dict[str, Any] | None = None
+    template: str,
+    *,
+    to: str,
+    user: User | None,
+    context: dict[str, Any] | None = None,
+    locale: str | None = None,
 ) -> None:
+    """``locale`` is used when there is no user yet (a sign-up); otherwise the user's."""
     if template not in TEMPLATES:
         raise ValueError(f"Unknown email template {template!r}")
-    locale = _locale(user)
+    locale = _locale(user, fallback=locale or "en")
     payload = {
         "template": template,
         "to": to,

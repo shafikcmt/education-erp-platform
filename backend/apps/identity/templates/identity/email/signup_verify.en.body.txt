@@ -1,0 +1,12 @@
+{% autoescape off %}Hello,
+
+Someone asked to create the organisation {{ organisation }} on Education ERP with this email address.
+To confirm the request, open this link within {{ hours }} hours:
+
+{{ verify_url }}
+
+After you confirm, our team reviews the request. When it is approved, you receive an invitation to sign in as the owner.
+
+If you did not ask for this, ignore this email. Nothing is created without your confirmation. The link works only once.
+
+— Education ERP{% endautoescape %}

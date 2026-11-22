@@ -40,6 +40,19 @@ urlpatterns = [
         p.OwnerInvitationView.as_view(),
         name="platform-tenant-owner-invitation",
     ),
+    path("signup/", p.SignupView.as_view(), name="signup"),
+    path("signup/verify/", p.SignupVerifyView.as_view(), name="signup-verify"),
+    path("platform/signups/", p.PlatformSignupsView.as_view(), name="platform-signups"),
+    path(
+        "platform/signups/<str:signup_id>/approve/",
+        p.PlatformSignupApproveView.as_view(),
+        name="platform-signup-approve",
+    ),
+    path(
+        "platform/signups/<str:signup_id>/reject/",
+        p.PlatformSignupRejectView.as_view(),
+        name="platform-signup-reject",
+    ),
     path(
         "platform/support-sessions/",
         p.OwnSupportSessionsView.as_view(),

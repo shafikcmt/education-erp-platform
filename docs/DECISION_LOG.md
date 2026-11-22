@@ -59,6 +59,7 @@
 | 053 | Feature flags as data-driven rollout controls, separate from entitlements | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 049 | D9 isolation-overhead benchmark deferred from Phase 3 M10 to Phase 18 (production-like environment); D9 thresholds unchanged | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
+| 061 | Self-service sign-up always needs a platform administrator's approval in v1 (stricter than ADR-060 Q3 "optional approval"); P23 anonymous request/verify; P25 retention sweep | **Proposed** (implemented as the stricter safe default; owner to confirm) | 2026-11-22 |
 
 ---
 
@@ -759,6 +760,14 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **ADR-059:** minimal `notifications_core` (in-app + email through the existing mail path); SMS and push in Phase 14.
 - **ADR-060 (Accepted):** owner answers to plan §12. Q1: Jinja2 `SandboxedEnvironment`. Q2: in-house rules evaluator. Q3: self-service sign-up built behind a feature flag that is off by default (email verification, rate limits, honeypot, 48-hour expiry, optional Super Admin approval; no external CAPTCHA). Q4: six v1 draft presets, refined with real institutions; new versions opt-in. Q5: per-plan Studio quotas as soft limits (warn, then block new items).
 
+## ADR-061 — Sign-up approval is mandatory in v1
+
+**Status:** **Proposed** (2026-11-22, Phase 5 M8). Built as the stricter, safe default; it narrows ADR-060 Q3 and changes nothing else. The owner may accept it, or ask for the optional (automatic) approval path, which would need its own design.
+
+- **Context:** ADR-060 Q3 accepted self-service sign-up behind an off-by-default flag with an *optional* Super Admin approval. Provisioning (P4) always runs for an authenticated user who holds `tenancy.tenant.create` (uncached check, audited). Automatic approval would need a new anonymous provisioning scope with no accountable actor, which weakens the platform operation catalogue (ADR-043).
+- **Decision:** every verified sign-up waits for a platform administrator, who approves it (P4 with the administrator as the actor; the owner gets the usual invitation) or rejects it with a reason. P23 is catalogued as an anonymous, registry-only operation (request and email verification); P25 is a system retention sweep. The feature stays off unless `TENANCY_SIGNUP_ENABLED` is set; tenant hosts stay disabled, so production use waits for the approved domain and security review.
+- **Consequences:** no tenant ever exists without a human decision. A busy platform needs someone to review requests; requests waiting for a decision are never purged automatically.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -781,3 +790,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-21 — Owner approved Phase 3 and the Phase 4 plan: ADR-050 to ADR-053 **Accepted**; ADR-054 added (Accepted).
 - 2026-11-22 — Owner approved Phase 4 (no ADR changed). ADR-055 to ADR-059 listed as Proposed with `plans/PHASE_05_PLAN.md`; ADR-016 stays Proposed until ADR-055 is decided.
 - 2026-11-22 — Owner approved the Phase 5 plan: ADR-055 to ADR-059 **Accepted**; ADR-060 added (Accepted); ADR-016 decided by ADR-055 (its original text kept).
+- 2026-11-22 — Added ADR-061 (Proposed): mandatory approval for self-service sign-up in v1 (stricter than ADR-060 Q3). No Accepted ADR changed.

@@ -16,6 +16,7 @@ from django.conf import settings
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
+from rest_framework.permissions import AllowAny
 from rest_framework.request import Request
 from rest_framework.response import Response
 
@@ -25,10 +26,10 @@ from apps.identity.api.utils import CsrfProtectedView, get_or_404, service_error
 from apps.identity.models import User
 from apps.rbac.permissions import HasPermission
 from apps.tenancy.api import serializers as s
-from apps.tenancy.models import Tenant
+from apps.tenancy.models import SignupRequest, Tenant
 from apps.tenancy.rules import TenantStatus
 from apps.tenancy.selectors.platform import memberships_of, support_sessions_of
-from apps.tenancy.services import registry
+from apps.tenancy.services import registry, signup
 from apps.tenancy.services import support as support_services
 
 TAGS = ["platform-tenants"]
@@ -346,3 +347,128 @@ class EndOwnSupportSessionView(CsrfProtectedView):
                 request=request._request,
             )
         return Response({"session_id": session.pk, "status": session.status})
+
+
+# --------------------------------------------------------------------------- sign-up (Phase 5 M8)
+_SIGNUP_ACCEPTED = {"detail": "If the details are valid, a confirmation email is on its way."}
+
+
+class SignupView(CsrfProtectedView):
+    """Anonymous by design (platform host only): enumeration-safe 202, throttled, honeypot.
+    Answers 404 while ``TENANCY_SIGNUP_ENABLED`` is off (GET says whether it is on)."""
+
+    permission_classes = [AllowAny]
+    platform_operations = {"GET": "P23", "POST": "P23"}
+
+    @extend_schema(
+        tags=TAGS, summary="Is self-service sign-up open?", responses=s.SignupAvailabilitySerializer
+    )
+    def get(self, request: Request) -> Response:
+        return Response({"enabled": signup.enabled()})
+
+    @extend_schema(
+        tags=TAGS,
+        summary="Ask to create an organisation (email verification, then approval)",
+        request=s.SignupRequestSerializer,
+        responses={202: s.SignupAcceptedSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        signup._require_enabled()  # before validation: a closed sign-up reveals nothing
+        data = s.SignupRequestSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        with service_errors():
+            signup.request_signup(request._request, dict(data.validated_data))
+        return Response(_SIGNUP_ACCEPTED, status=status.HTTP_202_ACCEPTED)
+
+
+class SignupVerifyView(CsrfProtectedView):
+    permission_classes = [AllowAny]
+    platform_operations = {"POST": "P23"}
+
+    @extend_schema(
+        tags=TAGS,
+        summary="Confirm a sign-up with the emailed single-use token",
+        request=s.SignupVerifySerializer,
+        responses=s.SignupAcceptedSerializer,
+    )
+    def post(self, request: Request) -> Response:
+        signup._require_enabled()
+        data = s.SignupVerifySerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        with service_errors():
+            signup.verify_signup(request._request, data.validated_data["token"])
+        return Response({"detail": "Confirmed. The request now waits for approval."})
+
+
+_SIGNUP_FIELDS = (
+    "id", "email", "organisation_name", "slug", "institution_type", "institution_name",
+    "default_locale", "timezone", "currency", "country", "status", "created_at", "expires_at",
+    "verified_at", "decided_at", "decision_reason",
+)  # fmt: skip
+
+
+def _signup_row(row: SignupRequest) -> dict[str, Any]:
+    return {**{f: getattr(row, f) for f in _SIGNUP_FIELDS}, "tenant_id": row.provisioned_tenant_id}
+
+
+class PlatformSignupsView(CsrfProtectedView):
+    permission_classes = [HasPermission({"GET": "tenancy.tenant.create"})]
+    platform_operations = {"GET": "P4"}
+
+    @extend_schema(
+        tags=TAGS,
+        summary="Sign-up requests (newest first)",
+        parameters=[OpenApiParameter("status", OpenApiTypes.STR)],
+        responses=s.PlatformSignupSerializer(many=True),
+    )
+    def get(self, request: Request) -> Response:
+        signup.expire_stale()
+        rows = SignupRequest.objects.order_by("-created_at")
+        if value := request.query_params.get("status"):
+            rows = rows.filter(status=value[:16])
+        return Response(
+            s.PlatformSignupSerializer([_signup_row(r) for r in rows[:200]], many=True).data
+        )
+
+
+class PlatformSignupApproveView(CsrfProtectedView):
+    permission_classes = [HasPermission({"POST": "tenancy.tenant.create"})]
+    platform_operations = {"POST": "P4"}
+
+    @extend_schema(
+        tags=TAGS,
+        summary="Approve a verified sign-up (provisions the tenant, invites the owner)",
+        request=None,
+        responses={201: s.TenantRegistrySerializer},
+    )
+    def post(self, request: Request, signup_id: str) -> Response:
+        row = get_or_404(SignupRequest.objects.all(), signup_id)
+        with service_errors():
+            tenant = signup.approve_signup(
+                actor=_actor(request), signup_id=row.pk, request=request._request
+            )
+        return Response(s.TenantRegistrySerializer(tenant).data, status=status.HTTP_201_CREATED)
+
+
+class PlatformSignupRejectView(CsrfProtectedView):
+    permission_classes = [HasPermission({"POST": "tenancy.tenant.create"})]
+    platform_operations = {"POST": "P4"}
+
+    @extend_schema(
+        tags=TAGS,
+        summary="Reject an open sign-up",
+        request=s.RegistryReasonSerializer,
+        responses=s.PlatformSignupSerializer,
+    )
+    def post(self, request: Request, signup_id: str) -> Response:
+        data = s.RegistryReasonSerializer(data=request.data)
+        data.is_valid(raise_exception=True)
+        row = get_or_404(SignupRequest.objects.all(), signup_id)
+        with service_errors():
+            row = signup.reject_signup(
+                actor=_actor(request),
+                signup_id=row.pk,
+                reason=data.validated_data["reason"],
+                request=request._request,
+            )
+        return Response(s.PlatformSignupSerializer(_signup_row(row)).data)

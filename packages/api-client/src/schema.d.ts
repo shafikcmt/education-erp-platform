@@ -1810,6 +1810,69 @@ export interface paths {
         patch: operations["platform_roles_partial_update"];
         trace?: never;
     };
+    "/api/v1/platform/signups/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sign-up requests (newest first)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["platform_signups_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/signups/{signup_id}/approve/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve a verified sign-up (provisions the tenant, invites the owner)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_signups_approve_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/signups/{signup_id}/reject/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reject an open sign-up
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["platform_signups_reject_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/platform/support-sessions/": {
         parameters: {
             query?: never;
@@ -2435,6 +2498,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/signup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Is self-service sign-up open?
+         * @description Anonymous by design (platform host only): enumeration-safe 202, throttled, honeypot.
+         *     Answers 404 while ``TENANCY_SIGNUP_ENABLED`` is off (GET says whether it is on).
+         */
+        get: operations["signup_retrieve"];
+        put?: never;
+        /**
+         * Ask to create an organisation (email verification, then approval)
+         * @description Anonymous by design (platform host only): enumeration-safe 202, throttled, honeypot.
+         *     Answers 404 while ``TENANCY_SIGNUP_ENABLED`` is off (GET says whether it is on).
+         */
+        post: operations["signup_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/signup/verify/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm a sign-up with the emailed single-use token
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["signup_verify_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/support-sessions/": {
         parameters: {
             query?: never;
@@ -2830,6 +2940,12 @@ export interface components {
         Csrf: {
             detail: string;
         };
+        /**
+         * @description * `en` - en
+         *     * `bn` - bn
+         * @enum {string}
+         */
+        DefaultLocaleEnum: "en" | "bn";
         EmailChangeRequest: {
             /** Format: email */
             new_email: string;
@@ -3343,6 +3459,32 @@ export interface components {
             code: string;
             name: string;
         };
+        PlatformSignup: {
+            /** Format: uuid */
+            id: string;
+            /** Format: email */
+            email: string;
+            organisation_name: string;
+            slug: string;
+            institution_type: string;
+            institution_name: string;
+            default_locale: string;
+            timezone: string;
+            currency: string;
+            country: string;
+            status: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: date-time */
+            verified_at: string | null;
+            /** Format: date-time */
+            decided_at: string | null;
+            decision_reason: string;
+            /** Format: uuid */
+            tenant_id: string | null;
+        };
         PlatformUser: {
             /** Format: uuid */
             readonly id: string;
@@ -3575,6 +3717,31 @@ export interface components {
             kind: components["schemas"]["SetOverrideKindEnum"];
             /** Format: date-time */
             expires_at?: string | null;
+        };
+        SignupAccepted: {
+            detail: string;
+        };
+        SignupAvailability: {
+            enabled: boolean;
+        };
+        SignupRequestRequest: {
+            /** Format: email */
+            email: string;
+            organisation_name: string;
+            slug: string;
+            institution_type: components["schemas"]["InstitutionTypeEnum"];
+            institution_name: string;
+            default_locale: components["schemas"]["DefaultLocaleEnum"];
+            /** @default UTC */
+            timezone: string;
+            /** @default USD */
+            currency: string;
+            country?: string;
+            /** @default  */
+            website: string;
+        };
+        SignupVerifyRequest: {
+            token: string;
         };
         StepUpRequest: {
             password: string;
@@ -6136,6 +6303,73 @@ export interface operations {
             };
         };
     };
+    platform_signups_list: {
+        parameters: {
+            query?: {
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSignup"][];
+                };
+            };
+        };
+    };
+    platform_signups_approve_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantRegistry"];
+                };
+            };
+        };
+    };
+    platform_signups_reject_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                signup_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistryReasonRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlatformSignup"];
+                };
+            };
+        };
+    };
     platform_support_sessions_list: {
         parameters: {
             query?: never;
@@ -6958,6 +7192,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantRole"];
+                };
+            };
+        };
+    };
+    signup_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupAvailability"];
+                };
+            };
+        };
+    };
+    signup_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupRequestRequest"];
+            };
+        };
+        responses: {
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupAccepted"];
+                };
+            };
+        };
+    };
+    signup_verify_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupVerifyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SignupAccepted"];
                 };
             };
         };
