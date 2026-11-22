@@ -101,6 +101,11 @@ EVENTS: dict[str, frozenset[str]] = {
     "tenancy.support_approval.changed": frozenset({"old", "new", "reason"}),
     # tenant registry and structure (Phase 3 M8). Registry events are written to both logs.
     "tenancy.tenant.provisioned": frozenset({"slug", "tenant_id"}),
+    # self-service sign-up (Phase 5 M8, P23); the requester's email is never logged
+    "tenancy.signup.requested": frozenset({"slug", "institution_type"}),
+    "tenancy.signup.verified": frozenset({"slug"}),
+    "tenancy.signup.approved": frozenset({"slug", "tenant_id"}),
+    "tenancy.signup.rejected": frozenset({"slug"}),
     "tenancy.tenant.provisioning_failed": frozenset({"slug", "tenant_id", "error"}),
     "tenancy.tenant.updated": frozenset({"fields", "tenant_id"}),
     "tenancy.tenant.suspended": frozenset({"reason", "tenant_id", "revoked_support_count"}),

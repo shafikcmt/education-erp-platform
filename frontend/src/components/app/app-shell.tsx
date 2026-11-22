@@ -15,6 +15,7 @@ import {
   SlidersHorizontal,
   ShieldCheck,
   UserCog,
+  UserPlus,
   Users,
 } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
@@ -44,6 +45,12 @@ function platformNav(me: Me): NavItem[] {
       key: "tenants",
       icon: Building2,
       show: can(me, "tenancy.tenant.view_any"),
+    },
+    {
+      href: "/platform/signups",
+      key: "signups",
+      icon: UserPlus,
+      show: can(me, "tenancy.tenant.create"),
     },
     {
       href: "/platform/plans",

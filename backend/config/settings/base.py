@@ -193,6 +193,10 @@ SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
     "invite_email": (5, 60 * 60),
     # Phase 3 M8: password attempts when redeeming an invitation for an existing account.
     "invite_accept": (5, 15 * 60),
+    # Phase 5 M8: self-service sign-up (per IP: 429; per email: silent).
+    "signup_ip": (env.int("SECURITY_SIGNUP_IP_LIMIT", default=5), 60 * 60),
+    "signup_email": (3, 24 * 60 * 60),
+    "signup_verify_ip": (20, 60 * 60),
 }
 SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
 SECURITY_LOGIN_MAX_DELAY_SECONDS = 30
@@ -255,6 +259,11 @@ TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 
 # Phase 3 M8 (plan §12.2, §10.2): when true, provisioning is refused (409
 # ``tenant_hosts_disabled``) while tenant hosts are off. Production sets it; nowhere else does.
 TENANT_PROVISIONING_REQUIRES_HOSTS = False
+# Phase 5 M8 (ADR-060 Q3, P23): self-service sign-up. OFF unless the deployment turns it on;
+# every request still needs a platform administrator's approval before a tenant exists.
+TENANCY_SIGNUP_ENABLED: bool = env.bool("TENANCY_SIGNUP_ENABLED", default=False)
+TENANCY_SIGNUP_TTL_HOURS = 48  # the verification link
+TENANCY_SIGNUP_RETENTION_DAYS = 30  # closed requests are deleted after this
 # Reversing tenant-isolation migrations (RLS, tenant context function) is refused unless
 # explicitly allowed, and is never allowed in production or staging (plan §19.2).
 ERP_ALLOW_ISOLATION_ROLLBACK: bool = env.bool("ERP_ALLOW_ISOLATION_ROLLBACK", default=False)
@@ -382,6 +391,12 @@ CELERY_BEAT_SCHEDULE = {
     "module-registry-entitlement-sweep": {
         "task": "module_registry.sweep_entitlements",
         "schedule": 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 5 M8 (P25): expire unverified sign-ups, delete closed ones after the retention.
+    "tenancy-purge-signups": {
+        "task": "tenancy.purge_signups",
+        "schedule": 24 * 60 * 60.0,
         "options": {"queue": "default"},
     },
     "tenancy-isolation-daily-report": {

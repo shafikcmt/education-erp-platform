@@ -134,6 +134,16 @@ REGISTRY_ALLOWLIST: dict[str, AllowEntry] = {
             "tests/test_permission_catalog.py::test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused",
         ),
     ),
+    "tenancy_signuprequest": AllowEntry(
+        "Self-service sign-up requests (Phase 5 M8, P23): no tenant exists yet. Written by the "
+        "anonymous, throttled request/verify flow (off unless TENANCY_SIGNUP_ENABLED); read and "
+        "decided only by holders of tenancy.tenant.create; tokens hashed; closed rows purged "
+        "after 30 days (P25).",
+        (
+            "apps/tenancy/tests/test_signup.py::test_only_provisioners_see_and_decide_sign_ups",
+            "apps/tenancy/tests/test_signup.py::test_sign_up_is_off_by_default_and_reveals_nothing",
+        ),
+    ),
     "module_registry_module": AllowEntry(
         "Global, code-defined module catalogue (Phase 4, ADR-050); no tenant data. SELECT "
         "only for the runtime role; written only by the owner-run sync_modules bootstrap.",

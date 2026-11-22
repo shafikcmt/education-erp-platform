@@ -2462,6 +2462,85 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/platform/signups/:
+    get:
+      operationId: platform_signups_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Sign-up requests (newest first)
+      parameters:
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - platform-tenants
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PlatformSignup'
+          description: ''
+  /api/v1/platform/signups/{signup_id}/approve/:
+    post:
+      operationId: platform_signups_approve_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Approve a verified sign-up (provisions the tenant, invites the owner)
+      parameters:
+      - in: path
+        name: signup_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantRegistry'
+          description: ''
+  /api/v1/platform/signups/{signup_id}/reject/:
+    post:
+      operationId: platform_signups_reject_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Reject an open sign-up
+      parameters:
+      - in: path
+        name: signup_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistryReasonRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlatformSignup'
+          description: ''
   /api/v1/platform/support-sessions/:
     get:
       operationId: platform_support_sessions_list
@@ -3415,6 +3494,74 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantRole'
           description: ''
+  /api/v1/signup/:
+    get:
+      operationId: signup_retrieve
+      description: |-
+        Anonymous by design (platform host only): enumeration-safe 202, throttled, honeypot.
+        Answers 404 while ``TENANCY_SIGNUP_ENABLED`` is off (GET says whether it is on).
+      summary: Is self-service sign-up open?
+      tags:
+      - platform-tenants
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupAvailability'
+          description: ''
+    post:
+      operationId: signup_create
+      description: |-
+        Anonymous by design (platform host only): enumeration-safe 202, throttled, honeypot.
+        Answers 404 while ``TENANCY_SIGNUP_ENABLED`` is off (GET says whether it is on).
+      summary: Ask to create an organisation (email verification, then approval)
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupRequestRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupAccepted'
+          description: ''
+  /api/v1/signup/verify/:
+    post:
+      operationId: signup_verify_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Confirm a sign-up with the emailed single-use token
+      tags:
+      - platform-tenants
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SignupVerifyRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignupAccepted'
+          description: ''
   /api/v1/support-sessions/:
     get:
       operationId: support_sessions_list
@@ -4154,6 +4301,14 @@ components:
           type: string
       required:
       - detail
+    DefaultLocaleEnum:
+      enum:
+      - en
+      - bn
+      type: string
+      description: |-
+        * `en` - en
+        * `bn` - bn
     EmailChangeRequest:
       type: object
       properties:
@@ -5428,6 +5583,71 @@ components:
       required:
       - code
       - name
+    PlatformSignup:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        organisation_name:
+          type: string
+        slug:
+          type: string
+        institution_type:
+          type: string
+        institution_name:
+          type: string
+        default_locale:
+          type: string
+        timezone:
+          type: string
+        currency:
+          type: string
+        country:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          nullable: true
+        decision_reason:
+          type: string
+        tenant_id:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - country
+      - created_at
+      - currency
+      - decided_at
+      - decision_reason
+      - default_locale
+      - email
+      - expires_at
+      - id
+      - institution_name
+      - institution_type
+      - organisation_name
+      - slug
+      - status
+      - tenant_id
+      - timezone
+      - verified_at
     PlatformUser:
       type: object
       properties:
@@ -6096,6 +6316,82 @@ components:
       - kind
       - module
       - reason
+    SignupAccepted:
+      type: object
+      properties:
+        detail:
+          type: string
+      required:
+      - detail
+    SignupAvailability:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+      required:
+      - enabled
+    SignupRequestRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          minLength: 1
+          maxLength: 254
+        organisation_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        slug:
+          type: string
+          minLength: 1
+          maxLength: 32
+          pattern: ^[a-z][a-z0-9-]{1,30}[a-z0-9]$
+        institution_type:
+          $ref: '#/components/schemas/InstitutionTypeEnum'
+        institution_name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        default_locale:
+          $ref: '#/components/schemas/DefaultLocaleEnum'
+        timezone:
+          type: string
+          minLength: 1
+          default: UTC
+          maxLength: 64
+        currency:
+          type: string
+          minLength: 1
+          default: USD
+          pattern: ^[A-Z]{3}$
+        country:
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^([A-Z]{2})?$
+          - type: string
+            maxLength: 0
+        website:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - default_locale
+      - email
+      - institution_name
+      - institution_type
+      - organisation_name
+      - slug
+    SignupVerifyRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          minLength: 1
+          maxLength: 200
+      required:
+      - token
     StepUpRequest:
       type: object
       properties:

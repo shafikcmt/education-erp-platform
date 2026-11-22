@@ -9,6 +9,8 @@
   only): a daily summary of blocked isolation violations (``tenancy.isolation.blocked`` platform
   events, tenant id as metadata) per tenant and reason, as one structured log line. No tenant
   data is read (plan §14 "security monitoring").
+* ``tenancy.purge_signups`` — platform task **P25** (registry only, no tenant data): expires
+  unverified sign-ups and deletes closed ones after ``TENANCY_SIGNUP_RETENTION_DAYS``.
 * ``tenancy.expire_support_sessions`` — tenant task: marks the tenant's lapsed support
   sessions ``expired`` and ends the staff sign-ins on its hosts. Runs for active and suspended
   tenants (a suspended tenant's sessions still have to end).
@@ -97,3 +99,10 @@ def expire_support_sessions(*, tenant_id: uuid.UUID) -> int:
     for session_id in lapsed:
         expire_session(session_id)
     return len(lapsed)
+
+
+@platform_task(name="tenancy.purge_signups", operation="P25")
+def purge_signups() -> int:
+    from apps.tenancy.services.signup import purge_closed
+
+    return purge_closed()

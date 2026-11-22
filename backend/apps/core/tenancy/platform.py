@@ -179,14 +179,12 @@ CATALOGUE: dict[str, PlatformOperationSpec] = {
             "T",
             disabled_reason="Runs inside P4 and the tenant transaction; no separate scope.",
         ),
-        _op(
-            "P23",
-            "Self-service sign-up",
-            "user",
-            "RT",
-            disabled_reason="Planned for Phase 5 M7, behind a feature flag that is off (ADR-060).",
-        ),
+        # P23 is catalogued as enabled; the feature itself stays off unless the deployment sets
+        # TENANCY_SIGNUP_ENABLED (ADR-060 Q3). It only writes sign-up registry rows: tenants are
+        # provisioned by an administrator through P4.
+        _op("P23", "Self-service sign-up (request and email verification)", "anonymous", "R"),
         _op("P24", "Workflow SLA sweep", "system", "I"),
+        _op("P25", "Sign-up retention sweep", "system", "R"),
         _op(
             "P16",
             "Incident break-glass",

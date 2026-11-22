@@ -522,3 +522,50 @@ class ContextSerializer(serializers.Serializer[Any]):
     institution_terminology = serializers.DictField(
         child=serializers.DictField(child=serializers.DictField(child=serializers.CharField()))
     )
+
+
+# --------------------------------------------------------------------------- sign-up (Phase 5 M8)
+class SignupAvailabilitySerializer(serializers.Serializer[None]):
+    enabled = serializers.BooleanField()
+
+
+class SignupRequestSerializer(serializers.Serializer[None]):
+    email = serializers.EmailField(max_length=254)
+    organisation_name = serializers.CharField(max_length=200)
+    slug = serializers.RegexField(SLUG_PATTERN, max_length=32)
+    institution_type = serializers.ChoiceField(choices=INSTITUTION_TYPES)
+    institution_name = serializers.CharField(max_length=200)
+    default_locale = serializers.ChoiceField(choices=[code for code, _ in settings.LANGUAGES])
+    timezone = serializers.CharField(max_length=64, required=False, default="UTC")
+    currency = serializers.RegexField(r"^[A-Z]{3}$", required=False, default="USD")
+    country = serializers.RegexField(r"^([A-Z]{2})?$", required=False, default="", allow_blank=True)
+    # Honeypot: hidden from people, filled by bots. Any value makes the request a silent no-op.
+    website = serializers.CharField(max_length=200, required=False, allow_blank=True, default="")
+
+
+class SignupVerifySerializer(serializers.Serializer[None]):
+    token = serializers.CharField(max_length=200)
+
+
+class SignupAcceptedSerializer(serializers.Serializer[None]):
+    detail = serializers.CharField()
+
+
+class PlatformSignupSerializer(serializers.Serializer[Any]):
+    id = serializers.UUIDField()
+    email = serializers.EmailField()
+    organisation_name = serializers.CharField()
+    slug = serializers.CharField()
+    institution_type = serializers.CharField()
+    institution_name = serializers.CharField()
+    default_locale = serializers.CharField()
+    timezone = serializers.CharField()
+    currency = serializers.CharField()
+    country = serializers.CharField()
+    status = serializers.CharField()
+    created_at = serializers.DateTimeField()
+    expires_at = serializers.DateTimeField()
+    verified_at = serializers.DateTimeField(allow_null=True)
+    decided_at = serializers.DateTimeField(allow_null=True)
+    decision_reason = serializers.CharField()
+    tenant_id = serializers.UUIDField(allow_null=True)

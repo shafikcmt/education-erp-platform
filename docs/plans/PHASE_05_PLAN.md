@@ -137,6 +137,7 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | P22 | Apply a preset version to an institution at provisioning (inside P4) | user (`tenancy.tenant.create`) | T |
 | P23 | Self-service sign-up (only if Q3 = yes) | anonymous, rate-limited | R + T |
 | P24 | Workflow SLA and escalation sweep | system | I |
+| P25 | Sign-up retention sweep (added in M8, §13.8) | system | R |
 
 ## 8. Permissions (new codes)
 
@@ -278,6 +279,17 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C40 | **Notification bell** in the header on tenant hosts (own inbox, unread count, mark all as read; polls every minute). **Deviation (recorded): the onboarding wizard is a dashboard checklist** computed from server state (institution, published settings, custom fields, invited team), shown to members who can edit the configuration tenant-wide, until every step is done |
 | C41 | **Deviation (recorded): self-service sign-up (P23, behind its off-by-default flag) moves to M8** together with the E2E tests, to keep this PR reviewable. en + bn catalogue keys (`studio`, `notifications`, `onboarding`); 6 new unit tests |
 
+### 13.8 M8 — self-service sign-up, E2E, security self-review (2026-11-22, branch `feat/phase-05-m8`)
+
+| # | Note |
+|---|---|
+| C42 | **Self-service sign-up (ADR-060 Q3) behind `TENANCY_SIGNUP_ENABLED` (off).** Anonymous, platform-host only: `GET/POST /api/v1/signup/`, `POST /api/v1/signup/verify/`; 404 while off. Enumeration-safe 202, per-IP limit (429), silent per-email limit, honeypot field, SHA-256-hashed single-use token in the URL fragment, 48-hour expiry; the verify page needs a click (mail scanners must not confirm). Audit events never carry the email |
+| C43 | **Deviation (ADR-061, Proposed): approval is always required.** `GET /platform/signups/`, `POST …/{id}/approve/` (P4 with the administrator as the actor; the owner receives the usual invitation) and `…/reject/` (reason 10–200), all `tenancy.tenant.create`. A conditional state change claims a request, so concurrent approvals can't both provision; a failed provisioning returns it to `verified` |
+| C44 | Catalogue: **P23** enabled as an anonymous, registry-only operation (request and verification); **P25** (new) system retention sweep, daily: unverified requests expire, closed requests are deleted after 30 days, requests awaiting a decision are kept. `tenancy_signuprequest` is an allow-listed registry table; its FK is `provisioned_tenant` (a `tenant_id` column would mark tenant data) |
+| C45 | Frontend: `/signup` (shown from the sign-in page only while open), `/signup/verify`, platform `/platform/signups` (nav "Sign-ups" for `tenancy.tenant.create`), en + bn; email template `signup_verify` (en + bn) |
+| C46 | E2E (`e2e/studio.spec.ts`): a tenant per institution type provisioned from its preset; the madrasa owner sees the preset terminology and publishes, republishes and restores settings in the Studio (step-up); the full sign-up journey (request → email → confirm → approval → owner joins). Sign-up runs only in the throwaway stack (`TENANCY_SIGNUP_ENABLED=true`, `E2E_SIGNUP=1`) |
+| C47 | Security self-review: `docs/security/PHASE_05_SECURITY_REVIEW.md` |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
@@ -288,3 +300,4 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 - 2026-11-22 — §13.5 appended: M5 notes C25–C29.
 - 2026-11-22 — §13.6 appended: M6 notes C30–C35.
 - 2026-11-22 — §13.7 appended: M7 notes C36–C41 (deviations: JSON editors in v1, onboarding checklist, sign-up moved to M8).
+- 2026-11-22 — §13.8 appended: M8 notes C42–C47 (sign-up with mandatory approval, ADR-061 Proposed; P23 enabled, P25 added; E2E; security self-review).

@@ -348,3 +348,51 @@ class SupportSession(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"support session {self.pk}"
+
+
+# --------------------------------------------------------------------------- self-service sign-up
+class SignupStatus(models.TextChoices):
+    PENDING = "pending", "Waiting for email verification"
+    VERIFIED = "verified", "Waiting for approval"
+    PROVISIONING = "provisioning", "Being provisioned"
+    APPROVED = "approved", "Approved"
+    REJECTED = "rejected", "Rejected"
+    EXPIRED = "expired", "Expired"
+
+
+class SignupRequest(BaseModel):
+    """A prospective organisation's sign-up (Phase 5 M8, P23; ADR-060 Q3).
+
+    Platform registry table: no tenant exists yet. Only the hash of the verification token is
+    stored. Every request needs a platform administrator's approval before a tenant is
+    provisioned (P4). Closed requests are deleted after the retention period.
+    """
+
+    email = models.EmailField(max_length=254)
+    organisation_name = models.CharField(max_length=200)
+    slug = models.CharField(max_length=32)
+    institution_type = models.CharField(max_length=32)
+    institution_name = models.CharField(max_length=200)
+    default_locale = models.CharField(max_length=8)
+    timezone = models.CharField(max_length=64)
+    currency = models.CharField(max_length=3)
+    country = models.CharField(max_length=2, blank=True)
+    status = models.CharField(
+        max_length=16, choices=SignupStatus.choices, default=SignupStatus.PENDING
+    )
+    token_hash = models.CharField(max_length=64, unique=True)
+    expires_at = models.DateTimeField()
+    verified_at = models.DateTimeField(null=True, blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+    decided_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+    decision_reason = models.CharField(max_length=200, blank=True)
+    # Not named ``tenant``: a ``tenant_id`` column marks tenant-owned rows for the isolation
+    # gates, and this registry row is not tenant data.
+    provisioned_tenant = models.ForeignKey(
+        Tenant, null=True, blank=True, on_delete=models.SET_NULL, related_name="+"
+    )
+
+    class Meta:
+        indexes = [models.Index(fields=["status", "created_at"])]

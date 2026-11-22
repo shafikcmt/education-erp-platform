@@ -159,7 +159,9 @@ jobs:
           # Every E2E browser reaches the API from one client address (the Docker gateway),
           # so the per-IP sign-in limit is raised for this stack only; per-account limits stay.
           echo 'SECURITY_LOGIN_IP_LIMIT=200' >> .env
-          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS|SECURITY_LOGIN_IP_LIMIT)=' .env
+          # Phase 5 M8: the sign-up journey runs in this throwaway stack only.
+          sed -i 's/^TENANCY_SIGNUP_ENABLED=.*/TENANCY_SIGNUP_ENABLED=true/' .env
+          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS|SECURITY_LOGIN_IP_LIMIT|TENANCY_SIGNUP_ENABLED)=' .env
       - name: Owner/superuser DB credentials never reach runtime services (security review H3)
         run: docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py
       - name: Build and start the full stack
@@ -193,6 +195,7 @@ jobs:
             E2E_BASE_URL: "http://localhost:8080",
             MAILPIT_URL: "http://localhost:8025",
             E2E_TENANT_HOSTS: "1",
+            E2E_SIGNUP: "1",
           }
       - name: Service logs on failure
         if: failure()

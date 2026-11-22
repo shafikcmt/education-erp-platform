@@ -17,6 +17,8 @@ import { unwrap } from "@/lib/api/errors";
 import { safeNextPath } from "@/lib/auth/next-path";
 import { useErrorMessage } from "@/lib/auth/use-error-message";
 
+import { SignupLink } from "./signup-link";
+
 export function LoginForm({ next, expired }: { next?: string; expired: boolean }) {
   const t = useTranslations();
   const router = useRouter();
@@ -94,6 +96,7 @@ export function LoginForm({ next, expired }: { next?: string; expired: boolean }
       >
         {t("auth.login.forgot")}
       </Link>
+      <SignupLink />
     </form>
   );
 }

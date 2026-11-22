@@ -2,8 +2,9 @@
  * E2E helpers: Mailpit (dev email), RFC 6238 TOTP for test authenticators, admin API session.
  * Test data only: synthetic `example.test` addresses and generated passwords.
  */
-import { createHmac } from "node:crypto";
+import { createHash, createHmac } from "node:crypto";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 
 import { type APIRequestContext, expect, type Page, request } from "@playwright/test";
@@ -58,15 +59,25 @@ export function totp(secret: string, step = Math.floor(Date.now() / 30_000)): st
   return value.toString().padStart(6, "0");
 }
 
-/** A code for a step not used before by this process (the server rejects replays). */
-const usedSteps = new Set<number>();
+/** Claim one TOTP step for one secret across ALL Playwright workers: `mkdir` is atomic, so two
+ * workers never send the same code (the server counts a replay as a wrong code, and ten wrong
+ * codes lock the account for 15 minutes, failing every later journey). */
+function claimStep(secret: string, step: number): boolean {
+  const id = createHash("sha256").update(secret).digest("hex").slice(0, 16);
+  try {
+    mkdirSync(path.join(tmpdir(), `erp-e2e-totp-${id}-${step}`));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function freshTotp(secret: string): Promise<string> {
   let step = Math.floor(Date.now() / 30_000);
-  while (usedSteps.has(step)) {
+  while (!claimStep(secret, step)) {
     await new Promise((r) => setTimeout(r, 1_000));
     step = Math.floor(Date.now() / 30_000);
   }
-  usedSteps.add(step);
   return totp(secret, step);
 }
 
