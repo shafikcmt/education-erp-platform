@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-22 (Phase 3 **Approved**; Phase 4 **Complete**, awaiting owner approval (ADR-050–054); tenant hosts disabled)
+- **Last updated:** 2026-11-22 (Phase 4 **Approved**; Phase 5 plan **Proposed** (ADR-055–059); tenant hosts disabled)
 
 ---
 
@@ -346,8 +346,8 @@ Details: `docs/AI_ASSISTANT.md`.
 | 1 | Repository foundation and infrastructure (approved 2026-11-06) |
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
-| 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete** (awaiting owner approval): M1–M6 merged in PRs #44–#49; M7 (E2E, usage metering, security self-review) on `feat/phase-04-m7`) |
-| 5 | Customization Studio and institution configuration |
+| 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
+| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Proposed**; ADR-055–059 Proposed) |
 | 6 | Academic structure and student admission |
 | 7 | Student, teacher and parent management |
 | 8 | Attendance management |
@@ -462,3 +462,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-21 — Phase 4 M4 merged (PR #47); M5 on its branch; phase table updated. No rule changed.
 - 2026-11-21 — Phase 4 M5 merged (PR #48); M6 on its branch; phase table updated. No rule changed.
 - 2026-11-22 — Phase 4 M6 merged (PR #49); M7 on its branch; Phase 4 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.
+- 2026-11-22 — Phase 4 M7 merged (PR #50) and Phase 4 approved by the owner; Phase 5 plan proposed (ADR-055 to ADR-059 Proposed); phase table and last-updated line updated. No rule changed.

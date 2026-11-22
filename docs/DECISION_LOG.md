@@ -748,6 +748,16 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **ADR-053:** feature flags are data-driven rollout controls (default, percentage, plans, tenant allow-list), separate from entitlements.
 - **ADR-054:** owner answers Q1–Q5 (plan §12).
 
+## ADR-055 to ADR-059 — Phase 5 (Customization Studio)
+
+**Status:** Proposed (2026-11-22, with `plans/PHASE_05_PLAN.md`). Not built on before the owner approves the plan. Full text: plan §3–§5, §11 and §12.
+
+- **ADR-055 (would decide ADR-016):** in-house, allow-listed JSONLogic-style rules evaluator (no new dependency), with depth/node/step limits, `Decimal` arithmetic and mandatory test cases per namespace.
+- **ADR-056:** template engine = Jinja2 `SandboxedEnvironment` (new dependency) with plain-dict contexts, autoescape, allow-listed filters and render limits; alternative: restricted Django engine.
+- **ADR-057:** declared `settings_schema` keys; scoped config versions (draft/published/archived); resolution core → preset → tenant → institution → campus; cache keyed by config version.
+- **ADR-058:** presets as repo files (YAML via `pyyaml`, promoted from transitive to direct dependency) synced by an owner-run bootstrap; institutions pin preset versions; upgrades are opt-in.
+- **ADR-059:** minimal `notifications_core` (in-app + email through the existing mail path); SMS and push in Phase 14.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -768,3 +778,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-21 — Added ADR-049 (Accepted): the D9 benchmark moves to Phase 18. No existing ADR changed; D9 thresholds unchanged.
 - 2026-11-21 — ADR-050 to ADR-053 listed as Proposed with `plans/PHASE_04_PLAN.md`. They are detailed in the plan §10 and are not built on before approval. No existing ADR changed.
 - 2026-11-21 — Owner approved Phase 3 and the Phase 4 plan: ADR-050 to ADR-053 **Accepted**; ADR-054 added (Accepted).
+- 2026-11-22 — Owner approved Phase 4 (no ADR changed). ADR-055 to ADR-059 listed as Proposed with `plans/PHASE_05_PLAN.md`; ADR-016 stays Proposed until ADR-055 is decided.
