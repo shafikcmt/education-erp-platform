@@ -132,6 +132,9 @@ EVENTS: dict[str, frozenset[str]] = {
     "customization.workflow.published": frozenset({"key", "subject", "number"}),
     "customization.workflow.started": frozenset({"key", "number", "state"}),
     "customization.workflow.transitioned": frozenset({"transition", "from", "to"}),
+    "customization.template.draft_saved": frozenset({"key", "kind", "number"}),
+    "customization.template.published": frozenset({"key", "kind", "number"}),
+    "customization.numbering.defined": frozenset({"key", "pattern", "scope", "reset"}),
     "customization.presets.synced": frozenset({"declared", "created", "deprecated"}),
     "customization.config.draft_saved": frozenset(
         {"scope", "number", "added", "removed", "changed"}

@@ -347,7 +347,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 2 | Authentication, users, roles and permissions (approved; merged in PR #15) |
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
-| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–060 Accepted; **in progress**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 forms, workflows and notifications on `feat/phase-05-m4`) |
+| 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–060 Accepted; **in progress**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 templates and numbering on `feat/phase-05-m5`) |
 | 6 | Academic structure and student admission |
 | 7 | Student, teacher and parent management |
 | 8 | Attendance management |
@@ -468,3 +468,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-22 — Phase 5 M1 merged (PR #52); M2 on its branch; phase table updated. No rule changed.
 - 2026-11-22 — Phase 5 M2 merged (PR #53); M3 on its branch; phase table updated. No rule changed.
 - 2026-11-22 — Phase 5 M3 merged (PR #54); M4 on its branch; phase table updated. No rule changed.
+- 2026-11-22 — Phase 5 M4 merged (PR #55); M5 on its branch; phase table updated. No rule changed.

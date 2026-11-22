@@ -246,6 +246,16 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C23 | **`notifications_core`** (new platform module, ADR-059): in-app `notifications_core_notification` (standard RLS, composite key to the membership) for active members only; relative links only; email queued after commit through a tenant task and the existing mail path. Reading endpoints arrive with the APIs (M6) |
 | C24 | **P24** workflow SLA sweep (every 15 minutes; per-tenant task flags overdue requests once and notifies). Catalogue now P1–P24: P22 (preset pinning, inside P4) and P23 (self-service sign-up, M7 behind a flag) are listed as disabled. Shared draft/publish helper (`versioning.py`) used by rules, forms and workflows. Permissions `customization.form.view|manage`, `customization.workflow.view|manage` (65 codes) |
 
+### 13.5 M5 — template sandbox and numbering (2026-11-22, branch `feat/phase-05-m5`)
+
+| # | Note |
+|---|---|
+| C25 | **Template sandbox** (`templates_engine.py`, ADR-056): Jinja2 3.1.6 `ImmutableSandboxedEnvironment` (new dependency, with MarkupSafe), no loader (`include`/`import`/`extends`/`from` refused at save time), no globals, 22 allow-listed filters plus a safe `date` filter, `StrictUndefined`, autoescape for HTML kinds, plain-data contexts only (no ORM objects, no floats; `Decimal` printed as given), source ≤ 20,000 characters, output generated incrementally and stopped at the kind's limit |
+| C26 | **Security tests** (exit criterion): `__class__`/`__mro__`/`__subclasses__`/`__globals__` escapes, `self._TemplateReference__context`, `attr`, `format`, `range`, `lipsum`, `cycler`, `namespace`, `map(attribute=…)`, `config`/`request`, bound-method tricks, template loading, output and data limits, HTML escaping, email header injection (single-line subjects), SMS length |
+| C27 | **Template kinds** in manifests (`TEMPLATE_KINDS`): `customization.email` (subject + body), `customization.sms` (≤ 480 characters), `customization.notice` (HTML). `customization_templatedefinition` (standard RLS, versioned): one subject/body per locale; previews use the kind's sample data or caller data limited to declared variables; publishing renders every locale with the sample first |
+| C28 | **Numbering sequences** (`customization_numberingsequence`, `…numbercounter`, standard RLS, composite key counter → sequence): tokens `{INST}`, `{CAMPUS}`, `{YYYY}`, `{YY}`, `{AY}` (from the academic-year start month setting), exactly one `{SEQ:n}`; scope tenant / institution / campus; reset never / yearly / academic year. `allocate()` locks the counter row inside the business transaction: gap-free (a rollback returns the number) and concurrency-tested (4 parallel transactions get 1-4) |
+| C29 | Permissions `customization.template.view|manage`, `customization.numbering.view|manage` (69 codes) |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
@@ -253,3 +263,4 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 - 2026-11-22 — §13.2 appended: M2 notes C7–C12.
 - 2026-11-22 — §13.3 appended: M3 notes C13–C18.
 - 2026-11-22 — §13.4 appended: M4 notes C19–C24.
+- 2026-11-22 — §13.5 appended: M5 notes C25–C29.

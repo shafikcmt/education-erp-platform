@@ -167,3 +167,18 @@ def declared_subjects() -> dict[str, str]:
             raise InvalidSettingsCatalogError(f"{code!r}: subjects are '<module>.<name>'.")
         out[code] = str(raw.get("label", code))
     return out
+
+
+@cache
+def declared_template_kinds() -> dict[str, dict[str, Any]]:
+    """Template kinds of the installed modules (``TEMPLATE_KINDS``; ADR-056)."""
+    out: dict[str, dict[str, Any]] = {}
+    for module, code, raw in _manifest_items("TEMPLATE_KINDS"):
+        if not KEY_PATTERN.match(code) or not code.startswith(f"{module}."):
+            raise InvalidSettingsCatalogError(f"{code!r}: template kinds are '<module>.<name>'.")
+        if raw.get("format") not in ("text", "html") or not isinstance(raw.get("variables"), dict):
+            raise InvalidSettingsCatalogError(f"{code}: format and variables are required.")
+        if set(raw.get("sample", {})) - set(raw["variables"]):
+            raise InvalidSettingsCatalogError(f"{code}: the sample uses undeclared variables.")
+        out[code] = dict(raw)
+    return out
