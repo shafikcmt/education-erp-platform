@@ -159,6 +159,16 @@ def test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused(ow
         assert "permissions: 0 created, 0 updated, 0 deprecated" in second
         assert "(0 created, 0 permissions added, 0 removed)" in second
 
+        # Phase 5 M2: presets sync idempotently, only as the owner, and are immutable.
+        assert "presets: 6 declared, 6 created, 0 deprecated" in manage("sync_presets")
+        assert "presets: 6 declared, 0 created, 0 deprecated" in manage("sync_presets")
+        assert "owner role" in manage("sync_presets", as_url=app_url, ok=False)
+        with psycopg.connect(owner_url, autocommit=True) as conn:
+            conn.execute(
+                "UPDATE customization_preset SET checksum = 'x' WHERE code = 'school.general.v1'"
+            )
+        assert "immutable" in manage("sync_presets", ok=False)
+
         manage(
             "shell",
             "-c",

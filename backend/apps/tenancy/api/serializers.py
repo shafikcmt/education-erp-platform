@@ -477,5 +477,9 @@ class ContextSerializer(serializers.Serializer[Any]):
     scopes = ScopePermissionsSerializer(many=True)
     support_banner = BannerSerializer(many=True)
     entitlements = EntitlementsSerializer()
-    # Phase 5 (Customization Studio) fills this; until then it is always empty.
-    terminology = serializers.DictField(child=serializers.CharField())
+    # Phase 5 M2: effective terminology (locale -> term key -> label) of the organisation, and
+    # of each active institution (its preset and published overrides, ADR-057/058).
+    terminology = serializers.DictField(child=serializers.DictField(child=serializers.CharField()))
+    institution_terminology = serializers.DictField(
+        child=serializers.DictField(child=serializers.DictField(child=serializers.CharField()))
+    )

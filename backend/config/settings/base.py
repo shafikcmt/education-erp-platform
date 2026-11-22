@@ -234,6 +234,10 @@ IDENTITY_SIGN_IN_GUARDS: list[str] = ["apps.tenancy.access.sign_in_guard"]
 # Phase 4 M3 (ADR-052, ADR-054): plan limits for tenancy, and provisioning hooks (trial plan).
 TENANCY_PLAN_LIMITS = "apps.billing.selectors.plan_limits"
 TENANCY_PROVISIONING_HOOKS: list[str] = ["apps.billing.provisioning.start_trial_plan"]
+# Phase 5 M2 (ADR-058): new institutions pin their type's default preset; its settings form the
+# preset layer of the effective configuration.
+TENANCY_INSTITUTION_PRESET = "apps.customization.presets.default_preset_for"
+CUSTOMIZATION_PRESET_LAYER = "apps.customization.presets.layer"
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}

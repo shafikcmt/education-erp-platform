@@ -1,0 +1,23 @@
+# Draft v1 (ADR-060 Q4): to be validated with real institutions; a new version is opt-in.
+code: school.general.v1
+institution_type: school
+version: 1
+default_for_type: true
+name: {en: School (general), bn: স্কুল (সাধারণ)}
+suggested_modules: [academics, students, staff, attendance, examinations, fees, parent_portal]
+settings:
+  customization.structure_levels:
+    - {key: academic_year}
+    - {key: class}
+    - {key: section}
+    - {key: subject}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.academic_year: Academic year, unit.class: Class, unit.section: Section, unit.subject: Subject, unit.teacher: Teacher, unit.student: Student, unit.head: Head teacher, unit.term: Term}
+    bn: {unit.academic_year: শিক্ষাবর্ষ, unit.class: শ্রেণি, unit.section: শাখা, unit.subject: বিষয়, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: প্রধান শিক্ষক, unit.term: সাময়িক পরীক্ষা}
+  customization.role_labels:
+    en: {institution_admin: Head teacher}
+    bn: {institution_admin: প্রধান শিক্ষক}

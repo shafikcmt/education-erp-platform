@@ -42,6 +42,7 @@ from apps.tenancy.errors import TenantHostsDisabled
 from apps.tenancy.models import Campus, Institution, Invitation, Tenant, TenantDomain
 from apps.tenancy.rules import LIMIT_KEYS, TenantStatus, check_transition, validate_slug
 from apps.tenancy.services import support as support_services
+from apps.tenancy.services.common import institution_preset
 from apps.tenancy.services.invitations import issue_invitation
 
 if TYPE_CHECKING:
@@ -171,7 +172,10 @@ def _provision_contents(
     TenantDomain.objects.create(domain=tenant_domain(tenant.slug), is_primary=True, verified_at=now)
     sync_system_copies(tenant.pk)
     institution = Institution.objects.create(
-        code=first.code, name=first.name, institution_type=first.institution_type
+        code=first.code,
+        name=first.name,
+        institution_type=first.institution_type,
+        **institution_preset(first.institution_type),
     )
     Campus.objects.create(
         institution=institution, code=first.campus_code, name=first.campus_name, is_main=True

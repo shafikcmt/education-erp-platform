@@ -121,6 +121,7 @@ EVENTS: dict[str, frozenset[str]] = {
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
     "authz.denied": frozenset({"permission", "module", "reason"}),
     # Phase 5 M1: configuration versions (tenant log; key names only, never values)
+    "customization.presets.synced": frozenset({"declared", "created", "deprecated"}),
     "customization.config.draft_saved": frozenset(
         {"scope", "number", "added", "removed", "changed"}
     ),

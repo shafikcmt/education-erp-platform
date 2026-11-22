@@ -130,3 +130,14 @@ def member_codes(membership: Membership) -> set[str]:
     for role in roles:
         codes |= role_codes(role)
     return codes
+
+
+def institution_preset(institution_type: str) -> dict[str, str]:
+    """Preset pin for a new institution (``TENANCY_INSTITUTION_PRESET`` hook, Phase 5 M2).
+    Tenancy never imports the customization app."""
+    from django.conf import settings
+    from django.utils.module_loading import import_string
+
+    hook = getattr(settings, "TENANCY_INSTITUTION_PRESET", "")
+    code, version = import_string(hook)(institution_type) if hook else ("", "")
+    return {"preset_code": code, "preset_version": version}

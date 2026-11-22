@@ -2132,7 +2132,16 @@ export interface components {
             support_banner: components["schemas"]["Banner"][];
             entitlements: components["schemas"]["Entitlements"];
             terminology: {
-                [key: string]: string;
+                [key: string]: {
+                    [key: string]: string;
+                };
+            };
+            institution_terminology: {
+                [key: string]: {
+                    [key: string]: {
+                        [key: string]: string;
+                    };
+                };
             };
         };
         Csrf: {

@@ -93,6 +93,22 @@ def _sees_institution(user: Any, institution: Institution) -> bool:
     )
 
 
+def _terminology() -> dict[str, Any]:
+    from apps.customization.resolver import get_effective_config
+    from apps.customization.scopes import ConfigScope
+
+    key = "customization.terminology"
+    return {
+        "terminology": get_effective_config(ConfigScope(), key),
+        "institution_terminology": {
+            str(pk): get_effective_config(ConfigScope(pk), key)
+            for pk in Institution.objects.filter(archived_at__isnull=True).values_list(
+                "pk", flat=True
+            )
+        },
+    }
+
+
 # --------------------------------------------------------------------------- public / context
 class PublicTenantView(TenantView):
     """Anonymous sign-in page data: name, languages and branding only."""
@@ -166,7 +182,7 @@ class ContextView(TenantView):
                 **entitlement_summary(tenant_id),
                 "limits": limits_usage(tenant),
             },
-            "terminology": {},
+            **_terminology(),
         }
         return Response(s.ContextSerializer(data).data)
 
