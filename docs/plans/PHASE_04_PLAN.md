@@ -209,6 +209,16 @@ The owner approved the plan with the recommended answers:
 | P32 | Platform tenant page: **Subscription** panel (`billing.subscription.view_any`) with assign plan, start trial, add or remove add-ons, grant/revoke and end module overrides; every action asks for a reason and recovers from `step_up_required` |
 | P33 | English and Bengali catalogues (new `billing` block, nav items, error). Module names are shown as codes for now (module `name_i18n` is a later improvement) |
 
+### 13.7 M7 — E2E, usage metering, review (2026-11-21, branch `feat/phase-04-m7`)
+
+| # | Note |
+|---|---|
+| P34 | E2E journey `e2e/billing.spec.ts` (desktop): the admin creates a plan and records a placeholder test price (step-up), provisions an organisation, assigns the plan in the subscription panel; the owner joins, enrols MFA and sees the plan, limits with usage and modules (an unbuilt module "coming soon"). Shared tenant-host steps moved to `e2e/tenant-flows.ts` (no duplication) |
+| P35 | Concurrency (plan §8): a change waits for a transaction holding the subscription row; two racing changes leave the snapshot equal to the final plan. The test found F2 (concurrent snapshot rewrite); `recompute()` now takes a per-tenant transaction-scoped advisory lock |
+| P36 | `billing_usagerecord` (standard tenant RLS): daily rows for `institutions` and `campuses`, written by the tenant task `billing.record_tenant_usage`, fanned out by the daily platform task `billing.record_usage` (P19, system iteration). Idempotent per day |
+| P37 | `/me/context/` gains `terminology` (always empty until Phase 5), completing the roadmap deliverable |
+| P38 | Security self-review: `docs/security/PHASE_04_SECURITY_REVIEW.md` (four defects found and fixed, residual risks for the owner) |
+
 ### Change notes
 - 2026-11-21 — Created (Proposed).
 - 2026-11-21 — Approved by the owner with the recommended answers (ADR-054).
@@ -218,3 +228,4 @@ The owner approved the plan with the recommended answers:
 - 2026-11-21 — §13.4 appended: M4 notes P18–P23.
 - 2026-11-21 — §13.5 appended: M5 notes P24–P28.
 - 2026-11-21 — §13.6 appended: M6 notes P29–P33.
+- 2026-11-21 — §13.7 appended: M7 notes P34–P38.

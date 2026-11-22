@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 4 — Module registry & feature entitlement engine: **In progress** (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
+- **Current phase:** Phase 4 — Module registry & feature entitlement engine: **Complete** on `feat/phase-04-m7` (M1–M7), awaiting the owner's approval. Phase 5 does not start without it. History of this line: (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
 - **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
   - **M2 (tenancy data model): Complete** and merged into `main` (PR [#18](https://github.com/shafikcmt/education-erp-platform/pull/18), squash `3616778`; Sessions 16–18).
@@ -35,7 +35,7 @@
 | 1 | Repository foundation & infrastructure | Approved | [PR #2](https://github.com/shafikcmt/education-erp-platform/pull/2), [PR #12](https://github.com/shafikcmt/education-erp-platform/pull/12) (both merged) | Owner approval 2026-11-06 |
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
-| 4 | Module registry & feature entitlement engine | In progress | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`); `feat/phase-04-m6` (M6) | Plan Approved (ADR-050–054) |
+| 4 | Module registry & feature entitlement engine | Complete | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`); `feat/phase-04-m7` (M7) | Plan Approved (ADR-050–054) |
 | 5 | Customization Studio & institution configuration | Not started | | |
 | 6 | Academic structure & student admission | Not started | | |
 | 7 | Student, teacher & parent management | Not started | | |
@@ -866,4 +866,20 @@ See `DECISION_LOG.md`.
   - full stack with the locally built frontend (tenant hosts on `*.localhost`, throwaway `.env` as in CI): Playwright **35 passed, 2 skipped** (existing suite, no regression). New Phase 4 journeys are M7.
 - **Known gap:** module names are shown as codes (no `name_i18n` on modules yet).
 - **Next:** M7 (Phase 4 E2E journeys, docs, security self-review, Phase 4 completion PR).
+
+### 2026-11-21/22 — Session 30 (continued): Phase 4 M7 — Phase 4 Complete
+- **M6:** [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) — CI **8/8 success**; squash-merged pinned to `80c9955` → **`f8c924b`** (tree identical to the head).
+- **M7 (`feat/phase-04-m7`):**
+  - E2E journey `e2e/billing.spec.ts` (plan → test price with step-up → organisation → subscription panel → owner's Subscription page); shared steps in `e2e/tenant-flows.ts`;
+  - concurrency test of subscription changes; it found a real race (F2: concurrent snapshot rewrite), fixed with a per-tenant advisory lock in `recompute()`;
+  - `billing_usagerecord` with daily per-tenant metering (institutions, campuses; P19 system iteration);
+  - `terminology` placeholder in `/me/context/` (empty until Phase 5);
+  - security self-review `docs/security/PHASE_04_SECURITY_REVIEW.md`.
+- **Verification (local):**
+  - backend **921 passed, 9 skipped** before the last test fix, then the concurrency test re-run 3×; ruff, format, mypy (242 files), import-linter 9/9, `makemigrations --check`, OpenAPI `--validate --fail-on-warn` clean; client regenerated;
+  - frontend `tsc`, ESLint, Prettier clean; Vitest 40/40;
+  - full stack rebuilt with the M7 backend and the local frontend: Playwright **36 passed, 3 skipped** (the new journey runs on desktop).
+- **Exit criteria (roadmap):** non-entitled module calls rejected in tests (M4) and plan changes update entitlements (M3, M5, E2E) — both pass.
+- **Known gaps / residual risks:** expiry lag of up to one hour (hourly sweep); trial-at-provisioning fails soft (logged); catalogue tables writable by the runtime role (service-layer protected); module names shown as codes; snapshot without `valid_from`/`valid_until`; Phase 3 open items unchanged.
+- **Next:** owner review and approval of Phase 4. Phase 5 (Customization Studio) needs a plan and approval first.
 

@@ -351,6 +351,12 @@ CELERY_BEAT_SCHEDULE = {
     },
     # Phase 3 M10 (plan §14, P14): daily summary of blocked isolation violations.
     # Phase 4 M3 (P19): end lapsed trials, add-ons and overrides; recompute entitlements.
+    # Phase 4 M7 (P19): daily usage metering (institutions and campuses).
+    "billing-record-usage": {
+        "task": "billing.record_usage",
+        "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
     "module-registry-entitlement-sweep": {
         "task": "module_registry.sweep_entitlements",
         "schedule": 60 * 60.0,

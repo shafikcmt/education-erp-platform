@@ -105,8 +105,17 @@ def _assert_tenant_transaction(tenant_id: uuid.UUID) -> None:
 
 
 def recompute(tenant_id: uuid.UUID) -> dict[str, tuple[str, bool, str]]:
-    """Rewrite the tenant's snapshot (inside its transaction) and invalidate its cache."""
+    """Rewrite the tenant's snapshot (inside its transaction) and invalidate its cache.
+
+    Recomputes of one tenant are serialised by a transaction-scoped advisory lock: two
+    concurrent changes would otherwise both delete and re-insert the snapshot. The data is
+    resolved after the lock is held, so the last recompute always stores the latest state."""
     _assert_tenant_transaction(tenant_id)
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))",
+            [f"entitlements:{tenant_id}"],
+        )
     resolved = resolve(tenant_id)
     TenantModule.objects.all().delete()
     TenantModule.objects.bulk_create(
