@@ -212,3 +212,130 @@ class FieldDefinition(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"{self.entity}.{self.key}"
+
+
+class FormDefinition(TenantScopedModel):
+    """A versioned form layout of a declared entity (CUSTOMIZATION_ENGINE.md §4.3): sections of
+    core and custom fields, with optional visibility rules (``customization.form_visibility``)."""
+
+    key = models.CharField(max_length=64)
+    entity = models.CharField(max_length=80)
+    name = models.CharField(max_length=120)
+    layout = models.JSONField(default=dict)
+    number = models.PositiveIntegerField()
+    status = models.CharField(max_length=16, choices=Lifecycle.choices, default=Lifecycle.DRAFT)
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.UUIDField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_formdefinition"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_form_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key", "number"], name="customization_form_number_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="draft"),
+                name="customization_form_one_draft",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="published"),
+                name="customization_form_one_published",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"form {self.key} v{self.number}"
+
+
+class WorkflowDefinition(TenantScopedModel):
+    """A versioned declarative state machine (CUSTOMIZATION_ENGINE.md §4.4) for a declared
+    subject. Instances pin the version they started with."""
+
+    key = models.CharField(max_length=64)
+    subject = models.CharField(max_length=80)
+    name = models.CharField(max_length=120)
+    spec = models.JSONField(default=dict)  # states, initial, transitions, sla_hours
+    number = models.PositiveIntegerField()
+    status = models.CharField(max_length=16, choices=Lifecycle.choices, default=Lifecycle.DRAFT)
+    published_at = models.DateTimeField(null=True, blank=True)
+    published_by = models.UUIDField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_workflowdefinition"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(key__regex=r"^[a-z][a-z0-9_]{1,63}$"),
+                name="customization_workflow_key_valid",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key", "number"], name="customization_workflow_number_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="draft"),
+                name="customization_workflow_one_draft",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "key"],
+                condition=models.Q(status="published"),
+                name="customization_workflow_one_published",
+            ),
+            models.UniqueConstraint(fields=["tenant", "id"], name="customization_wfd_tenant_key"),
+        ]
+
+    def __str__(self) -> str:
+        return f"workflow {self.key} v{self.number}"
+
+
+class WorkflowInstance(TenantScopedModel):
+    definition = models.ForeignKey(
+        WorkflowDefinition, on_delete=models.PROTECT, related_name="+", db_constraint=False
+    )
+    subject = models.CharField(max_length=80)
+    subject_id = models.UUIDField()
+    state = models.CharField(max_length=40)
+    context = models.JSONField(default=dict, blank=True)  # subject.* values for guards
+    started_by = models.UUIDField()
+    entered_state_at = models.DateTimeField()
+    sla_due_at = models.DateTimeField(null=True, blank=True)
+    sla_breached_at = models.DateTimeField(null=True, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_workflowinstance"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "definition", "subject_id"],
+                condition=models.Q(finished_at__isnull=True),
+                name="customization_workflow_one_open_per_subject",
+            ),
+            models.UniqueConstraint(fields=["tenant", "id"], name="customization_wfi_tenant_key"),
+        ]
+
+    def __str__(self) -> str:
+        return f"workflow instance {self.pk} ({self.state})"
+
+
+class WorkflowStep(TenantScopedModel):
+    """Append-only history of an instance (who moved it, from where to where, why)."""
+
+    instance = models.ForeignKey(
+        WorkflowInstance, on_delete=models.PROTECT, related_name="steps", db_constraint=False
+    )
+    transition = models.CharField(max_length=40)
+    from_state = models.CharField(max_length=40)
+    to_state = models.CharField(max_length=40)
+    actor = models.UUIDField()
+    note = models.CharField(max_length=500, blank=True, default="")
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "customization_workflowstep"
+
+    def __str__(self) -> str:
+        return f"{self.from_state} -> {self.to_state}"

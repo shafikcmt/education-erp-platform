@@ -28,7 +28,6 @@ def _m(
 
 PLANNED_MODULES: list[dict[str, Any]] = [
     _m("files", "Files", PLATFORM, ("tenancy",)),
-    _m("notifications_core", "Notifications", PLATFORM, ("tenancy",)),
     _m("academics", "Academics", STANDARD, ("customization",), True),
     _m("timetable", "Timetable", STANDARD, ("academics", "staff"), True),
     _m("admissions", "Admissions", STANDARD, ("academics", "customization"), True),

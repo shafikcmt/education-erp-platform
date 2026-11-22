@@ -147,3 +147,23 @@ def declared_entities() -> dict[str, str]:
             raise InvalidSettingsCatalogError(f"{code!r}: entities are '<module>.<name>'.")
         out[code] = str(raw.get("label", code))
     return out
+
+
+@cache
+def entity_core_fields() -> dict[str, frozenset[str]]:
+    """Core (non-custom) fields a form may place, per declared entity."""
+    return {
+        code: frozenset(raw.get("core_fields", []))
+        for _, code, raw in _manifest_items("CUSTOM_FIELD_ENTITIES")
+    }
+
+
+@cache
+def declared_subjects() -> dict[str, str]:
+    """Subjects that approval workflows may run on (``WORKFLOW_SUBJECTS``)."""
+    out: dict[str, str] = {}
+    for module, code, raw in _manifest_items("WORKFLOW_SUBJECTS"):
+        if not KEY_PATTERN.match(code) or not code.startswith(f"{module}."):
+            raise InvalidSettingsCatalogError(f"{code!r}: subjects are '<module>.<name>'.")
+        out[code] = str(raw.get("label", code))
+    return out

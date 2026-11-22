@@ -91,7 +91,13 @@ SETTINGS = {
 # Entities that accept custom fields (Phase 5 M3; CUSTOMIZATION_ENGINE.md §4.2). Values are
 # stored in the entity's ``extra`` JSONB and validated against the active definitions.
 CUSTOM_FIELD_ENTITIES = {
-    "tenancy.institution": {"label": "Institution"},
-    "tenancy.campus": {"label": "Campus"},
+    "tenancy.institution": {"label": "Institution", "core_fields": ["code", "name"]},
+    "tenancy.campus": {"label": "Campus", "core_fields": ["code", "name"]},
+    "tenancy.member": {"label": "Member", "core_fields": ["display_name"]},
+}
+
+# Subjects that approval workflows may run on (Phase 5 M4); modules add theirs (admissions,
+# leave, fee waivers …). A member subject lets organisations approve role or profile changes.
+WORKFLOW_SUBJECTS = {
     "tenancy.member": {"label": "Member"},
 }
