@@ -46,7 +46,7 @@ def test_registry_covers_the_phase_2_catalog_and_seed_is_idempotent():
     codes = set(declared_permissions())
     # 20 (Phase 2) + 17 (M4) + 4 support-session codes (M5) + 5 registry codes (M8)
     # + 1 module catalogue code (Phase 4 M1) + 6 billing and 1 flag code (Phase 4 M2)
-    assert len(codes) == 61
+    assert len(codes) == 65
     assert {"identity.user.view", "audit.event.view_ip", "rbac.platform_role.assign"} <= codes
     assert set(Permission.objects.values_list("code", flat=True)) >= codes
     assert catalog_drift() == []

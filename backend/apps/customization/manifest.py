@@ -41,6 +41,15 @@ PERMISSIONS = [
         "description": "Define and deprecate custom fields",
         "requires_mfa": True,
     },
+    # Phase 5 M4: forms and workflow definitions.
+    {"code": "customization.form.view", "description": "View form definitions"},
+    {"code": "customization.form.manage", "description": "Design forms", "requires_mfa": True},
+    {"code": "customization.workflow.view", "description": "View workflow definitions"},
+    {
+        "code": "customization.workflow.manage",
+        "description": "Design approval workflows",
+        "requires_mfa": True,
+    },
 ]
 
 # Declared configuration keys (ADR-057). Every key belongs to the module whose code prefixes

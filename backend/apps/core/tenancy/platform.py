@@ -173,6 +173,21 @@ CATALOGUE: dict[str, PlatformOperationSpec] = {
             disabled_reason="Owner-run bootstrap (sync_presets), not a runtime platform scope.",
         ),
         _op(
+            "P22",
+            "Preset pinning at provisioning",
+            "user",
+            "T",
+            disabled_reason="Runs inside P4 and the tenant transaction; no separate scope.",
+        ),
+        _op(
+            "P23",
+            "Self-service sign-up",
+            "user",
+            "RT",
+            disabled_reason="Planned for Phase 5 M7, behind a feature flag that is off (ADR-060).",
+        ),
+        _op("P24", "Workflow SLA sweep", "system", "I"),
+        _op(
             "P16",
             "Incident break-glass",
             "user",

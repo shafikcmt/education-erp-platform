@@ -235,9 +235,21 @@ All migrations are additive. Composite `(tenant_id, …)` keys are used for tena
 | C17 | **Custom fields:** entities declared in manifests (`CUSTOM_FIELD_ENTITIES`: `tenancy.institution`, `tenancy.campus`, `tenancy.member`). `customization_fielddefinition` (standard RLS): ten types, i18n labels, options for choice fields, per-type limits, visibility, view/edit permissions (must exist), PII flag, order. Key and type never change (deprecate and create). `validate_values()` refuses unknown and deprecated keys, enforces required fields and fixed per-type schemas (decimals as strings, real calendar dates, ranges) |
 | C18 | Permissions `customization.rule.view|manage`, `customization.field.view|manage` (manage: MFA), 61 codes in total; tenant owners hold them. **Not yet built:** storing values on the tenancy entities (`extra` columns, wired with the APIs in M6) and per-plan Studio quotas (ADR-060 Q5; planned with the APIs in M6). A test found and fixed a missing check: a choice field could be created without options |
 
+### 13.4 M4 — forms, workflows, notifications (2026-11-22, branch `feat/phase-05-m4`)
+
+| # | Note |
+|---|---|
+| C19 | **Forms** (`customization_formdefinition`, standard RLS, versioned like rules): sections of core fields (declared per entity, `core_fields`) and custom fields, optional `visible_when` rules (`customization.form_visibility`). Layout checks: 1–20 sections, ≤ 60 fields, known fields only, each field once, rules checked in the sandbox |
+| C20 | **DynamicForm backend:** `render()` expands the published form with field metadata for the renderer; `visible_sections()` evaluates visibility for given values (a rule that can't decide hides its section: fail closed); `validate_submission()` refuses hidden and unknown fields, enforces required fields only where visible and validates custom values. The renderer UI is M7 |
+| C21 | **Workflows** (`customization_workflowdefinition`, `…instance`, `…step`, standard RLS, composite tenant keys instance → definition → step): states, initial, `start_permission`, transitions with permission and optional guard (`customization.workflow_guard`), per-state SLA hours. Spec checks include reachability of a final state. Instances pin their definition version; one open instance per subject and definition; steps are append-only |
+| C22 | Transitions check the permission uncached in the given scope (tenant by default; modules pass object scopes), evaluate the guard against the instance's `subject.*` context and a supplied day (a guard that can't decide refuses), set the SLA due time, and notify the starter and the members who can act next (holders of the next transitions' permissions) |
+| C23 | **`notifications_core`** (new platform module, ADR-059): in-app `notifications_core_notification` (standard RLS, composite key to the membership) for active members only; relative links only; email queued after commit through a tenant task and the existing mail path. Reading endpoints arrive with the APIs (M6) |
+| C24 | **P24** workflow SLA sweep (every 15 minutes; per-tenant task flags overdue requests once and notifies). Catalogue now P1–P24: P22 (preset pinning, inside P4) and P23 (self-service sign-up, M7 behind a flag) are listed as disabled. Shared draft/publish helper (`versioning.py`) used by rules, forms and workflows. Permissions `customization.form.view|manage`, `customization.workflow.view|manage` (65 codes) |
+
 ### Change notes
 - 2026-11-22 — Created (Proposed).
 - 2026-11-22 — Approved by the owner with the recommended answers (ADR-060); ADR-055 to ADR-059 Accepted.
 - 2026-11-22 — §13.1 appended: M1 notes C1–C6.
 - 2026-11-22 — §13.2 appended: M2 notes C7–C12.
 - 2026-11-22 — §13.3 appended: M3 notes C13–C18.
+- 2026-11-22 — §13.4 appended: M4 notes C19–C24.

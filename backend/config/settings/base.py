@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     "apps.module_registry",
     "apps.billing",
     "apps.customization",
+    "apps.notifications_core",
 ]
 
 MIDDLEWARE = [
@@ -360,6 +361,12 @@ CELERY_BEAT_SCHEDULE = {
     "billing-record-usage": {
         "task": "billing.record_usage",
         "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 5 M4 (P24): flag overdue workflow requests and notify who can act.
+    "customization-workflow-sla-sweep": {
+        "task": "customization.sweep_workflow_sla",
+        "schedule": 15 * 60.0,
         "options": {"queue": "default"},
     },
     "module-registry-entitlement-sweep": {
