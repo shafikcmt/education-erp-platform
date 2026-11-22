@@ -71,3 +71,19 @@ MODULE = {
     "dependencies": ["identity", "rbac"],
     "sellable": False,
 }
+
+# Declared configuration keys (Phase 5 M1; ADR-057). No country-specific defaults.
+SETTINGS = {
+    "tenancy.week_start": {
+        "description": "First day of the week (ISO 8601: 1 = Monday … 7 = Sunday)",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 7},
+        "default": 1,
+        "scopes": ["tenant", "institution", "campus"],
+    },
+    "tenancy.academic_year_start_month": {
+        "description": "Month in which the academic year starts (1-12)",
+        "schema": {"type": "integer", "minimum": 1, "maximum": 12},
+        "default": 1,
+        "scopes": ["tenant", "institution"],
+    },
+}

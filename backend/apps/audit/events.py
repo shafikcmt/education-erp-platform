@@ -120,6 +120,15 @@ EVENTS: dict[str, frozenset[str]] = {
     "audit.ip.revealed": frozenset({"event_id"}),
     "audit.ip.erased": frozenset({"subject_user_id", "count"}),
     "authz.denied": frozenset({"permission", "module", "reason"}),
+    # Phase 5 M1: configuration versions (tenant log; key names only, never values)
+    "customization.config.draft_saved": frozenset(
+        {"scope", "number", "added", "removed", "changed"}
+    ),
+    "customization.config.draft_discarded": frozenset({"scope", "number"}),
+    "customization.config.published": frozenset({"scope", "number", "added", "removed", "changed"}),
+    "customization.config.rolled_back": frozenset(
+        {"scope", "number", "source", "added", "removed", "changed"}
+    ),
     # tenant isolation monitoring (Phase 3 M3, P14): platform log, tenant id as metadata only
     "tenancy.isolation.blocked": frozenset({"reason", "tenant_id", "host_kind"}),
     # platform operations (Phase 3, ADR-043): platform_scope start/end
