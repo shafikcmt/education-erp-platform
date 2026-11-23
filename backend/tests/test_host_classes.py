@@ -57,6 +57,19 @@ TENANT_HOST_ROUTES = {
     # Phase 4 M5: the organisation's own plan, modules and limits (read-only)
     "api/v1/tenant/subscription/": False,
     # Phase 5 M6: Customization Studio and the notification inbox (signed-in members only)
+    # Phase 6 M2: academics (module-gated, behind the membership gate)
+    "api/v1/academics/setup/": False,
+    "api/v1/academics/years/": False,
+    "api/v1/academics/years/<str:year_id>/status/": False,
+    "api/v1/academics/years/<str:year_id>/terms/": False,
+    "api/v1/academics/units/": False,
+    "api/v1/academics/units/<str:unit_id>/": False,
+    "api/v1/academics/units/<str:unit_id>/archive/": False,
+    "api/v1/academics/subjects/": False,
+    "api/v1/academics/subjects/<str:subject_id>/archive/": False,
+    "api/v1/academics/offerings/": False,
+    "api/v1/academics/offerings/<str:offering_id>/teachers/": False,
+    "api/v1/academics/offerings/<str:offering_id>/teachers/<str:teacher_id>/": False,
     "api/v1/customization/catalog/": False,
     "api/v1/customization/config/": False,
     "api/v1/customization/config/publish/": False,

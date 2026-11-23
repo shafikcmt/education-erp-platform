@@ -4,6 +4,283 @@
  */
 
 export interface paths {
+    "/api/v1/academics/offerings/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Offerings of an academic year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_offerings_list"];
+        put?: never;
+        /**
+         * Offer a subject in a unit for a year (and term)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_offerings_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/offerings/{offering_id}/teachers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign a teacher (a member) to an offering
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_offerings_teachers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/offerings/{offering_id}/teachers/{teacher_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a teacher from an offering
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["academics_offerings_teachers_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/setup/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Structure levels and capability flags of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_setup_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/subjects/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Subjects and courses of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_subjects_list"];
+        put?: never;
+        /**
+         * Create a subject or course
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_subjects_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/subjects/{subject_id}/archive/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a subject
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_subjects_archive_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/units/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Academic units of an institution (flat list with parents)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_units_list"];
+        put?: never;
+        /**
+         * Create an academic unit
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_units_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/units/{unit_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename or change a unit
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["academics_units_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/academics/units/{unit_id}/archive/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Archive a unit
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_units_archive_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/years/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Academic years of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_years_list"];
+        put?: never;
+        /**
+         * Create an academic year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_years_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/years/{year_id}/status/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Activate or close an academic year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_years_status_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/academics/years/{year_id}/terms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Terms of a year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["academics_years_terms_list"];
+        put?: never;
+        /**
+         * Add a term to a year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["academics_years_terms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events/": {
         parameters: {
             query?: never;
@@ -2720,6 +2997,14 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * @description * `term` - Term
+         *     * `semester` - Semester
+         *     * `trimester` - Trimester
+         *     * `quarter` - Quarter
+         * @enum {string}
+         */
+        AcademicTermKindEnum: "term" | "semester" | "trimester" | "quarter";
         Accepted: {
             detail: string;
         };
@@ -3286,6 +3571,33 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        Offering: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly year: string;
+            /** Format: uuid */
+            readonly term: string | null;
+            /** Format: uuid */
+            readonly unit: string;
+            /** Format: uuid */
+            readonly subject: string;
+            /** Format: decimal */
+            readonly credits: string | null;
+            readonly teachers: components["schemas"]["Teacher"][];
+        };
+        OfferingCreateRequest: {
+            /** Format: uuid */
+            year: string;
+            /** Format: uuid */
+            unit: string;
+            /** Format: uuid */
+            subject: string;
+            /** Format: uuid */
+            term?: string | null;
+            /** Format: decimal */
+            credits?: string | null;
+        };
         /**
          * @description * `success` - Success
          *     * `failure` - Failure
@@ -3421,6 +3733,15 @@ export interface components {
                 [key: string]: string;
             };
             permissions?: string[];
+        };
+        PatchedUnitUpdateRequest: {
+            code?: string;
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            capacity?: number | null;
+            order?: number;
         };
         Permission: {
             readonly code: string;
@@ -3631,6 +3952,12 @@ export interface components {
             permissions: string[];
         };
         /**
+         * @description * `primary` - Primary
+         *     * `assistant` - Assistant
+         * @enum {string}
+         */
+        RoleEnum: "primary" | "assistant";
+        /**
          * @description * `platform` - Platform role
          *     * `template` - Tenant role template
          *     * `tenant` - Tenant role
@@ -3718,6 +4045,12 @@ export interface components {
             /** Format: date-time */
             expires_at?: string | null;
         };
+        Setup: {
+            levels: string[];
+            credit_based: boolean;
+            semester_based: boolean;
+            section_enabled: boolean;
+        };
         SignupAccepted: {
             detail: string;
         };
@@ -3750,6 +4083,33 @@ export interface components {
         };
         StepUpResult: {
             step_up_expires_at: number;
+        };
+        Subject: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly subject_type: string;
+            /** Format: decimal */
+            readonly credits: string | null;
+            /** Format: date-time */
+            readonly archived_at: string | null;
+        };
+        SubjectCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** @default core */
+            subject_type: string;
+            /** Format: decimal */
+            credits?: string | null;
         };
         SubscribedAddOn: {
             code: string;
@@ -3833,6 +4193,19 @@ export interface components {
          * @enum {string}
          */
         SystemHealthStatusEnum: "ok" | "degraded";
+        Teacher: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly membership: string;
+            readonly role: components["schemas"]["RoleEnum"];
+        };
+        TeacherAssignRequest: {
+            /** Format: uuid */
+            membership: string;
+            /** @default primary */
+            role: components["schemas"]["RoleEnum"];
+        };
         TemplateDraftRequest: {
             key: string;
             kind: string;
@@ -3969,6 +4342,36 @@ export interface components {
                 [key: string]: components["schemas"]["LimitUsage"];
             };
         };
+        Term: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly year: string;
+            readonly kind: components["schemas"]["AcademicTermKindEnum"];
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly order: number;
+            /** Format: date */
+            readonly start_date: string;
+            /** Format: date */
+            readonly end_date: string;
+        };
+        TermCreateRequest: {
+            /** @default term */
+            kind: components["schemas"]["AcademicTermKindEnum"];
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** @default 1 */
+            order: number;
+            /** Format: date */
+            start_date: string;
+            /** Format: date */
+            end_date: string;
+        };
         TokenPasswordRequest: {
             token: string;
             password: string;
@@ -3980,6 +4383,41 @@ export interface components {
             reason: string;
             plan: string;
             days: number;
+        };
+        Unit: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly campus: string | null;
+            /** Format: uuid */
+            readonly parent: string | null;
+            readonly level_key: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly capacity: number | null;
+            readonly order: number;
+            /** Format: date-time */
+            readonly archived_at: string | null;
+        };
+        UnitCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            level_key: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** Format: uuid */
+            parent?: string | null;
+            /** Format: uuid */
+            campus?: string | null;
+            capacity?: number | null;
+            /** @default 0 */
+            order: number;
         };
         WorkflowDraftRequest: {
             key: string;
@@ -4025,6 +4463,49 @@ export interface components {
             /** @default  */
             note: string;
         };
+        Year: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            /** Format: date */
+            readonly start_date: string;
+            /** Format: date */
+            readonly end_date: string;
+            readonly status: components["schemas"]["YearStatusEnum"];
+        };
+        YearCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            start_date: string;
+            /** Format: date */
+            end_date: string;
+        };
+        /**
+         * @description * `planned` - Planned
+         *     * `active` - Active
+         *     * `closed` - Closed
+         * @enum {string}
+         */
+        YearStatusEnum: "planned" | "active" | "closed";
+        YearStatusRequest: {
+            status: components["schemas"]["YearStatusStatusEnum"];
+        };
+        /**
+         * @description * `active` - active
+         *     * `closed` - closed
+         * @enum {string}
+         */
+        YearStatusStatusEnum: "active" | "closed";
     };
     responses: never;
     parameters: never;
@@ -4034,6 +4515,394 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    academics_offerings_list: {
+        parameters: {
+            query: {
+                /** @description Academic year id */
+                year: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Offering"][];
+                };
+            };
+        };
+    };
+    academics_offerings_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferingCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Offering"];
+                };
+            };
+        };
+    };
+    academics_offerings_teachers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offering_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TeacherAssignRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Teacher"];
+                };
+            };
+        };
+    };
+    academics_offerings_teachers_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                offering_id: string;
+                teacher_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    academics_setup_retrieve: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Setup"];
+                };
+            };
+        };
+    };
+    academics_subjects_list: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subject"][];
+                };
+            };
+        };
+    };
+    academics_subjects_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubjectCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subject"];
+                };
+            };
+        };
+    };
+    academics_subjects_archive_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                subject_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Subject"];
+                };
+            };
+        };
+    };
+    academics_units_list: {
+        parameters: {
+            query: {
+                /** @description Include archived units */
+                archived?: boolean;
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"][];
+                };
+            };
+        };
+    };
+    academics_units_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnitCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
+                };
+            };
+        };
+    };
+    academics_units_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedUnitUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
+                };
+            };
+        };
+    };
+    academics_units_archive_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                unit_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Unit"];
+                };
+            };
+        };
+    };
+    academics_years_list: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Year"][];
+                };
+            };
+        };
+    };
+    academics_years_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["YearCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Year"];
+                };
+            };
+        };
+    };
+    academics_years_status_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["YearStatusRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Year"];
+                };
+            };
+        };
+    };
+    academics_years_terms_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Term"][];
+                };
+            };
+        };
+    };
+    academics_years_terms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TermCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Term"];
+                };
+            };
+        };
+    };
     tenant_audit_events_list: {
         parameters: {
             query?: {

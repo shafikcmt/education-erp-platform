@@ -33,6 +33,7 @@ API_MODULES = (
     "apps.billing.api",
     "apps.module_registry.api",
     "apps.customization.api",
+    "apps.academics.api",
 )
 
 

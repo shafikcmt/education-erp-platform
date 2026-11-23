@@ -4,6 +4,453 @@ info:
   version: 1.0.0
   description: Multi-tenant Education ERP SaaS — REST API v1 (ADR-015).
 paths:
+  /api/v1/academics/offerings/:
+    get:
+      operationId: academics_offerings_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Offerings of an academic year
+      parameters:
+      - in: query
+        name: year
+        schema:
+          type: string
+        description: Academic year id
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offering'
+          description: ''
+    post:
+      operationId: academics_offerings_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Offer a subject in a unit for a year (and term)
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferingCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offering'
+          description: ''
+  /api/v1/academics/offerings/{offering_id}/teachers/:
+    post:
+      operationId: academics_offerings_teachers_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Assign a teacher (a member) to an offering
+      parameters:
+      - in: path
+        name: offering_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeacherAssignRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Teacher'
+          description: ''
+  /api/v1/academics/offerings/{offering_id}/teachers/{teacher_id}/:
+    delete:
+      operationId: academics_offerings_teachers_destroy
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Remove a teacher from an offering
+      parameters:
+      - in: path
+        name: offering_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: teacher_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/academics/setup/:
+    get:
+      operationId: academics_setup_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Structure levels and capability flags of an institution
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Setup'
+          description: ''
+  /api/v1/academics/subjects/:
+    get:
+      operationId: academics_subjects_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Subjects and courses of an institution
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subject'
+          description: ''
+    post:
+      operationId: academics_subjects_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create a subject or course
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubjectCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+          description: ''
+  /api/v1/academics/subjects/{subject_id}/archive/:
+    post:
+      operationId: academics_subjects_archive_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Archive a subject
+      parameters:
+      - in: path
+        name: subject_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subject'
+          description: ''
+  /api/v1/academics/units/:
+    get:
+      operationId: academics_units_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Academic units of an institution (flat list with parents)
+      parameters:
+      - in: query
+        name: archived
+        schema:
+          type: boolean
+        description: Include archived units
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Unit'
+          description: ''
+    post:
+      operationId: academics_units_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create an academic unit
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnitCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/academics/units/{unit_id}/:
+    patch:
+      operationId: academics_units_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Rename or change a unit
+      parameters:
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUnitUpdateRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/academics/units/{unit_id}/archive/:
+    post:
+      operationId: academics_units_archive_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Archive a unit
+      parameters:
+      - in: path
+        name: unit_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unit'
+          description: ''
+  /api/v1/academics/years/:
+    get:
+      operationId: academics_years_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Academic years of an institution
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Year'
+          description: ''
+    post:
+      operationId: academics_years_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create an academic year
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YearCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Year'
+          description: ''
+  /api/v1/academics/years/{year_id}/status/:
+    post:
+      operationId: academics_years_status_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Activate or close an academic year
+      parameters:
+      - in: path
+        name: year_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/YearStatusRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Year'
+          description: ''
+  /api/v1/academics/years/{year_id}/terms/:
+    get:
+      operationId: academics_years_terms_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Terms of a year
+      parameters:
+      - in: path
+        name: year_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Term'
+          description: ''
+    post:
+      operationId: academics_years_terms_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add a term to a year
+      parameters:
+      - in: path
+        name: year_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - academics
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TermCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Term'
+          description: ''
   /api/v1/audit-events/:
     get:
       operationId: tenant_audit_events_list
@@ -3752,6 +4199,18 @@ paths:
           description: ''
 components:
   schemas:
+    AcademicTermKindEnum:
+      enum:
+      - term
+      - semester
+      - trimester
+      - quarter
+      type: string
+      description: |-
+        * `term` - Term
+        * `semester` - Semester
+        * `trimester` - Trimester
+        * `quarter` - Quarter
     Accepted:
       type: object
       properties:
@@ -5149,6 +5608,74 @@ components:
       - link
       - read_at
       - title
+    Offering:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        term:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+          readOnly: true
+        subject:
+          type: string
+          format: uuid
+          readOnly: true
+        credits:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        teachers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Teacher'
+          readOnly: true
+      required:
+      - credits
+      - id
+      - subject
+      - teachers
+      - term
+      - unit
+      - year
+    OfferingCreateRequest:
+      type: object
+      properties:
+        year:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          format: uuid
+        subject:
+          type: string
+          format: uuid
+        term:
+          type: string
+          format: uuid
+          nullable: true
+        credits:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - subject
+      - unit
+      - year
     OutcomeEnum:
       enum:
       - success
@@ -5477,6 +6004,32 @@ components:
             minLength: 1
             maxLength: 100
           maxItems: 500
+    PatchedUnitUpdateRequest:
+      type: object
+      properties:
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        capacity:
+          type: integer
+          maximum: 100000
+          minimum: 1
+          nullable: true
+        order:
+          type: integer
+          maximum: 1000
+          minimum: 0
     Permission:
       type: object
       properties:
@@ -6091,6 +6644,14 @@ components:
       - code
       - name
       - permissions
+    RoleEnum:
+      enum:
+      - primary
+      - assistant
+      type: string
+      description: |-
+        * `primary` - Primary
+        * `assistant` - Assistant
     RoleKindEnum:
       enum:
       - platform
@@ -6316,6 +6877,24 @@ components:
       - kind
       - module
       - reason
+    Setup:
+      type: object
+      properties:
+        levels:
+          type: array
+          items:
+            type: string
+        credit_based:
+          type: boolean
+        semester_based:
+          type: boolean
+        section_enabled:
+          type: boolean
+      required:
+      - credit_based
+      - levels
+      - section_enabled
+      - semester_based
     SignupAccepted:
       type: object
       properties:
@@ -6417,6 +6996,82 @@ components:
           type: integer
       required:
       - step_up_expires_at
+    Subject:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        subject_type:
+          type: string
+          readOnly: true
+        credits:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        archived_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - archived_at
+      - code
+      - credits
+      - id
+      - institution
+      - name
+      - name_i18n
+      - subject_type
+    SubjectCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        subject_type:
+          type: string
+          minLength: 1
+          default: core
+          pattern: ^[a-z][a-z0-9_]{1,31}$
+        credits:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - code
+      - institution
+      - name
     SubscribedAddOn:
       type: object
       properties:
@@ -6634,6 +7289,37 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    Teacher:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        membership:
+          type: string
+          format: uuid
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+      required:
+      - id
+      - membership
+      - role
+    TeacherAssignRequest:
+      type: object
+      properties:
+        membership:
+          type: string
+          format: uuid
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          default: primary
+      required:
+      - membership
     TemplateDraftRequest:
       type: object
       properties:
@@ -7023,6 +7709,87 @@ components:
       - plan
       - status
       - trial_ends_at
+    Term:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/AcademicTermKindEnum'
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+      required:
+      - code
+      - end_date
+      - id
+      - kind
+      - name
+      - name_i18n
+      - order
+      - start_date
+      - year
+    TermCreateRequest:
+      type: object
+      properties:
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/AcademicTermKindEnum'
+          default: term
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        order:
+          type: integer
+          maximum: 20
+          minimum: 1
+          default: 1
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - code
+      - end_date
+      - name
+      - start_date
     TokenPasswordRequest:
       type: object
       properties:
@@ -7068,6 +7835,109 @@ components:
       - days
       - plan
       - reason
+    Unit:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        campus:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        parent:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        level_key:
+          type: string
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+        order:
+          type: integer
+          readOnly: true
+        archived_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - archived_at
+      - campus
+      - capacity
+      - code
+      - id
+      - institution
+      - level_key
+      - name
+      - name_i18n
+      - order
+      - parent
+    UnitCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        level_key:
+          type: string
+          minLength: 1
+          maxLength: 40
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        parent:
+          type: string
+          format: uuid
+          nullable: true
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+        capacity:
+          type: integer
+          maximum: 100000
+          minimum: 1
+          nullable: true
+        order:
+          type: integer
+          maximum: 1000
+          minimum: 0
+          default: 0
+      required:
+      - code
+      - institution
+      - level_key
+      - name
     WorkflowDraftRequest:
       type: object
       properties:
@@ -7182,6 +8052,103 @@ components:
           maxLength: 500
       required:
       - transition
+    Year:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/YearStatusEnum'
+          readOnly: true
+      required:
+      - code
+      - end_date
+      - id
+      - institution
+      - name
+      - name_i18n
+      - start_date
+      - status
+    YearCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+      required:
+      - code
+      - end_date
+      - institution
+      - name
+      - start_date
+    YearStatusEnum:
+      enum:
+      - planned
+      - active
+      - closed
+      type: string
+      description: |-
+        * `planned` - Planned
+        * `active` - Active
+        * `closed` - Closed
+    YearStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/YearStatusStatusEnum'
+      required:
+      - status
+    YearStatusStatusEnum:
+      enum:
+      - active
+      - closed
+      type: string
+      description: |-
+        * `active` - active
+        * `closed` - closed
   securitySchemes:
     sessionAuth:
       type: apiKey
