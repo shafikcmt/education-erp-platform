@@ -105,13 +105,14 @@ Exit criteria in detail: plan §21; approval-gate checklist: plan §23.
 
 ## Phase 6 — Academic structure & student admission
 **Depends on:** Phase 5.
-**Deliverables:** `academics` (years, terms, structure levels, academic unit tree, subjects/courses, offerings, capability flags), `timetable` (basic: periods, rooms, slots, clash detection), `admissions` (inquiries, cycles, public forms, applications, review workflow, test scheduling, merit list, conversion hook — student creation completes with Phase 7 models, so the student model may be introduced minimally here or conversion is finalized in Phase 7; decide in phase plan).
+**Plan:** `plans/PHASE_06_PLAN.md` (**Approved**, 2026-11-23; ADR-063–066).
+**Deliverables:** `academics` (years, terms, structure levels, academic unit tree, subjects/courses, offerings, capability flags), `files` (ADR-064), `admissions` (inquiries, cycles, public forms, applications, review workflow, test scheduling, merit list, conversion hook — student creation completes with Phase 7 models, so the student model may be introduced minimally here or conversion is finalized in Phase 7; decide in phase plan).
 **Exit:** school/university/madrasa/coaching structures configurable without code changes (tests per preset).
 **Moved here (Phase 3 plan rev. 2, Q11, effective on plan approval):** the full `files` module (uploads, presigned URLs, virus-scan hook, quotas). It is built in Phase 6, or in Phase 7 if Phase 6 stores no uploads, on top of the Phase 3 `tenant_storage_key()` helper.
 
 ## Phase 7 — Student, teacher & parent management
 **Depends on:** Phase 6.
-**Deliverables:** `students` (profiles, guardians N–N, enrollments, documents, bulk import, promotion/transfer, TC, ID cards via templates), `staff` (profiles, departments, designations, teaching assignments), `parent_portal` (guardian & student portal shells, child switcher), admission → enrollment conversion completed, scoped selectors (teacher → own sections, guardian → own children).
+**Deliverables:** `timetable` (basic: periods, rooms, slots, teacher/room clash detection; moved from Phase 6 by ADR-066 Q2), `students` (profiles, guardians N–N, enrollments, documents, bulk import, promotion/transfer, TC, ID cards via templates), `staff` (profiles, departments, designations, teaching assignments), `parent_portal` (guardian & student portal shells, child switcher), admission → enrollment conversion completed, scoped selectors (teacher → own sections, guardian → own children).
 **Exit:** object-level scope tests pass; import validates and reports errors.
 
 ## Phase 8 — Attendance management
@@ -235,3 +236,4 @@ A sellable MVP for schools/madrasas/coaching centers = Phases 1–10 + minimal P
 - 2026-11-21 — Phase 4 M1–M7 implemented (Complete, awaiting owner approval); see `plans/PHASE_04_PLAN.md` §13 and `security/PHASE_04_SECURITY_REVIEW.md`.
 - 2026-11-22 — Phase 4 approved by the owner; Phase 5 plan proposed (`plans/PHASE_05_PLAN.md`).
 - 2026-11-22 — Phase 5 plan approved (ADR-055 to ADR-060); Phase 5 in progress.
+- 2026-11-23 — Phase 6 plan approved (ADR-063–066): `timetable` moves from Phase 6 to Phase 7; `files` is built in Phase 6.

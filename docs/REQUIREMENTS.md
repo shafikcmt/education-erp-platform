@@ -66,7 +66,7 @@
 | ACA-01 | Academic years/sessions, terms/semesters with configurable calendars | M | 6 |
 | ACA-02 | Configurable structure levels (class/section; faculty/department/program; marhala/jamaat; batch) | M | 6 |
 | ACA-03 | Subjects/courses/kitabs with credits (optional), teachers assignment | M | 6 |
-| ACA-04 | Timetable (periods, rooms, teacher clash detection) | S | 6 |
+| ACA-04 | Timetable (periods, rooms, teacher clash detection) | S | 7 (moved from 6, ADR-066) |
 | ACA-05 | Promotion/progression rules and bulk promotion | M | 6–9 |
 | ADM-01 | Inquiry tracking and online application form (public, tenant-branded) | M | 6 |
 | ADM-02 | Application review workflow, admission test scheduling, merit list | S | 6 |
@@ -198,3 +198,4 @@ Numeric NFR targets marked *proposed* require owner approval (see `DECISION_LOG.
 ### Change notes
 - 2026-11-05 — Initial version (Phase 0).
 - 2026-11-05 — Aligned with Phase 2 approvals (ADR-031 to ADR-037); see `plans/PHASE_02_PLAN.md` rev. 2.
+- 2026-11-23 — ACA-04 (timetable) moved to Phase 7 (ADR-066 Q2).
