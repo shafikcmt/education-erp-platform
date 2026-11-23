@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
+from decimal import Decimal
 from typing import Any
 
 from rest_framework import serializers
 
-from apps.admissions.models import Application, Cycle, CycleTarget, Inquiry
+from apps.admissions.models import (
+    Application,
+    Cycle,
+    CycleTarget,
+    Inquiry,
+    MeritList,
+    Test,
+    TestAssignment,
+)
 
 _CODE = r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$"
 _KEY = r"^[a-z][a-z0-9_]{1,63}$"
@@ -115,3 +124,69 @@ class DecisionSerializer(serializers.Serializer[Any]):
 
 class OfferResponseSerializer(serializers.Serializer[Any]):
     accept = serializers.BooleanField()
+
+
+# --------------------------------------------------------------------------- tests and merit (M6)
+class TestSerializer(serializers.ModelSerializer[Test]):
+    seated = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Test
+        fields = ["id", "cycle", "name", "starts_at", "venue", "capacity", "max_score", "seated"]
+        read_only_fields = fields
+
+
+class TestCreateSerializer(serializers.Serializer[Any]):
+    name = serializers.CharField(max_length=160)
+    starts_at = serializers.DateTimeField()
+    venue = serializers.CharField(max_length=200, required=False, allow_blank=True, default="")
+    capacity = serializers.IntegerField(min_value=1)
+    max_score = serializers.DecimalField(max_digits=8, decimal_places=2, min_value=Decimal("0.01"))
+
+
+class TestSeatSerializer(serializers.ModelSerializer[TestAssignment]):
+    application_number = serializers.CharField(source="application.number", read_only=True)
+    applicant_name = serializers.CharField(source="application.applicant_name", read_only=True)
+
+    class Meta:
+        model = TestAssignment
+        fields = [
+            "id", "test", "application", "application_number", "applicant_name", "seat", "score",
+            "absent", "scored_at",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+
+class TestSeatCreateSerializer(serializers.Serializer[Any]):
+    application = serializers.UUIDField()
+
+
+class ScoreSerializer(serializers.Serializer[Any]):
+    score = serializers.DecimalField(
+        max_digits=8, decimal_places=2, min_value=Decimal(0), allow_null=True
+    )
+    absent = serializers.BooleanField(required=False, default=False)
+
+
+class RankedSerializer(serializers.Serializer[Any]):
+    application = serializers.UUIDField()
+    number = serializers.CharField()
+    applicant_name = serializers.CharField(required=False)
+    score = serializers.CharField()
+    total = serializers.CharField()
+    rank = serializers.IntegerField()
+    status = serializers.CharField()
+
+
+class MeritListSerializer(serializers.ModelSerializer[MeritList]):
+    ranking = RankedSerializer(many=True)
+
+    class Meta:
+        model = MeritList
+        fields = ["id", "target", "version", "rule_key", "published_at", "ranking"]
+        read_only_fields = fields
+
+
+class MeritSerializer(serializers.Serializer[Any]):
+    preview = RankedSerializer(many=True)
+    published = MeritListSerializer(allow_null=True)

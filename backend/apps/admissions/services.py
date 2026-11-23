@@ -449,6 +449,10 @@ def respond_to_offer(
     if accept:
         tenant_id, app_id = str(application.tenant_id), str(application.pk)
         transaction.on_commit(lambda: _accepted_handlers(tenant_id, app_id))
+    else:
+        from apps.admissions.merit import after_decline
+
+        after_decline(application, request)  # the freed seat goes down the published list
     return application
 
 

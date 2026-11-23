@@ -50,6 +50,34 @@ urlpatterns = [
         v.ApplicationDocumentDownloadView.as_view(),
         name="application-document-download",
     ),
+    # ------------------------------------------------------------- tests and merit (M6)
+    path("admissions/cycles/<str:cycle_id>/tests/", v.CycleTestsView.as_view(), name="cycle-tests"),
+    path(
+        "admissions/tests/<str:test_id>/assignments/",
+        v.TestAssignmentsView.as_view(),
+        name="test-assignments",
+    ),
+    path(
+        "admissions/assignments/<str:assignment_id>/",
+        v.AssignmentScoreView.as_view(),
+        name="assignment-score",
+    ),
+    path(
+        "admissions/applications/<str:application_id>/evaluate/",
+        v.ApplicationEvaluateView.as_view(),
+        name="application-evaluate",
+    ),
+    path("admissions/targets/<str:target_id>/merit/", v.TargetMeritView.as_view(), name="merit"),
+    path(
+        "admissions/targets/<str:target_id>/merit/publish/",
+        v.TargetMeritPublishView.as_view(),
+        name="merit-publish",
+    ),
+    path(
+        "admissions/targets/<str:target_id>/merit/offers/",
+        v.TargetMeritOffersView.as_view(),
+        name="merit-offers",
+    ),
     # ------------------------------------------------------------- public (anonymous, M5)
     path("public/admissions/cycles/", p.OpenCyclesView.as_view(), name="public-cycles"),
     path(

@@ -317,6 +317,18 @@ Role templates (system copies are synced by P7):
 | D29 | **P26 enabled** (`admissions.housekeeping`, every 6 hours): it fans out `admissions.purge` per active tenant. Unverified public drafts past expiry are deleted (personal data), and open cycles past their closing date are closed |
 | D30 | **Not in M5:** presigned uploads from a real browser to the object store are exercised in the M8 E2E (the stack exposes the object store to browsers then); the public pages are M7 |
 
+### 13.6 M6 — tests, scores, the merit list and offers (2026-11-23, branch `feat/phase-06-m6`)
+
+| # | Note |
+|---|---|
+| D31 | New tables `admissions_test` (cycle, name, start, venue, capacity, maximum score) and `admissions_testassignment` (test, application, seat, score, `absent`), plus `admissions_meritlist` (target, version, frozen ranking, rule key). They use standard RLS and composite keys (`admissions.0005`): a test belongs to its institution's cycle; an assignment's test and application share one cycle; a merit list's target belongs to its cycle |
+| D32 | **Seating and scores:** seating gives the next seat number, respects the test's capacity (row-locked) and makes the application `test_scheduled`. Scores must lie between 0 and the maximum, and an absent applicant has no score. Once every test of an application is scored or marked absent, the application is `evaluated` with the total (absent counts 0). A correction re-opens it. Cycles without tests mark applications evaluated directly (`…/evaluate/`, review permission) |
+| D33 | **Ranking:** only evaluated applications whose review workflow is finished are ranked. The cycle's merit rule (namespace `admissions.merit`; variables are the application's core and custom values, the total score and `today`; numbers are `Decimal`) decides the order; without a rule the total score does. Ties go to the higher total, then the earlier submission, then the number. If the rule can't be evaluated for an application, publication stops (fail closed) |
+| D34 | **Publishing** (`admissions.merit.publish`, MFA and step-up) freezes the ranking as a new version and sets each application's `merit_rank`. Names are not frozen into the list (personal data); they are read live for staff with `admissions.application.view` |
+| D35 | **Offers by merit** (`admissions.application.decide`) go down the latest published ranking up to the target's free seats. A **declined offer automatically offers the freed seat to the next waiting applicant** of the published list, as an audited system action (`via=decline`). Acceptance keeps calling `ADMISSIONS_ACCEPTED_HANDLERS` after commit; this is the stand-in for the `admissions.application.accepted` event, which Phase 7 consumes |
+| D36 | Permissions: `admissions.test.manage` (MFA) and `admissions.merit.publish` (MFA, step-up), 88 codes in total. Owner and institution admin get both; admission officer gets tests. **Exam controller** gets `admissions.test.manage` only: it schedules and scores tests and sees seat lists (number and name), not application files. The plan's "test scores" maps to this one code instead of adding a separate score code |
+| D37 | The applicant's status page lists their tests (name, time, venue, seat). **Not in M6:** emailing applicants about decisions and offers (they see them through the status link; notifications are extended in Phase 14) |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
@@ -325,3 +337,4 @@ Role templates (system copies are synced by P7):
 - 2026-11-23 — §13.3 appended: M3 notes D11–D17.
 - 2026-11-23 — §13.4 appended: M4 notes D18–D23.
 - 2026-11-23 — §13.5 appended: M5 notes D24–D30.
+- 2026-11-23 — §13.6 appended: M6 notes D31–D37.

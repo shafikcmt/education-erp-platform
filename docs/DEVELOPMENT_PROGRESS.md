@@ -38,7 +38,7 @@
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Approved | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`), [PR #50](https://github.com/shafikcmt/education-erp-platform/pull/50) (M7, merged `983a9e4`) | **Approved** (owner, 2026-11-22) |
 | 5 | Customization Studio & institution configuration | Approved | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`), [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) (M6, merged `940ec47`), [PR #58](https://github.com/shafikcmt/education-erp-platform/pull/58) (M7, merged `662986c`); [PR #59](https://github.com/shafikcmt/education-erp-platform/pull/59) (M8, merged `1d6e227`) | **Approved** (owner, 2026-11-23); ADR-061, ADR-062 Accepted |
-| 6 | Academic structure & student admission | In progress | [PR #61](https://github.com/shafikcmt/education-erp-platform/pull/61) (plan, merged `8f284ff`), [PR #62](https://github.com/shafikcmt/education-erp-platform/pull/62) (M1, merged `7dc28fc`), [PR #63](https://github.com/shafikcmt/education-erp-platform/pull/63) (M2, merged `4f5e564`), [PR #64](https://github.com/shafikcmt/education-erp-platform/pull/64) (M3, merged `c12d3b7`), [PR #65](https://github.com/shafikcmt/education-erp-platform/pull/65) (M4, merged `b345b21`); `feat/phase-06-m5` (M5) | Plan Approved (ADR-063–066); `timetable` moved to Phase 7 |
+| 6 | Academic structure & student admission | In progress | [PR #61](https://github.com/shafikcmt/education-erp-platform/pull/61) (plan, merged `8f284ff`), [PR #62](https://github.com/shafikcmt/education-erp-platform/pull/62) (M1, merged `7dc28fc`), [PR #63](https://github.com/shafikcmt/education-erp-platform/pull/63) (M2, merged `4f5e564`), [PR #64](https://github.com/shafikcmt/education-erp-platform/pull/64) (M3, merged `c12d3b7`), [PR #65](https://github.com/shafikcmt/education-erp-platform/pull/65) (M4, merged `b345b21`), [PR #66](https://github.com/shafikcmt/education-erp-platform/pull/66) (M5, merged `43a49fc`); `feat/phase-06-m6` (M6) | Plan Approved (ADR-063–066); `timetable` moved to Phase 7 |
 | 7 | Student, teacher & parent management | Not started | | |
 | 8 | Attendance management | Not started | | |
 | 9 | Examination & results | Not started | | |
@@ -142,6 +142,17 @@ See `DECISION_LOG.md`.
 - **Verification (local):** backend **1071 passed, 9 skipped** (7 new public-flow tests); ruff, format, mypy (367 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean and client regenerated; frontend `tsc` clean. GitHub CI: pending (see the PR).
 - **Next:** M6 (admission tests and scores, the merit list with the `admissions.merit` rule, offers).
 
+### 2026-11-23 — Session 31 (continued): Phase 6 M6
+- **M5:** [PR #66](https://github.com/shafikcmt/education-erp-platform/pull/66) — CI **8/8 success**; squash-merged pinned to `bed198b` → **`43a49fc`** (tree identical to the head).
+- **M6 (`feat/phase-06-m6`):** admission tests, seats and scores (plan §13.6 D31–D37):
+  - the evaluated state with the total score;
+  - the merit list, ranked by the cycle's sandboxed merit rule or the total;
+  - publishing creates frozen versions (MFA and step-up);
+  - offers go down the ranking, and a declined seat moves to the next applicant automatically;
+  - the applicant's status page lists their tests.
+- **Verification (local):** backend **1078 passed, 9 skipped** (7 new merit tests); ruff, format, mypy (369 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean and client regenerated; frontend `tsc` clean. GitHub CI: pending (see the PR).
+- **Next:** M7 (frontend: academic setup, admissions back office, public pages; en and bn).
+
 ## Known gaps / open questions
 
 - Price points, tier boundaries, trial length (ADR-024).
@@ -159,6 +170,7 @@ See `DECISION_LOG.md`.
 - **Phase 6 gaps (recorded, not hidden; plan §13):**
   - Presigned uploads not yet exercised against the real object store from a browser; the stack exposes the object store to browsers with the public flow (M5/M8).
   - No malware scanner yet: files stay `unscanned` and staff-only (ADR-066 Q8, Phase 18).
+  - Applicants are not emailed about decisions or offers yet; they see them through the status link (Phase 14).
 - **Phase 3 M5 gaps (recorded, not hidden; plan §24.8):**
   - ~~**No HTTP endpoints** for support sessions and the approval setting~~ — **resolved in M8**.
   - ~~**Suspension service (P5)**~~ — **resolved in M8** (revokes open support sessions).

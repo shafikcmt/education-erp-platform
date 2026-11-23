@@ -112,6 +112,13 @@ EVENTS: dict[str, frozenset[str]] = {
     "admissions.application.status_changed": frozenset({"status"}),
     "admissions.application.decided": frozenset({"decision"}),
     "admissions.application.offer_answered": frozenset({"accepted"}),
+    # admissions tests and merit (Phase 6 M6)
+    "admissions.test.created": frozenset({"capacity"}),
+    "admissions.test.assigned": frozenset({"seat"}),
+    "admissions.test.scored": frozenset({"absent"}),
+    "admissions.application.evaluated": frozenset({"tests"}),
+    "admissions.merit.published": frozenset({"version", "ranked"}),
+    "admissions.merit.offers_made": frozenset({"version", "offered", "via"}),
     # files (Phase 6 M3); never names, keys or contents
     "files.file.upload_requested": frozenset({"purpose", "size"}),
     "files.file.verified": frozenset({"status", "scan"}),

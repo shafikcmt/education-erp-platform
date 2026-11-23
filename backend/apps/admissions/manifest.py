@@ -1,8 +1,8 @@
 """admissions manifest (Phase 6 M4; ADR-063, ADR-065, ADR-066).
 
 Inquiries, admission cycles bound to Studio artefacts (form, workflow, merit rule, numbering),
-applications and their review. The public application flow follows in M5; tests and the merit
-list in M6. Applicant data is personal data: visible only with ``admissions.application.view``
+applications and their review, the public application flow (M5), admission tests and the
+merit list (M6). Applicant data is personal data: visible only with ``admissions.application.view``
 in the institution's scope.
 """
 
@@ -34,6 +34,18 @@ PERMISSIONS = [
         "code": "admissions.application.decide",
         "description": "Offer or reject applications and record offer responses",
         "requires_mfa": True,
+    },
+    # Phase 6 M6
+    {
+        "code": "admissions.test.manage",
+        "description": "Schedule admission tests, seat applicants and enter scores",
+        "requires_mfa": True,
+    },
+    {
+        "code": "admissions.merit.publish",
+        "description": "Publish a merit list (offers follow its ranks)",
+        "requires_mfa": True,
+        "requires_step_up": True,
     },
 ]
 

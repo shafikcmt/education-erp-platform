@@ -9,8 +9,12 @@
   against the form). Students are created from accepted applications in Phase 7
   (``ADMISSIONS_ACCEPTED_HANDLERS``).
 
+* ``Test`` / ``TestAssignment`` (M6): admission tests of a cycle and the applications seated in
+  them, with scores; ``MeritList``: a published, frozen ranking of one target's evaluated
+  applications (versioned).
+
 All tables are tenant-owned (standard RLS) with composite tenant/institution keys
-(``admissions.0002``).
+(``admissions.0002``, ``admissions.0005``).
 """
 
 from __future__ import annotations
@@ -190,8 +194,104 @@ class Application(TenantScopedModel):
                 condition=~models.Q(number=""),
                 name="admissions_application_number_unique",
             ),
+            # Composite key for test assignments (M6).
+            models.UniqueConstraint(
+                fields=["tenant", "cycle", "id"], name="admissions_application_cycle_key"
+            ),
         ]
         indexes = [models.Index(fields=["tenant", "cycle", "status"])]
 
     def __str__(self) -> str:
         return self.number or str(self.pk)
+
+
+class Test(TenantScopedModel):
+    """An admission test of a cycle (M6)."""
+
+    __test__ = False  # not a pytest test class
+
+    institution = _fk("tenancy.Institution")
+    cycle = _fk("admissions.Cycle", related_name="tests")
+    name = models.CharField(max_length=160)
+    starts_at = models.DateTimeField()
+    venue = models.CharField(max_length=200, blank=True)
+    capacity = models.PositiveIntegerField()
+    max_score = models.DecimalField(max_digits=8, decimal_places=2)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "admissions_test"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant", "cycle", "id"], name="admissions_test_key"),
+            models.CheckConstraint(
+                condition=models.Q(capacity__gt=0), name="admissions_test_capacity"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(max_score__gt=0), name="admissions_test_max_score"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class TestAssignment(TenantScopedModel):
+    """An application seated in a test, and its score (``absent`` scores nothing)."""
+
+    __test__ = False  # not a pytest test class
+
+    cycle = _fk("admissions.Cycle")
+    test = _fk("admissions.Test", related_name="assignments")
+    application = _fk("admissions.Application", related_name="test_assignments")
+    seat = models.PositiveIntegerField()
+    score = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True)
+    absent = models.BooleanField(default=False)
+    scored_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "admissions_testassignment"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "test", "application"], name="admissions_assignment_unique"
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "test", "seat"], name="admissions_assignment_seat_unique"
+            ),
+            models.CheckConstraint(
+                condition=models.Q(score__isnull=True) | models.Q(score__gte=0),
+                name="admissions_assignment_score",
+            ),
+            models.CheckConstraint(
+                condition=~(models.Q(absent=True) & models.Q(score__isnull=False)),
+                name="admissions_assignment_absent_no_score",
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.test_id}:{self.seat}"
+
+
+class MeritList(TenantScopedModel):
+    """A published ranking of one target (immutable; a new publication is a new version).
+
+    ``ranking`` is ``[{"application": id, "number": str, "score": str, "rank": int}]`` in rank
+    order, frozen at publication; offers follow it.
+    """
+
+    institution = _fk("tenancy.Institution")
+    cycle = _fk("admissions.Cycle")
+    target = _fk("admissions.CycleTarget", related_name="merit_lists")
+    version = models.PositiveIntegerField()
+    ranking = models.JSONField(default=list)
+    rule_key = models.CharField(max_length=64, blank=True)
+    published_at = models.DateTimeField()
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "admissions_meritlist"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "target", "version"], name="admissions_meritlist_version_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.target_id} v{self.version}"
