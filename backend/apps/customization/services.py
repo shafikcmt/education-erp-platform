@@ -12,10 +12,12 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.models import Max, QuerySet
 from django.utils import timezone
+from django.utils.module_loading import import_string
 
 from apps.audit.services import record
 from apps.core.tenancy import require_tenant
@@ -178,6 +180,10 @@ def _activate(
     version.published_at, version.published_by = timezone.now(), actor.pk
     version.save()
     invalidate()
+    # Modules veto configurations their data can't live with (e.g. structure levels in use);
+    # a refusal raises inside this transaction, so the publish is undone.
+    for path in getattr(settings, "CUSTOMIZATION_PUBLISH_CHECKS", []):
+        import_string(path)(scope)
     return current, before
 
 

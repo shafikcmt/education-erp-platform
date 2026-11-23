@@ -2,7 +2,7 @@
 code: training.general.v1
 institution_type: training_institute
 version: 1
-default_for_type: true
+default_for_type: false
 name: {en: Training institute (general), bn: প্রশিক্ষণ প্রতিষ্ঠান (সাধারণ)}
 suggested_modules: [academics, students, attendance, fees, lms, ext_certification]
 settings:

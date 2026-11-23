@@ -90,9 +90,10 @@ def test_modules_that_are_not_built_are_never_enabled(admin, plan, tenant_factor
     a = tenant_factory(slug="alpha")
     services.assign_plan(actor=admin.user, tenant_id=a.id, plan_code="starter", reason=REASON)
     snap = _snapshot(a)
-    assert snap["academics"] == ("plan", False, "not_built")
-    assert snap["students"][1] is False
-    assert _enabled(a) == _platform()
+    assert snap["academics"] == ("plan", True, "")  # built since Phase 6
+    assert snap["students"] == ("plan", False, "not_built")
+    assert snap["fees"][1] is False  # not built either
+    assert _enabled(a) == _platform() | {"academics"}
 
 
 def test_overrides_grant_and_revoke(admin, plan, built, tenant_factory):

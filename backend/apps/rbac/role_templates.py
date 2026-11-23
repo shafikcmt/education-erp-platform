@@ -139,6 +139,15 @@ _OWNER_CODES = [
     "customization.template.manage",
     "customization.numbering.view",
     "customization.numbering.manage",
+    # Phase 6: academic structure (years, units, subjects, offerings).
+    "academics.year.view",
+    "academics.year.manage",
+    "academics.structure.view",
+    "academics.structure.manage",
+    "academics.subject.view",
+    "academics.subject.manage",
+    "academics.offering.view",
+    "academics.offering.manage",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -167,6 +176,15 @@ _INSTITUTION_ADMIN_CODES = [
     "customization.config.view",
     "customization.config.edit",
     "customization.config.publish",
+    # Phase 6: academic structure (years, units, subjects, offerings).
+    "academics.year.view",
+    "academics.year.manage",
+    "academics.structure.view",
+    "academics.structure.manage",
+    "academics.subject.view",
+    "academics.subject.manage",
+    "academics.offering.view",
+    "academics.offering.manage",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -177,6 +195,12 @@ _CAMPUS_ADMIN_CODES = [
     "rbac.role.view",
     "rbac.assignment.view",
     "rbac.assignment.manage",
+    # Phase 6: campus admins read the academic structure (and so can assign teachers, who read
+    # it too: nobody grants permissions they don't hold).
+    "academics.year.view",
+    "academics.structure.view",
+    "academics.subject.view",
+    "academics.offering.view",
 ]
 TENANT_OWNER = "tenant_owner"
 
@@ -207,14 +231,33 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Academic Coordinator",
         "একাডেমিক সমন্বয়ক",
         "Academic structure, timetable and curriculum coordination (incl. HoD).",
-        [TENANT_VIEW, "academics.structure.manage", "timetable.timetable.manage"],
+        [
+            TENANT_VIEW,
+            "academics.year.view",
+            "academics.year.manage",
+            "academics.structure.view",
+            "academics.structure.manage",
+            "academics.subject.view",
+            "academics.subject.manage",
+            "academics.offering.view",
+            "academics.offering.manage",
+            "timetable.timetable.manage",
+        ],
     ),
     _template(
         "teacher",
         "Teacher",
         "শিক্ষক",
         "Assigned classes: attendance, marks entry, LMS content.",
-        [TENANT_VIEW, "attendance.record.mark", "examinations.marks.enter", "lms.content.manage"],
+        [
+            TENANT_VIEW,
+            "academics.structure.view",
+            "academics.subject.view",
+            "academics.offering.view",
+            "attendance.record.mark",
+            "examinations.marks.enter",
+            "lms.content.manage",
+        ],
     ),
     _template(
         "class_teacher",

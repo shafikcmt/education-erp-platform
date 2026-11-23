@@ -35,15 +35,17 @@ GOOD = {
 
 def test_every_institution_type_has_exactly_one_valid_default_preset():
     presets = file_presets()
-    assert len(presets) == 6
+    assert len(presets) == 12  # v1 drafts (Phase 5) and v2 (Phase 6, ADR-063), both kept
     for itype in TYPE_PREFIX:
-        defaults = [p for p in presets.values() if p["institution_type"] == itype]
-        assert [p["default_for_type"] for p in defaults] == [True], itype
+        of_type = [p for p in presets.values() if p["institution_type"] == itype]
+        defaults = [p for p in of_type if p["default_for_type"]]
+        assert [p["version"] for p in defaults] == [2], itype  # one default: the v2 preset
         terminology = defaults[0]["settings"]["customization.terminology"]
         assert {"en", "bn"} <= set(terminology), itype  # both launch languages
-    assert presets["university.credit.v1"]["settings"]["customization.capabilities"][
-        "academics.credit_based"
-    ]
+    for version in ("v1", "v2"):
+        assert presets[f"university.credit.{version}"]["settings"]["customization.capabilities"][
+            "academics.credit_based"
+        ]
 
 
 @pytest.mark.parametrize(
@@ -65,7 +67,7 @@ def test_invalid_presets_are_refused(change, message):
 
 
 def test_runtime_role_can_only_read_presets():
-    assert Preset.objects.count() == 6  # synced by the owner bootstrap
+    assert Preset.objects.count() == 12  # synced by the owner bootstrap (v1 and v2)
     with pytest.raises(ProgrammingError, match="permission denied"), connection.cursor() as cursor:
         cursor.execute("UPDATE customization_preset SET is_default = false")
 
@@ -101,7 +103,7 @@ def test_new_institutions_pin_their_types_default_preset_and_inherit_its_setting
         madrasa = create_institution(
             actor=owner, code="mad", name="Mad", institution_type="madrasa"
         )
-        assert (uni.preset_code, uni.preset_version) == ("university.credit.v1", "1")
+        assert (uni.preset_code, uni.preset_version) == ("university.credit.v2", "2")
         flags = get_effective_config(ConfigScope(uni.pk), "customization.capabilities")
         assert flags["academics.credit_based"] is True
         terms = get_effective_config(ConfigScope(madrasa.pk), "customization.terminology")

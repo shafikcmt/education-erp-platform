@@ -2,7 +2,7 @@
 code: coaching.general.v1
 institution_type: coaching_center
 version: 1
-default_for_type: true
+default_for_type: false
 name: {en: Coaching center (general), bn: কোচিং সেন্টার (সাধারণ)}
 suggested_modules: [academics, students, attendance, fees, online_exams, ext_batch_management]
 settings:

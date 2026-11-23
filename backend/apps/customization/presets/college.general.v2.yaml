@@ -1,0 +1,25 @@
+# Draft v2 (Phase 6, ADR-063): structure levels are organisational only; academic years,
+# terms and subjects/courses have their own models. Still a draft to validate with real
+# institutions (ADR-060 Q4).
+code: college.general.v2
+institution_type: college
+version: 2
+default_for_type: true
+name: {en: College (general), bn: কলেজ (সাধারণ)}
+suggested_modules: [academics, admissions, students, staff, attendance, examinations, fees]
+settings:
+  customization.structure_levels:
+    - {key: group}
+    - {key: class}
+    - {key: section}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.section_enabled: true
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.session: Academic session, unit.group: Group, unit.class: Year, unit.section: Section, unit.subject: Subject, unit.teacher: Teacher, unit.student: Student, unit.head: Principal}
+    bn: {unit.session: শিক্ষাবর্ষ, unit.group: বিভাগ, unit.class: বর্ষ, unit.section: শাখা, unit.subject: বিষয়, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: অধ্যক্ষ}
+  customization.role_labels:
+    en: {institution_admin: Principal}
+    bn: {institution_admin: অধ্যক্ষ}

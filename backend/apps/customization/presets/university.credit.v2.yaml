@@ -1,0 +1,25 @@
+# Draft v2 (Phase 6, ADR-063): structure levels are organisational only; academic years,
+# terms and subjects/courses have their own models. Still a draft to validate with real
+# institutions (ADR-060 Q4).
+code: university.credit.v2
+institution_type: university
+version: 2
+default_for_type: true
+name: {en: University (credit-based), bn: বিশ্ববিদ্যালয় (ক্রেডিটভিত্তিক)}
+suggested_modules: [academics, admissions, students, staff, examinations, fees, accounting, hostel, ext_course_registration]
+settings:
+  customization.structure_levels:
+    - {key: faculty}
+    - {key: department}
+    - {key: program}
+  customization.capabilities:
+    academics.credit_based: true
+    academics.section_enabled: false
+    academics.semester_based: true
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.faculty: Faculty, unit.department: Department, unit.program: Program, unit.class: Program, unit.term: Semester, unit.subject: Course, unit.teacher: Faculty member, unit.student: Student, unit.head: Vice-Chancellor}
+    bn: {unit.faculty: অনুষদ, unit.department: বিভাগ, unit.program: প্রোগ্রাম, unit.class: প্রোগ্রাম, unit.term: সেমিস্টার, unit.subject: কোর্স, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: উপাচার্য}
+  customization.role_labels:
+    en: {institution_admin: Registrar, exam_controller: Controller of Examinations, academic_coordinator: Head of Department, hostel_warden: Provost}
+    bn: {institution_admin: রেজিস্ট্রার, exam_controller: পরীক্ষা নিয়ন্ত্রক, academic_coordinator: বিভাগীয় প্রধান, hostel_warden: প্রভোস্ট}

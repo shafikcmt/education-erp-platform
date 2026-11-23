@@ -69,7 +69,7 @@ def test_provisioning_creates_a_working_tenant(admin_api, django_capture_on_comm
         [institution] = Institution.objects.all()
         assert institution.institution_type == "madrasa"
         # Phase 5 M2: the first institution pins its type's default preset (ADR-058).
-        assert (institution.preset_code, institution.preset_version) == ("madrasa.general.v1", "1")
+        assert (institution.preset_code, institution.preset_version) == ("madrasa.general.v2", "2")
         [campus] = Campus.objects.all()
         assert campus.is_main and campus.institution_id == institution.pk
         [invitation] = Invitation.objects.select_related("role")
