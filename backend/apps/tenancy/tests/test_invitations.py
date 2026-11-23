@@ -237,3 +237,39 @@ def test_invitations_are_rate_limited_per_address(org, settings):
         _invite(org, org.owner, "busy@example.com", "teacher", "campus", org.south, org.south_main)
     assert exc.value.status_code == 429 and exc.value.extra["retry_after"] > 0
     assert _invite(org, org.owner, "calm@example.com")  # another address is unaffected
+
+
+def test_acceptance_re_authorises_the_inviting_member(org):
+    """ADR-062: removing someone's rights also voids the invitations they sent."""
+    _, suspended_token = _invite(
+        org, org.head, "s@example.com", "teacher", "institution", org.north
+    )
+    _, removed_token = _invite(org, org.head, "r@example.com", "teacher", "institution", org.north)
+    _, kept_token = _invite(org, org.owner, "k@example.com", "teacher", "institution", org.north)
+    with tenant_atomic(org.tenant):
+        assert Invitation.objects.filter(recheck_inviter=True).count() == 3
+        Membership.objects.filter(user=org.head).update(status="suspended")
+    with pytest.raises(InvitationInvalid):
+        _accept(org, suspended_token, make_user("s@example.com").user)
+    with tenant_atomic(org.tenant):
+        Membership.objects.filter(user=org.head).update(status="active")
+        RoleAssignment.objects.filter(membership__user=org.head).delete()
+    with pytest.raises(InvitationInvalid):
+        _accept(org, removed_token, make_user("r@example.com").user)
+    assert _accept(org, kept_token, make_user("k@example.com").user).status == "active"
+    assert _attempts(org) == ["inviter_unauthorised", "inviter_unauthorised"]
+    with tenant_atomic(org.tenant):  # the void invitations stay open for an administrator
+        assert Invitation.objects.filter(accepted_at__isnull=True).count() == 2
+
+
+def test_platform_issued_owner_invitations_are_not_re_checked(org):
+    """The provisioning operator is no member; P4 authorised the owner invitation."""
+    with tenant_atomic(org.tenant):
+        invitation, token = invitations.issue_invitation(
+            actor=None,
+            email="founder@example.com",
+            role=tenant_roles.system_role(org.tenant.id, "tenant_owner"),
+            scope_type="tenant",
+        )
+        assert invitation.recheck_inviter is False
+    assert _accept(org, token, make_user("founder@example.com").user).status == "active"

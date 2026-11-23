@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -30,6 +30,7 @@ from apps.core.tokens import generate_token, hash_token
 from apps.identity import throttling
 from apps.identity.services.notifications import send_security_email
 from apps.rbac.engine import bump_tenant_version, require_perm
+from apps.rbac.services import GuardRailViolation
 from apps.tenancy.errors import (
     InvitationEmailMismatch,
     InvitationInvalid,
@@ -114,6 +115,7 @@ def create_invitation(
         institution=inst,
         campus=camp,
         request=request,
+        recheck_inviter=True,
     )
 
 
@@ -126,6 +128,7 @@ def issue_invitation(
     institution: Any = None,
     campus: Any = None,
     request: HttpRequest | None = None,
+    recheck_inviter: bool = False,
 ) -> tuple[Invitation, str]:
     """Store and send an invitation WITHOUT authorising ``actor`` against the tenant. For
     callers that authorised it already: :func:`create_invitation`, and provisioning (P4),
@@ -150,6 +153,7 @@ def issue_invitation(
                 token_hash=token_hash,
                 expires_at=timezone.now() + LIFETIME,
                 invited_by=getattr(actor, "pk", None),
+                recheck_inviter=recheck_inviter,
             )
     except IntegrityError:
         raise ValidationError(
@@ -235,6 +239,31 @@ def _reject(reason: str, request: HttpRequest | None, user: Any) -> InvitationIn
     return InvitationInvalid()
 
 
+def _inviter_still_authorised(ctx: Any, invitation: Invitation) -> bool:
+    """ADR-062: the member who invited must still be an active member who may invite into this
+    scope and holds every permission of the role (uncached). Otherwise the invitation is void,
+    so removing someone's rights also stops the invitations they sent."""
+    from apps.identity.models import User
+
+    if not invitation.recheck_inviter:
+        return True
+    if invitation.invited_by is None:
+        return False  # a member invitation always names its inviter
+    inviter = User.objects.filter(pk=invitation.invited_by, is_active=True).first()
+    member = Membership.objects.filter(user_id=invitation.invited_by).first()
+    if inviter is None or member is None or member.status != Membership.Status.ACTIVE:
+        return False
+    try:
+        target, _, _ = common.resolve_scope(
+            ctx, invitation.scope_type, invitation.institution, invitation.campus
+        )
+        require_perm(inviter, INVITE, target=target, use_cache=False)
+        common.assert_no_escalation(inviter, invitation.role, target)
+    except (PermissionDenied, GuardRailViolation, ValidationError):
+        return False
+    return True
+
+
 def accept_invitation(*, token: str, user: User, request: HttpRequest | None = None) -> Membership:
     """Redeem ``token`` for the signed-in ``user`` inside the current tenant."""
     ctx = common.tenant_context()
@@ -256,6 +285,8 @@ def accept_invitation(*, token: str, user: User, request: HttpRequest | None = N
         return existing
     if invitation.expires_at <= timezone.now():
         raise _reject("expired", request, user)
+    if not _inviter_still_authorised(ctx, invitation):
+        raise _reject("inviter_unauthorised", request, user)
     if not mine:
         record(
             "tenancy.invitation.invalid_attempt",
