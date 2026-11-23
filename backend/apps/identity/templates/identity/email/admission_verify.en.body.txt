@@ -1,0 +1,10 @@
+{% autoescape off %}Hello,
+
+An application to {{ tenant_name }} was started with this email address.
+To submit it, open this link within {{ hours }} hours:
+
+{{ action_url }}
+
+If you did not apply, ignore this email: nothing is submitted without your confirmation. The link works only once.
+
+— {{ tenant_name }}{% endautoescape %}

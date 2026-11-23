@@ -68,6 +68,19 @@ TENANT_HOST_ROUTES = {
     "api/v1/admissions/applications/<str:application_id>/review/": False,
     "api/v1/admissions/applications/<str:application_id>/decision/": False,
     "api/v1/admissions/applications/<str:application_id>/offer-response/": False,
+    # Phase 6 M5: application documents (staff) and the public admissions flow (anonymous:
+    # skips the membership gate; throttled, enumeration-safe, 404 without the module)
+    "api/v1/admissions/applications/<str:application_id>/documents/": False,
+    "api/v1/admissions/applications/<str:application_id>/documents/<str:file_id>/download/": False,
+    "api/v1/public/admissions/cycles/": True,
+    "api/v1/public/admissions/cycles/<str:cycle_id>/form/": True,
+    "api/v1/public/admissions/cycles/<str:cycle_id>/visibility/": True,
+    "api/v1/public/admissions/cycles/<str:cycle_id>/apply/": True,
+    "api/v1/public/admissions/verify/": True,
+    "api/v1/public/admissions/status/": True,
+    "api/v1/public/admissions/status/respond/": True,
+    "api/v1/public/admissions/status/documents/": True,
+    "api/v1/public/admissions/status/documents/confirm/": True,
     # Phase 6 M3: files (module-gated, behind the membership gate)
     "api/v1/files/uploads/": False,
     "api/v1/files/<str:file_id>/": False,

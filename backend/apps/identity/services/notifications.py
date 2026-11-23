@@ -42,6 +42,8 @@ TEMPLATES = frozenset(
         "support_session_started",
         "support_approval_changed",
         "signup_verify",  # Phase 5 M8: sent by apps.tenancy.services.signup
+        "admission_verify",  # Phase 6 M5: sent by apps.admissions.public
+        "admission_status",
     }
 )
 

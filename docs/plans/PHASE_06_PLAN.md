@@ -305,6 +305,18 @@ Role templates (system copies are synced by P7):
 | D22 | **Review and decision:** without a workflow, `submitted → under_review`; with one, the review runs in the workflow (its own permissions) and the decision waits until it is finished. Offers respect the target's capacity (offered + accepted, row-locked); a decline frees the seat. Accepting calls `ADMISSIONS_ACCEPTED_HANDLERS` after commit (nothing registered until Phase 7 creates students) — the codebase's settings-hook pattern stands in for a domain event bus |
 | D23 | Back-office API (module `admissions`): inquiries, cycles (+ targets, status), applications (+ review, decision, offer response); lists need an institution or cycle and answer 404 outside the caller's institutions. The institution check moved to one helper (`tenancy.api.permissions.visible_institution`), now shared by academics and admissions. Permissions: 7 codes (86 total); role templates: owner and institution admin all; admission officer inquiries, cycles view, applications view and review, uploads; front desk inquiries. Institution admins also got the files codes so they can assign admission officers (no escalation) |
 
+### 13.5 M5 — public application flow (2026-11-23, branch `feat/phase-06-m5`)
+
+| # | Note |
+|---|---|
+| D24 | **Public routes on tenant hosts** (`/api/v1/public/admissions/…`): open cycles, the cycle's form and server-side section visibility, apply, verify, status, offer answer, document slot and confirm. Anonymous by design (URL audit allow-list, host routes skip the membership gate). Every route answers **404 when the organisation has no `admissions` module** (the module gate lets anonymous callers through, so the view checks the entitlement itself) |
+| D25 | **Apply → verify → status link:** apply validates with the cycle's form and stores a `draft`, then emails a single-use verification link (48 hours). Verify allocates the number and makes the application `submitted`, then emails a personal **status link**. Only SHA-256 hashes of both tokens are stored (partial unique constraints, `admissions.0003`). Tokens travel in the URL fragment and the request body, never the URL path. Links use the tenant's primary verified domain (`tenancy.services.invitations.tenant_link`, shared with invitations) |
+| D26 | **Abuse controls:** the per-IP limit answers 429 (`admission_ip`, 10/hour). The per-email limit per cycle (`admission_email`, 3/day) and the honeypot are **silent**, so the answer is always the same 202. Token actions share `admission_verify_ip` (60/hour). The audit metadata never contains the email |
+| D27 | **Documents:** with the status link, the applicant asks for an upload slot (purpose `admissions.document`, type, size and count limits) and confirms it while the application is in review. Staff list documents and get short-lived download links (`…/applications/{id}/documents/`, `admissions.application.view` in the institution's scope; 404 outside it). Unscanned files stay staff-only (Q8) |
+| D28 | **Workflow start:** a public submitter is not a member who could start a workflow, so the cycle's workflow starts when staff take a public application into review (`start_review`). Staff-entered applications still start it at submission |
+| D29 | **P26 enabled** (`admissions.housekeeping`, every 6 hours): it fans out `admissions.purge` per active tenant. Unverified public drafts past expiry are deleted (personal data), and open cycles past their closing date are closed |
+| D30 | **Not in M5:** presigned uploads from a real browser to the object store are exercised in the M8 E2E (the stack exposes the object store to browsers then); the public pages are M7 |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
@@ -312,3 +324,4 @@ Role templates (system copies are synced by P7):
 - 2026-11-23 — §13.2 appended: M2 notes D8–D10.
 - 2026-11-23 — §13.3 appended: M3 notes D11–D17.
 - 2026-11-23 — §13.4 appended: M4 notes D18–D23.
+- 2026-11-23 — §13.5 appended: M5 notes D24–D30.

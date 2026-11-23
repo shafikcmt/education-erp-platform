@@ -108,6 +108,7 @@ EVENTS: dict[str, frozenset[str]] = {
     "admissions.cycle.target_added": frozenset({"capacity"}),
     "admissions.cycle.status_changed": frozenset({"status"}),
     "admissions.application.submitted": frozenset({"source"}),
+    "admissions.application.drafted": frozenset({"source"}),
     "admissions.application.status_changed": frozenset({"status"}),
     "admissions.application.decided": frozenset({"decision"}),
     "admissions.application.offer_answered": frozenset({"accepted"}),

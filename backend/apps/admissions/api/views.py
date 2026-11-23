@@ -19,6 +19,8 @@ from rest_framework.response import Response
 from apps.admissions import services
 from apps.admissions.api import serializers as s
 from apps.admissions.models import Application, Cycle, Inquiry
+from apps.files.api.serializers import DownloadSerializer
+from apps.files.api.serializers import StoredFileSerializer as DocumentSerializer
 from apps.identity.api.utils import service_errors
 from apps.identity.models import User
 from apps.tenancy.api.permissions import HasTenantPermission, visible_institution
@@ -306,3 +308,62 @@ class OfferResponseView(AdmissionsView):
                 request=request._request,
             )
         return Response(s.ApplicationSerializer(row).data)
+
+
+# --------------------------------------------------------------------------- documents (M5)
+class ApplicationDocumentsView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"GET": "admissions.application.view"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Documents of an application", responses=DocumentSerializer(many=True)
+    )
+    def get(self, request: Request, application_id: str) -> Response:
+        from apps.files.models import StoredFile
+
+        row = _visible(request, Application, application_id, "admissions.application.view")
+        files = StoredFile.objects.filter(
+            owner_type="admissions.application", owner_id=row.pk
+        ).exclude(status=StoredFile.Status.DELETED)
+        return Response(DocumentSerializer(files.order_by("created_at"), many=True).data)
+
+
+class ApplicationDocumentDownloadView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"GET": "admissions.application.view"})]
+
+    @extend_schema(
+        tags=TAGS,
+        summary="A short-lived download link for a document",
+        responses=DownloadSerializer,
+    )
+    def get(self, request: Request, application_id: str, file_id: str) -> Response:
+        from apps.files import services as file_services
+        from apps.files import storage
+        from apps.files.models import StoredFile
+
+        row = _visible(request, Application, application_id, "admissions.application.view")
+        document = StoredFile.objects.filter(
+            pk=file_id, owner_type="admissions.application", owner_id=row.pk
+        ).first() if _is_uuid(file_id) else None  # fmt: skip
+        if document is None:
+            raise NotFound()
+        with service_errors():
+            url = file_services.download_url(file=document)
+        return Response(
+            DownloadSerializer(
+                {
+                    "url": url,
+                    "scan_state": document.scan_state,
+                    "expires_in": storage.DOWNLOAD_SECONDS,
+                }
+            ).data
+        )
+
+
+def _is_uuid(value: str) -> bool:
+    import uuid
+
+    try:
+        uuid.UUID(value)
+    except ValueError:
+        return False
+    return True

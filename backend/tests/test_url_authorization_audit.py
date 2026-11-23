@@ -27,6 +27,16 @@ ANONYMOUS = {
     # Phase 3 M8 (tenant host only)
     "tenancy:public-tenant": "name, languages and branding for the sign-in page",
     "tenancy:invitation-accept": "single-use invitation token; enumeration-safe; durable audit",
+    # Phase 6 M5 (tenant host only; public admissions, ADR-065)
+    "admissions:public-cycles": "open cycles only (no personal data); 404 without the module",
+    "admissions:public-cycle-form": "the published form of an open cycle; 404 without the module",
+    "admissions:public-cycle-visibility": "server-side section visibility for an open cycle's form",
+    "admissions:public-apply": "always 202; IP/email throttles; honeypot; draft until verified",
+    "admissions:public-verify": "single-use, hashed, 48-hour token; throttled",
+    "admissions:public-status": "hashed status-link token in the body; throttled at the actions",
+    "admissions:public-respond": "hashed status-link token; offers only; throttled",
+    "admissions:public-document-slot": "hashed status-link token; purpose limits; throttled",
+    "admissions:public-document-confirm": "hashed status-link token; own documents only",
     # Phase 5 M8 (platform host only; 404 while TENANCY_SIGNUP_ENABLED is off)
     "tenancy:signup": "always 202; throttled per IP and email; honeypot; needs approval",
     "tenancy:signup-verify": "single-use, hashed, 48-hour token; throttled",

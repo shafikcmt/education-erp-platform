@@ -166,10 +166,25 @@ class Application(TenantScopedModel):
     decided_at = models.DateTimeField(null=True, blank=True)
     responded_at = models.DateTimeField(null=True, blank=True)
     email_verified_at = models.DateTimeField(null=True, blank=True)
+    # Public flow (M5, ADR-065): only SHA-256 hashes of the emailed single-use verification
+    # token and of the status-link token are stored.
+    verify_token_hash = models.CharField(max_length=64, blank=True)
+    verify_expires_at = models.DateTimeField(null=True, blank=True)
+    status_token_hash = models.CharField(max_length=64, blank=True)
 
     class Meta(TenantScopedModel.Meta):
         db_table = "admissions_application"
         constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "verify_token_hash"],
+                condition=~models.Q(verify_token_hash=""),
+                name="admissions_application_verify_token_unique",
+            ),
+            models.UniqueConstraint(
+                fields=["tenant", "status_token_hash"],
+                condition=~models.Q(status_token_hash=""),
+                name="admissions_application_status_token_unique",
+            ),
             models.UniqueConstraint(
                 fields=["tenant", "cycle", "number"],
                 condition=~models.Q(number=""),

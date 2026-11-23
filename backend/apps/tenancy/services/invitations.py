@@ -51,6 +51,12 @@ LIFETIME = timedelta(days=7)
 
 def invitation_link(locale: str, token: str) -> str:
     """Link on the tenant's own host; the token travels in the URL fragment only."""
+    return tenant_link(locale, "accept-invitation", token)
+
+
+def tenant_link(locale: str, page: str, token: str) -> str:
+    """A frontend link on the current tenant's own host (primary verified domain); the token
+    travels in the URL fragment only (never sent to servers or in Referer)."""
     base = urlsplit(settings.FRONTEND_BASE_URL)
     domain = (
         TenantDomain.objects.filter(is_primary=True, verified_at__isnull=False)
@@ -59,7 +65,7 @@ def invitation_link(locale: str, token: str) -> str:
     )
     host = domain or base.hostname or ""
     port = f":{base.port}" if base.port else ""
-    return f"{base.scheme}://{host}{port}/{locale}/accept-invitation#token={token}"
+    return f"{base.scheme}://{host}{port}/{locale}/{page}#token={token}"
 
 
 def _throttle(ctx_id: Any, email: str) -> None:

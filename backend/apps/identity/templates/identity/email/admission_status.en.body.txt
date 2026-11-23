@@ -1,0 +1,10 @@
+{% autoescape off %}Hello,
+
+Your application to {{ tenant_name }} is submitted.
+Use this personal link to follow it, add documents and answer an offer:
+
+{{ action_url }}
+
+Keep this link private: anyone who has it can see your application.
+
+— {{ tenant_name }}{% endautoescape %}
