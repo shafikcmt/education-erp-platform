@@ -86,9 +86,9 @@ def test_tenancy_migrations_rehearse_forward_reverse_forward(owner_dsn):
 
         refused = manage("migrate", "tenancy", "zero", "--noinput", ok=False)
         assert "Refusing to reverse" in refused
-        # Ordinary migrations after the isolation ones reverse until the guard refuses: the
-        # sign-up registry table (0007, no RLS) is gone, every isolation object stays.
-        assert query(TENANCY_OBJECTS) == (7, 4)
+        # Phase 6: academics.0002 (isolation keys, refuses reversal) depends on the newest
+        # tenancy migration, so the refusal comes before any tenancy table is touched.
+        assert query(TENANCY_OBJECTS) == (8, 4)
 
         manage("migrate", "tenancy", "zero", "--noinput", ERP_ALLOW_ISOLATION_ROLLBACK="true")
         assert query(TENANCY_OBJECTS) == (0, 0)

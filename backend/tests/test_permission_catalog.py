@@ -154,14 +154,14 @@ def test_owner_bootstrap_is_repeatable_idempotent_and_runtime_role_is_refused(ow
     try:
         manage("migrate", "--noinput")
         first = manage("seed_roles")
-        assert "permissions: 69 created" in first and "system roles: 22 seeded (22 created" in first
+        assert "permissions: 77 created" in first and "system roles: 22 seeded (22 created" in first
         second = manage("seed_roles")
         assert "permissions: 0 created, 0 updated, 0 deprecated" in second
         assert "(0 created, 0 permissions added, 0 removed)" in second
 
         # Phase 5 M2: presets sync idempotently, only as the owner, and are immutable.
-        assert "presets: 6 declared, 6 created, 0 deprecated" in manage("sync_presets")
-        assert "presets: 6 declared, 0 created, 0 deprecated" in manage("sync_presets")
+        assert "presets: 12 declared, 12 created, 0 deprecated" in manage("sync_presets")
+        assert "presets: 12 declared, 0 created, 0 deprecated" in manage("sync_presets")
         assert "owner role" in manage("sync_presets", as_url=app_url, ok=False)
         with psycopg.connect(owner_url, autocommit=True) as conn:
             conn.execute(

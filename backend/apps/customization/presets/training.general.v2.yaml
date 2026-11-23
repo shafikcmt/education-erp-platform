@@ -1,0 +1,24 @@
+# Draft v2 (Phase 6, ADR-063): structure levels are organisational only; academic years,
+# terms and subjects/courses have their own models. Still a draft to validate with real
+# institutions (ADR-060 Q4).
+code: training.general.v2
+institution_type: training_institute
+version: 2
+default_for_type: true
+name: {en: Training institute (general), bn: প্রশিক্ষণ প্রতিষ্ঠান (সাধারণ)}
+suggested_modules: [academics, students, attendance, fees, lms, ext_certification]
+settings:
+  customization.structure_levels:
+    - {key: program}
+    - {key: batch}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.section_enabled: false
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.program: Course, unit.batch: Cohort, unit.class: Cohort, unit.subject: Module, unit.teacher: Trainer, unit.student: Trainee, unit.head: Director}
+    bn: {unit.program: কোর্স, unit.batch: ব্যাচ, unit.class: ব্যাচ, unit.subject: মডিউল, unit.teacher: প্রশিক্ষক, unit.student: প্রশিক্ষণার্থী, unit.head: পরিচালক}
+  customization.role_labels:
+    en: {institution_admin: Director}
+    bn: {institution_admin: পরিচালক}

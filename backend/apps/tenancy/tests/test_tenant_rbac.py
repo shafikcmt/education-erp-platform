@@ -47,6 +47,15 @@ SELF = SELF_SERVICE_CODES
 TEMPLATE_CODES = [row["code"] for row in TEMPLATE_ROLES]
 
 
+# Phase 6: teachers also read the academic structure.
+TEACHER_CODES = {
+    "tenancy.tenant.view",
+    "academics.structure.view",
+    "academics.subject.view",
+    "academics.offering.view",
+}
+
+
 def _perms(tenant, user, target: ScopeTarget | None = None, *, cache: bool = False) -> frozenset:
     with tenant_atomic(tenant):
         return effective_permissions(
@@ -183,7 +192,7 @@ def test_system_copies_mirror_the_templates_and_are_read_only(org):
     assert {"tenancy.member.remove", "rbac.assignment.manage", "rbac.role.clone"} <= owner_codes
     assert _codes(org.tenant, "institution_admin") < owner_codes
     assert _codes(org.tenant, "campus_admin") < _codes(org.tenant, "institution_admin")
-    assert _codes(org.tenant, "teacher") == {"tenancy.tenant.view"}
+    assert _codes(org.tenant, "teacher") == TEACHER_CODES
 
 
 def test_template_reference_must_be_a_template(org):
@@ -225,7 +234,7 @@ def test_p7_syncs_every_tenant_and_isolates_failures(org, tenant_site, monkeypat
     summary = sync_all_tenants()
     assert (summary.tenants, summary.changed, summary.failed) == (2, 2, 0)
     for tenant in (org.tenant, other):
-        assert _codes(tenant, "teacher") == {"tenancy.tenant.view", "tenancy.member.view"}
+        assert _codes(tenant, "teacher") == TEACHER_CODES | {"tenancy.member.view"}
         assert tenant_cache_version(tenant.id) != versions[tenant.id]
     with tenant_atomic(gone):
         assert not Role.objects.filter(tenant_id=gone.id).exists()
@@ -242,8 +251,8 @@ def test_p7_syncs_every_tenant_and_isolates_failures(org, tenant_site, monkeypat
     monkeypatch.setattr("apps.tenancy.services.system_roles.sync_system_copies", flaky)
     summary = sync_all_tenants()
     assert (summary.tenants, summary.changed, summary.failed) == (2, 1, 1)
-    assert _codes(other, "teacher") == {"tenancy.tenant.view"}
-    assert _codes(org.tenant, "teacher") == {"tenancy.tenant.view", "tenancy.member.view"}
+    assert _codes(other, "teacher") == TEACHER_CODES
+    assert _codes(org.tenant, "teacher") == TEACHER_CODES | {"tenancy.member.view"}
 
 
 def _permission_id(code: str) -> Any:
@@ -345,7 +354,7 @@ def test_platform_roles_grant_nothing_in_a_tenant(org):
     assert PlatformRoleSource().grants(admin, org.t_tenant) == frozenset()
     assert _perms(org.tenant, admin) == SELF
     grant_role(org.tenant, admin, "teacher")
-    assert _perms(org.tenant, admin) == SELF | {"tenancy.tenant.view"}
+    assert _perms(org.tenant, admin) == SELF | TEACHER_CODES
     assert "rbac.assignment.manage" in effective_permissions(admin, PLATFORM, use_cache=False)
 
 

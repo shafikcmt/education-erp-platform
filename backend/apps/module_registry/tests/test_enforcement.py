@@ -75,9 +75,15 @@ def test_revoking_the_module_takes_effect_on_the_next_request(admin, org, built)
 
 
 def test_unbuilt_modules_stay_refused_even_when_granted(admin, org):
-    _grant(admin, org)  # no ``built`` patch: academics is not built yet
-    response = _api(org, "deputy@example.com", "institution_admin").get(PROBE)
-    assert response.json()["code"] == "module_not_entitled"
+    from apps.core.tenancy import tenant_atomic
+    from apps.module_registry import entitlements
+    from apps.module_registry.errors import ModuleNotEntitledError
+
+    _grant(admin, org, "students")  # no ``built`` patch: students is not built yet
+    with tenant_atomic(org.tenant):
+        assert not entitlements.is_entitled("students")
+        with pytest.raises(ModuleNotEntitledError):
+            entitlements.require_module("students")
 
 
 def test_tenant_tasks_of_a_module_are_refused_for_tenants_without_it(admin, org, built):

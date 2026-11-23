@@ -260,6 +260,21 @@ Role templates (system copies are synced by P7):
 - Every new tenant table has RLS and isolation tests. The URL audit, catalogue completeness, host-route review and anonymous allow-list pass. The abuse controls are tested.
 - Tests, lint, type checks, OpenAPI drift, E2E and CI all pass. The docs, progress file, decision log and security self-review are updated.
 
+## 13. Implementation notes (appended during implementation)
+
+### 13.1 M1 — academic structure data model (2026-11-23, branch `feat/phase-06-m1`)
+
+| # | Note |
+|---|---|
+| D1 | New `academics` app (module `academics`, standard, sellable; depends on `customization`): `AcademicYear`, `Term`, `Unit`, `Subject`, `Offering`, `OfferingTeacher`. Every table has standard RLS (ENABLE + FORCE) and composite `(tenant_id, institution_id, …)` keys (`academics.0002`, reversal refused): a unit's parent and campus, an offering's year, unit and subject stay in one institution, and an offering's term belongs to its year (key `(tenant_id, year_id, id)`) |
+| D2 | **Capability flags in one place** (`academics/capabilities.py`): `academics.credit_based` (subjects need credits, otherwise credits are refused), `academics.semester_based` (offerings need a term), `academics.section_enabled` (exposed; the levels themselves come from configuration). `unit_levels()` reads the effective `customization.structure_levels` and leaves out time and subject keys (`academic_year`, `session`, `semester`, `term`, `subject`, `course`, `kitab`, `module`) that v1 presets listed |
+| D3 | **v2 presets** for all six types (organisational levels only; `academics.section_enabled`; madrasa level labels `unit.marhala`/`unit.jamaat`). v2 is the default for new institutions; v1 files keep identical content (only `default_for_type` flips, which is outside the checksum), so pinned institutions are unaffected (ADR-058) |
+| D4 | Services re-check `academics.*.manage` in the institution's scope without the cache, validate (no overlapping years or terms, one active year, closed years locked, a unit sits exactly one level below its parent and stays on its parent's campus, archiving refused with live children or open-year offerings, teachers are active members) and audit every write (metadata key `ref`, because `code` is reserved for secrets in the audit catalogue) |
+| D5 | **Publish check:** `CUSTOMIZATION_PUBLISH_CHECKS` (setting) lets modules veto a configuration their data can't live with; `customization` calls them after activation inside the publishing transaction and never imports the modules. `academics.hooks.check_structure_levels` refuses levels that strand units. **Defect found and fixed:** a configuration read inside the publishing transaction cached the not-yet-committed values, which survived a rollback; the resolver now stores nothing while a publish of the connection is uncommitted |
+| D6 | Role templates: owner, institution admin and academic coordinator get the academics codes; teachers and campus admins the view codes (a campus admin must hold what a teacher holds to assign the role). Promotion rule namespace `academics.promotion` declared (runs from Phase 7). Permission catalogue: 77 codes |
+| D7 | Existing gates updated to the new facts, keeping what they protect: `academics` is now a built module (the "unbuilt stays refused" tests use `students`); 12 presets; v2 pinned at provisioning; `migrate tenancy zero` is now refused before any tenancy table is touched (`academics.0002` depends on the newest tenancy migration) |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
+- 2026-11-23 — §13.1 appended: M1 notes D1–D7.

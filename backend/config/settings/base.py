@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.billing",
     "apps.customization",
     "apps.notifications_core",
+    "apps.academics",
 ]
 
 MIDDLEWARE = [
@@ -246,6 +247,9 @@ CUSTOMIZATION_PRESET_LAYER = "apps.customization.presets.layer"
 # Phase 5 M6: custom field values on tenancy entities (validation, edit checks, masking) and
 # the platform defaults of the per-plan Studio quotas (ADR-060 Q5; plans may set these keys).
 TENANCY_CUSTOM_FIELDS = "apps.customization.fields"
+# Phase 6 M1 (ADR-063): checks run after a configuration version becomes active; a refusal
+# undoes the publish (customization never imports the modules that register here).
+CUSTOMIZATION_PUBLISH_CHECKS = ["apps.academics.hooks.check_structure_levels"]
 STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     "max_custom_fields_per_entity": 50,
     "max_forms": 20,
