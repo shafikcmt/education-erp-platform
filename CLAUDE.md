@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-23 (Phase 5 **Approved**; ADR-061/062 Accepted; Phase 6 not started; tenant hosts disabled)
+- **Last updated:** 2026-11-23 (Phase 5 **Approved**; Phase 6 plan **Approved** (ADR-063–066), in progress; tenant hosts disabled)
 
 ---
 
@@ -348,8 +348,8 @@ Details: `docs/AI_ASSISTANT.md`.
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
-| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Proposed**; ADR-063–065 Proposed) |
-| 7 | Student, teacher and parent management |
+| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–066 Accepted; **in progress**; `timetable` moved to Phase 7, `files` built here) |
+| 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066) |
 | 8 | Attendance management |
 | 9 | Examination and results |
 | 10 | Fees and financial accounting |
@@ -474,3 +474,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-22 — Phase 5 M7 merged (PR #58); M8 on its branch (ADR-061 Proposed: mandatory sign-up approval); Phase 5 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.
 - 2026-11-23 — Phase 5 M8 merged (PR #59) and Phase 5 approved by the owner (ADR-061 Accepted; ADR-062 added and Accepted: inviter re-check at invitation acceptance); phase table and last-updated line updated. No rule changed.
 - 2026-11-23 — Fix PR #60 merged; Phase 6 plan proposed (ADR-063 to ADR-065 Proposed); phase table updated. No rule changed.
+- 2026-11-23 — Owner approved the Phase 6 plan with all recommendations (ADR-063 to ADR-066 Accepted; `timetable` moves to Phase 7); phase table and last-updated line updated. No rule changed.

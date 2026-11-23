@@ -1,6 +1,6 @@
 # Phase 6 Plan — Academic Structure and Student Admission
 
-- **Status:** **Proposed** (2026-11-23). Not to be implemented until the owner approves it (CLAUDE.md §0.6).
+- **Status:** **Approved** (owner, 2026-11-23: "approved all ur recommendation") with the recommended answers to Q1–Q8 (ADR-066). ADR-063 to ADR-065 Accepted.
 - **Depends on:**
   - Phase 5 (**Approved** by the owner, 2026-11-23).
   - Accepted ADRs:
@@ -239,7 +239,7 @@ Role templates (system copies are synced by P7):
   - Anonymous, throttled, enumeration-safe.
   - Email-verified drafts and hashed status links instead of applicant accounts.
   - Uploads only against verified drafts.
-- **ADR-066 (on approval):** the owner's answers to §11.
+- **ADR-066:** the owner's answers to §11 (all eight recommendations).
 
 ## 11. Questions for the owner
 
@@ -262,3 +262,4 @@ Role templates (system copies are synced by P7):
 
 ### Change notes
 - 2026-11-23 — Created (Proposed).
+- 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
