@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "apps.notifications_core",
     "apps.academics",
     "apps.files",
+    "apps.admissions",
 ]
 
 MIDDLEWARE = [
@@ -251,6 +252,9 @@ TENANCY_CUSTOM_FIELDS = "apps.customization.fields"
 # Phase 6 M1 (ADR-063): checks run after a configuration version becomes active; a refusal
 # undoes the publish (customization never imports the modules that register here).
 CUSTOMIZATION_PUBLISH_CHECKS = ["apps.academics.hooks.check_structure_levels"]
+# Phase 6 M4 (ADR-066 Q3): called after commit with (tenant_id, application_id) when an offer is
+# accepted. Phase 7 registers student creation here; nothing is registered yet.
+ADMISSIONS_ACCEPTED_HANDLERS: list[str] = []
 STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     "max_custom_fields_per_entity": 50,
     "max_forms": 20,
@@ -353,6 +357,10 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "SupportSessionStatusEnum": "apps.tenancy.models.SupportSession.Status",
         "MemberStatusChangeEnum": [("active", "Active"), ("suspended", "Suspended")],
         "AcademicTermKindEnum": "apps.academics.models.Term.Kind",
+        "AcademicYearStatusEnum": "apps.academics.models.AcademicYear.Status",
+        "InquiryStatusEnum": "apps.admissions.models.Inquiry.Status",
+        "AdmissionCycleStatusEnum": "apps.admissions.models.Cycle.Status",
+        "ApplicationStatusEnum": "apps.admissions.models.Application.Status",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)

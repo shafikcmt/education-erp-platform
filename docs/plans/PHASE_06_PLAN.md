@@ -294,9 +294,21 @@ Role templates (system copies are synced by P7):
 | D16 | Tenant-host API (module `files`): `files/uploads/` (needs `files.file.upload`), `files/{id}/` (GET, DELETE by the uploader), `files/{id}/confirm/`, `files/{id}/download/` (uploader or `files.file.view` tenant-wide; anyone else 404). Owner, then institution admin roles get the two codes via the owner template (79 permission codes) |
 | D17 | **Known gap:** presigned uploads have not yet been exercised against the real object store from a browser. The dev/CI stack does not expose the object store to browsers yet; that comes with the public upload flow and its E2E in M5/M8. Unit tests cover presigning (real signing) and verification (storage I/O faked) |
 
+### 13.4 M4 — admissions back office (2026-11-23, branch `feat/phase-06-m4`)
+
+| # | Note |
+|---|---|
+| D18 | New `admissions` app (standard, sellable; depends on `academics` and `customization`): `Inquiry`, `Cycle`, `CycleTarget`, `Application`; standard RLS and composite tenant/institution keys (`admissions.0002`): a cycle's year, a target's unit and an application's cycle stay in one institution, an application's target belongs to its cycle |
+| D19 | The manifest declares the Studio entity `admissions.application` (core fields: applicant name, email, phone, date of birth, guardian name and phone, previous institution, address), the workflow subject `admissions.application`, the rule namespace `admissions.merit` (number) and the file purpose `admissions.document` (PDF/JPEG/PNG, 5 × 5 MB, applicant-visible when clean) |
+| D20 | **Cycles bind only published, fitting artefacts:** the form must be on `admissions.application`, the workflow on that subject, the merit rule in `admissions.merit`, the numbering sequence must exist; bindings are re-checked when a cycle opens. A fee needs an amount and a currency (shown only; collection is Phase 10). Opening needs at least one target |
+| D21 | **Applications** (staff-entered in M4; public in M5) are validated by the cycle's form on the server, then the formats of the core values (email, ISO date, text length); promoted columns hold name, email, phone and date of birth, other core values `core`, custom values `extra`. Submitting allocates the number (gap-free sequence, per institution) and starts the cycle's workflow |
+| D22 | **Review and decision:** without a workflow, `submitted → under_review`; with one, the review runs in the workflow (its own permissions) and the decision waits until it is finished. Offers respect the target's capacity (offered + accepted, row-locked); a decline frees the seat. Accepting calls `ADMISSIONS_ACCEPTED_HANDLERS` after commit (nothing registered until Phase 7 creates students) — the codebase's settings-hook pattern stands in for a domain event bus |
+| D23 | Back-office API (module `admissions`): inquiries, cycles (+ targets, status), applications (+ review, decision, offer response); lists need an institution or cycle and answer 404 outside the caller's institutions. The institution check moved to one helper (`tenancy.api.permissions.visible_institution`), now shared by academics and admissions. Permissions: 7 codes (86 total); role templates: owner and institution admin all; admission officer inquiries, cycles view, applications view and review, uploads; front desk inquiries. Institution admins also got the files codes so they can assign admission officers (no escalation) |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
 - 2026-11-23 — §13.1 appended: M1 notes D1–D7.
 - 2026-11-23 — §13.2 appended: M2 notes D8–D10.
 - 2026-11-23 — §13.3 appended: M3 notes D11–D17.
+- 2026-11-23 — §13.4 appended: M4 notes D18–D23.
