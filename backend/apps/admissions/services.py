@@ -361,15 +361,29 @@ def _locked(application: Application) -> Application:
 def start_review(
     *, actor: User, application: Application, request: HttpRequest | None = None
 ) -> Application:
-    """Built-in path (cycles without a workflow): submitted → under review."""
+    """submitted → under review. A cycle with a workflow starts it now for applications that
+    don't have one yet (public submissions); otherwise the workflow runs the review."""
     application = _locked(application)
     _authorise(actor, REVIEW, application.institution_id)
     if application.workflow_instance_id is not None:
         raise ValidationError({"status": "This application is reviewed through its workflow."})
     if application.status != Application.Status.SUBMITTED:
         raise ValidationError({"status": "Only submitted applications go into review."})
+    cycle = Cycle.objects.get(pk=application.cycle_id)
+    if cycle.workflow_key:
+        # Public applications start the cycle's workflow here (their submitter is no member).
+        from apps.customization import workflows
+
+        instance = workflows.start(
+            actor=actor,
+            key=cycle.workflow_key,
+            subject_id=application.pk,
+            context={"subject.source": application.source},
+            target=target_of(cycle.institution_id),
+        )
+        application.workflow_instance_id = instance.pk
     application.status, application.updated_by = Application.Status.UNDER_REVIEW, actor.pk
-    application.save(update_fields=["status", "updated_by", "updated_at"])
+    application.save(update_fields=["status", "workflow_instance_id", "updated_by", "updated_at"])
     _audit("admissions.application.status_changed", actor, request, application,
            status=application.status)  # fmt: skip
     return application

@@ -348,7 +348,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
-| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–066 Accepted; **in progress**: plan merged in PR #61; M1 merged in PR #62; M2 merged in PR #63; M3 merged in PR #64; M4 admissions back office on `feat/phase-06-m4`; `timetable` moved to Phase 7, `files` built here) |
+| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–066 Accepted; **in progress**: plan merged in PR #61; M1 merged in PR #62; M2 merged in PR #63; M3 merged in PR #64; M4 merged in PR #65; M5 public application flow on `feat/phase-06-m5`; `timetable` moved to Phase 7, `files` built here) |
 | 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066) |
 | 8 | Attendance management |
 | 9 | Examination and results |
@@ -479,3 +479,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-23 — Phase 6 M1 merged (PR #62); M2 on its branch; phase table updated. No rule changed.
 - 2026-11-23 — Phase 6 M2 merged (PR #63); M3 on its branch; phase table updated. No rule changed.
 - 2026-11-23 — Phase 6 M3 merged (PR #64); M4 on its branch; phase table updated. No rule changed.
+- 2026-11-23 — Phase 6 M4 merged (PR #65); M5 on its branch; phase table updated. No rule changed.

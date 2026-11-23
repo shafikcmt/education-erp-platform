@@ -200,6 +200,10 @@ SECURITY_THROTTLES: dict[str, tuple[int, int]] = {
     "signup_ip": (env.int("SECURITY_SIGNUP_IP_LIMIT", default=5), 60 * 60),
     "signup_email": (3, 24 * 60 * 60),
     "signup_verify_ip": (20, 60 * 60),
+    # Phase 6 M5: public admissions (per IP: 429; per email and cycle: silent).
+    "admission_ip": (env.int("SECURITY_ADMISSION_IP_LIMIT", default=10), 60 * 60),
+    "admission_email": (3, 24 * 60 * 60),
+    "admission_verify_ip": (60, 60 * 60),
 }
 SECURITY_LOGIN_LOCK_SECONDS = 15 * 60
 SECURITY_LOGIN_MAX_DELAY_SECONDS = 30
@@ -427,6 +431,12 @@ CELERY_BEAT_SCHEDULE = {
     # Phase 6 M3 (P27): remove unconfirmed uploads and deleted files' objects.
     "files-housekeeping": {
         "task": "files.housekeeping",
+        "schedule": 6 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 6 M5 (P26): delete expired public drafts, close cycles past their dates.
+    "admissions-housekeeping": {
+        "task": "admissions.housekeeping",
         "schedule": 6 * 60 * 60.0,
         "options": {"queue": "default"},
     },

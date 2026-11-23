@@ -559,6 +559,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Application'
           description: ''
+  /api/v1/admissions/applications/{application_id}/documents/:
+    get:
+      operationId: admissions_applications_documents_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Documents of an application
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StoredFile'
+          description: ''
+  /api/v1/admissions/applications/{application_id}/documents/{file_id}/download/:
+    get:
+      operationId: admissions_applications_documents_download_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A short-lived download link for a document
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+          description: ''
   /api/v1/admissions/applications/{application_id}/offer-response/:
     post:
       operationId: admissions_applications_offer_response_create
@@ -4273,6 +4328,241 @@ paths:
               schema:
                 $ref: '#/components/schemas/RevokedCount'
           description: ''
+  /api/v1/public/admissions/cycles/:
+    get:
+      operationId: public_admissions_cycles_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Open admissions
+      tags:
+      - admissions-public
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PublicCycle'
+          description: ''
+  /api/v1/public/admissions/cycles/{cycle_id}/apply/:
+    post:
+      operationId: public_admissions_cycles_apply_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Apply (an email confirmation follows)
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicSubmitRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '202':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+          description: ''
+  /api/v1/public/admissions/cycles/{cycle_id}/form/:
+    get:
+      operationId: public_admissions_cycles_form_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: The application form of an open cycle
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions-public
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/public/admissions/cycles/{cycle_id}/visibility/:
+    post:
+      operationId: public_admissions_cycles_visibility_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Sections visible for these values
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PublicSubmitRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: {}
+          description: ''
+  /api/v1/public/admissions/status/:
+    post:
+      operationId: public_admissions_status_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: My application (status link)
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicStatus'
+          description: ''
+  /api/v1/public/admissions/status/documents/:
+    post:
+      operationId: public_admissions_status_documents_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Ask for a document upload slot
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentSlotRequestRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentSlot'
+          description: ''
+  /api/v1/public/admissions/status/documents/confirm/:
+    post:
+      operationId: public_admissions_status_documents_confirm_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Confirm an uploaded document
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentConfirmRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicStatus'
+          description: ''
+  /api/v1/public/admissions/status/respond/:
+    post:
+      operationId: public_admissions_status_respond_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Answer an offer
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RespondRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PublicStatus'
+          description: ''
+  /api/v1/public/admissions/verify/:
+    post:
+      operationId: public_admissions_verify_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Confirm an application
+      tags:
+      - admissions-public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Accepted'
+          description: ''
   /api/v1/public/tenant/:
     get:
       operationId: public_tenant_retrieve
@@ -5576,6 +5866,61 @@ components:
       description: |-
         * `en` - en
         * `bn` - bn
+    DocumentConfirmRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 256
+        file:
+          type: string
+          format: uuid
+      required:
+      - file
+      - token
+    DocumentSlot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - fields
+      - id
+      - url
+    DocumentSlotRequestRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 256
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        size:
+          type: integer
+          minimum: 1
+        content_type:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - content_type
+      - name
+      - size
+      - token
     Download:
       type: object
       properties:
@@ -7477,6 +7822,97 @@ components:
       - name
       - owner_email
       - slug
+    PublicCycle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+        closes_on:
+          type: string
+          format: date
+        fee_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        fee_currency:
+          type: string
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/PublicTarget'
+      required:
+      - closes_on
+      - fee_amount
+      - fee_currency
+      - id
+      - name
+      - name_i18n
+      - targets
+    PublicStatus:
+      type: object
+      properties:
+        number:
+          type: string
+        status:
+          type: string
+        cycle:
+          type: string
+        applicant_name:
+          type: string
+        decision_note:
+          type: string
+        can_add_documents:
+          type: boolean
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusDocument'
+      required:
+      - applicant_name
+      - can_add_documents
+      - cycle
+      - decision_note
+      - documents
+      - number
+      - status
+    PublicSubmitRequest:
+      type: object
+      properties:
+        target:
+          type: string
+          format: uuid
+        values:
+          type: object
+          additionalProperties: {}
+        website:
+          type: string
+          default: ''
+          maxLength: 200
+      required:
+      - target
+      - values
+    PublicTarget:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        unit:
+          type: string
+        unit_name:
+          type: string
+      required:
+      - id
+      - unit
+      - unit_name
     PublicTenant:
       type: object
       properties:
@@ -7523,6 +7959,19 @@ components:
           maxLength: 200
       required:
       - reason
+    RespondRequest:
+      type: object
+      properties:
+        token:
+          type: string
+          writeOnly: true
+          minLength: 1
+          maxLength: 256
+        accept:
+          type: boolean
+      required:
+      - accept
+      - token
     RevealedIp:
       type: object
       properties:
@@ -7971,6 +8420,20 @@ components:
       description: |-
         * `staff` - Entered by staff
         * `public` - Public form
+    StatusDocument:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        status:
+          type: string
+      required:
+      - id
+      - name
+      - status
     StepUpRequest:
       type: object
       properties:
