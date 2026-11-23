@@ -340,6 +340,7 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "MembershipStatusEnum": "apps.tenancy.models.Membership.Status",
         "SupportSessionStatusEnum": "apps.tenancy.models.SupportSession.Status",
         "MemberStatusChangeEnum": [("active", "Active"), ("suspended", "Suspended")],
+        "AcademicTermKindEnum": "apps.academics.models.Term.Kind",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)

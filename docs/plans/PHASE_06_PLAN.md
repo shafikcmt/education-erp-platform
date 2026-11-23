@@ -274,7 +274,16 @@ Role templates (system copies are synced by P7):
 | D6 | Role templates: owner, institution admin and academic coordinator get the academics codes; teachers and campus admins the view codes (a campus admin must hold what a teacher holds to assign the role). Promotion rule namespace `academics.promotion` declared (runs from Phase 7). Permission catalogue: 77 codes |
 | D7 | Existing gates updated to the new facts, keeping what they protect: `academics` is now a built module (the "unbuilt stays refused" tests use `students`); 12 presets; v2 pinned at provisioning; `migrate tenancy zero` is now refused before any tenancy table is touched (`academics.0002` depends on the newest tenancy migration) |
 
+### 13.2 M2 — academics API, OpenAPI and client (2026-11-23, branch `feat/phase-06-m2`)
+
+| # | Note |
+|---|---|
+| D8 | Tenant-host API, module `academics` (`/api/v1/academics/…`): `setup/` (levels and capability flags of an institution), `years/` (+ `{id}/status/`, `{id}/terms/`), `units/` (+ PATCH `{id}/`, `{id}/archive/`), `subjects/` (+ `{id}/archive/`), `offerings/` (by year; + `{id}/teachers/`, `{id}/teachers/{teacher}/` DELETE) |
+| D9 | The permission classes let a request through when the code is held in some scope of the tenant; lists need an institution (or a year) and answer **404** unless the caller holds the view code at that institution or one of its campuses (an unknown and a foreign institution are indistinguishable); writes go to the services, which re-check the exact institution scope uncached. Unknown or malformed ids are 404 |
+| D10 | The module is checked before any permission (`module_not_entitled` for tenants without `academics`). OpenAPI regenerated with `--fail-on-warn` (enum override `AcademicTermKindEnum` for the term kind) and the TypeScript client regenerated; host-route review list and catalogue completeness cover the new views |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
 - 2026-11-23 — §13.1 appended: M1 notes D1–D7.
+- 2026-11-23 — §13.2 appended: M2 notes D8–D10.
