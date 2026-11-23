@@ -1598,6 +1598,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/WorkflowInstance'
           description: ''
+  /api/v1/files/{file_id}/:
+    get:
+      operationId: files_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A file's state
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredFile'
+          description: ''
+    delete:
+      operationId: files_destroy
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Delete my upload
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - sessionAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/files/{file_id}/confirm/:
+    post:
+      operationId: files_confirm_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Confirm an upload (the object is then verified)
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StoredFile'
+          description: ''
+  /api/v1/files/{file_id}/download/:
+    get:
+      operationId: files_download_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A short-lived download link
+      parameters:
+      - in: path
+        name: file_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - files
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Download'
+          description: ''
+  /api/v1/files/uploads/:
+    post:
+      operationId: files_uploads_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Ask for an upload slot (presigned POST)
+      tags:
+      - files
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UploadRequestRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UploadSlot'
+          description: ''
   /api/v1/institutions/:
     get:
       operationId: institutions_list
@@ -4768,6 +4883,20 @@ components:
       description: |-
         * `en` - en
         * `bn` - bn
+    Download:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        scan_state:
+          type: string
+        expires_in:
+          type: integer
+      required:
+      - expires_in
+      - scan_state
+      - url
     EmailChangeRequest:
       type: object
       properties:
@@ -6707,6 +6836,18 @@ components:
         results: {}
       required:
       - results
+    ScanStateEnum:
+      enum:
+      - pending
+      - clean
+      - infected
+      - unscanned
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `clean` - Clean
+        * `infected` - Infected
+        * `unscanned` - Unscanned
     ScopePermissions:
       type: object
       properties:
@@ -6996,6 +7137,71 @@ components:
           type: integer
       required:
       - step_up_expires_at
+    StoredFile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        purpose:
+          type: string
+          readOnly: true
+        original_name:
+          type: string
+          readOnly: true
+        content_type:
+          type: string
+          readOnly: true
+        declared_size:
+          type: integer
+          readOnly: true
+        size:
+          type: integer
+          readOnly: true
+          nullable: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StoredFileStatusEnum'
+          readOnly: true
+        scan_state:
+          allOf:
+          - $ref: '#/components/schemas/ScanStateEnum'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        verified_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - content_type
+      - created_at
+      - declared_size
+      - id
+      - original_name
+      - purpose
+      - scan_state
+      - size
+      - status
+      - verified_at
+    StoredFileStatusEnum:
+      enum:
+      - awaiting_upload
+      - verifying
+      - ready
+      - rejected
+      - deleted
+      type: string
+      description: |-
+        * `awaiting_upload` - Awaiting upload
+        * `verifying` - Verifying
+        * `ready` - Ready
+        * `rejected` - Rejected
+        * `deleted` - Deleted
     Subject:
       type: object
       properties:
@@ -7938,6 +8144,45 @@ components:
       - institution
       - level_key
       - name
+    UploadRequestRequest:
+      type: object
+      properties:
+        purpose:
+          type: string
+          minLength: 1
+          maxLength: 64
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+        size:
+          type: integer
+          minimum: 1
+        content_type:
+          type: string
+          minLength: 1
+          maxLength: 100
+      required:
+      - content_type
+      - name
+      - purpose
+      - size
+    UploadSlot:
+      type: object
+      properties:
+        file:
+          $ref: '#/components/schemas/StoredFile'
+        url:
+          type: string
+          format: uri
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+      required:
+      - fields
+      - file
+      - url
     WorkflowDraftRequest:
       type: object
       properties:

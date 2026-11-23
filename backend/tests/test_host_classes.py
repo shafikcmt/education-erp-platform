@@ -57,6 +57,11 @@ TENANT_HOST_ROUTES = {
     # Phase 4 M5: the organisation's own plan, modules and limits (read-only)
     "api/v1/tenant/subscription/": False,
     # Phase 5 M6: Customization Studio and the notification inbox (signed-in members only)
+    # Phase 6 M3: files (module-gated, behind the membership gate)
+    "api/v1/files/uploads/": False,
+    "api/v1/files/<str:file_id>/": False,
+    "api/v1/files/<str:file_id>/confirm/": False,
+    "api/v1/files/<str:file_id>/download/": False,
     # Phase 6 M2: academics (module-gated, behind the membership gate)
     "api/v1/academics/setup/": False,
     "api/v1/academics/years/": False,

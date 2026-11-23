@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "apps.customization",
     "apps.notifications_core",
     "apps.academics",
+    "apps.files",
 ]
 
 MIDDLEWARE = [
@@ -256,6 +257,8 @@ STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     "max_workflows": 20,
     "max_rules": 50,
     "max_templates": 50,
+    # Phase 6 M3 (ADR-064): object storage per tenant, in MB (plan key ``max_storage_mb``).
+    "max_storage_mb": 1024,
 }
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
@@ -293,15 +296,20 @@ STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 S3_BUCKET: str = env.str("S3_BUCKET")
+# One source for the S3 connection: the storage backend and the files module's presigning
+# (Phase 6 M3) both read it, even when tests swap the storage backend.
+S3_CONNECTION: dict[str, str] = {
+    "bucket_name": S3_BUCKET,
+    "endpoint_url": env.str("S3_ENDPOINT_URL"),
+    "access_key": env.str("S3_ACCESS_KEY_ID"),
+    "secret_key": env.str("S3_SECRET_ACCESS_KEY"),
+    "region_name": env.str("S3_REGION", default="us-east-1"),
+}
 STORAGES: dict[str, dict[str, Any]] = {
     "default": {
         "BACKEND": "storages.backends.s3.S3Storage",
         "OPTIONS": {
-            "bucket_name": S3_BUCKET,
-            "endpoint_url": env.str("S3_ENDPOINT_URL"),
-            "access_key": env.str("S3_ACCESS_KEY_ID"),
-            "secret_key": env.str("S3_SECRET_ACCESS_KEY"),
-            "region_name": env.str("S3_REGION", default="us-east-1"),
+            **S3_CONNECTION,
             "addressing_style": "path",
             "signature_version": "s3v4",
             "default_acl": None,
@@ -312,6 +320,10 @@ STORAGES: dict[str, dict[str, Any]] = {
     },
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
+# Phase 6 M3 (ADR-064): presigned URLs are signed for the endpoint browsers reach (defaults to
+# the internal one); a scanner callable decides scan states (default: no scanner, "unscanned").
+S3_PUBLIC_ENDPOINT_URL: str = env.str("S3_PUBLIC_ENDPOINT_URL", default="")
+FILES_SCANNER = "apps.files.scanning.no_scanner"
 
 # --------------------------------------------------------------------------- DRF / OpenAPI
 REST_FRAMEWORK: dict[str, Any] = {
@@ -402,6 +414,12 @@ CELERY_BEAT_SCHEDULE = {
     "tenancy-purge-signups": {
         "task": "tenancy.purge_signups",
         "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 6 M3 (P27): remove unconfirmed uploads and deleted files' objects.
+    "files-housekeeping": {
+        "task": "files.housekeeping",
+        "schedule": 6 * 60 * 60.0,
         "options": {"queue": "default"},
     },
     "tenancy-isolation-daily-report": {
