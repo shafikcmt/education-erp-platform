@@ -61,6 +61,9 @@
 | 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
 | 061 | Self-service sign-up always needs a platform administrator's approval in v1 (stricter than ADR-060 Q3 "optional approval"); P23 anonymous request/verify; P25 retention sweep | **Accepted** (owner, 2026-11-23, with the Phase 5 approval) | 2026-11-22 |
 | 062 | Invitations created by members are re-authorised at acceptance (inviter still an active member with `tenancy.member.invite` in scope and every permission of the role); platform-issued owner invitations are not | **Accepted** (owner, 2026-11-23) | 2026-11-23 |
+| 063 | Academic structure: dedicated year/term models; one generic unit tree whose levels come from the effective `customization.structure_levels` (v2 presets with organisational levels only); capability flags branch centrally; offering teachers are memberships | **Proposed** (with `plans/PHASE_06_PLAN.md`) | 2026-11-23 |
+| 064 | `files` module: server-chosen tenant keys, presigned POST/GET, purposes with limits, scan-state machine with a pluggable scanner (default `none` = unscanned, staff-only), quotas via `max_storage_mb`; no new dependency | **Proposed** | 2026-11-23 |
+| 065 | Public admissions on tenant hosts: anonymous, throttled, enumeration-safe; email-verified drafts and hashed status links (no applicant accounts); uploads only against verified drafts | **Proposed** | 2026-11-23 |
 
 ---
 
@@ -777,6 +780,14 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **Decision:** invitations created by a member (`create_invitation`) carry `recheck_inviter = true`. At acceptance the inviter must still be an active, active-account member who holds `tenancy.member.invite` in the invitation's scope and every permission of the offered role (uncached; the existing no-escalation rule). Otherwise acceptance fails with the generic `invitation_invalid` answer and a durable `inviter_unauthorised` attempt; the invitation stays open so an administrator can revoke or resend it. Owner invitations issued by the platform at provisioning (P4) are not re-checked: the operator is no member and was authorised by the platform operation. Rows created before the change default to `false` (invitations expire after 7 days).
 - **Consequences:** removing someone's rights also stops the invitations they sent. One more uncached permission evaluation per acceptance.
 
+## ADR-063 to ADR-065 — Phase 6 (academic structure and admissions)
+
+**Status:** **Proposed** (2026-11-23, with `plans/PHASE_06_PLAN.md`). Not to be built on until the owner approves the plan. Full text: plan §2–§5 and §10; the owner's answers to plan §11 will be recorded as ADR-066.
+
+- **ADR-063:** dedicated academic year and term models; one generic `academics_unit` tree whose levels are the institution's effective `customization.structure_levels` (organisational levels only, from v2 presets; presets stay immutable and opt-in, ADR-058); capability flags branch in one place; offering teachers reference tenant memberships.
+- **ADR-064:** the `files` module with server-chosen `tenant_storage_key()` keys, presigned POST and short-lived GET (`attachment`), purposes with limits, a scan-state machine with a pluggable scanner (default `none`: unscanned, staff-only), quotas via `max_storage_mb`, housekeeping P27. No new dependency.
+- **ADR-065:** public admissions on tenant hosts: anonymous, throttled, honeypot, identical answers; email-verified drafts (48 h) and hashed, revocable status links instead of applicant accounts; uploads only against verified drafts; housekeeping P26.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -801,3 +812,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-22 — Owner approved the Phase 5 plan: ADR-055 to ADR-059 **Accepted**; ADR-060 added (Accepted); ADR-016 decided by ADR-055 (its original text kept).
 - 2026-11-22 — Added ADR-061 (Proposed): mandatory approval for self-service sign-up in v1 (stricter than ADR-060 Q3). No Accepted ADR changed.
 - 2026-11-23 — Owner approved Phase 5: ADR-061 Accepted. Added ADR-062 (Accepted): inviter re-check at invitation acceptance. No other ADR changed.
+- 2026-11-23 — Added ADR-063 to ADR-065 (Proposed) with the Phase 6 plan. No existing ADR changed.
