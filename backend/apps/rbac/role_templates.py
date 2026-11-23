@@ -148,6 +148,9 @@ _OWNER_CODES = [
     "academics.subject.manage",
     "academics.offering.view",
     "academics.offering.manage",
+    # Phase 6 M3: files (attached files are authorised through their owners).
+    "files.file.view",
+    "files.file.upload",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.

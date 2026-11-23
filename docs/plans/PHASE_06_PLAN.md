@@ -282,8 +282,21 @@ Role templates (system copies are synced by P7):
 | D9 | The permission classes let a request through when the code is held in some scope of the tenant; lists need an institution (or a year) and answer **404** unless the caller holds the view code at that institution or one of its campuses (an unknown and a foreign institution are indistinguishable); writes go to the services, which re-check the exact institution scope uncached. Unknown or malformed ids are 404 |
 | D10 | The module is checked before any permission (`module_not_entitled` for tenants without `academics`). OpenAPI regenerated with `--fail-on-warn` (enum override `AcademicTermKindEnum` for the term kind) and the TypeScript client regenerated; host-route review list and catalogue completeness cover the new views |
 
+### 13.3 M3 — files module (2026-11-23, branch `feat/phase-06-m3`)
+
+| # | Note |
+|---|---|
+| D11 | New `files` app (platform module): `files_storedfile` (standard RLS; key unique per tenant). Lifecycle `awaiting_upload → verifying → ready / rejected`, soft `deleted`; scan state separate (`pending`, `clean`, `infected`, `unscanned`) |
+| D12 | **Purposes** are declared by modules in `FILE_PURPOSES` (allowed types from a safe list that excludes anything a browser can render as active content, size ≤ 50 MB, count per owner, `applicant_visible`). Admissions declares its purpose in M4/M5 |
+| D13 | **Uploads:** the server chooses the key (`tenant_storage_key("files", purpose, uuid)`; the client's file name never reaches it) and returns a presigned POST bound to that key, the declared content type and size (`content-length-range`), valid 10 minutes. Confirming queues `files.verify_upload` after commit: the task compares the object's size and type with the declaration and the purpose, scans it, and rejects (and deletes) mismatches. **Downloads:** presigned GET, 5 minutes, `Content-Disposition: attachment`; infected files are never served; applicants only get clean files of purposes that allow it |
+| D14 | Presigning is local signing (no network), so it works inside tenant transactions; `head`/`delete` are network I/O and run in task bodies (the open-transaction guard). URLs are signed for `S3_PUBLIC_ENDPOINT_URL` (default: the internal endpoint). The S3 connection moved to one setting, `S3_CONNECTION`, read by the storage backend and by presigning |
+| D15 | Scanner hook `FILES_SCANNER` (default `no_scanner` → `unscanned`; a real scanner is Phase 18, ADR-066 Q8). Quota: plan key `max_storage_mb` (default 1024 MB) over live files. **P27** files housekeeping (system, I) every 6 hours: unconfirmed uploads expire, deleted and rejected objects are removed after 24 h. **P26** is catalogued (disabled) for the admissions housekeeping of M5 |
+| D16 | Tenant-host API (module `files`): `files/uploads/` (needs `files.file.upload`), `files/{id}/` (GET, DELETE by the uploader), `files/{id}/confirm/`, `files/{id}/download/` (uploader or `files.file.view` tenant-wide; anyone else 404). Owner, then institution admin roles get the two codes via the owner template (79 permission codes) |
+| D17 | **Known gap:** presigned uploads have not yet been exercised against the real object store from a browser. The dev/CI stack does not expose the object store to browsers yet; that comes with the public upload flow and its E2E in M5/M8. Unit tests cover presigning (real signing) and verification (storage I/O faked) |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
 - 2026-11-23 — §13.1 appended: M1 notes D1–D7.
 - 2026-11-23 — §13.2 appended: M2 notes D8–D10.
+- 2026-11-23 — §13.3 appended: M3 notes D11–D17.

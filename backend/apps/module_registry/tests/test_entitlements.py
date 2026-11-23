@@ -51,7 +51,7 @@ def _enabled(tenant: Any) -> frozenset[str]:
 
 
 def _platform() -> set[str]:
-    """Built platform modules (``files`` and ``notifications_core`` are not built yet)."""
+    """Built platform modules (computed from the catalogue, so new platform modules count)."""
     return {
         code
         for code, m in entitlements._modules().items()

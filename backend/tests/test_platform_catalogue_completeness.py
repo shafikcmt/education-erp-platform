@@ -34,6 +34,7 @@ API_MODULES = (
     "apps.module_registry.api",
     "apps.customization.api",
     "apps.academics.api",
+    "apps.files.api",
 )
 
 

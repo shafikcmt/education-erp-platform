@@ -186,6 +186,14 @@ CATALOGUE: dict[str, PlatformOperationSpec] = {
         _op("P24", "Workflow SLA sweep", "system", "I"),
         _op("P25", "Sign-up retention sweep", "system", "R"),
         _op(
+            "P26",
+            "Admissions housekeeping",
+            "system",
+            "I",
+            disabled_reason="Arrives with the public admissions flow (Phase 6 M5).",
+        ),
+        _op("P27", "Files housekeeping (unconfirmed uploads, deleted files)", "system", "I"),
+        _op(
             "P16",
             "Incident break-glass",
             "user",

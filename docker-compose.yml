@@ -34,6 +34,8 @@ x-backend-env: &backend_env
   S3_REGION: ${S3_REGION:-us-east-1}
   S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID}
   S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY}
+  # Phase 6 M3: the endpoint browsers use for presigned URLs (empty: the internal endpoint).
+  S3_PUBLIC_ENDPOINT_URL: ${S3_PUBLIC_ENDPOINT_URL:-}
   EMAIL_BACKEND: ${EMAIL_BACKEND}
   EMAIL_HOST: ${EMAIL_HOST}
   EMAIL_PORT: ${EMAIL_PORT}

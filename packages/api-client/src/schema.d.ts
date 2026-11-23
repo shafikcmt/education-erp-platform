@@ -1147,6 +1147,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/files/{file_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A file's state
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["files_retrieve"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete my upload
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["files_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/files/{file_id}/confirm/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm an upload (the object is then verified)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["files_confirm_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/files/{file_id}/download/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A short-lived download link
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["files_download_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/files/uploads/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Ask for an upload slot (presigned POST)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["files_uploads_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/institutions/": {
         parameters: {
             query?: never;
@@ -3231,6 +3320,12 @@ export interface components {
          * @enum {string}
          */
         DefaultLocaleEnum: "en" | "bn";
+        Download: {
+            /** Format: uri */
+            url: string;
+            scan_state: string;
+            expires_in: number;
+        };
         EmailChangeRequest: {
             /** Format: email */
             new_email: string;
@@ -3979,6 +4074,14 @@ export interface components {
         RuleTestResult: {
             results: unknown;
         };
+        /**
+         * @description * `pending` - Pending
+         *     * `clean` - Clean
+         *     * `infected` - Infected
+         *     * `unscanned` - Unscanned
+         * @enum {string}
+         */
+        ScanStateEnum: "pending" | "clean" | "infected" | "unscanned";
         ScopePermissions: {
             scope_type: string;
             /** Format: uuid */
@@ -4084,6 +4187,30 @@ export interface components {
         StepUpResult: {
             step_up_expires_at: number;
         };
+        StoredFile: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly purpose: string;
+            readonly original_name: string;
+            readonly content_type: string;
+            readonly declared_size: number;
+            readonly size: number | null;
+            readonly status: components["schemas"]["StoredFileStatusEnum"];
+            readonly scan_state: components["schemas"]["ScanStateEnum"];
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly verified_at: string | null;
+        };
+        /**
+         * @description * `awaiting_upload` - Awaiting upload
+         *     * `verifying` - Verifying
+         *     * `ready` - Ready
+         *     * `rejected` - Rejected
+         *     * `deleted` - Deleted
+         * @enum {string}
+         */
+        StoredFileStatusEnum: "awaiting_upload" | "verifying" | "ready" | "rejected" | "deleted";
         Subject: {
             /** Format: uuid */
             readonly id: string;
@@ -4418,6 +4545,20 @@ export interface components {
             capacity?: number | null;
             /** @default 0 */
             order: number;
+        };
+        UploadRequestRequest: {
+            purpose: string;
+            name: string;
+            size: number;
+            content_type: string;
+        };
+        UploadSlot: {
+            file: components["schemas"]["StoredFile"];
+            /** Format: uri */
+            url: string;
+            fields: {
+                [key: string]: string;
+            };
         };
         WorkflowDraftRequest: {
             key: string;
@@ -5958,6 +6099,112 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkflowInstance"];
+                };
+            };
+        };
+    };
+    files_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredFile"];
+                };
+            };
+        };
+    };
+    files_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    files_confirm_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoredFile"];
+                };
+            };
+        };
+    };
+    files_download_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Download"];
+                };
+            };
+        };
+    };
+    files_uploads_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UploadRequestRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UploadSlot"];
                 };
             };
         };
