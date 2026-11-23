@@ -35,6 +35,7 @@ API_MODULES = (
     "apps.customization.api",
     "apps.academics.api",
     "apps.files.api",
+    "apps.admissions.api",
 )
 
 

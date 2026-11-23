@@ -451,6 +451,361 @@ paths:
               schema:
                 $ref: '#/components/schemas/Term'
           description: ''
+  /api/v1/admissions/applications/:
+    get:
+      operationId: admissions_applications_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Applications of a cycle
+      parameters:
+      - in: query
+        name: cycle
+        schema:
+          type: string
+        description: Cycle id
+        required: true
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+          description: ''
+    post:
+      operationId: admissions_applications_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Enter an application on an applicant's behalf
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApplicationCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/applications/{application_id}/:
+    get:
+      operationId: admissions_applications_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: An application
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/applications/{application_id}/decision/:
+    post:
+      operationId: admissions_applications_decision_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Offer a seat or reject
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DecisionRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/applications/{application_id}/offer-response/:
+    post:
+      operationId: admissions_applications_offer_response_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Record the applicant's answer to an offer
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferResponseRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/applications/{application_id}/review/:
+    post:
+      operationId: admissions_applications_review_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Take a submitted application into review (cycles without a workflow)
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/cycles/:
+    get:
+      operationId: admissions_cycles_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Admission cycles of an institution
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cycle'
+          description: ''
+    post:
+      operationId: admissions_cycles_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create an admission cycle
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CycleCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+          description: ''
+  /api/v1/admissions/cycles/{cycle_id}/status/:
+    post:
+      operationId: admissions_cycles_status_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Open, close or archive a cycle
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CycleStatusRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cycle'
+          description: ''
+  /api/v1/admissions/cycles/{cycle_id}/targets/:
+    post:
+      operationId: admissions_cycles_targets_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add a target unit with its capacity
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TargetCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Target'
+          description: ''
+  /api/v1/admissions/inquiries/:
+    get:
+      operationId: admissions_inquiries_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Inquiries of an institution (newest first)
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      - in: query
+        name: status
+        schema:
+          type: string
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Inquiry'
+          description: ''
+    post:
+      operationId: admissions_inquiries_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Record an inquiry
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InquiryCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inquiry'
+          description: ''
+  /api/v1/admissions/inquiries/{inquiry_id}/:
+    patch:
+      operationId: admissions_inquiries_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Follow up an inquiry
+      parameters:
+      - in: path
+        name: inquiry_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedInquiryWriteRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inquiry'
+          description: ''
   /api/v1/audit-events/:
     get:
       operationId: tenant_audit_events_list
@@ -4326,6 +4681,16 @@ components:
         * `semester` - Semester
         * `trimester` - Trimester
         * `quarter` - Quarter
+    AcademicYearStatusEnum:
+      enum:
+      - planned
+      - active
+      - closed
+      type: string
+      description: |-
+        * `planned` - Planned
+        * `active` - Active
+        * `closed` - Closed
     Accepted:
       type: object
       properties:
@@ -4404,6 +4769,156 @@ components:
       required:
       - code
       - name
+    AdmissionCycleStatusEnum:
+      enum:
+      - draft
+      - open
+      - closed
+      - archived
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `open` - Open
+        * `closed` - Closed
+        * `archived` - Archived
+    Application:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cycle:
+          type: string
+          format: uuid
+          readOnly: true
+        target:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        applicant_name:
+          type: string
+          readOnly: true
+        applicant_email:
+          type: string
+          format: email
+          readOnly: true
+        applicant_phone:
+          type: string
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        core:
+          readOnly: true
+        extra:
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ApplicationStatusEnum'
+          readOnly: true
+        source:
+          allOf:
+          - $ref: '#/components/schemas/SourceEnum'
+          readOnly: true
+        workflow_instance_id:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        merit_rank:
+          type: integer
+          readOnly: true
+          nullable: true
+        decision_note:
+          type: string
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        responded_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - applicant_email
+      - applicant_name
+      - applicant_phone
+      - core
+      - cycle
+      - date_of_birth
+      - decided_at
+      - decision_note
+      - extra
+      - id
+      - merit_rank
+      - number
+      - responded_at
+      - score
+      - source
+      - status
+      - submitted_at
+      - target
+      - workflow_instance_id
+    ApplicationCreateRequest:
+      type: object
+      properties:
+        cycle:
+          type: string
+          format: uuid
+        target:
+          type: string
+          format: uuid
+        values:
+          type: object
+          additionalProperties: {}
+      required:
+      - cycle
+      - target
+      - values
+    ApplicationStatusEnum:
+      enum:
+      - draft
+      - submitted
+      - under_review
+      - test_scheduled
+      - evaluated
+      - offered
+      - accepted
+      - declined
+      - rejected
+      - withdrawn
+      type: string
+      description: |-
+        * `draft` - Draft
+        * `submitted` - Submitted
+        * `under_review` - Under review
+        * `test_scheduled` - Test scheduled
+        * `evaluated` - Evaluated
+        * `offered` - Offered
+        * `accepted` - Accepted
+        * `declined` - Declined
+        * `rejected` - Rejected
+        * `withdrawn` - Withdrawn
     Artefact:
       type: object
       description: A version of a rule, form, workflow or template.
@@ -4875,6 +5390,184 @@ components:
           type: string
       required:
       - detail
+    Cycle:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        opens_on:
+          type: string
+          format: date
+          readOnly: true
+        closes_on:
+          type: string
+          format: date
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/AdmissionCycleStatusEnum'
+          readOnly: true
+        form_key:
+          type: string
+          readOnly: true
+        workflow_key:
+          type: string
+          readOnly: true
+        merit_rule_key:
+          type: string
+          readOnly: true
+        numbering_key:
+          type: string
+          readOnly: true
+        fee_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        fee_currency:
+          type: string
+          readOnly: true
+        targets:
+          type: array
+          items:
+            $ref: '#/components/schemas/Target'
+          readOnly: true
+      required:
+      - closes_on
+      - code
+      - fee_amount
+      - fee_currency
+      - form_key
+      - id
+      - institution
+      - merit_rule_key
+      - name
+      - name_i18n
+      - numbering_key
+      - opens_on
+      - status
+      - targets
+      - workflow_key
+      - year
+    CycleCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        year:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          pattern: ^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 200
+        opens_on:
+          type: string
+          format: date
+        closes_on:
+          type: string
+          format: date
+        form_key:
+          type: string
+          minLength: 1
+          pattern: ^[a-z][a-z0-9_]{1,63}$
+        workflow_key:
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^[a-z][a-z0-9_]{1,63}$
+          - type: string
+            maxLength: 0
+        merit_rule_key:
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^[a-z][a-z0-9_]{1,63}$
+          - type: string
+            maxLength: 0
+        numbering_key:
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^[a-z][a-z0-9_]{1,63}$
+          - type: string
+            maxLength: 0
+        fee_amount:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,16}(?:\.\d{0,2})?$
+          nullable: true
+        fee_currency:
+          oneOf:
+          - type: string
+            default: ''
+            pattern: ^[A-Z]{3}$
+          - type: string
+            maxLength: 0
+      required:
+      - closes_on
+      - code
+      - form_key
+      - institution
+      - name
+      - opens_on
+      - year
+    CycleStatusRequest:
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/AdmissionCycleStatusEnum'
+      required:
+      - status
+    DecisionEnum:
+      enum:
+      - offered
+      - rejected
+      type: string
+      description: |-
+        * `offered` - offered
+        * `rejected` - rejected
+    DecisionRequest:
+      type: object
+      properties:
+        decision:
+          $ref: '#/components/schemas/DecisionEnum'
+        note:
+          type: string
+          default: ''
+          maxLength: 500
+      required:
+      - decision
     DefaultLocaleEnum:
       enum:
       - en
@@ -5162,6 +5855,121 @@ components:
       required:
       - items
       - unread
+    Inquiry:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        interest:
+          type: string
+          readOnly: true
+        source:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/InquiryStatusEnum'
+          readOnly: true
+        assigned_to:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        follow_up_on:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        notes:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - assigned_to
+      - created_at
+      - email
+      - follow_up_on
+      - id
+      - institution
+      - interest
+      - name
+      - notes
+      - phone
+      - source
+      - status
+    InquiryCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        phone:
+          type: string
+          maxLength: 32
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        interest:
+          type: string
+          maxLength: 200
+        source:
+          type: string
+          maxLength: 32
+        status:
+          $ref: '#/components/schemas/InquiryStatusEnum'
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        follow_up_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          maxLength: 2000
+        institution:
+          type: string
+          format: uuid
+      required:
+      - institution
+      - name
+    InquiryStatusEnum:
+      enum:
+      - new
+      - contacted
+      - converted
+      - closed
+      type: string
+      description: |-
+        * `new` - New
+        * `contacted` - Contacted
+        * `converted` - Converted
+        * `closed` - Closed
     Institution:
       type: object
       description: |-
@@ -5737,6 +6545,13 @@ components:
       - link
       - read_at
       - title
+    OfferResponseRequest:
+      type: object
+      properties:
+        accept:
+          type: boolean
+      required:
+      - accept
     Offering:
       type: object
       properties:
@@ -5946,6 +6761,42 @@ components:
           type: integer
           maximum: 1000
           minimum: 0
+    PatchedInquiryWriteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        phone:
+          type: string
+          maxLength: 32
+        email:
+          oneOf:
+          - type: string
+            format: email
+            maxLength: 254
+          - type: string
+            maxLength: 0
+        interest:
+          type: string
+          maxLength: 200
+        source:
+          type: string
+          maxLength: 32
+        status:
+          $ref: '#/components/schemas/InquiryStatusEnum'
+        assigned_to:
+          type: string
+          format: uuid
+          nullable: true
+        follow_up_on:
+          type: string
+          format: date
+          nullable: true
+        notes:
+          type: string
+          maxLength: 2000
     PatchedInstitutionUpdateRequest:
       type: object
       properties:
@@ -7112,6 +7963,14 @@ components:
           maxLength: 200
       required:
       - token
+    SourceEnum:
+      enum:
+      - staff
+      - public
+      type: string
+      description: |-
+        * `staff` - Entered by staff
+        * `public` - Public form
     StepUpRequest:
       type: object
       properties:
@@ -7495,6 +8354,37 @@ components:
       description: |-
         * `ok` - ok
         * `degraded` - degraded
+    Target:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        unit:
+          type: string
+          format: uuid
+          readOnly: true
+        capacity:
+          type: integer
+          readOnly: true
+      required:
+      - capacity
+      - id
+      - unit
+    TargetCreateRequest:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+        capacity:
+          type: integer
+          maximum: 100000
+          minimum: 1
+      required:
+      - capacity
+      - unit
     Teacher:
       type: object
       properties:
@@ -8326,7 +9216,7 @@ components:
           readOnly: true
         status:
           allOf:
-          - $ref: '#/components/schemas/YearStatusEnum'
+          - $ref: '#/components/schemas/AcademicYearStatusEnum'
           readOnly: true
       required:
       - code
@@ -8369,16 +9259,6 @@ components:
       - institution
       - name
       - start_date
-    YearStatusEnum:
-      enum:
-      - planned
-      - active
-      - closed
-      type: string
-      description: |-
-        * `planned` - Planned
-        * `active` - Active
-        * `closed` - Closed
     YearStatusRequest:
       type: object
       properties:

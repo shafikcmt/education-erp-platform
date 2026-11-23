@@ -281,6 +281,231 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admissions/applications/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Applications of a cycle
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_applications_list"];
+        put?: never;
+        /**
+         * Enter an application on an applicant's behalf
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_applications_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/applications/{application_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An application
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_applications_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/applications/{application_id}/decision/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Offer a seat or reject
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_applications_decision_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/applications/{application_id}/offer-response/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record the applicant's answer to an offer
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_applications_offer_response_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/applications/{application_id}/review/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a submitted application into review (cycles without a workflow)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_applications_review_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/cycles/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admission cycles of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_cycles_list"];
+        put?: never;
+        /**
+         * Create an admission cycle
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_cycles_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/cycles/{cycle_id}/status/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Open, close or archive a cycle
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_cycles_status_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/cycles/{cycle_id}/targets/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a target unit with its capacity
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_cycles_targets_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/inquiries/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Inquiries of an institution (newest first)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_inquiries_list"];
+        put?: never;
+        /**
+         * Record an inquiry
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_inquiries_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/inquiries/{inquiry_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Follow up an inquiry
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["admissions_inquiries_partial_update"];
+        trace?: never;
+    };
     "/api/v1/audit-events/": {
         parameters: {
             query?: never;
@@ -3094,6 +3319,13 @@ export interface components {
          * @enum {string}
          */
         AcademicTermKindEnum: "term" | "semester" | "trimester" | "quarter";
+        /**
+         * @description * `planned` - Planned
+         *     * `active` - Active
+         *     * `closed` - Closed
+         * @enum {string}
+         */
+        AcademicYearStatusEnum: "planned" | "active" | "closed";
         Accepted: {
             detail: string;
         };
@@ -3127,6 +3359,68 @@ export interface components {
             name: string;
             module?: string | null;
         };
+        /**
+         * @description * `draft` - Draft
+         *     * `open` - Open
+         *     * `closed` - Closed
+         *     * `archived` - Archived
+         * @enum {string}
+         */
+        AdmissionCycleStatusEnum: "draft" | "open" | "closed" | "archived";
+        Application: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly cycle: string;
+            /** Format: uuid */
+            readonly target: string;
+            readonly number: string;
+            readonly applicant_name: string;
+            /** Format: email */
+            readonly applicant_email: string;
+            readonly applicant_phone: string;
+            /** Format: date */
+            readonly date_of_birth: string | null;
+            readonly core: unknown;
+            readonly extra: unknown;
+            readonly status: components["schemas"]["ApplicationStatusEnum"];
+            readonly source: components["schemas"]["SourceEnum"];
+            /** Format: uuid */
+            readonly workflow_instance_id: string | null;
+            /** Format: decimal */
+            readonly score: string | null;
+            readonly merit_rank: number | null;
+            readonly decision_note: string;
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            /** Format: date-time */
+            readonly decided_at: string | null;
+            /** Format: date-time */
+            readonly responded_at: string | null;
+        };
+        ApplicationCreateRequest: {
+            /** Format: uuid */
+            cycle: string;
+            /** Format: uuid */
+            target: string;
+            values: {
+                [key: string]: unknown;
+            };
+        };
+        /**
+         * @description * `draft` - Draft
+         *     * `submitted` - Submitted
+         *     * `under_review` - Under review
+         *     * `test_scheduled` - Test scheduled
+         *     * `evaluated` - Evaluated
+         *     * `offered` - Offered
+         *     * `accepted` - Accepted
+         *     * `declined` - Declined
+         *     * `rejected` - Rejected
+         *     * `withdrawn` - Withdrawn
+         * @enum {string}
+         */
+        ApplicationStatusEnum: "draft" | "submitted" | "under_review" | "test_scheduled" | "evaluated" | "offered" | "accepted" | "declined" | "rejected" | "withdrawn";
         /** @description A version of a rule, form, workflow or template. */
         Artefact: {
             /** Format: uuid */
@@ -3314,6 +3608,66 @@ export interface components {
         Csrf: {
             detail: string;
         };
+        Cycle: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly year: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            /** Format: date */
+            readonly opens_on: string;
+            /** Format: date */
+            readonly closes_on: string;
+            readonly status: components["schemas"]["AdmissionCycleStatusEnum"];
+            readonly form_key: string;
+            readonly workflow_key: string;
+            readonly merit_rule_key: string;
+            readonly numbering_key: string;
+            /** Format: decimal */
+            readonly fee_amount: string | null;
+            readonly fee_currency: string;
+            readonly targets: components["schemas"]["Target"][];
+        };
+        CycleCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            /** Format: uuid */
+            year: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            opens_on: string;
+            /** Format: date */
+            closes_on: string;
+            form_key: string;
+            workflow_key?: string;
+            merit_rule_key?: string;
+            numbering_key?: string;
+            /** Format: decimal */
+            fee_amount?: string | null;
+            fee_currency?: string;
+        };
+        CycleStatusRequest: {
+            status: components["schemas"]["AdmissionCycleStatusEnum"];
+        };
+        /**
+         * @description * `offered` - offered
+         *     * `rejected` - rejected
+         * @enum {string}
+         */
+        DecisionEnum: "offered" | "rejected";
+        DecisionRequest: {
+            decision: components["schemas"]["DecisionEnum"];
+            /** @default  */
+            note: string;
+        };
         /**
          * @description * `en` - en
          *     * `bn` - bn
@@ -3431,6 +3785,49 @@ export interface components {
             unread: number;
             items: components["schemas"]["Notification"][];
         };
+        Inquiry: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly name: string;
+            readonly phone: string;
+            /** Format: email */
+            readonly email: string;
+            readonly interest: string;
+            readonly source: string;
+            readonly status: components["schemas"]["InquiryStatusEnum"];
+            /** Format: uuid */
+            readonly assigned_to: string | null;
+            /** Format: date */
+            readonly follow_up_on: string | null;
+            readonly notes: string;
+            /** Format: date-time */
+            readonly created_at: string;
+        };
+        InquiryCreateRequest: {
+            name: string;
+            phone?: string;
+            email?: string;
+            interest?: string;
+            source?: string;
+            status?: components["schemas"]["InquiryStatusEnum"];
+            /** Format: uuid */
+            assigned_to?: string | null;
+            /** Format: date */
+            follow_up_on?: string | null;
+            notes?: string;
+            /** Format: uuid */
+            institution: string;
+        };
+        /**
+         * @description * `new` - New
+         *     * `contacted` - Contacted
+         *     * `converted` - Converted
+         *     * `closed` - Closed
+         * @enum {string}
+         */
+        InquiryStatusEnum: "new" | "contacted" | "converted" | "closed";
         /**
          * @description Custom field values, masked by each field's view permission (Phase 5 M6). Without a
          *     request in the context nothing is shown (fail closed).
@@ -3666,6 +4063,9 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        OfferResponseRequest: {
+            accept: boolean;
+        };
         Offering: {
             /** Format: uuid */
             readonly id: string;
@@ -3758,6 +4158,19 @@ export interface components {
             edit_permission?: string;
             pii?: boolean;
             order?: number;
+        };
+        PatchedInquiryWriteRequest: {
+            name?: string;
+            phone?: string;
+            email?: string;
+            interest?: string;
+            source?: string;
+            status?: components["schemas"]["InquiryStatusEnum"];
+            /** Format: uuid */
+            assigned_to?: string | null;
+            /** Format: date */
+            follow_up_on?: string | null;
+            notes?: string;
         };
         PatchedInstitutionUpdateRequest: {
             name?: string;
@@ -4179,6 +4592,12 @@ export interface components {
         SignupVerifyRequest: {
             token: string;
         };
+        /**
+         * @description * `staff` - Entered by staff
+         *     * `public` - Public form
+         * @enum {string}
+         */
+        SourceEnum: "staff" | "public";
         StepUpRequest: {
             password: string;
             code?: string;
@@ -4320,6 +4739,18 @@ export interface components {
          * @enum {string}
          */
         SystemHealthStatusEnum: "ok" | "degraded";
+        Target: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly unit: string;
+            readonly capacity: number;
+        };
+        TargetCreateRequest: {
+            /** Format: uuid */
+            unit: string;
+            capacity: number;
+        };
         Teacher: {
             /** Format: uuid */
             readonly id: string;
@@ -4616,7 +5047,7 @@ export interface components {
             readonly start_date: string;
             /** Format: date */
             readonly end_date: string;
-            readonly status: components["schemas"]["YearStatusEnum"];
+            readonly status: components["schemas"]["AcademicYearStatusEnum"];
         };
         YearCreateRequest: {
             /** Format: uuid */
@@ -4631,13 +5062,6 @@ export interface components {
             /** Format: date */
             end_date: string;
         };
-        /**
-         * @description * `planned` - Planned
-         *     * `active` - Active
-         *     * `closed` - Closed
-         * @enum {string}
-         */
-        YearStatusEnum: "planned" | "active" | "closed";
         YearStatusRequest: {
             status: components["schemas"]["YearStatusStatusEnum"];
         };
@@ -5040,6 +5464,310 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Term"];
+                };
+            };
+        };
+    };
+    admissions_applications_list: {
+        parameters: {
+            query: {
+                /** @description Cycle id */
+                cycle: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"][];
+                };
+            };
+        };
+    };
+    admissions_applications_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplicationCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_applications_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_applications_decision_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_applications_offer_response_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferResponseRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_applications_review_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_cycles_list: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cycle"][];
+                };
+            };
+        };
+    };
+    admissions_cycles_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CycleCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cycle"];
+                };
+            };
+        };
+    };
+    admissions_cycles_status_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CycleStatusRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Cycle"];
+                };
+            };
+        };
+    };
+    admissions_cycles_targets_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TargetCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Target"];
+                };
+            };
+        };
+    };
+    admissions_inquiries_list: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inquiry"][];
+                };
+            };
+        };
+    };
+    admissions_inquiries_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InquiryCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inquiry"];
+                };
+            };
+        };
+    };
+    admissions_inquiries_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                inquiry_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedInquiryWriteRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Inquiry"];
                 };
             };
         };

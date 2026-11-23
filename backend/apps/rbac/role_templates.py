@@ -151,6 +151,14 @@ _OWNER_CODES = [
     # Phase 6 M3: files (attached files are authorised through their owners).
     "files.file.view",
     "files.file.upload",
+    # Phase 6 M4: admissions.
+    "admissions.inquiry.view",
+    "admissions.inquiry.manage",
+    "admissions.cycle.view",
+    "admissions.cycle.manage",
+    "admissions.application.view",
+    "admissions.application.review",
+    "admissions.application.decide",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -188,6 +196,17 @@ _INSTITUTION_ADMIN_CODES = [
     "academics.subject.manage",
     "academics.offering.view",
     "academics.offering.manage",
+    # Phase 6 M3: files (and so they can assign admission officers, who upload).
+    "files.file.view",
+    "files.file.upload",
+    # Phase 6 M4: admissions.
+    "admissions.inquiry.view",
+    "admissions.inquiry.manage",
+    "admissions.cycle.view",
+    "admissions.cycle.manage",
+    "admissions.application.view",
+    "admissions.application.review",
+    "admissions.application.decide",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -281,7 +300,15 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Admission Officer",
         "ভর্তি কর্মকর্তা",
         "Inquiries, applications and enrollment.",
-        [TENANT_VIEW, "admissions.application.manage"],
+        [
+            TENANT_VIEW,
+            "admissions.inquiry.view",
+            "admissions.inquiry.manage",
+            "admissions.cycle.view",
+            "admissions.application.view",
+            "admissions.application.review",
+            "files.file.upload",
+        ],
     ),
     _template(
         "accountant",
@@ -330,7 +357,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Front Desk",
         "ফ্রন্ট ডেস্ক",
         "Inquiries, visitors and notices.",
-        [TENANT_VIEW, "admissions.inquiry.manage"],
+        [TENANT_VIEW, "admissions.inquiry.view", "admissions.inquiry.manage"],
     ),
     _template(
         "staff_member",

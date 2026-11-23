@@ -101,6 +101,16 @@ EVENTS: dict[str, frozenset[str]] = {
     "tenancy.support_approval.changed": frozenset({"old", "new", "reason"}),
     # tenant registry and structure (Phase 3 M8). Registry events are written to both logs.
     "tenancy.tenant.provisioned": frozenset({"slug", "tenant_id"}),
+    # admissions (Phase 6 M4); applicant personal data is never logged
+    "admissions.inquiry.created": frozenset({"source"}),
+    "admissions.inquiry.updated": frozenset({"fields"}),
+    "admissions.cycle.created": frozenset({"ref"}),
+    "admissions.cycle.target_added": frozenset({"capacity"}),
+    "admissions.cycle.status_changed": frozenset({"status"}),
+    "admissions.application.submitted": frozenset({"source"}),
+    "admissions.application.status_changed": frozenset({"status"}),
+    "admissions.application.decided": frozenset({"decision"}),
+    "admissions.application.offer_answered": frozenset({"accepted"}),
     # files (Phase 6 M3); never names, keys or contents
     "files.file.upload_requested": frozenset({"purpose", "size"}),
     "files.file.verified": frozenset({"status", "scan"}),

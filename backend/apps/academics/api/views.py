@@ -21,13 +21,10 @@ from apps.academics import capabilities as caps
 from apps.academics import services
 from apps.academics.api import serializers as s
 from apps.academics.models import AcademicYear, Offering, OfferingTeacher, Subject, Term, Unit
-from apps.core.tenancy import require_tenant
 from apps.identity.api.utils import service_errors
 from apps.identity.models import User
-from apps.rbac.engine import ScopeTarget, has_perm
-from apps.tenancy.api.permissions import HasTenantPermission
+from apps.tenancy.api.permissions import HasTenantPermission, visible_institution
 from apps.tenancy.api.views_tenant import TenantView
-from apps.tenancy.models import Campus, Institution
 
 TAGS = ["academics"]
 INSTITUTION = OpenApiParameter("institution", str, required=True, description="Institution id")
@@ -54,25 +51,11 @@ def _get(model: Any, pk: Any) -> Any:
     return row
 
 
-def _visible_institution(user: User, code: str, institution_id: Any) -> Any:
-    """The institution when ``user`` holds ``code`` there or at one of its campuses; else 404
-    (indistinguishable from an unknown institution)."""
-    inst = _get(Institution, institution_id)
-    tenant_id = require_tenant().id
-    targets = [ScopeTarget(tenant_id, inst.pk)] + [
-        ScopeTarget(tenant_id, inst.pk, campus)
-        for campus in Campus.objects.filter(institution=inst).values_list("pk", flat=True)
-    ]
-    if not any(has_perm(user, code, target=t, use_cache=False) for t in targets):
-        raise NotFound()
-    return inst
-
-
 def _institution_param(request: Request, code: str) -> Any:
     value = request.query_params.get("institution")
     if not value:
         raise ValidationError({"institution": "Choose an institution."})
-    return _visible_institution(_actor(request), code, value)
+    return visible_institution(_actor(request), code, value)
 
 
 class AcademicsView(TenantView):
@@ -161,7 +144,7 @@ class TermsView(AcademicsView):
     @extend_schema(tags=TAGS, summary="Terms of a year", responses=s.TermSerializer(many=True))
     def get(self, request: Request, year_id: str) -> Response:
         year = _get(AcademicYear, year_id)
-        _visible_institution(_actor(request), "academics.year.view", year.institution_id)
+        visible_institution(_actor(request), "academics.year.view", year.institution_id)
         rows = Term.objects.filter(year=year).order_by("order", "start_date")
         return Response(s.TermSerializer(rows, many=True).data)
 
@@ -317,7 +300,7 @@ class OfferingsView(AcademicsView):
     )
     def get(self, request: Request) -> Response:
         year = _get(AcademicYear, request.query_params.get("year") or None)
-        _visible_institution(_actor(request), "academics.offering.view", year.institution_id)
+        visible_institution(_actor(request), "academics.offering.view", year.institution_id)
         rows = Offering.objects.filter(year=year).prefetch_related("teachers")
         return Response(s.OfferingSerializer(rows, many=True).data)
 

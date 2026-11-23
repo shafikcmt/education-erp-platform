@@ -58,3 +58,27 @@ def HasTenantPermission(codes: str | dict[str, str]) -> type[Any]:  # noqa: N802
 def HasTenantAnyPermission(*codes: str) -> type[AnyPermissionCheck]:  # noqa: N802
     base = HasAnyPermission(*codes)
     return type(f"Tenant{base.__name__}", (_AnyTenantScope, base), {})
+
+
+def visible_institution(user: Any, code: str, institution_id: Any) -> Any:
+    """The institution when ``user`` holds ``code`` there or at one of its campuses, else
+    ``NotFound`` (an unknown and a foreign institution are indistinguishable). For list views of
+    institution-bound modules (Phase 6); services still check the exact scope."""
+    from django.core.exceptions import ValidationError
+    from rest_framework.exceptions import NotFound
+
+    from apps.tenancy.models import Campus, Institution
+
+    try:
+        inst = Institution.objects.filter(pk=institution_id).first()
+    except (ValueError, ValidationError):
+        inst = None
+    if inst is None:
+        raise NotFound()
+    targets = [ScopeTarget(inst.tenant_id, inst.pk)] + [
+        ScopeTarget(inst.tenant_id, inst.pk, campus)
+        for campus in Campus.objects.filter(institution=inst).values_list("pk", flat=True)
+    ]
+    if not any(has_perm(user, code, target=t, use_cache=False) for t in targets):
+        raise NotFound()
+    return inst
