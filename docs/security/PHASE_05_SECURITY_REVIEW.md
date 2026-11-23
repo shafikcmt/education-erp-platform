@@ -45,7 +45,7 @@
 
 ## 3. Residual risks and open items (for the owner)
 
-1. **ADR-061 is Proposed.** Sign-up approval is mandatory in v1. This is stricter than ADR-060's "optional approval". Please confirm it, or ask for an automatic path, which would need a new design.
+1. ~~**ADR-061 is Proposed.**~~ Accepted by the owner on 2026-11-23: sign-up approval is mandatory in v1.
 2. **One client address in E2E.** The CI/local stack reaches the API from one Docker gateway address, so the per-IP sign-up limit (5 per hour) is shared by the whole E2E run. Production sees real client addresses through Nginx.
 3. **Preset content is a draft** (ADR-060 Q4). It must be validated with real institutions before it is used for onboarding.
 4. **JSON editors in Studio v1.** The editors are safe, because the server validates everything, but they are not friendly for non-technical admins. Visual builders are not built.
@@ -54,8 +54,9 @@
    - SMS and push notifications (Phase 14);
    - dashboard and report-layout configuration (Phase 15).
 6. **Still open from earlier phases:**
-   - re-checking the inviter's permission at invitation acceptance (owner decision);
+   - ~~re-checking the inviter's permission at invitation acceptance~~ — done on 2026-11-23 (ADR-062);
    - the items moved to Phase 18 (D9 benchmark, prefork K6, alerting).
 
 ### Change notes
 - 2026-11-22 — Created (Phase 5 M8).
+- 2026-11-23 — Owner approved Phase 5; ADR-061 Accepted; the inviter re-check (ADR-062) implemented.

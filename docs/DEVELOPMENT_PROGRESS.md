@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 5 — Customization Studio & institution configuration: **Complete** (M1–M8), **awaiting the owner's approval**. Phase 6 is not started. Open decision: ADR-061 (Proposed). History of this line: plan Proposed with five owner questions; plan Approved 2026-11-22 (ADR-055 to ADR-060); In progress during M1–M8.
+- **Current phase:** Phase 5 — Customization Studio & institution configuration: **Approved** by the owner (2026-11-23; ADR-061 and ADR-062 Accepted). **Phase 6 is not started**: its plan is the next step and needs the owner's approval. History of this line: plan Proposed; plan Approved 2026-11-22 (ADR-055 to ADR-060); In progress during M1–M8; Complete 2026-11-22 (M8 merged in PR #59, `1d6e227`).
 - **Phase 4:** **Approved** by the owner (2026-11-22); M1–M7 merged (PRs #44–#50). History of this line: (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
 - **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
@@ -37,7 +37,7 @@
 | 2 | Authentication, users, roles & permissions | Approved | [PR #13](https://github.com/shafikcmt/education-erp-platform/pull/13) (plan, merged), [PR #15](https://github.com/shafikcmt/education-erp-platform/pull/15) (implementation + security-review fixes, merged as `2d61e83`) | Owner-authorized merge 2026-11-07 after final security review (ADR-040) |
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Approved | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`), [PR #50](https://github.com/shafikcmt/education-erp-platform/pull/50) (M7, merged `983a9e4`) | **Approved** (owner, 2026-11-22) |
-| 5 | Customization Studio & institution configuration | Complete | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`), [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) (M6, merged `940ec47`), [PR #58](https://github.com/shafikcmt/education-erp-platform/pull/58) (M7, merged `662986c`); `feat/phase-05-m8` (M8: sign-up, E2E, security self-review) | **Complete**, awaiting the owner's approval; ADR-061 Proposed |
+| 5 | Customization Studio & institution configuration | Approved | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`), [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) (M6, merged `940ec47`), [PR #58](https://github.com/shafikcmt/education-erp-platform/pull/58) (M7, merged `662986c`); [PR #59](https://github.com/shafikcmt/education-erp-platform/pull/59) (M8, merged `1d6e227`) | **Approved** (owner, 2026-11-23); ADR-061, ADR-062 Accepted |
 | 6 | Academic structure & student admission | Not started | | |
 | 7 | Student, teacher & parent management | Not started | | |
 | 8 | Attendance management | Not started | | |
@@ -93,6 +93,12 @@ See `DECISION_LOG.md`.
 - **Open questions for the owner:** ADR-061 (mandatory sign-up approval); re-checking the inviter's permission at invitation acceptance (from Phase 3).
 - **Next:** owner review of Phase 5; then the Phase 6 plan (academic structure and student admission) only after approval.
 
+### 2026-11-23 — Session 31 (continued): Phase 5 approved; inviter re-check
+- **M8:** [PR #59](https://github.com/shafikcmt/education-erp-platform/pull/59) — CI **8/8 success**; squash-merged pinned to `04611cd` → **`1d6e227`** (tree identical to the head).
+- **Owner:** "approve and continue develop same" — recorded as approval of Phase 5 together with the two recommendations put to the owner: ADR-061 (mandatory sign-up approval) Accepted, and the open Phase 3 question answered "yes" (ADR-062). The owner can correct this reading.
+- **Fix (`fix/invitation-inviter-recheck`):** member-created invitations are re-authorised at acceptance (ADR-062): migration `tenancy/0008` adds `recheck_inviter` (default false, also in the database); acceptance fails with the generic answer and a durable `inviter_unauthorised` attempt when the inviter is suspended, has left, or lost the invite permission or a permission of the role. Provisioning owner invitations are not re-checked. 2 new tests.
+- **Next:** Phase 6 plan (academic structure and student admission) as a proposal; implementation only after the owner approves it.
+
 ## Known gaps / open questions
 
 - Price points, tier boundaries, trial length (ADR-024).
@@ -105,7 +111,7 @@ See `DECISION_LOG.md`.
   - Preset content is a draft for review with real institutions (ADR-060 Q4).
   - Studio v1 edits rules, forms, workflows and templates as JSON; visual builders are not built (§13.7 C38).
   - The onboarding wizard is a dashboard checklist, not a separate flow (C40).
-  - Self-service sign-up moved from M7 to M8 (C41); built in M8 with **mandatory** approval (ADR-061 Proposed, owner to confirm).
+  - Self-service sign-up moved from M7 to M8 (C41); built in M8 with **mandatory** approval (ADR-061, Accepted 2026-11-23).
   - Custom field values on members wait for member profiles (Phase 7).
 - **Phase 3 M5 gaps (recorded, not hidden; plan §24.8):**
   - ~~**No HTTP endpoints** for support sessions and the approval setting~~ — **resolved in M8**.
@@ -119,7 +125,7 @@ See `DECISION_LOG.md`.
   - ~~**Provisioning (P4)** and the platform permission codes~~ — **resolved in M8**.
   - ~~**MFA enrollment** on the platform host only~~ — **resolved in M8** (own MFA and step-up on tenant hosts, N81).
   - ~~`rbac_role` / `rbac_rolepermission` have no RLS~~ — **resolved in M6** (dual-scope RLS). The explicit `tenant_id` filters in M4 code stay as a second layer.
-  - **Inviter re-check:** an invitation stays valid if the inviter later loses the right to invite; it can be revoked. Re-validating at acceptance was **not** added in M8 (still a possible hardening; owner decision needed).
+  - ~~**Inviter re-check:** an invitation stays valid if the inviter later loses the right to invite~~ — **resolved 2026-11-23** (ADR-062: member-created invitations are re-authorised at acceptance).
 - **Phase 3 M8 gaps (recorded, not hidden; plan §24.11):**
   - ~~**No frontend** for M8 endpoints~~ — **resolved in M9** (plan §24.12).
   - Tenant lists (institutions, campuses, members, invitations) are filtered in Python after a per-object permission check: fine for Phase 3 sizes (limits 1/3), to be revisited with pagination before large tenants exist.

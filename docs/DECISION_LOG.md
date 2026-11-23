@@ -59,7 +59,8 @@
 | 053 | Feature flags as data-driven rollout controls, separate from entitlements | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 049 | D9 isolation-overhead benchmark deferred from Phase 3 M10 to Phase 18 (production-like environment); D9 thresholds unchanged | **Accepted** (owner, 2026-11-21) | 2026-11-21 |
 | 048 | Phase 3 M3 working decisions (owner answers M3-Q1 to M3-Q7): two-stage host handling; tenant-host endpoint allow-list; `api` as a platform host in dev/CI/E2E; deferred tests recorded; fail-closed suspended/offboarding; `CONN_MAX_AGE = 0` with a non-production override; measurements recorded without automatic thresholds | **Accepted** (owner, 2026-11-13) | 2026-11-13 |
-| 061 | Self-service sign-up always needs a platform administrator's approval in v1 (stricter than ADR-060 Q3 "optional approval"); P23 anonymous request/verify; P25 retention sweep | **Proposed** (implemented as the stricter safe default; owner to confirm) | 2026-11-22 |
+| 061 | Self-service sign-up always needs a platform administrator's approval in v1 (stricter than ADR-060 Q3 "optional approval"); P23 anonymous request/verify; P25 retention sweep | **Accepted** (owner, 2026-11-23, with the Phase 5 approval) | 2026-11-22 |
+| 062 | Invitations created by members are re-authorised at acceptance (inviter still an active member with `tenancy.member.invite` in scope and every permission of the role); platform-issued owner invitations are not | **Accepted** (owner, 2026-11-23) | 2026-11-23 |
 
 ---
 
@@ -762,11 +763,19 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 
 ## ADR-061 — Sign-up approval is mandatory in v1
 
-**Status:** **Proposed** (2026-11-22, Phase 5 M8). Built as the stricter, safe default; it narrows ADR-060 Q3 and changes nothing else. The owner may accept it, or ask for the optional (automatic) approval path, which would need its own design.
+**Status:** **Accepted** (owner, 2026-11-23, with the Phase 5 approval). Proposed 2026-11-22 as the stricter, safe default; it narrows ADR-060 Q3 and changes nothing else.
 
 - **Context:** ADR-060 Q3 accepted self-service sign-up behind an off-by-default flag with an *optional* Super Admin approval. Provisioning (P4) always runs for an authenticated user who holds `tenancy.tenant.create` (uncached check, audited). Automatic approval would need a new anonymous provisioning scope with no accountable actor, which weakens the platform operation catalogue (ADR-043).
 - **Decision:** every verified sign-up waits for a platform administrator, who approves it (P4 with the administrator as the actor; the owner gets the usual invitation) or rejects it with a reason. P23 is catalogued as an anonymous, registry-only operation (request and email verification); P25 is a system retention sweep. The feature stays off unless `TENANCY_SIGNUP_ENABLED` is set; tenant hosts stay disabled, so production use waits for the approved domain and security review.
 - **Consequences:** no tenant ever exists without a human decision. A busy platform needs someone to review requests; requests waiting for a decision are never purged automatically.
+
+## ADR-062 — Re-authorise the inviter at invitation acceptance
+
+**Status:** **Accepted** (owner, 2026-11-23; the open Phase 3 question, answered with the recommendation).
+
+- **Context:** an invitation stayed valid after its inviter lost the right to invite (suspension, removed role); only an explicit revocation stopped it.
+- **Decision:** invitations created by a member (`create_invitation`) carry `recheck_inviter = true`. At acceptance the inviter must still be an active, active-account member who holds `tenancy.member.invite` in the invitation's scope and every permission of the offered role (uncached; the existing no-escalation rule). Otherwise acceptance fails with the generic `invitation_invalid` answer and a durable `inviter_unauthorised` attempt; the invitation stays open so an administrator can revoke or resend it. Owner invitations issued by the platform at provisioning (P4) are not re-checked: the operator is no member and was authorised by the platform operation. Rows created before the change default to `false` (invitations expire after 7 days).
+- **Consequences:** removing someone's rights also stops the invitations they sent. One more uncached permission evaluation per acceptance.
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
@@ -791,3 +800,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-22 — Owner approved Phase 4 (no ADR changed). ADR-055 to ADR-059 listed as Proposed with `plans/PHASE_05_PLAN.md`; ADR-016 stays Proposed until ADR-055 is decided.
 - 2026-11-22 — Owner approved the Phase 5 plan: ADR-055 to ADR-059 **Accepted**; ADR-060 added (Accepted); ADR-016 decided by ADR-055 (its original text kept).
 - 2026-11-22 — Added ADR-061 (Proposed): mandatory approval for self-service sign-up in v1 (stricter than ADR-060 Q3). No Accepted ADR changed.
+- 2026-11-23 — Owner approved Phase 5: ADR-061 Accepted. Added ADR-062 (Accepted): inviter re-check at invitation acceptance. No other ADR changed.

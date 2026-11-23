@@ -269,6 +269,10 @@ class Invitation(TenantScopedModel):
     accepted_at = models.DateTimeField(null=True, blank=True)
     revoked_at = models.DateTimeField(null=True, blank=True)
     invited_by = models.UUIDField(null=True, blank=True)
+    # Phase 5 approval (ADR-062): invitations created by a member are re-authorised at
+    # acceptance. Platform-issued owner invitations (provisioning, P4) are not: the operator is no
+    # member and was authorised by the platform operation itself.
+    recheck_inviter = models.BooleanField(default=False)
 
     class Meta(TenantScopedModel.Meta):
         db_table = "tenancy_invitation"
