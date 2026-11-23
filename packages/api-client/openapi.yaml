@@ -614,6 +614,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/Download'
           description: ''
+  /api/v1/admissions/applications/{application_id}/evaluate/:
+    post:
+      operationId: admissions_applications_evaluate_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Mark an application evaluated (cycles without tests)
+      parameters:
+      - in: path
+        name: application_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Application'
+          description: ''
   /api/v1/admissions/applications/{application_id}/offer-response/:
     post:
       operationId: admissions_applications_offer_response_create
@@ -667,6 +691,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/assignments/{assignment_id}/:
+    patch:
+      operationId: admissions_assignments_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Enter a score (or an absence)
+      parameters:
+      - in: path
+        name: assignment_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedScoreRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSeat'
           description: ''
   /api/v1/admissions/cycles/:
     get:
@@ -778,6 +831,61 @@ paths:
               schema:
                 $ref: '#/components/schemas/Target'
           description: ''
+  /api/v1/admissions/cycles/{cycle_id}/tests/:
+    get:
+      operationId: admissions_cycles_tests_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Admission tests of a cycle
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+          description: ''
+    post:
+      operationId: admissions_cycles_tests_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Schedule an admission test
+      parameters:
+      - in: path
+        name: cycle_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Test'
+          description: ''
   /api/v1/admissions/inquiries/:
     get:
       operationId: admissions_inquiries_list
@@ -860,6 +968,135 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Inquiry'
+          description: ''
+  /api/v1/admissions/targets/{target_id}/merit/:
+    get:
+      operationId: admissions_targets_merit_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: 'Merit ranking of a target: preview and the latest publication'
+      parameters:
+      - in: path
+        name: target_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Merit'
+          description: ''
+  /api/v1/admissions/targets/{target_id}/merit/offers/:
+    post:
+      operationId: admissions_targets_merit_offers_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Offer the free seats down the published merit list
+      parameters:
+      - in: path
+        name: target_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Application'
+          description: ''
+  /api/v1/admissions/targets/{target_id}/merit/publish/:
+    post:
+      operationId: admissions_targets_merit_publish_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Publish the merit list (a new frozen version)
+      parameters:
+      - in: path
+        name: target_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeritList'
+          description: ''
+  /api/v1/admissions/tests/{test_id}/assignments/:
+    get:
+      operationId: admissions_tests_assignments_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Seat list of a test
+      parameters:
+      - in: path
+        name: test_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TestSeat'
+          description: ''
+    post:
+      operationId: admissions_tests_assignments_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Seat an application
+      parameters:
+      - in: path
+        name: test_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - admissions
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TestSeatCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TestSeat'
           description: ''
   /api/v1/audit-events/:
     get:
@@ -6759,6 +6996,52 @@ components:
       - slug
       - tenant_id
       - tenant_status
+    Merit:
+      type: object
+      properties:
+        preview:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ranked'
+        published:
+          allOf:
+          - $ref: '#/components/schemas/MeritList'
+          nullable: true
+      required:
+      - preview
+      - published
+    MeritList:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        target:
+          type: string
+          format: uuid
+          readOnly: true
+        version:
+          type: integer
+          readOnly: true
+        rule_key:
+          type: string
+          readOnly: true
+        published_at:
+          type: string
+          format: date-time
+          readOnly: true
+        ranking:
+          type: array
+          items:
+            $ref: '#/components/schemas/Ranked'
+      required:
+      - id
+      - published_at
+      - ranking
+      - rule_key
+      - target
+      - version
     MfaConfirmRequest:
       type: object
       properties:
@@ -7272,6 +7555,17 @@ components:
             minLength: 1
             maxLength: 100
           maxItems: 500
+    PatchedScoreRequest:
+      type: object
+      properties:
+        score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          nullable: true
+        absent:
+          type: boolean
+          default: false
     PatchedTenantProfileUpdateRequest:
       type: object
       properties:
@@ -7875,6 +8169,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/StatusDocument'
+        tests:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatusTest'
       required:
       - applicant_name
       - can_add_documents
@@ -7883,6 +8181,7 @@ components:
       - documents
       - number
       - status
+      - tests
     PublicSubmitRequest:
       type: object
       properties:
@@ -7932,6 +8231,31 @@ components:
       - default_locale
       - locales
       - name
+    Ranked:
+      type: object
+      properties:
+        application:
+          type: string
+          format: uuid
+        number:
+          type: string
+        applicant_name:
+          type: string
+        score:
+          type: string
+        total:
+          type: string
+        rank:
+          type: integer
+        status:
+          type: string
+      required:
+      - application
+      - number
+      - rank
+      - score
+      - status
+      - total
     ReasonRequest:
       type: object
       properties:
@@ -8434,6 +8758,23 @@ components:
       - id
       - name
       - status
+    StatusTest:
+      type: object
+      properties:
+        name:
+          type: string
+        starts_at:
+          type: string
+          format: date-time
+        venue:
+          type: string
+        seat:
+          type: integer
+      required:
+      - name
+      - seat
+      - starts_at
+      - venue
     StepUpRequest:
       type: object
       properties:
@@ -9349,6 +9690,129 @@ components:
       - end_date
       - name
       - start_date
+    Test:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        cycle:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        starts_at:
+          type: string
+          format: date-time
+          readOnly: true
+        venue:
+          type: string
+          readOnly: true
+        capacity:
+          type: integer
+          readOnly: true
+        max_score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
+        seated:
+          type: integer
+          readOnly: true
+      required:
+      - capacity
+      - cycle
+      - id
+      - max_score
+      - name
+      - seated
+      - starts_at
+      - venue
+    TestCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        starts_at:
+          type: string
+          format: date-time
+        venue:
+          type: string
+          default: ''
+          maxLength: 200
+        capacity:
+          type: integer
+          minimum: 1
+        max_score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+      required:
+      - capacity
+      - max_score
+      - name
+      - starts_at
+    TestSeat:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        test:
+          type: string
+          format: uuid
+          readOnly: true
+        application:
+          type: string
+          format: uuid
+          readOnly: true
+        application_number:
+          type: string
+          readOnly: true
+        applicant_name:
+          type: string
+          readOnly: true
+        seat:
+          type: integer
+          readOnly: true
+        score:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,6}(?:\.\d{0,2})?$
+          readOnly: true
+          nullable: true
+        absent:
+          type: boolean
+          readOnly: true
+        scored_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - absent
+      - applicant_name
+      - application
+      - application_number
+      - id
+      - score
+      - scored_at
+      - seat
+      - test
+    TestSeatCreateRequest:
+      type: object
+      properties:
+        application:
+          type: string
+          format: uuid
+      required:
+      - application
     TokenPasswordRequest:
       type: object
       properties:

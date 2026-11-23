@@ -57,6 +57,13 @@ class StatusDocumentSerializer(serializers.Serializer[Any]):
     status = serializers.CharField()
 
 
+class StatusTestSerializer(serializers.Serializer[Any]):
+    name = serializers.CharField()
+    starts_at = serializers.DateTimeField()
+    venue = serializers.CharField()
+    seat = serializers.IntegerField()
+
+
 class PublicStatusSerializer(serializers.Serializer[Any]):
     number = serializers.CharField()
     status = serializers.CharField()
@@ -65,6 +72,7 @@ class PublicStatusSerializer(serializers.Serializer[Any]):
     decision_note = serializers.CharField()
     can_add_documents = serializers.BooleanField()
     documents = StatusDocumentSerializer(many=True)
+    tests = StatusTestSerializer(many=True)
 
 
 class RespondSerializer(TokenSerializer):

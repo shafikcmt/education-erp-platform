@@ -10,15 +10,23 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.exceptions import ValidationError
+from django.db.models import Count
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.request import Request
 from rest_framework.response import Response
 
-from apps.admissions import services
+from apps.admissions import merit, services
 from apps.admissions.api import serializers as s
-from apps.admissions.models import Application, Cycle, Inquiry
+from apps.admissions.models import (
+    Application,
+    Cycle,
+    CycleTarget,
+    Inquiry,
+    Test,
+    TestAssignment,
+)
 from apps.files.api.serializers import DownloadSerializer
 from apps.files.api.serializers import StoredFileSerializer as DocumentSerializer
 from apps.identity.api.utils import service_errors
@@ -357,6 +365,165 @@ class ApplicationDocumentDownloadView(AdmissionsView):
                 }
             ).data
         )
+
+
+# --------------------------------------------------------------------------- tests (M6)
+class CycleTestsView(AdmissionsView):
+    permission_classes = [
+        HasTenantPermission({"GET": "admissions.test.manage", "POST": "admissions.test.manage"})
+    ]
+
+    @extend_schema(
+        tags=TAGS, summary="Admission tests of a cycle", responses=s.TestSerializer(many=True)
+    )
+    def get(self, request: Request, cycle_id: str) -> Response:
+        cycle = _visible(request, Cycle, cycle_id, "admissions.test.manage")
+        rows = Test.objects.filter(cycle=cycle).annotate(seated=Count("assignments"))
+        return Response(s.TestSerializer(rows.order_by("starts_at"), many=True).data)
+
+    @extend_schema(
+        tags=TAGS, summary="Schedule an admission test", request=s.TestCreateSerializer,
+        responses={201: s.TestSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, cycle_id: str) -> Response:
+        cycle = _visible(request, Cycle, cycle_id, "admissions.test.manage")
+        v = _valid(s.TestCreateSerializer, request.data)
+        with service_errors():
+            row = merit.create_test(
+                actor=_actor(request), cycle=cycle, request=request._request, **v
+            )
+        row.seated = 0  # type: ignore[attr-defined]
+        return Response(s.TestSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class TestAssignmentsView(AdmissionsView):
+    permission_classes = [
+        HasTenantPermission({"GET": "admissions.test.manage", "POST": "admissions.test.manage"})
+    ]
+
+    @extend_schema(
+        tags=TAGS, summary="Seat list of a test", responses=s.TestSeatSerializer(many=True)
+    )
+    def get(self, request: Request, test_id: str) -> Response:
+        test = _visible(request, Test, test_id, "admissions.test.manage")
+        rows = TestAssignment.objects.filter(test=test).select_related("application")
+        return Response(s.TestSeatSerializer(rows.order_by("seat"), many=True).data)
+
+    @extend_schema(
+        tags=TAGS, summary="Seat an application", request=s.TestSeatCreateSerializer,
+        responses={201: s.TestSeatSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, test_id: str) -> Response:
+        test = _visible(request, Test, test_id, "admissions.test.manage")
+        v = _valid(s.TestSeatCreateSerializer, request.data)
+        application = Application.objects.filter(
+            pk=v["application"], cycle_id=test.cycle_id
+        ).first()
+        with service_errors():
+            if application is None:
+                raise ValidationError({"application": "Choose an application of this cycle."})
+            row = merit.assign_test(
+                actor=_actor(request), test=test, application=application,
+                request=request._request,
+            )  # fmt: skip
+        return Response(s.TestSeatSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class AssignmentScoreView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"PATCH": "admissions.test.manage"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Enter a score (or an absence)", request=s.ScoreSerializer,
+        responses=s.TestSeatSerializer,
+    )  # fmt: skip
+    def patch(self, request: Request, assignment_id: str) -> Response:
+        row = _get(TestAssignment, assignment_id)
+        test = _visible(request, Test, row.test_id, "admissions.test.manage")
+        v = _valid(s.ScoreSerializer, request.data)
+        with service_errors():
+            row = merit.record_score(
+                actor=_actor(request), assignment=row, request=request._request, **v
+            )
+        assert test  # noqa: S101 - visibility checked above
+        return Response(s.TestSeatSerializer(row).data)
+
+
+class ApplicationEvaluateView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"POST": "admissions.application.review"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Mark an application evaluated (cycles without tests)", request=None,
+        responses=s.ApplicationSerializer,
+    )  # fmt: skip
+    def post(self, request: Request, application_id: str) -> Response:
+        with service_errors():
+            row = merit.mark_evaluated(
+                actor=_actor(request), application=_get(Application, application_id),
+                request=request._request,
+            )  # fmt: skip
+        return Response(s.ApplicationSerializer(row).data)
+
+
+# --------------------------------------------------------------------------- merit (M6)
+def _merit_payload(target: CycleTarget) -> dict[str, Any]:
+    names = dict(Application.objects.filter(target=target).values_list("id", "applicant_name"))
+    published = merit.latest(target)
+    if published is not None:
+        published.ranking = [  # names are not frozen in the list (personal data)
+            {**row, "applicant_name": names.get(_uuid(row["application"]), "")}
+            for row in published.ranking
+        ]
+    return {"preview": merit.ranking(target), "published": published}
+
+
+def _uuid(value: str) -> Any:
+    import uuid
+
+    return uuid.UUID(value)
+
+
+class TargetMeritView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"GET": "admissions.application.view"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Merit ranking of a target: preview and the latest publication",
+        responses=s.MeritSerializer,
+    )  # fmt: skip
+    def get(self, request: Request, target_id: str) -> Response:
+        target = _visible(request, CycleTarget, target_id, "admissions.application.view")
+        with service_errors():
+            data = _merit_payload(target)
+        return Response(s.MeritSerializer(data).data)
+
+
+class TargetMeritPublishView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"POST": "admissions.merit.publish"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Publish the merit list (a new frozen version)", request=None,
+        responses={201: s.MeritListSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, target_id: str) -> Response:
+        target = _visible(request, CycleTarget, target_id, "admissions.merit.publish")
+        with service_errors():
+            row = merit.publish(actor=_actor(request), target=target, request=request._request)
+        return Response(s.MeritListSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class TargetMeritOffersView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"POST": "admissions.application.decide"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Offer the free seats down the published merit list", request=None,
+        responses=s.ApplicationSerializer(many=True),
+    )  # fmt: skip
+    def post(self, request: Request, target_id: str) -> Response:
+        target = _visible(request, CycleTarget, target_id, "admissions.application.decide")
+        with service_errors():
+            rows = merit.offer_by_merit(
+                actor=_actor(request), target=target, request=request._request
+            )
+        return Response(s.ApplicationSerializer(rows, many=True).data)
 
 
 def _is_uuid(value: str) -> bool:

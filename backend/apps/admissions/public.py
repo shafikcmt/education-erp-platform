@@ -26,7 +26,7 @@ from django.http import HttpRequest
 from django.utils import timezone
 
 from apps.admissions import services
-from apps.admissions.models import Application, Cycle
+from apps.admissions.models import Application, Cycle, TestAssignment
 from apps.audit.services import record
 from apps.core.net import client_ip
 from apps.core.tokens import generate_token, hash_token
@@ -167,6 +167,18 @@ def by_status_token(token: str) -> Application:
     return application
 
 
+def _tests(application: Application) -> list[dict[str, Any]]:
+    from apps.admissions.models import Test
+
+    seats = dict(
+        TestAssignment.objects.filter(application=application).values_list("test_id", "seat")
+    )
+    return [
+        {"name": t.name, "starts_at": t.starts_at, "venue": t.venue, "seat": seats[t.pk]}
+        for t in Test.objects.filter(pk__in=seats).order_by("starts_at")
+    ]
+
+
 def status_of(token: str) -> dict[str, Any]:
     from apps.files.models import StoredFile
 
@@ -186,6 +198,7 @@ def status_of(token: str) -> dict[str, Any]:
         if application.status in (Application.Status.OFFERED, Application.Status.REJECTED)
         else "",
         "can_add_documents": application.status in _ANSWER_STATUSES,
+        "tests": _tests(application),
         "documents": [
             {"id": str(d.pk), "name": d.original_name, "status": d.status} for d in documents
         ],

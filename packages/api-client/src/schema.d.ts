@@ -391,6 +391,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admissions/applications/{application_id}/evaluate/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Mark an application evaluated (cycles without tests)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_applications_evaluate_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admissions/applications/{application_id}/offer-response/": {
         parameters: {
             query?: never;
@@ -431,6 +452,27 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/assignments/{assignment_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Enter a score (or an absence)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["admissions_assignments_partial_update"];
         trace?: never;
     };
     "/api/v1/admissions/cycles/": {
@@ -501,6 +543,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admissions/cycles/{cycle_id}/tests/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admission tests of a cycle
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_cycles_tests_list"];
+        put?: never;
+        /**
+         * Schedule an admission test
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_cycles_tests_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admissions/inquiries/": {
         parameters: {
             query?: never;
@@ -546,6 +614,95 @@ export interface paths {
          *     authenticated sessions).
          */
         patch: operations["admissions_inquiries_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/admissions/targets/{target_id}/merit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Merit ranking of a target: preview and the latest publication
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_targets_merit_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/targets/{target_id}/merit/offers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Offer the free seats down the published merit list
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_targets_merit_offers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/targets/{target_id}/merit/publish/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Publish the merit list (a new frozen version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_targets_merit_publish_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/tests/{test_id}/assignments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Seat list of a test
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["admissions_tests_assignments_list"];
+        put?: never;
+        /**
+         * Seat an application
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_tests_assignments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/audit-events/": {
@@ -4263,6 +4420,21 @@ export interface components {
             membership_status: string;
             sign_in_url: string | null;
         };
+        Merit: {
+            preview: components["schemas"]["Ranked"][];
+            published: components["schemas"]["MeritList"] | null;
+        };
+        MeritList: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly target: string;
+            readonly version: number;
+            readonly rule_key: string;
+            /** Format: date-time */
+            readonly published_at: string;
+            ranking: components["schemas"]["Ranked"][];
+        };
         MfaConfirmRequest: {
             /** Format: uuid */
             device_id: string;
@@ -4475,6 +4647,12 @@ export interface components {
             };
             permissions?: string[];
         };
+        PatchedScoreRequest: {
+            /** Format: decimal */
+            score?: string | null;
+            /** @default false */
+            absent: boolean;
+        };
         PatchedTenantProfileUpdateRequest: {
             name?: string;
             default_locale?: string;
@@ -4684,6 +4862,7 @@ export interface components {
             decision_note: string;
             can_add_documents: boolean;
             documents: components["schemas"]["StatusDocument"][];
+            tests: components["schemas"]["StatusTest"][];
         };
         PublicSubmitRequest: {
             /** Format: uuid */
@@ -4707,6 +4886,16 @@ export interface components {
             branding: {
                 [key: string]: unknown;
             };
+        };
+        Ranked: {
+            /** Format: uuid */
+            application: string;
+            number: string;
+            applicant_name?: string;
+            score: string;
+            total: string;
+            rank: number;
+            status: string;
         };
         ReasonRequest: {
             reason: string;
@@ -4896,6 +5085,13 @@ export interface components {
             id: string;
             name: string;
             status: string;
+        };
+        StatusTest: {
+            name: string;
+            /** Format: date-time */
+            starts_at: string;
+            venue: string;
+            seat: number;
         };
         StepUpRequest: {
             password: string;
@@ -5228,6 +5424,50 @@ export interface components {
             start_date: string;
             /** Format: date */
             end_date: string;
+        };
+        Test: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly cycle: string;
+            readonly name: string;
+            /** Format: date-time */
+            readonly starts_at: string;
+            readonly venue: string;
+            readonly capacity: number;
+            /** Format: decimal */
+            readonly max_score: string;
+            readonly seated: number;
+        };
+        TestCreateRequest: {
+            name: string;
+            /** Format: date-time */
+            starts_at: string;
+            /** @default  */
+            venue: string;
+            capacity: number;
+            /** Format: decimal */
+            max_score: string;
+        };
+        TestSeat: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly test: string;
+            /** Format: uuid */
+            readonly application: string;
+            readonly application_number: string;
+            readonly applicant_name: string;
+            readonly seat: number;
+            /** Format: decimal */
+            readonly score: string | null;
+            readonly absent: boolean;
+            /** Format: date-time */
+            readonly scored_at: string | null;
+        };
+        TestSeatCreateRequest: {
+            /** Format: uuid */
+            application: string;
         };
         TokenPasswordRequest: {
             token: string;
@@ -5902,6 +6142,27 @@ export interface operations {
             };
         };
     };
+    admissions_applications_evaluate_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
     admissions_applications_offer_response_create: {
         parameters: {
             query?: never;
@@ -5944,6 +6205,31 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Application"];
+                };
+            };
+        };
+    };
+    admissions_assignments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedScoreRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestSeat"];
                 };
             };
         };
@@ -6043,6 +6329,52 @@ export interface operations {
             };
         };
     };
+    admissions_cycles_tests_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Test"][];
+                };
+            };
+        };
+    };
+    admissions_cycles_tests_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Test"];
+                };
+            };
+        };
+    };
     admissions_inquiries_list: {
         parameters: {
             query: {
@@ -6110,6 +6442,115 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Inquiry"];
+                };
+            };
+        };
+    };
+    admissions_targets_merit_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Merit"];
+                };
+            };
+        };
+    };
+    admissions_targets_merit_offers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Application"][];
+                };
+            };
+        };
+    };
+    admissions_targets_merit_publish_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                target_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MeritList"];
+                };
+            };
+        };
+    };
+    admissions_tests_assignments_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestSeat"][];
+                };
+            };
+        };
+    };
+    admissions_tests_assignments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                test_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TestSeatCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestSeat"];
                 };
             };
         };
