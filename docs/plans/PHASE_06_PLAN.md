@@ -329,6 +329,17 @@ Role templates (system copies are synced by P7):
 | D36 | Permissions: `admissions.test.manage` (MFA) and `admissions.merit.publish` (MFA, step-up), 88 codes in total. Owner and institution admin get both; admission officer gets tests. **Exam controller** gets `admissions.test.manage` only: it schedules and scores tests and sees seat lists (number and name), not application files. The plan's "test scores" maps to this one code instead of adding a separate score code |
 | D37 | The applicant's status page lists their tests (name, time, venue, seat). **Not in M6:** emailing applicants about decisions and offers (they see them through the status link; notifications are extended in Phase 14) |
 
+### 13.7 M7 — frontend: academics, admissions back office, public pages (2026-11-24, branch `feat/phase-06-m7`)
+
+| # | Note |
+|---|---|
+| D38 | **Academics page** (`/academics`): per institution, years (add, activate, close), subjects (type, credits) and the unit tree (add a unit at a level, under a parent). Level names come from the server: `GET /academics/setup/` now also returns `level_labels`, the effective terminology (`unit.<level>`) in the request language with an English fallback, so the UI shows the tenant's own words (for example "Jamaat") and never hardcodes them |
+| D39 | **Admissions page** (`/admissions`). Its tabs follow the member's permissions:<ul><li>**Cycles:** create, add targets, open, close and archive. A chosen cycle shows its applications (review, evaluate, decide with a note, record offer answers, documents with short-lived download links), its tests (schedule, seat, score, absent) and the merit list per target (preview, publish with step-up, offer free seats).</li><li>**Tests:** lists the institution's tests for exam controllers.</li><li>**Inquiries.**</li></ul>The navigation shows Academics and Admissions only with the permission and the module entitlement |
+| D40 | Small API additions for the UI:<ul><li>`GET /admissions/tests/?institution=` (`admissions.test.manage`), because exam controllers have no cycle view;</li><li>`unit_name` on cycle targets, because admission staff may lack academics permissions.</li></ul>Both are tested; the scope still answers 404 outside the caller's institutions |
+| D41 | **Public pages on tenant hosts:**<ul><li>`/apply`: open cycles, the target, the cycle's form through the shared `DynamicForm` with a public source, a honeypot field, and the same answer for every submission;</li><li>`/apply/verify`: a button, never automatic, so mail scanners can't submit;</li><li>`/apply/status`: status, decision note, offer answer, tests and document uploads.</li></ul>Tokens are read from the URL fragment, removed from the address bar, kept only in memory and sent in request bodies. The pages answer 404 on the platform host. `DynamicForm` now takes a form source; the Studio preview is unchanged |
+| D42 | **Browser uploads and CSP:**<ul><li>Uploads go straight to the object store with the presigned POST, so the CSP `connect-src` accepts one extra origin from `FILES_UPLOAD_ORIGIN`.</li><li>Only a bare http(s) origin is accepted, and the validation is unit-tested.</li><li>The setting is empty by default, which blocks browser uploads. Committed configuration sets no value.</li><li>The M8 E2E stack sets it to exercise uploads for real.</li></ul> |
+| D43 | **Not in M7:**<ul><li>a staff "enter an application" screen (the API exists; staff can use the public form meanwhile);</li><li>screens for terms and offerings (API only);</li><li>pickers for Studio keys in the cycle dialog (keys are typed).</li></ul>All three are recorded as gaps. Real-browser runs of these screens come with the M8 E2E |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
@@ -338,3 +349,4 @@ Role templates (system copies are synced by P7):
 - 2026-11-23 — §13.4 appended: M4 notes D18–D23.
 - 2026-11-23 — §13.5 appended: M5 notes D24–D30.
 - 2026-11-23 — §13.6 appended: M6 notes D31–D37.
+- 2026-11-24 — §13.7 appended: M7 notes D38–D43.

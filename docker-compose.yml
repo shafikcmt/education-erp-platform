@@ -238,6 +238,9 @@ services:
     image: erp-frontend:dev
     environment:
       API_INTERNAL_URL: ${API_INTERNAL_URL}
+      # Browsers upload files straight to the object store (presigned POST); its public origin
+      # joins the CSP connect-src. Empty = uploads blocked (Phase 6 M7).
+      FILES_UPLOAD_ORIGIN: ${FILES_UPLOAD_ORIGIN:-}
       NEXT_TELEMETRY_DISABLED: ${NEXT_TELEMETRY_DISABLED:-1}
     read_only: true
     tmpfs:

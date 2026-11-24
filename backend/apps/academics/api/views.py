@@ -11,6 +11,7 @@ from __future__ import annotations
 from typing import Any
 
 from django.core.exceptions import ValidationError
+from django.utils import translation
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -77,6 +78,7 @@ class SetupView(AcademicsView):
             inst = _institution_param(request, "academics.structure.view")
         data = {
             "levels": caps.unit_levels(inst.pk),
+            "level_labels": caps.level_labels(inst.pk, translation.get_language() or "en"),
             "credit_based": caps.capability(inst.pk, caps.CREDIT_BASED),
             "semester_based": caps.capability(inst.pk, caps.SEMESTER_BASED),
             "section_enabled": caps.capability(inst.pk, caps.SECTION_ENABLED),

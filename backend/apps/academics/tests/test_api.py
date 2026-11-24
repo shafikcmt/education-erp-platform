@@ -57,6 +57,7 @@ def test_owner_builds_years_units_subjects_and_offerings(entitled):
     setup = owner.get(f"{V1}/setup/", institution=north).json()
     assert setup == {
         "levels": ["class", "section"],
+        "level_labels": {"class": "Class", "section": "Section"},  # the preset's terminology
         "credit_based": False,
         "semester_based": False,
         "section_enabled": True,

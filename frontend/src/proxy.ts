@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import createMiddleware from "next-intl/middleware";
 
 import { routing } from "./i18n/routing";
-import { buildCsp, createNonce } from "./lib/security/csp";
+import { buildCsp, createNonce, uploadOriginOf } from "./lib/security/csp";
 
 const handleI18nRouting = createMiddleware(routing);
 
@@ -16,7 +16,10 @@ const handleI18nRouting = createMiddleware(routing);
  */
 export default function proxy(request: NextRequest) {
   const nonce = createNonce();
-  const csp = buildCsp(nonce, { dev: process.env.NODE_ENV === "development" });
+  const csp = buildCsp(nonce, {
+    dev: process.env.NODE_ENV === "development",
+    uploadOrigin: uploadOriginOf(process.env.FILES_UPLOAD_ORIGIN),
+  });
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);
   headers.set("content-security-policy", csp);

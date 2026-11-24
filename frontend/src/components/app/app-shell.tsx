@@ -2,7 +2,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  BookOpen,
   Building2,
+  ClipboardList,
   CreditCard,
   Eye,
   Headset,
@@ -88,6 +90,21 @@ function tenantNav(context: TenantContext | undefined): NavItem[] {
       show: has("tenancy.institution.view"),
     },
     { href: "/members", key: "members", icon: Users, show: has("tenancy.member.view") },
+    {
+      href: "/academics",
+      key: "academics",
+      icon: BookOpen,
+      show: has("academics.structure.view"),
+    },
+    {
+      href: "/admissions",
+      key: "admissions",
+      icon: ClipboardList,
+      show:
+        has("admissions.cycle.view") ||
+        has("admissions.test.manage") ||
+        has("admissions.inquiry.view"),
+    },
     { href: "/roles", key: "roles", icon: UserCog, show: has("rbac.role.view") },
     { href: "/settings", key: "settings", icon: Settings, show: has("tenancy.tenant.view") },
     {

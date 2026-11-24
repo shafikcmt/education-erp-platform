@@ -235,7 +235,7 @@ Verify sign-in with MFA, then remove the old key.
 
 **Brute force (ADR-040):** login lock per (email, network) with a capped global per-email delay; MFA failures counted per account (10 / 15 min → 15-minute lock) across login and step-up; lock notices at most once per user per day.
 
-**Content-Security-Policy (ADR-040):** nonce-based scripts with `strict-dynamic` and no unsafe script allowances; see `frontend/src/lib/security/csp.ts` and `frontend/e2e/csp.spec.ts`.
+**Content-Security-Policy (ADR-040):** nonce-based scripts with `strict-dynamic` and no unsafe script allowances; see `frontend/src/lib/security/csp.ts` and `frontend/e2e/csp.spec.ts`. Since Phase 6 M7, `connect-src` may add one validated bare origin from `FILES_UPLOAD_ORIGIN` (the object store's public origin, for presigned browser uploads). It is empty by default, which blocks browser uploads.
 
 **IP-derived device fingerprints** (`identity_seendevice`) are kept at most 90 days and are erased by `erase_ip_data` (ADR-036 scope).
 
@@ -255,3 +255,4 @@ Verify sign-in with MFA, then remove the old key.
 - 2026-11-18 — Phase 3 M5: support sessions implemented as described in `MULTI_TENANT_ARCHITECTURE.md` §3.4 and plan §24.8 (read-only, tenant-approved by default, ≤ 2 h, audited per request, no access to suspended tenants).
 - 2026-11-18 — Phase 3 M6: the audit log is now separated per scope in the database (private dual-scope RLS): platform staff cannot read tenant audit events from the platform host (D3), and IP retention and erasure run in every scope.
 - 2026-11-21 — Phase 3 M11: §6b (tenant isolation and tenant administration as built), pointers to the evidence map and the self-review.
+- 2026-11-24 — Phase 6 M7: optional upload origin in the CSP `connect-src` (`FILES_UPLOAD_ORIGIN`; empty by default).

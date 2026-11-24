@@ -148,7 +148,7 @@ class CyclesView(AdmissionsView):
     def get(self, request: Request) -> Response:
         with service_errors():
             inst = _institution_param(request, "admissions.cycle.view")
-        rows = Cycle.objects.filter(institution=inst).prefetch_related("targets")
+        rows = Cycle.objects.filter(institution=inst).prefetch_related("targets__unit")
         return Response(s.CycleSerializer(rows.order_by("-opens_on"), many=True).data)
 
     @extend_schema(
@@ -394,6 +394,22 @@ class CycleTestsView(AdmissionsView):
             )
         row.seated = 0  # type: ignore[attr-defined]
         return Response(s.TestSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class InstitutionTestsView(AdmissionsView):
+    """Tests of an institution for those who run them (exam controllers have no cycle view)."""
+
+    permission_classes = [HasTenantPermission({"GET": "admissions.test.manage"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Admission tests of an institution (newest first)",
+        parameters=[INSTITUTION], responses=s.TestSerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request) -> Response:
+        with service_errors():
+            inst = _institution_param(request, "admissions.test.manage")
+        rows = Test.objects.filter(institution=inst).annotate(seated=Count("assignments"))
+        return Response(s.TestSerializer(rows.order_by("-starts_at")[:200], many=True).data)
 
 
 class TestAssignmentsView(AdmissionsView):

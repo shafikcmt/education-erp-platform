@@ -8,8 +8,25 @@
  *   attributes at runtime without a nonce. This affects CSS only; scripts stay nonce-only, with
  *   no 'unsafe-inline' or 'unsafe-eval' (zod runs jitless, see lib/zod-config.ts).
  * - Development adds 'unsafe-eval' for React Refresh; production builds never do.
+ * - `uploadOrigin` (Phase 6 M7): browsers upload files straight to the object store with a
+ *   presigned POST, so its public origin joins `connect-src`. Only a bare http(s) origin is
+ *   accepted; anything else is ignored (fail closed: uploads are then blocked).
  */
-export function buildCsp(nonce: string, { dev = false }: { dev?: boolean } = {}): string {
+export function uploadOriginOf(value: string | undefined): string | null {
+  if (!value) return null;
+  try {
+    const url = new URL(value);
+    const bare = url.pathname === "/" && !url.search && !url.hash && !url.username;
+    return bare && (url.protocol === "https:" || url.protocol === "http:") ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+export function buildCsp(
+  nonce: string,
+  { dev = false, uploadOrigin = null }: { dev?: boolean; uploadOrigin?: string | null } = {},
+): string {
   const directives: Record<string, string[]> = {
     "default-src": ["'self'"],
     "script-src": [
@@ -21,7 +38,7 @@ export function buildCsp(nonce: string, { dev = false }: { dev?: boolean } = {})
     "style-src": ["'self'", "'unsafe-inline'"],
     "img-src": ["'self'", "data:"],
     "font-src": ["'self'"],
-    "connect-src": ["'self'", ...(dev ? ["ws:"] : [])],
+    "connect-src": ["'self'", ...(uploadOrigin ? [uploadOrigin] : []), ...(dev ? ["ws:"] : [])],
     "object-src": ["'none'"],
     "base-uri": ["'self'"],
     "form-action": ["'self'"],

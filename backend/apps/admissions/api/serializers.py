@@ -49,9 +49,12 @@ class InquiryCreateSerializer(InquiryWriteSerializer):
 
 
 class TargetSerializer(serializers.ModelSerializer[CycleTarget]):
+    # Admission staff need the unit's name without academics permissions (M7).
+    unit_name = serializers.CharField(source="unit.name", read_only=True)
+
     class Meta:
         model = CycleTarget
-        fields = ["id", "unit", "capacity"]
+        fields = ["id", "unit", "unit_name", "capacity"]
         read_only_fields = fields
 
 
