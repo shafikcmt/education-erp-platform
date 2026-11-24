@@ -161,7 +161,12 @@ jobs:
           echo 'SECURITY_LOGIN_IP_LIMIT=200' >> .env
           # Phase 5 M8: the sign-up journey runs in this throwaway stack only.
           sed -i 's/^TENANCY_SIGNUP_ENABLED=.*/TENANCY_SIGNUP_ENABLED=true/' .env
-          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS|SECURITY_LOGIN_IP_LIMIT|TENANCY_SIGNUP_ENABLED)=' .env
+          # Phase 6 M8: browsers upload admission documents straight to the object store
+          # (presigned POST), so this stack signs URLs for its published port and the CSP
+          # allows that origin.
+          sed -i 's|^FILES_UPLOAD_ORIGIN=.*|FILES_UPLOAD_ORIGIN=http://localhost:8333|' .env
+          echo 'S3_PUBLIC_ENDPOINT_URL=http://localhost:8333' >> .env
+          grep -E '^(TENANT_HOSTS_ENABLED|CSRF_TRUSTED_ORIGINS|SECURITY_LOGIN_IP_LIMIT|TENANCY_SIGNUP_ENABLED|FILES_UPLOAD_ORIGIN|S3_PUBLIC_ENDPOINT_URL)=' .env
       - name: Owner/superuser DB credentials never reach runtime services (security review H3)
         run: docker compose config --format json | python3 infra/scripts/check_runtime_secrets.py
       - name: Build and start the full stack

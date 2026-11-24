@@ -168,7 +168,7 @@ function ApplicationsPanel({ cycle, rows }: { cycle: Cycle; rows: Application[] 
                     </div>
                   </div>
                   {a.workflow_instance_id ? (
-                    <p className="text-muted-foreground text-xs">{t("applications.inWorkflow")}</p>
+                    <WorkflowControl instance={a.workflow_instance_id} />
                   ) : null}
                   {docs === a.id ? <Documents application={a.id} /> : null}
                 </li>
@@ -179,6 +179,53 @@ function ApplicationsPanel({ cycle, rows }: { cycle: Cycle; rows: Application[] 
         )}
       </CardContent>
     </Card>
+  );
+}
+
+/** The application's review request: its state and the transitions this member may take
+ * (each transition is checked by the server with its own permission). */
+function WorkflowControl({ instance }: { instance: string }) {
+  const t = useTranslations("admissions");
+  const refresh = useAdmissionsRefresh();
+  const { run, failure } = useAction();
+  const request = useQuery({
+    queryKey: [...ADMISSIONS_KEY, "workflow", instance],
+    queryFn: () =>
+      unwrap(
+        api().GET("/api/v1/customization/workflow-requests/{instance_id}/", {
+          params: { path: { instance_id: instance } },
+        }),
+      ),
+  });
+  const take = (transition: string) =>
+    run(async () => {
+      await unwrap(
+        api().POST("/api/v1/customization/workflow-requests/{instance_id}/transition/", {
+          params: { path: { instance_id: instance } },
+          body: { transition, note: "" },
+        }),
+      );
+      await refresh();
+    });
+  const row = request.data;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs" data-testid="workflow">
+      {failure ? <Alert variant="destructive">{failure}</Alert> : null}
+      <span className="text-muted-foreground">
+        {row
+          ? row.finished_at
+            ? t("applications.workflowDone", { state: row.state })
+            : t("applications.workflowState", { state: row.state })
+          : t("applications.inWorkflow")}
+      </span>
+      {row && !row.finished_at
+        ? row.actions.map((action) => (
+            <Button key={action} size="sm" variant="outline" onClick={() => void take(action)}>
+              {action}
+            </Button>
+          ))
+        : null}
+    </div>
   );
 }
 

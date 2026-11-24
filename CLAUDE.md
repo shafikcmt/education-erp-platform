@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-23 (Phase 5 **Approved**; Phase 6 plan **Approved** (ADR-063–066), in progress; tenant hosts disabled)
+- **Last updated:** 2026-11-24 (Phase 5 **Approved**; Phase 6 **Complete**, awaiting the owner's approval; tenant hosts disabled)
 
 ---
 
@@ -348,7 +348,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 3 | SaaS tenants, institutions and campuses (plan `docs/plans/PHASE_03_PLAN.md` rev. 3 **Approved**; ADR-041–049 Accepted; **Complete**: M1–M11 merged in PRs #17, #18, #29–#36, #41, #42; D9 benchmark moved to Phase 18 (ADR-049); **Approved** by the owner 2026-11-21) |
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
-| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–066 Accepted; **in progress**: plan merged in PR #61; M1 merged in PR #62; M2 merged in PR #63; M3 merged in PR #64; M4 merged in PR #65; M5 merged in PR #66; M6 merged in PR #67; M7 frontend on `feat/phase-06-m7`; `timetable` moved to Phase 7, `files` built here) |
+| 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–066 Accepted; **Complete**, awaiting the owner's approval: plan merged in PR #61; M1–M7 merged in PRs #62–#68; M8 (E2E, security self-review) on `feat/phase-06-m8`; `timetable` moved to Phase 7, `files` built here) |
 | 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066) |
 | 8 | Attendance management |
 | 9 | Examination and results |
@@ -482,3 +482,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-23 — Phase 6 M4 merged (PR #65); M5 on its branch; phase table updated. No rule changed.
 - 2026-11-23 — Phase 6 M5 merged (PR #66); M6 on its branch; phase table updated. No rule changed.
 - 2026-11-24 — Phase 6 M6 merged (PR #67); M7 on its branch; phase table updated. No rule changed.
+- 2026-11-24 — Phase 6 M7 merged (PR #68); M8 on its branch; Phase 6 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.

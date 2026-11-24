@@ -24,7 +24,7 @@ export function ApplyStatus() {
   const t = useTranslations();
   const format = useFormatter();
   const errorMessage = useErrorMessage();
-  const { token, ready } = useFragmentToken();
+  const { token, ready, version } = useFragmentToken();
   const [status, setStatus] = useState<Status | null>(null);
   const [state, setState] = useState<"loading" | "ready" | "failed">("loading");
   const [failure, setFailure] = useState<string | null>(null);
@@ -41,9 +41,9 @@ export function ApplyStatus() {
     }
   }, [token]);
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one load per visit
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one load per opened link
     if (ready) void load();
-  }, [ready, load]);
+  }, [ready, load, version]);
 
   if (!ready) return null;
   if (!token || state === "failed") {
@@ -78,8 +78,14 @@ export function ApplyStatus() {
       const form = new FormData();
       for (const [key, value] of Object.entries(slot.fields)) form.append(key, value);
       form.append("file", file); // the file goes last in an S3 POST form
-      const sent = await fetch(slot.url, { method: "POST", body: form, credentials: "omit" });
-      if (!sent.ok) throw new Error(t("apply.uploadFailed"));
+      // A multipart POST is a CORS "simple" request: sent without CORS on the object store, the
+      // response is opaque. The server checks the stored object (size, type) after the
+      // confirmation, so a failed upload shows up as a rejected document.
+      try {
+        await fetch(slot.url, { method: "POST", body: form, mode: "no-cors", credentials: "omit" });
+      } catch {
+        throw new Error(t("apply.uploadFailed"));
+      }
       return unwrap(
         api().POST("/api/v1/public/admissions/status/documents/confirm/", {
           body: { token, file: slot.id },

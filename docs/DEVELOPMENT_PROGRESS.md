@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 6 — Academic structure & student admission: **In progress** (plan **Approved** 2026-11-23 with all recommended answers; ADR-063 to ADR-066 Accepted). Phase 5 **Approved** (2026-11-23). History of this line: plan Proposed 2026-11-23.
+- **Current phase:** Phase 6 — Academic structure & student admission: **Complete**, awaiting the owner's approval (2026-11-24; M1–M8; security self-review `docs/security/PHASE_06_SECURITY_REVIEW.md`). Phase 7 is **not started**. Plan **Approved** 2026-11-23 with all recommended answers; ADR-063 to ADR-066 Accepted. Phase 5 **Approved** (2026-11-23). History of this line: plan Proposed 2026-11-23.
 - **Phase 4:** **Approved** by the owner (2026-11-22); M1–M7 merged (PRs #44–#50). History of this line: (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
 - **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
@@ -38,7 +38,7 @@
 | 3 | SaaS tenants, institutions & campuses | Approved | [PR #16](https://github.com/shafikcmt/education-erp-platform/pull/16) (plan), [PR #17](https://github.com/shafikcmt/education-erp-platform/pull/17) (M1, merged `3108824`), [PR #18](https://github.com/shafikcmt/education-erp-platform/pull/18) (M2, merged `3616778`), [PR #29](https://github.com/shafikcmt/education-erp-platform/pull/29) (M3, merged `066b727`), [PR #30](https://github.com/shafikcmt/education-erp-platform/pull/30) (M4, merged `14a54d6`), [PR #31](https://github.com/shafikcmt/education-erp-platform/pull/31) (M5, merged `cd5d07a`), [PR #32](https://github.com/shafikcmt/education-erp-platform/pull/32) (M6, merged `0b39b39`), [PR #33](https://github.com/shafikcmt/education-erp-platform/pull/33) (M7, merged `4fbcbcc`), [PR #34](https://github.com/shafikcmt/education-erp-platform/pull/34) (M8, merged `92fcd05`), [PR #35](https://github.com/shafikcmt/education-erp-platform/pull/35) (M9, merged `8b19e76`); `feat/phase-03-m10` (M10) | **Approved** (owner, 2026-11-21; M1–M11; D9 benchmark moved to Phase 18, ADR-049); M5–M11 not started |
 | 4 | Module registry & feature entitlement engine | Approved | [PR #43](https://github.com/shafikcmt/education-erp-platform/pull/43) (plan), [PR #44](https://github.com/shafikcmt/education-erp-platform/pull/44) (M1, merged `10d3365`), [PR #45](https://github.com/shafikcmt/education-erp-platform/pull/45) (M2, merged `e1465f5`), [PR #46](https://github.com/shafikcmt/education-erp-platform/pull/46) (M3, merged `3a7e6a5`), [PR #47](https://github.com/shafikcmt/education-erp-platform/pull/47) (M4, merged `d97634f`), [PR #48](https://github.com/shafikcmt/education-erp-platform/pull/48) (M5, merged `aa4b8f6`), [PR #49](https://github.com/shafikcmt/education-erp-platform/pull/49) (M6, merged `f8c924b`), [PR #50](https://github.com/shafikcmt/education-erp-platform/pull/50) (M7, merged `983a9e4`) | **Approved** (owner, 2026-11-22) |
 | 5 | Customization Studio & institution configuration | Approved | [PR #51](https://github.com/shafikcmt/education-erp-platform/pull/51) (plan, merged `15eadb0`), [PR #52](https://github.com/shafikcmt/education-erp-platform/pull/52) (M1, merged `cd6f643`), [PR #53](https://github.com/shafikcmt/education-erp-platform/pull/53) (M2, merged `98f2ba8`), [PR #54](https://github.com/shafikcmt/education-erp-platform/pull/54) (M3, merged `eeef420`), [PR #55](https://github.com/shafikcmt/education-erp-platform/pull/55) (M4, merged `121bbff`), [PR #56](https://github.com/shafikcmt/education-erp-platform/pull/56) (M5, merged `4914529`), [PR #57](https://github.com/shafikcmt/education-erp-platform/pull/57) (M6, merged `940ec47`), [PR #58](https://github.com/shafikcmt/education-erp-platform/pull/58) (M7, merged `662986c`); [PR #59](https://github.com/shafikcmt/education-erp-platform/pull/59) (M8, merged `1d6e227`) | **Approved** (owner, 2026-11-23); ADR-061, ADR-062 Accepted |
-| 6 | Academic structure & student admission | In progress | [PR #61](https://github.com/shafikcmt/education-erp-platform/pull/61) (plan, merged `8f284ff`), [PR #62](https://github.com/shafikcmt/education-erp-platform/pull/62) (M1, merged `7dc28fc`), [PR #63](https://github.com/shafikcmt/education-erp-platform/pull/63) (M2, merged `4f5e564`), [PR #64](https://github.com/shafikcmt/education-erp-platform/pull/64) (M3, merged `c12d3b7`), [PR #65](https://github.com/shafikcmt/education-erp-platform/pull/65) (M4, merged `b345b21`), [PR #66](https://github.com/shafikcmt/education-erp-platform/pull/66) (M5, merged `43a49fc`), [PR #67](https://github.com/shafikcmt/education-erp-platform/pull/67) (M6, merged `85ae32f`); `feat/phase-06-m7` (M7) | Plan Approved (ADR-063–066); `timetable` moved to Phase 7 |
+| 6 | Academic structure & student admission | In progress | [PR #61](https://github.com/shafikcmt/education-erp-platform/pull/61) (plan, merged `8f284ff`), [PR #62](https://github.com/shafikcmt/education-erp-platform/pull/62) (M1, merged `7dc28fc`), [PR #63](https://github.com/shafikcmt/education-erp-platform/pull/63) (M2, merged `4f5e564`), [PR #64](https://github.com/shafikcmt/education-erp-platform/pull/64) (M3, merged `c12d3b7`), [PR #65](https://github.com/shafikcmt/education-erp-platform/pull/65) (M4, merged `b345b21`), [PR #66](https://github.com/shafikcmt/education-erp-platform/pull/66) (M5, merged `43a49fc`), [PR #67](https://github.com/shafikcmt/education-erp-platform/pull/67) (M6, merged `85ae32f`), [PR #68](https://github.com/shafikcmt/education-erp-platform/pull/68) (M7, merged `8e3a302`); `feat/phase-06-m8` (M8) | **Complete**, awaiting the owner's approval (M1–M8); `timetable` moved to Phase 7 |
 | 7 | Student, teacher & parent management | Not started | | |
 | 8 | Attendance management | Not started | | |
 | 9 | Examination & results | Not started | | |
@@ -168,6 +168,27 @@ See `DECISION_LOG.md`.
   - GitHub CI: pending (see the PR).
 - **Next:** M8 (E2E through the real stack: structures per preset, the public journey to an accepted offer with a real upload; docs; security self-review; Phase 6 complete).
 
+### 2026-11-24 — Session 31 (continued): Phase 6 M8 — Phase 6 Complete
+- **M7:** [PR #68](https://github.com/shafikcmt/education-erp-platform/pull/68) — CI **8/8 success**; squash-merged pinned to `3d5e67e` → **`8e3a302`** (tree identical to the head).
+- **M8 (`feat/phase-06-m8`):** plan §13.8 D44–D46.
+  - **Real-stack E2E** of the whole admission journey: a madrasa structure in its own terminology; a published form and review workflow; apply, email verification and status link; a **real presigned upload** to the object store, verified by the worker and downloadable by staff; review workflow, test score, merit list (step-up) and offer; acceptance.
+  - **Fixes found by running it:**
+    - a workflow control on applications;
+    - status links re-read on `hashchange`;
+    - `no-cors` multipart upload;
+    - a label collision.
+  - The CI E2E stack now sets the object store's public origin.
+  - **Security self-review:** `docs/security/PHASE_06_SECURITY_REVIEW.md`.
+- **Verification (local):**
+  - backend **1078 passed, 9 skipped**, all gates clean;
+  - frontend `tsc`, ESLint and Prettier clean, vitest **49 passed**, `next build` OK;
+  - **E2E (local real stack): 38 passed, 5 skipped** (the skips are per-project, as before), including the new admissions journey.
+  - GitHub CI: pending (see the PR).
+- **Phase 6 status:** **Complete**, awaiting the owner's approval. **Phase 7 is not started.**
+- **Open questions for the owner** (self-review §3):
+  1. Automatic offer to the next applicant on a decline (current) or a manual step?
+  2. A separate score-only permission for exam controllers?
+
 ## Known gaps / open questions
 
 - Price points, tier boundaries, trial length (ADR-024).
@@ -183,7 +204,7 @@ See `DECISION_LOG.md`.
   - Self-service sign-up moved from M7 to M8 (C41); built in M8 with **mandatory** approval (ADR-061, Accepted 2026-11-23).
   - Custom field values on members wait for member profiles (Phase 7).
 - **Phase 6 gaps (recorded, not hidden; plan §13):**
-  - Presigned uploads not yet exercised against the real object store from a browser; the stack exposes the object store to browsers with the public flow (M5/M8).
+  - ~~Presigned uploads not yet exercised against the real object store from a browser~~ — **done in M8** (real-stack E2E; `FILES_UPLOAD_ORIGIN` and `S3_PUBLIC_ENDPOINT_URL` set in the E2E stack only).
   - No malware scanner yet: files stay `unscanned` and staff-only (ADR-066 Q8, Phase 18).
   - Applicants are not emailed about decisions or offers yet; they see them through the status link (Phase 14).
   - UI gaps after M7: no staff screen to enter an application (API only; the public form works); no screens for terms and offerings (API only); Studio keys are typed in the cycle dialog (no pickers).

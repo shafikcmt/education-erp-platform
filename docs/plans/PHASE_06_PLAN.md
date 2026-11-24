@@ -340,6 +340,14 @@ Role templates (system copies are synced by P7):
 | D42 | **Browser uploads and CSP:**<ul><li>Uploads go straight to the object store with the presigned POST, so the CSP `connect-src` accepts one extra origin from `FILES_UPLOAD_ORIGIN`.</li><li>Only a bare http(s) origin is accepted, and the validation is unit-tested.</li><li>The setting is empty by default, which blocks browser uploads. Committed configuration sets no value.</li><li>The M8 E2E stack sets it to exercise uploads for real.</li></ul> |
 | D43 | **Not in M7:**<ul><li>a staff "enter an application" screen (the API exists; staff can use the public form meanwhile);</li><li>screens for terms and offerings (API only);</li><li>pickers for Studio keys in the cycle dialog (keys are typed).</li></ul>All three are recorded as gaps. Real-browser runs of these screens come with the M8 E2E |
 
+### 13.8 M8 — end-to-end, security self-review, Phase 6 complete (2026-11-24, branch `feat/phase-06-m8`)
+
+| # | Note |
+|---|---|
+| D44 | **E2E through the real stack** (`frontend/e2e/admissions.spec.ts`):<ol><li>A madrasa organisation (the academics and admissions modules granted by the platform) builds its structure on the academics page, where levels show as "Marhala" and "Jamaat".</li><li>It publishes an application form and a review workflow, then opens a cycle.</li><li>An applicant applies on the organisation's host, confirms by email, and uploads a PDF to the object store through the presigned POST. The worker verifies it and staff can download it.</li><li>Staff take the application into review, finish the workflow, schedule a test, seat the applicant and enter the score.</li><li>Staff publish the merit list (step-up) and offer the seat.</li><li>The applicant accepts on the status page.</li></ol>There are no CSP violations and no serious accessibility issues. Structures per preset are covered by the parametrised backend test over all six types (same code path), and each capability flag has its own test |
+| D45 | **Changes found by running it:**<ul><li>a workflow control on application rows (state plus the transitions this member may take; the server checks each transition's permission);</li><li>`useFragmentToken` reads a new fragment on `hashchange`, so the same emailed link opened again refreshes the page;</li><li>the browser upload is a `no-cors` multipart POST, and the server's verification decides;</li><li>the cycle "Manage" label no longer collides with "Open".</li></ul>The CI E2E stack sets `S3_PUBLIC_ENDPOINT_URL` and `FILES_UPLOAD_ORIGIN` to the object store's published port |
+| D46 | Security self-review: `docs/security/PHASE_06_SECURITY_REVIEW.md` (defects F1–F6 fixed, residual risks for the owner). **Phase 6 Complete, awaiting the owner's approval; Phase 7 is not started** |
+
 ### Change notes
 - 2026-11-23 — Created (Proposed).
 - 2026-11-23 — Approved by the owner with all recommended answers (ADR-066); ADR-063 to ADR-065 Accepted. `timetable` moves to Phase 7 (Q2).
@@ -350,3 +358,4 @@ Role templates (system copies are synced by P7):
 - 2026-11-23 — §13.5 appended: M5 notes D24–D30.
 - 2026-11-23 — §13.6 appended: M6 notes D31–D37.
 - 2026-11-24 — §13.7 appended: M7 notes D38–D43.
+- 2026-11-24 — §13.8 appended: M8 notes D44–D46; Phase 6 Complete, awaiting approval.
