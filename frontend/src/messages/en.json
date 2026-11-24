@@ -845,7 +845,7 @@
       "title": "Admission cycles",
       "add": "New cycle",
       "none": "No admission cycles yet.",
-      "manage": "Open",
+      "manage": "Manage",
       "addTarget": "Add a target",
       "unit": "Unit",
       "capacity": "Seats",
@@ -892,7 +892,9 @@
       "accepted": "Record: accepted",
       "declined": "Record: declined",
       "documents": "Documents",
-      "inWorkflow": "Reviewed through the workflow (see Studio requests)."
+      "inWorkflow": "Reviewed through the workflow (see Studio requests).",
+      "workflowState": "Review step: {state}",
+      "workflowDone": "Review finished: {state}"
     },
     "documents": {
       "none": "No documents.",

@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useFormatter, useLocale, useTranslations } from "next-intl";
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import {
   DynamicForm,
@@ -37,55 +37,59 @@ export function ApplyPage() {
   const honeypot = useRef<HTMLInputElement>(null);
   const cycle = cycles.data?.find((c) => c.id === cycleId) ?? cycles.data?.[0];
   const target = targetId || cycle?.targets[0]?.id || "";
+  const cycleKey = cycle?.id ?? "";
+  // One stable source per cycle and target (the form re-checks visibility when it changes).
+  const source = useMemo<FormSource>(
+    () => ({
+      cacheKey: ["public", "admissions", "form", cycleKey],
+      render: () =>
+        unwrap(
+          api().GET("/api/v1/public/admissions/cycles/{cycle_id}/form/", {
+            params: { path: { cycle_id: cycleKey } },
+          }),
+        ) as Promise<{ sections: RenderedSection[] }>,
+      visibility: async (values) => {
+        await ensureCsrf();
+        const result = (await unwrap(
+          api().POST("/api/v1/public/admissions/cycles/{cycle_id}/visibility/", {
+            params: { path: { cycle_id: cycleKey } },
+            body: { target, values, website: "" },
+          }),
+        )) as { sections?: string[] };
+        return result.sections ?? [];
+      },
+      submit: async (values) => {
+        setLimited(false);
+        await ensureCsrf();
+        try {
+          await unwrap(
+            api().POST("/api/v1/public/admissions/cycles/{cycle_id}/apply/", {
+              params: { path: { cycle_id: cycleKey } },
+              body: { target, values, website: honeypot.current?.value ?? "" },
+            }),
+          );
+        } catch (error) {
+          if (isApiError(error) && error.status === 429) setLimited(true);
+          throw error;
+        }
+        setSent(true);
+      },
+      submitLabel: t("send"),
+      extra: (
+        // Hidden from people (and assistive technology); bots fill it.
+        <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
+          <label htmlFor="website">Website</label>
+          <input id="website" name="website" ref={honeypot} tabIndex={-1} autoComplete="off" />
+        </div>
+      ),
+    }),
+    [cycleKey, target, t],
+  );
 
   if (cycles.isError) return <Alert>{t("closed")}</Alert>;
   if (!cycles.data) return <p className="text-muted-foreground text-sm">{t("loading")}</p>;
   if (!cycle) return <Alert>{t("noneOpen")}</Alert>;
   if (sent) return <Alert variant="success">{t("sent")}</Alert>;
-
-  const source: FormSource = {
-    cacheKey: ["public", "admissions", "form", cycle.id],
-    render: () =>
-      unwrap(
-        api().GET("/api/v1/public/admissions/cycles/{cycle_id}/form/", {
-          params: { path: { cycle_id: cycle.id } },
-        }),
-      ) as Promise<{ sections: RenderedSection[] }>,
-    visibility: async (values) => {
-      await ensureCsrf();
-      const result = (await unwrap(
-        api().POST("/api/v1/public/admissions/cycles/{cycle_id}/visibility/", {
-          params: { path: { cycle_id: cycle.id } },
-          body: { target, values, website: "" },
-        }),
-      )) as { sections?: string[] };
-      return result.sections ?? [];
-    },
-    submit: async (values) => {
-      setLimited(false);
-      await ensureCsrf();
-      try {
-        await unwrap(
-          api().POST("/api/v1/public/admissions/cycles/{cycle_id}/apply/", {
-            params: { path: { cycle_id: cycle.id } },
-            body: { target, values, website: honeypot.current?.value ?? "" },
-          }),
-        );
-      } catch (error) {
-        if (isApiError(error) && error.status === 429) setLimited(true);
-        throw error;
-      }
-      setSent(true);
-    },
-    submitLabel: t("send"),
-    extra: (
-      // Hidden from people (and assistive technology); bots fill it.
-      <div aria-hidden="true" className="absolute -left-[10000px] h-px w-px overflow-hidden">
-        <label htmlFor="website">Website</label>
-        <input id="website" name="website" ref={honeypot} tabIndex={-1} autoComplete="off" />
-      </div>
-    ),
-  };
 
   return (
     <div className="grid gap-4">

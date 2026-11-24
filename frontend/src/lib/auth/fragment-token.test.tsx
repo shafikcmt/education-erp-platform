@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { useFragmentToken } from "./fragment-token";
@@ -21,5 +21,19 @@ describe("useFragmentToken", () => {
     const { result } = renderHook(() => useFragmentToken());
     await waitFor(() => expect(result.current.ready).toBe(true));
     expect(result.current.token).toBeNull();
+  });
+
+  it("reads a new link opened in the same tab (hash change without a reload)", async () => {
+    window.history.replaceState(null, "", "/en/apply/status#token=" + "a".repeat(43));
+    const { result } = renderHook(() => useFragmentToken());
+    await waitFor(() => expect(result.current.token).toBe("a".repeat(43)));
+    const first = result.current.version;
+    act(() => {
+      window.history.replaceState(null, "", "/en/apply/status#token=" + "b".repeat(43));
+      window.dispatchEvent(new HashChangeEvent("hashchange"));
+    });
+    await waitFor(() => expect(result.current.token).toBe("b".repeat(43)));
+    expect(result.current.version).toBeGreaterThan(first);
+    expect(window.location.hash).toBe("");
   });
 });
