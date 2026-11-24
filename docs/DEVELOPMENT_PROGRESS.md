@@ -5,7 +5,7 @@
 
 ## Current state
 
-- **Current phase:** Phase 6 — Academic structure & student admission: **Approved** by the owner (2026-11-24, all recommendations; ADR-067). Phase 7 plan: to be proposed; Phase 7 implementation is **not started**. History of this line: Complete, awaiting approval 2026-11-24 (M1–M8; security self-review `docs/security/PHASE_06_SECURITY_REVIEW.md`). Plan **Approved** 2026-11-23 with all recommended answers; ADR-063 to ADR-066 Accepted. Phase 5 **Approved** (2026-11-23). History of this line: plan Proposed 2026-11-23.
+- **Current phase:** Phase 6 — Academic structure & student admission: **Approved** by the owner (2026-11-24, all recommendations; ADR-067). Phase 7 plan **Proposed** (`docs/plans/PHASE_07_PLAN.md`, ADR-068 to ADR-073 Proposed); Phase 7 implementation is **not started**. History of this line: Complete, awaiting approval 2026-11-24 (M1–M8; security self-review `docs/security/PHASE_06_SECURITY_REVIEW.md`). Plan **Approved** 2026-11-23 with all recommended answers; ADR-063 to ADR-066 Accepted. Phase 5 **Approved** (2026-11-23). History of this line: plan Proposed 2026-11-23.
 - **Phase 4:** **Approved** by the owner (2026-11-22); M1–M7 merged (PRs #44–#50). History of this line: (M1 [#44](https://github.com/shafikcmt/education-erp-platform/pull/44), M2 [#45](https://github.com/shafikcmt/education-erp-platform/pull/45) M3 [#46](https://github.com/shafikcmt/education-erp-platform/pull/46) M4 [#47](https://github.com/shafikcmt/education-erp-platform/pull/47) and M5 [#48](https://github.com/shafikcmt/education-erp-platform/pull/48) merged; M6 on `feat/phase-04-m6`). **Tenant hosts remain disabled.**
 - **Phase 3:** **Approved** by the owner (2026-11-21). The milestone history below is kept as written.
   - **M1 (incl. O1): Complete** and merged into `main` (PR [#17](https://github.com/shafikcmt/education-erp-platform/pull/17), squash `3108824`).
@@ -201,6 +201,14 @@ See `DECISION_LOG.md`.
   - tests and docs.
 - **Next:** the Phase 7 plan (student, teacher and parent management, plus `timetable`) as a proposal; implementation only after the owner approves it.
 
+### 2026-11-24 — Session 31 (continued): Phase 7 plan proposed
+- **Approval fix:** [PR #70](https://github.com/shafikcmt/education-erp-platform/pull/70) squash-merged pinned to `8f38d19` → **`ce4129d`** (tree identical to the head).
+  - CI ended 8/8 green, but the first run of the stack E2E job **failed after 14 minutes**. I could not read which test failed: the log archive host is blocked from this environment.
+  - The same branch passed the full local real-stack E2E (38 passed). The re-run of the failed job passed (8/8).
+  - This is recorded as a **possible flaky E2E** to watch.
+- **Phase 7 plan proposed:** `docs/plans/PHASE_07_PLAN.md` covers students, guardians and enrollments, staff, the portal, the timetable, conversion from admission, bulk import and relationship scopes. It has eight owner questions with recommendations. ADR-068 to ADR-073 are Proposed.
+- **Next:** the owner's decision on the plan and Q1–Q8. No Phase 7 code is written before approval.
+
 ## Known gaps / open questions
 
 - Price points, tier boundaries, trial length (ADR-024).
@@ -219,6 +227,7 @@ See `DECISION_LOG.md`.
   - ~~Presigned uploads not yet exercised against the real object store from a browser~~ — **done in M8** (real-stack E2E; `FILES_UPLOAD_ORIGIN` and `S3_PUBLIC_ENDPOINT_URL` set in the E2E stack only).
   - No malware scanner yet: files stay `unscanned` and staff-only (ADR-066 Q8, Phase 18).
   - Applicants are not emailed about decisions or offers yet; they see them through the status link (Phase 14).
+  - CI: the stack E2E job of PR #70 failed once (unknown test; the log host is blocked here) and passed on re-run and locally. Watch for flakiness; if it recurs, add a per-test timing report to the CI job.
   - UI gaps after M7: no staff screen to enter an application (API only; the public form works); no screens for terms and offerings (API only); Studio keys are typed in the cycle dialog (no pickers).
 - **Phase 3 M5 gaps (recorded, not hidden; plan §24.8):**
   - ~~**No HTTP endpoints** for support sessions and the approval setting~~ — **resolved in M8**.

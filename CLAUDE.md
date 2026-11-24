@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-24 (Phase 6 **Approved** (ADR-067); Phase 7 plan to be proposed; tenant hosts disabled)
+- **Last updated:** 2026-11-24 (Phase 6 **Approved** (ADR-067); Phase 7 plan **Proposed**; tenant hosts disabled)
 
 ---
 
@@ -349,7 +349,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 4 | Module registry and feature entitlement engine (plan `docs/plans/PHASE_04_PLAN.md` **Approved**; ADR-050–054 Accepted; **Complete**: M1–M7 merged in PRs #44–#50; **Approved** by the owner 2026-11-22) |
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
 | 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–067 Accepted; **Complete**: plan merged in PR #61; M1–M8 merged in PRs #62–#69; **Approved** by the owner 2026-11-24 (ADR-067: automatic offer on decline kept, score-only permission `admissions.test.score`); `timetable` moved to Phase 7, `files` built here) |
-| 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066) |
+| 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066; plan `docs/plans/PHASE_07_PLAN.md` **Proposed**, ADR-068–073 Proposed; not started) |
 | 8 | Attendance management |
 | 9 | Examination and results |
 | 10 | Fees and financial accounting |
@@ -484,3 +484,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-24 — Phase 6 M6 merged (PR #67); M7 on its branch; phase table updated. No rule changed.
 - 2026-11-24 — Phase 6 M7 merged (PR #68); M8 on its branch; Phase 6 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.
 - 2026-11-24 — Phase 6 M8 merged (PR #69) and Phase 6 approved by the owner with all recommendations (ADR-067 Accepted); phase table and last-updated line updated. No rule changed.
+- 2026-11-24 — Approval fix merged (PR #70); Phase 7 plan proposed (ADR-068 to ADR-073 Proposed); phase table and last-updated line updated. No rule changed.
