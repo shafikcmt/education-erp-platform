@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: backend } }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           {
@@ -57,7 +57,7 @@ jobs:
       DATABASE_URL: postgres://erp_app:erp_app_ci_password@localhost:5432/erp
       DATABASE_MIGRATION_URL: postgres://erp_owner:erp_owner_ci_password@localhost:5432/erp
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Bootstrap database roles and extensions (ADR-009)
         env:
           PGHOST: localhost
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: backend } }
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           {
@@ -105,7 +105,7 @@ jobs:
     name: api · OpenAPI schema + generated client drift
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           {
@@ -131,7 +131,7 @@ jobs:
     name: frontend · lint, format, types, unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v5
         with: { node-version-file: .nvmrc, cache: pnpm }
@@ -148,7 +148,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: cp .env.example .env
       # Phase 3 M10: this throwaway CI stack serves tenant hosts on {slug}.localhost for the
       # two-tenant E2E (plan §10.2: dev/CI only; production refuses placeholder domains).
@@ -214,7 +214,7 @@ jobs:
     name: images · production build + Trivy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - run: docker build --target runtime -t erp-backend:ci backend
       - run: docker build -f frontend/Dockerfile --target runtime -t erp-frontend:ci .
       - name: Trivy (fail on fixable HIGH/CRITICAL)
@@ -228,6 +228,6 @@ jobs:
     name: security · gitleaks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with: { fetch-depth: 0 }
       - run: docker run --rm -v "$PWD:/repo" "$GITLEAKS_IMAGE" git /repo --no-banner --redact
