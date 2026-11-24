@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from apps.identity.models import User
 
 TESTS, PUBLISH = "admissions.test.manage", "admissions.merit.publish"
+SCORE = "admissions.test.score"  # ADR-067: entering scores is its own permission
 SEATABLE = (Application.Status.SUBMITTED, Application.Status.UNDER_REVIEW,
             Application.Status.TEST_SCHEDULED)  # fmt: skip
 SCORABLE = (Application.Status.TEST_SCHEDULED, Application.Status.EVALUATED)
@@ -142,7 +143,7 @@ def record_score(
 ) -> TestAssignment:
     row = TestAssignment.objects.select_for_update().get(pk=assignment.pk)
     test = Test.objects.get(pk=row.test_id)
-    _authorise(actor, TESTS, test.institution_id)
+    _authorise(actor, SCORE, test.institution_id)
     application = _locked(Application(pk=row.application_id))
     if application.status not in SCORABLE:
         raise ValidationError({"score": "Scores change only before a decision."})

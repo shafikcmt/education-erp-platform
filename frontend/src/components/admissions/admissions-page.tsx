@@ -14,7 +14,7 @@ import { TestsSection } from "./tests-section";
 
 const TABS = [
   { key: "cycles", permission: "admissions.cycle.view" },
-  { key: "tests", permission: "admissions.test.manage" },
+  { key: "tests", permission: "admissions.test.score" },
   { key: "inquiries", permission: "admissions.inquiry.view" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];

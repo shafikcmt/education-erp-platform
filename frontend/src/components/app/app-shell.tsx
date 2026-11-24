@@ -102,7 +102,7 @@ function tenantNav(context: TenantContext | undefined): NavItem[] {
       icon: ClipboardList,
       show:
         has("admissions.cycle.view") ||
-        has("admissions.test.manage") ||
+        has("admissions.test.score") ||
         has("admissions.inquiry.view"),
     },
     { href: "/roles", key: "roles", icon: UserCog, show: has("rbac.role.view") },

@@ -223,14 +223,19 @@ def test_unfinished_workflow_reviews_are_not_ranked(org, owner, world):
         assert [r["applicant_name"] for r in merit.ranking(target)] == ["Ana"]
 
 
-def test_roles_exam_controller_scores_but_cannot_publish(org, owner, world):
+def test_roles_exam_controller_only_scores(org, owner, world):
+    """ADR-067: the exam controller enters scores but neither schedules, seats nor publishes."""
     controller = make_user("controller@example.com", mfa=True).user
     grant_role(org.tenant, controller, "exam_controller", institution=org.north)
     with tenant_atomic(org.tenant):
         cycle, target = _cycle(owner, org, world)
+        with pytest.raises(PermissionDenied):
+            _test(controller, cycle)
         test = _test(owner, cycle)
         app = _apply(owner, cycle, target, "Ana")
-        seat = merit.assign_test(actor=controller, test=test, application=app)
+        with pytest.raises(PermissionDenied):
+            merit.assign_test(actor=controller, test=test, application=app)
+        seat = merit.assign_test(actor=owner, test=test, application=app)
         merit.record_score(actor=controller, assignment=seat, score=Decimal(50))
         with pytest.raises(PermissionDenied):
             merit.publish(actor=controller, target=target)

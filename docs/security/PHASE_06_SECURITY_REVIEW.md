@@ -43,10 +43,10 @@
 ## 3. Residual risks and open items (for the owner)
 
 1. **No malware scanner yet** (ADR-066 Q8). Files stay `unscanned` and reach staff only. Choosing a scanner is a Phase 18 infrastructure decision.
-2. **Automatic offer on decline.**
+2. ~~**Automatic offer on decline.**~~ Decided by ADR-067 (2026-11-24): kept as is.
    - The plan says a decline moves the next applicant up, so it is automatic and audited.
    - If you prefer a manual step, staff would press "Offer free seats" instead. This is a small change.
-3. **The exam controller role holds `admissions.test.manage`.** It can schedule tests as well as score them. A separate score-only code is possible if you want it.
+3. ~~**The exam controller role holds `admissions.test.manage`.**~~ Resolved by ADR-067 (2026-11-24): the exam controller now holds only `admissions.test.score`. It can schedule tests as well as score them. A separate score-only code is possible if you want it.
 4. **Applicants are not emailed about decisions or offers.** They see them through the status link. Notifications are extended in Phase 14.
 5. **One client address in E2E.** The local and CI stack reaches the API from one Docker gateway address, so per-IP limits are shared there. Production sees real client addresses through Nginx.
 6. **Preset content is a draft** (ADR-060 Q4). It must be validated with real institutions.
@@ -60,3 +60,4 @@
 
 ### Change notes
 - 2026-11-24 — Created (Phase 6 M8).
+- 2026-11-24 — Owner approved Phase 6; items 2 and 3 decided by ADR-067.

@@ -161,6 +161,7 @@ _OWNER_CODES = [
     "admissions.application.decide",
     # Phase 6 M6: admission tests and the merit list.
     "admissions.test.manage",
+    "admissions.test.score",
     "admissions.merit.publish",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
@@ -212,6 +213,7 @@ _INSTITUTION_ADMIN_CODES = [
     "admissions.application.decide",
     # Phase 6 M6: admission tests and the merit list.
     "admissions.test.manage",
+    "admissions.test.score",
     "admissions.merit.publish",
 ]
 _CAMPUS_ADMIN_CODES = [
@@ -303,8 +305,8 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             TENANT_VIEW,
             "examinations.exam.manage",
             "examinations.result.publish",
-            # Phase 6 M6: admission tests and scores (seat lists only, no application files).
-            "admissions.test.manage",
+            # Phase 6 (ADR-067): admission test scores only (seat lists, no application files).
+            "admissions.test.score",
         ],
     ),
     _template(
@@ -320,6 +322,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "admissions.application.view",
             "admissions.application.review",
             "admissions.test.manage",
+            "admissions.test.score",
             "files.file.upload",
         ],
     ),

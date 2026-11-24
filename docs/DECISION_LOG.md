@@ -790,6 +790,15 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **ADR-065:** public admissions on tenant hosts: anonymous, throttled, honeypot, identical answers; email-verified drafts (48 h) and hashed, revocable status links instead of applicant accounts; uploads only against verified drafts; housekeeping P26.
 - **ADR-066 (owner answers, all recommendations):** Q1 generic unit tree; Q2 `timetable` moves to Phase 7 after `staff`; Q3 Phase 6 ends at the `admissions.application.accepted` event, students are created in Phase 7; Q4 `files` in Phase 6 with limited public uploads; Q5 the application fee is shown only, collected in Phase 10; Q6 status links, no applicant accounts; Q7 teachers are memberships; Q8 scanner interface now, a real scanner chosen in Phase 18.
 
+## ADR-067 — Phase 6 approval decisions (offers on decline, score-only permission)
+
+- **Status:** Accepted (owner, 2026-11-24: "approval all ur recomendation"; Phase 6 approved).
+- **Context:** the Phase 6 self-review (`security/PHASE_06_SECURITY_REVIEW.md` §3) left two choices to the owner.
+- **Decision:**
+  1. **Automatic offer on decline stays.** When an offer is declined, the next waiting applicant of the latest published merit list is offered the freed seat at once. This is an audited system action (`via=decline`), so seats do not stay empty.
+  2. **A separate score-only permission, `admissions.test.score` (MFA).** Entering scores and seeing the tests and seat lists need `admissions.test.score`. Scheduling tests and seating applicants keep `admissions.test.manage`. The exam controller gets `admissions.test.score` only. Owners, institution admins and admission officers get both.
+- **Consequences:** the permission catalogue grows to 89 codes; role templates are synced by P7.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -816,3 +825,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-23 — Owner approved Phase 5: ADR-061 Accepted. Added ADR-062 (Accepted): inviter re-check at invitation acceptance. No other ADR changed.
 - 2026-11-23 — Added ADR-063 to ADR-065 (Proposed) with the Phase 6 plan. No existing ADR changed.
 - 2026-11-23 — Owner approved the Phase 6 plan with all recommendations: ADR-063 to ADR-065 Accepted; ADR-066 added (Accepted). No other ADR changed.
+- 2026-11-24 — Owner approved Phase 6 with all recommendations: ADR-067 added (Accepted): automatic offer on decline kept; score-only permission `admissions.test.score`. No other ADR changed.

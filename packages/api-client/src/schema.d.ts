@@ -688,7 +688,7 @@ export interface paths {
         };
         /**
          * Admission tests of an institution (newest first)
-         * @description Tests of an institution for those who run them (exam controllers have no cycle view).
+         * @description Tests of an institution for those who score them (exam controllers have no cycle view).
          */
         get: operations["admissions_tests_list"];
         put?: never;
