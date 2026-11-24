@@ -1046,7 +1046,7 @@ paths:
   /api/v1/admissions/tests/:
     get:
       operationId: admissions_tests_list
-      description: Tests of an institution for those who run them (exam controllers
+      description: Tests of an institution for those who score them (exam controllers
         have no cycle view).
       summary: Admission tests of an institution (newest first)
       parameters:

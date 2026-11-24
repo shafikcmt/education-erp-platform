@@ -12,6 +12,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api/browser";
 import { unwrap } from "@/lib/api/errors";
+import { canAnywhere, useTenantContext } from "@/lib/tenancy/context";
 
 import { ADMISSIONS_KEY, useAdmissionsRefresh } from "./shared";
 
@@ -102,6 +103,9 @@ function SeatList({
   const t = useTranslations("admissions");
   const refresh = useAdmissionsRefresh();
   const { run, failure } = useAction();
+  const { data: context } = useTenantContext();
+  // Entering scores is its own permission (ADR-067); the API checks it in the test's scope.
+  const canScore = canAnywhere(context, "admissions.test.score");
   const seats = useQuery({
     queryKey: [...ADMISSIONS_KEY, "seats", test.id],
     queryFn: () =>
@@ -185,28 +189,34 @@ function SeatList({
                     ? t("tests.score", { score: seat.score })
                     : t("tests.noScore")}
               </span>
-              <Input
-                className="h-8 w-24"
-                inputMode="decimal"
-                aria-label={t("tests.enterScore", { seat: seat.seat })}
-                value={scores[seat.id] ?? ""}
-                onChange={(e) => setScores({ ...scores, [seat.id]: e.target.value.trim() })}
-              />
-              <Button
-                size="sm"
-                variant="outline"
-                disabled={!/^\d+(\.\d{1,2})?$/.test(scores[seat.id] ?? "")}
-                onClick={() => void save(seat.id, { score: scores[seat.id] ?? "", absent: false })}
-              >
-                {t("save")}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => void save(seat.id, { score: null, absent: true })}
-              >
-                {t("tests.markAbsent")}
-              </Button>
+              {canScore ? (
+                <>
+                  <Input
+                    className="h-8 w-24"
+                    inputMode="decimal"
+                    aria-label={t("tests.enterScore", { seat: seat.seat })}
+                    value={scores[seat.id] ?? ""}
+                    onChange={(e) => setScores({ ...scores, [seat.id]: e.target.value.trim() })}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={!/^\d+(\.\d{1,2})?$/.test(scores[seat.id] ?? "")}
+                    onClick={() =>
+                      void save(seat.id, { score: scores[seat.id] ?? "", absent: false })
+                    }
+                  >
+                    {t("save")}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void save(seat.id, { score: null, absent: true })}
+                  >
+                    {t("tests.markAbsent")}
+                  </Button>
+                </>
+              ) : null}
             </li>
           ))}
         </ul>

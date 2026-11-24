@@ -397,9 +397,9 @@ class CycleTestsView(AdmissionsView):
 
 
 class InstitutionTestsView(AdmissionsView):
-    """Tests of an institution for those who run them (exam controllers have no cycle view)."""
+    """Tests of an institution for those who score them (exam controllers have no cycle view)."""
 
-    permission_classes = [HasTenantPermission({"GET": "admissions.test.manage"})]
+    permission_classes = [HasTenantPermission({"GET": "admissions.test.score"})]
 
     @extend_schema(
         tags=TAGS, summary="Admission tests of an institution (newest first)",
@@ -407,21 +407,21 @@ class InstitutionTestsView(AdmissionsView):
     )  # fmt: skip
     def get(self, request: Request) -> Response:
         with service_errors():
-            inst = _institution_param(request, "admissions.test.manage")
+            inst = _institution_param(request, "admissions.test.score")
         rows = Test.objects.filter(institution=inst).annotate(seated=Count("assignments"))
         return Response(s.TestSerializer(rows.order_by("-starts_at")[:200], many=True).data)
 
 
 class TestAssignmentsView(AdmissionsView):
     permission_classes = [
-        HasTenantPermission({"GET": "admissions.test.manage", "POST": "admissions.test.manage"})
+        HasTenantPermission({"GET": "admissions.test.score", "POST": "admissions.test.manage"})
     ]
 
     @extend_schema(
         tags=TAGS, summary="Seat list of a test", responses=s.TestSeatSerializer(many=True)
     )
     def get(self, request: Request, test_id: str) -> Response:
-        test = _visible(request, Test, test_id, "admissions.test.manage")
+        test = _visible(request, Test, test_id, "admissions.test.score")
         rows = TestAssignment.objects.filter(test=test).select_related("application")
         return Response(s.TestSeatSerializer(rows.order_by("seat"), many=True).data)
 
@@ -446,7 +446,7 @@ class TestAssignmentsView(AdmissionsView):
 
 
 class AssignmentScoreView(AdmissionsView):
-    permission_classes = [HasTenantPermission({"PATCH": "admissions.test.manage"})]
+    permission_classes = [HasTenantPermission({"PATCH": "admissions.test.score"})]
 
     @extend_schema(
         tags=TAGS, summary="Enter a score (or an absence)", request=s.ScoreSerializer,
@@ -454,7 +454,7 @@ class AssignmentScoreView(AdmissionsView):
     )  # fmt: skip
     def patch(self, request: Request, assignment_id: str) -> Response:
         row = _get(TestAssignment, assignment_id)
-        test = _visible(request, Test, row.test_id, "admissions.test.manage")
+        test = _visible(request, Test, row.test_id, "admissions.test.score")
         v = _valid(s.ScoreSerializer, request.data)
         with service_errors():
             row = merit.record_score(

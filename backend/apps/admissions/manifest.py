@@ -42,6 +42,11 @@ PERMISSIONS = [
         "requires_mfa": True,
     },
     {
+        "code": "admissions.test.score",
+        "description": "See admission tests and seat lists and enter scores (ADR-067)",
+        "requires_mfa": True,
+    },
+    {
         "code": "admissions.merit.publish",
         "description": "Publish a merit list (offers follow its ranks)",
         "requires_mfa": True,
