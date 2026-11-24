@@ -59,7 +59,9 @@
     "plans": "Plans",
     "subscription": "Subscription",
     "studio": "Studio",
-    "signups": "Sign-ups"
+    "signups": "Sign-ups",
+    "academics": "Academics",
+    "admissions": "Admissions"
   },
   "auth": {
     "email": "Email address",
@@ -763,5 +765,234 @@
         "expired": "Expired"
       }
     }
+  },
+  "academics": {
+    "title": "Academic structure",
+    "subtitle": "Academic years, the institution's structure and its subjects.",
+    "institution": "Institution",
+    "code": "Code",
+    "name": "Name",
+    "save": "Save",
+    "empty": "Nothing here yet.",
+    "years": {
+      "title": "Academic years",
+      "add": "Add a year",
+      "start": "Starts on",
+      "end": "Ends on",
+      "activate": "Activate",
+      "close": "Close the year",
+      "statuses": {
+        "planned": "Planned",
+        "active": "Active",
+        "closed": "Closed"
+      }
+    },
+    "subjects": {
+      "title": "Subjects and courses",
+      "add": "Add a subject",
+      "type": "Type",
+      "credits": "Credits",
+      "creditsHint": "Credits apply to credit-based institutions; leave empty otherwise.",
+      "creditCount": "{credits} credits",
+      "types": {
+        "core": "Core",
+        "elective": "Elective",
+        "optional": "Optional",
+        "practical": "Practical"
+      }
+    },
+    "units": {
+      "title": "Structure",
+      "add": "Add a unit",
+      "level": "Level",
+      "parent": "Belongs to",
+      "noParent": "— top level —",
+      "capacity": "Seats (optional)",
+      "levelsHint": "The levels and their names come from the institution's preset and Studio terminology.",
+      "noPreset": "This institution has no structure levels yet. Choose a preset in its settings."
+    }
+  },
+  "admissions": {
+    "title": "Admissions",
+    "subtitle": "Admission cycles, applications, tests, merit lists and inquiries.",
+    "noAccess": "You can't see this for the chosen institution.",
+    "save": "Save",
+    "hide": "Hide",
+    "empty": "Nothing here yet.",
+    "tabs": {
+      "cycles": "Cycles",
+      "tests": "Tests",
+      "inquiries": "Inquiries"
+    },
+    "panels": {
+      "applications": "Applications",
+      "tests": "Tests",
+      "merit": "Merit list"
+    },
+    "statuses": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "under_review": "Under review",
+      "test_scheduled": "Test scheduled",
+      "evaluated": "Evaluated",
+      "offered": "Offered",
+      "accepted": "Accepted",
+      "declined": "Declined",
+      "rejected": "Rejected",
+      "withdrawn": "Withdrawn"
+    },
+    "cycles": {
+      "title": "Admission cycles",
+      "add": "New cycle",
+      "none": "No admission cycles yet.",
+      "manage": "Open",
+      "addTarget": "Add a target",
+      "unit": "Unit",
+      "capacity": "Seats",
+      "target": "{unit}: {seats} seats",
+      "noTargets": "No targets yet — add at least one before opening.",
+      "bindingsHint": "Use the keys of published Studio items: the application form is required; the workflow, merit rule and numbering sequence are optional.",
+      "statuses": {
+        "draft": "Draft",
+        "open": "Open",
+        "closed": "Closed",
+        "archived": "Archived"
+      },
+      "to": {
+        "open": "Open",
+        "closed": "Close",
+        "archived": "Archive"
+      },
+      "fields": {
+        "year": "Academic year",
+        "code": "Code",
+        "name": "Name",
+        "opens_on": "Opens on",
+        "closes_on": "Closes on",
+        "form_key": "Application form key",
+        "workflow_key": "Workflow key",
+        "merit_rule_key": "Merit rule key",
+        "numbering_key": "Numbering key"
+      }
+    },
+    "applications": {
+      "one": "Application",
+      "none": "No applications yet.",
+      "score": "score {score}",
+      "rank": "rank {rank}",
+      "startReview": "Start review",
+      "evaluate": "Mark evaluated",
+      "decide": "Decide",
+      "decideTitle": "Decision for {name}",
+      "decideHint": "An offer needs a free seat in the target.",
+      "offer": "Offer a seat",
+      "reject": "Reject",
+      "note": "Note to the applicant",
+      "noteHint": "Shown on their status page.",
+      "accepted": "Record: accepted",
+      "declined": "Record: declined",
+      "documents": "Documents",
+      "inWorkflow": "Reviewed through the workflow (see Studio requests)."
+    },
+    "documents": {
+      "none": "No documents.",
+      "download": "Download",
+      "unscanned": "not scanned for malware",
+      "states": {
+        "awaiting_upload": "Waiting for upload",
+        "verifying": "Checking",
+        "ready": "Ready",
+        "rejected": "Rejected",
+        "deleted": "Deleted"
+      }
+    },
+    "tests": {
+      "add": "Schedule a test",
+      "none": "No tests yet.",
+      "seatList": "Seat list",
+      "seated": "{seated} of {capacity} seats",
+      "maxScore": "out of {max}",
+      "seat": "Seat an applicant",
+      "noSeats": "Nobody is seated yet.",
+      "absent": "Absent",
+      "score": "Score {score}",
+      "noScore": "No score",
+      "enterScore": "Score for seat {seat}",
+      "markAbsent": "Absent",
+      "fields": {
+        "name": "Name",
+        "starts_at": "Date and time",
+        "venue": "Venue",
+        "capacity": "Seats",
+        "max_score": "Maximum score"
+      }
+    },
+    "merit": {
+      "byRule": "Ranked by the merit rule “{rule}”.",
+      "byScore": "Ranked by the total test score.",
+      "preview": "Preview (not published)",
+      "published": "Version {version}, published {at}",
+      "publish": "Publish",
+      "republish": "Publish a new version",
+      "offer": "Offer free seats",
+      "failed": "The ranking can't be computed (check the merit rule).",
+      "empty": "No evaluated applications yet.",
+      "value": "{value}"
+    },
+    "inquiries": {
+      "add": "Record an inquiry",
+      "contactHint": "A phone number or an email address is needed.",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "interest": "Interested in",
+      "source": "Source",
+      "status": "Status",
+      "sources": {
+        "walk_in": "Walk-in",
+        "phone": "Phone",
+        "web": "Website",
+        "referral": "Referral",
+        "other": "Other"
+      },
+      "statuses": {
+        "new": "New",
+        "contacted": "Contacted",
+        "converted": "Converted",
+        "closed": "Closed"
+      }
+    }
+  },
+  "apply": {
+    "title": "Apply for admission",
+    "loading": "Loading…",
+    "closed": "Online applications are not available here.",
+    "noneOpen": "No admission is open right now.",
+    "cycle": "Admission",
+    "target": "Applying for",
+    "closes": "closes on {date}",
+    "fee": "application fee {amount} {currency} (paid at the institution)",
+    "send": "Send application",
+    "sent": "Thank you. If the details are valid, we have emailed you a link to confirm the application. It expires in 48 hours.",
+    "limited": "Too many attempts from this network. Please try again later.",
+    "privacy": "Your details are used only for this admission and are visible only to the institution's admission staff.",
+    "verifyTitle": "Confirm your application",
+    "verifyIntro": "Press the button to submit your application.",
+    "confirm": "Submit my application",
+    "verified": "Your application is submitted. We have emailed you a personal link to follow it.",
+    "statusTitle": "Your application",
+    "applicant": "Applicant",
+    "number": "Number",
+    "status": "Status",
+    "offerIntro": "You have been offered a seat. Please answer:",
+    "accept": "Accept the offer",
+    "decline": "Decline",
+    "tests": "Your tests",
+    "seat": "seat {seat}",
+    "documents": "Documents",
+    "addDocument": "Add a document",
+    "documentHint": "PDF, JPEG or PNG, up to 5 MB each, at most 5 files.",
+    "tooLarge": "This file is larger than 5 MB.",
+    "uploadFailed": "The upload failed. Please try again."
   }
 }

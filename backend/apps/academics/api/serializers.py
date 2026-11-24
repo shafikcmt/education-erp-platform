@@ -13,6 +13,7 @@ _CODE = r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,31}$"
 
 class SetupSerializer(serializers.Serializer[Any]):
     levels = serializers.ListField(child=serializers.CharField())
+    level_labels = serializers.DictField(child=serializers.CharField())
     credit_based = serializers.BooleanField()
     semester_based = serializers.BooleanField()
     section_enabled = serializers.BooleanField()

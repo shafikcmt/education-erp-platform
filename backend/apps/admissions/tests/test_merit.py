@@ -282,6 +282,8 @@ def test_api_tests_scores_merit_and_step_up(org, owner, world, admin):
     assert scored.status_code == 200, scored.content
     [row] = api.get(f"/api/v1/admissions/tests/{test_id}/assignments/").json()
     assert (row["applicant_name"], row["score"]) == ("Ana", "77.00")
+    listed = api.get("/api/v1/admissions/tests/", institution=str(org.north.pk)).json()
+    assert [(x["id"], x["seated"]) for x in listed] == [(test_id, 1)]
     preview = api.get(f"/api/v1/admissions/targets/{target.pk}/merit/").json()
     assert [r["applicant_name"] for r in preview["preview"]] == ["Ana"]
     assert preview["published"] is None
@@ -299,3 +301,5 @@ def test_api_tests_scores_merit_and_step_up(org, owner, world, admin):
     other.login(outsider, expect="authenticated")
     assert other.get(f"/api/v1/admissions/tests/{test_id}/assignments/").status_code == 404
     assert other.get(f"/api/v1/admissions/targets/{target.pk}/merit/").status_code == 404
+    north = str(org.north.pk)
+    assert other.get("/api/v1/admissions/tests/", institution=north).status_code == 404

@@ -679,6 +679,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admissions/tests/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Admission tests of an institution (newest first)
+         * @description Tests of an institution for those who run them (exam controllers have no cycle view).
+         */
+        get: operations["admissions_tests_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admissions/tests/{test_id}/assignments/": {
         parameters: {
             query?: never;
@@ -5045,6 +5065,9 @@ export interface components {
         };
         Setup: {
             levels: string[];
+            level_labels: {
+                [key: string]: string;
+            };
             credit_based: boolean;
             semester_based: boolean;
             section_enabled: boolean;
@@ -5239,6 +5262,7 @@ export interface components {
             readonly id: string;
             /** Format: uuid */
             readonly unit: string;
+            readonly unit_name: string;
             readonly capacity: number;
         };
         TargetCreateRequest: {
@@ -6505,6 +6529,28 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MeritList"];
+                };
+            };
+        };
+    };
+    admissions_tests_list: {
+        parameters: {
+            query: {
+                /** @description Institution id */
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Test"][];
                 };
             };
         };

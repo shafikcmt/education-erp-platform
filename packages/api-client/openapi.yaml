@@ -1043,6 +1043,32 @@ paths:
               schema:
                 $ref: '#/components/schemas/MeritList'
           description: ''
+  /api/v1/admissions/tests/:
+    get:
+      operationId: admissions_tests_list
+      description: Tests of an institution for those who run them (exam controllers
+        have no cycle view).
+      summary: Admission tests of an institution (newest first)
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        description: Institution id
+        required: true
+      tags:
+      - admissions
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Test'
+          description: ''
   /api/v1/admissions/tests/{test_id}/assignments/:
     get:
       operationId: admissions_tests_assignments_list
@@ -8649,6 +8675,10 @@ components:
           type: array
           items:
             type: string
+        level_labels:
+          type: object
+          additionalProperties:
+            type: string
         credit_based:
           type: boolean
         semester_based:
@@ -8657,6 +8687,7 @@ components:
           type: boolean
       required:
       - credit_based
+      - level_labels
       - levels
       - section_enabled
       - semester_based
@@ -9169,6 +9200,9 @@ components:
           type: string
           format: uuid
           readOnly: true
+        unit_name:
+          type: string
+          readOnly: true
         capacity:
           type: integer
           readOnly: true
@@ -9176,6 +9210,7 @@ components:
       - capacity
       - id
       - unit
+      - unit_name
     TargetCreateRequest:
       type: object
       properties:

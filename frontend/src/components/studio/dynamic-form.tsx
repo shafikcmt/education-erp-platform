@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, type ReactNode, useEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,46 @@ const INPUT_TYPES: Record<string, string> = {
   phone: "tel",
 };
 
+/** Where a form comes from and where it goes: the Studio preview validates; the public
+ * admission form submits an application (Phase 6 M7). */
+export type FormSource = {
+  cacheKey: unknown[];
+  render: () => Promise<{ sections: RenderedSection[] }>;
+  visibility: (values: Values) => Promise<string[]>;
+  submit: (values: Values) => Promise<unknown>;
+  submitLabel?: string;
+  /** Shown inside the form above the button (for example a hidden honeypot field). */
+  extra?: ReactNode;
+};
+
+function studioSource(formKey: string): FormSource {
+  return {
+    cacheKey: ["studio", "form-render", formKey],
+    render: () =>
+      unwrap(
+        api().GET("/api/v1/customization/forms/{key}/render/", {
+          params: { path: { key: formKey } },
+        }),
+      ) as Promise<{ sections: RenderedSection[] }>,
+    visibility: async (values) =>
+      (
+        await unwrap(
+          api().POST("/api/v1/customization/forms/{key}/visibility/", {
+            params: { path: { key: formKey } },
+            body: { values },
+          }),
+        )
+      ).sections,
+    submit: (values) =>
+      unwrap(
+        api().POST("/api/v1/customization/forms/{key}/validate/", {
+          params: { path: { key: formKey } },
+          body: { values },
+        }),
+      ),
+  };
+}
+
 /**
  * Renders a published form. Section visibility is decided by the server (the rules sandbox) on
  * every change; the submission is validated by the server too, and its field errors are shown
@@ -58,24 +98,18 @@ const INPUT_TYPES: Record<string, string> = {
  */
 export function DynamicForm({
   formKey,
+  source: given,
   onValid,
 }: {
   formKey: string;
-  onValid?: (cleaned: { core: unknown; custom: unknown }) => void;
+  source?: FormSource;
+  onValid?: (result: unknown) => void;
 }) {
   const t = useTranslations("studio.form");
   const locale = useLocale();
-  const form = useQuery({
-    queryKey: ["studio", "form-render", formKey],
-    queryFn: () =>
-      unwrap(
-        api().GET("/api/v1/customization/forms/{key}/render/", {
-          params: { path: { key: formKey } },
-        }),
-      ) as Promise<{
-        sections: RenderedSection[];
-      }>,
-  });
+  const [fallback] = useState(() => studioSource(formKey));
+  const source = given ?? fallback;
+  const form = useQuery({ queryKey: source.cacheKey, queryFn: source.render });
   const [values, setValues] = useState<Values>({});
   const [shown, setShown] = useState<string[] | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -86,13 +120,8 @@ export function DynamicForm({
     if (!form.data) return;
     let stale = false;
     const handle = setTimeout(() => {
-      void unwrap(
-        api().POST("/api/v1/customization/forms/{key}/visibility/", {
-          params: { path: { key: formKey } },
-          body: { values },
-        }),
-      ).then(
-        (result) => !stale && setShown(result.sections),
+      void source.visibility(values).then(
+        (sections) => !stale && setShown(sections),
         () => !stale && setShown([]), // fail closed: hide conditional sections
       );
     }, 250);
@@ -100,7 +129,7 @@ export function DynamicForm({
       stale = true;
       clearTimeout(handle);
     };
-  }, [form.data, formKey, values]);
+  }, [form.data, source, values]);
 
   if (form.isError) return <Alert variant="destructive">{t("unavailable")}</Alert>;
   if (!form.data) return <p className="text-muted-foreground text-sm">{t("loading")}</p>;
@@ -120,14 +149,9 @@ export function DynamicForm({
       Object.entries(values).filter(([n, v]) => names.has(n) && v !== null && v !== ""),
     );
     try {
-      const cleaned = await unwrap(
-        api().POST("/api/v1/customization/forms/{key}/validate/", {
-          params: { path: { key: formKey } },
-          body: { values: payload },
-        }),
-      );
-      setDone(true);
-      onValid?.(cleaned);
+      const result = await source.submit(payload);
+      setDone(!given); // the caller shows its own outcome
+      onValid?.(result);
     } catch (error) {
       if (isApiError(error) && Object.keys(error.fieldErrors).length) setErrors(error.fieldErrors);
       else setFailure(t("failed"));
@@ -160,8 +184,9 @@ export function DynamicForm({
           ))}
         </fieldset>
       ))}
+      {source.extra}
       <div>
-        <Button type="submit">{t("check")}</Button>
+        <Button type="submit">{source.submitLabel ?? t("check")}</Button>
       </div>
     </form>
   );
