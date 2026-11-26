@@ -799,15 +799,24 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
   2. **A separate score-only permission, `admissions.test.score` (MFA).** Entering scores and seeing the tests and seat lists need `admissions.test.score`. Scheduling tests and seating applicants keep `admissions.test.manage`. The exam controller gets `admissions.test.score` only. Owners, institution admins and admission officers get both.
 - **Consequences:** the permission catalogue grows to 89 codes; role templates are synced by P7.
 
-## ADR-068 to ADR-073 — Phase 7 (students, staff, portal, timetable) — Proposed
+## ADR-068 to ADR-074 — Phase 7 (students, staff, portal, timetable)
 
-- **Status:** Proposed (2026-11-24) with `plans/PHASE_07_PLAN.md` §13. Nothing is built on them before the owner approves the plan.
+- **Status:** ADR-068 to ADR-073 **Accepted** (owner, 2026-11-26, with the Phase 7 plan); proposed 2026-11-24 with `plans/PHASE_07_PLAN.md` §13.
 - **ADR-068:** students, guardians (N–N) and per-year enrollments in Phase 6 units; documents through `files`; a status lifecycle with transfer certificate and alumni.
 - **ADR-069:** portal access by invitation, linking memberships to guardian and student records; phone-only guardians get records without logins until Phase 14.
 - **ADR-070:** staff profiles optionally linked to memberships; departments and designations per institution; unit advisors. Teaching stays keyed by memberships (ADR-063).
 - **ADR-071:** a basic timetable with constraint-backed clash detection. No substitutions and no generator in Phase 7.
 - **ADR-072:** bulk import with a dry run, a row-level report and atomic rows. CSV, plus XLSX through `openpyxl` (a new dependency) if approved.
 - **ADR-073:** relationship scopes (assigned, child, own), enforced in shared selectors and services, with object-level tests.
+- **ADR-074 (owner answers, all recommendations; Accepted 2026-11-26):**
+  - Q1: student numbers come from a Studio numbering sequence per institution.
+  - Q2: phone-only guardians are records without logins until SMS OTP in Phase 14 (an SMS provider is the owner's decision).
+  - Q3: XLSX import through `openpyxl`, read-only, with size and row limits.
+  - Q4: the student is created on acceptance; the enrollment when staff choose the leaf unit (automatic when the admitted unit is a leaf).
+  - Q5: ID cards and TC are printable HTML templates now; server PDF in Phase 9.
+  - Q6: basic timetable only, with no substitutions or generator.
+  - Q7: discipline notes are deferred until a retention decision.
+  - Q8: guardian duplicates are matched by email or phone within the tenant only, with a staff merge.
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
@@ -837,3 +846,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-23 — Owner approved the Phase 6 plan with all recommendations: ADR-063 to ADR-065 Accepted; ADR-066 added (Accepted). No other ADR changed.
 - 2026-11-24 — Owner approved Phase 6 with all recommendations: ADR-067 added (Accepted): automatic offer on decline kept; score-only permission `admissions.test.score`. No other ADR changed.
 - 2026-11-24 — Added ADR-068 to ADR-073 (Proposed) with the Phase 7 plan. No existing ADR changed.
+- 2026-11-26 — Owner approved the Phase 7 plan with all recommendations: ADR-068 to ADR-073 Accepted; ADR-074 added (Accepted). No other ADR changed.
