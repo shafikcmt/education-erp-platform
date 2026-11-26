@@ -4328,6 +4328,147 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/timetable/my/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The lessons I teach
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["timetable_my_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/timetable/rooms/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rooms of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["timetable_rooms_list"];
+        put?: never;
+        /**
+         * Create a room
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["timetable_rooms_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/timetable/schedules/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Bell schedules with their periods
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["timetable_schedules_list"];
+        put?: never;
+        /**
+         * Create a bell schedule
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["timetable_schedules_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/timetable/schedules/{schedule_id}/periods/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a period to a bell schedule
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["timetable_schedules_periods_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/timetable/slots/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A unit's, room's or teacher's timetable
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["timetable_slots_list"];
+        put?: never;
+        /**
+         * Add a weekly lesson (clashes are refused)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["timetable_slots_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/timetable/slots/{slot_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a lesson
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["timetable_slots_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -5588,6 +5729,27 @@ export interface components {
             capacity?: number | null;
             order?: number;
         };
+        Period: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly order: number;
+            readonly name: string;
+            /** Format: time */
+            readonly start_time: string;
+            /** Format: time */
+            readonly end_time: string;
+            readonly is_break: boolean;
+        };
+        PeriodCreateRequest: {
+            order: number;
+            name: string;
+            /** Format: time */
+            start_time: string;
+            /** Format: time */
+            end_time: string;
+            /** @default false */
+            is_break: boolean;
+        };
         Permission: {
             readonly code: string;
             readonly module_code: string;
@@ -5914,6 +6076,26 @@ export interface components {
          * @enum {string}
          */
         RoleKindEnum: "platform" | "template" | "tenant";
+        Room: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly campus: string | null;
+            readonly code: string;
+            readonly name: string;
+            readonly capacity: number | null;
+        };
+        RoomCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+            /** Format: uuid */
+            campus?: string | null;
+            capacity?: number | null;
+        };
         RuleDraftRequest: {
             namespace: string;
             key: string;
@@ -5937,6 +6119,23 @@ export interface components {
          * @enum {string}
          */
         ScanStateEnum: "pending" | "clean" | "infected" | "unscanned";
+        Schedule: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly code: string;
+            readonly name: string;
+            readonly periods: {
+                [key: string]: unknown;
+            }[];
+        };
+        ScheduleCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+        };
         ScopePermissions: {
             scope_type: string;
             /** Format: uuid */
@@ -6036,6 +6235,45 @@ export interface components {
         };
         SignupVerifyRequest: {
             token: string;
+        };
+        Slot: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly year: string;
+            /** Format: uuid */
+            readonly term: string | null;
+            /** Format: uuid */
+            readonly unit: string;
+            readonly unit_name: string;
+            readonly weekday: components["schemas"]["WeekdayEnum"];
+            /** Format: uuid */
+            readonly period: string;
+            readonly period_name: string;
+            /** Format: time */
+            readonly start_time: string;
+            /** Format: time */
+            readonly end_time: string;
+            /** Format: uuid */
+            readonly offering: string;
+            readonly subject_name: string;
+            /** Format: uuid */
+            readonly teacher: string | null;
+            /** Format: uuid */
+            readonly room: string | null;
+            /** @default  */
+            readonly room_code: string;
+        };
+        SlotCreateRequest: {
+            /** Format: uuid */
+            offering: string;
+            weekday: number;
+            /** Format: uuid */
+            period: string;
+            /** Format: uuid */
+            teacher?: string | null;
+            /** Format: uuid */
+            room?: string | null;
         };
         /**
          * @description * `staff` - Entered by staff
@@ -6674,6 +6912,17 @@ export interface components {
                 [key: string]: string;
             };
         };
+        /**
+         * @description * `1` - Monday
+         *     * `2` - Tuesday
+         *     * `3` - Wednesday
+         *     * `4` - Thursday
+         *     * `5` - Friday
+         *     * `6` - Saturday
+         *     * `7` - Sunday
+         * @enum {integer}
+         */
+        WeekdayEnum: 1 | 2 | 3 | 4 | 5 | 6 | 7;
         WithdrawRequest: {
             reason: string;
             /** Format: date */
@@ -12287,6 +12536,206 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TenantProfile"];
                 };
+            };
+        };
+    };
+    timetable_my_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Slot"][];
+                };
+            };
+        };
+    };
+    timetable_rooms_list: {
+        parameters: {
+            query: {
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Room"][];
+                };
+            };
+        };
+    };
+    timetable_rooms_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoomCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Room"];
+                };
+            };
+        };
+    };
+    timetable_schedules_list: {
+        parameters: {
+            query: {
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Schedule"][];
+                };
+            };
+        };
+    };
+    timetable_schedules_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduleCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Schedule"];
+                };
+            };
+        };
+    };
+    timetable_schedules_periods_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeriodCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Period"];
+                };
+            };
+        };
+    };
+    timetable_slots_list: {
+        parameters: {
+            query?: {
+                room?: string;
+                /** @description Membership id */
+                teacher?: string;
+                unit?: string;
+                year?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Slot"][];
+                };
+            };
+        };
+    };
+    timetable_slots_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SlotCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Slot"];
+                };
+            };
+        };
+    };
+    timetable_slots_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slot_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

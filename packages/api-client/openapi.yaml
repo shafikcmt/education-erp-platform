@@ -6198,6 +6198,235 @@ paths:
               schema:
                 $ref: '#/components/schemas/TenantProfile'
           description: ''
+  /api/v1/timetable/my/:
+    get:
+      operationId: timetable_my_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: The lessons I teach
+      tags:
+      - timetable
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+          description: ''
+  /api/v1/timetable/rooms/:
+    get:
+      operationId: timetable_rooms_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Rooms of an institution
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      tags:
+      - timetable
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Room'
+          description: ''
+    post:
+      operationId: timetable_rooms_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create a room
+      tags:
+      - timetable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoomCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Room'
+          description: ''
+  /api/v1/timetable/schedules/:
+    get:
+      operationId: timetable_schedules_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Bell schedules with their periods
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      tags:
+      - timetable
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Schedule'
+          description: ''
+    post:
+      operationId: timetable_schedules_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create a bell schedule
+      tags:
+      - timetable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScheduleCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Schedule'
+          description: ''
+  /api/v1/timetable/schedules/{schedule_id}/periods/:
+    post:
+      operationId: timetable_schedules_periods_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add a period to a bell schedule
+      parameters:
+      - in: path
+        name: schedule_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - timetable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PeriodCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Period'
+          description: ''
+  /api/v1/timetable/slots/:
+    get:
+      operationId: timetable_slots_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A unit's, room's or teacher's timetable
+      parameters:
+      - in: query
+        name: room
+        schema:
+          type: string
+      - in: query
+        name: teacher
+        schema:
+          type: string
+        description: Membership id
+      - in: query
+        name: unit
+        schema:
+          type: string
+      - in: query
+        name: year
+        schema:
+          type: string
+      tags:
+      - timetable
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Slot'
+          description: ''
+    post:
+      operationId: timetable_slots_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Add a weekly lesson (clashes are refused)
+      tags:
+      - timetable
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SlotCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Slot'
+          description: ''
+  /api/v1/timetable/slots/{slot_id}/:
+    delete:
+      operationId: timetable_slots_destroy
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Remove a lesson
+      parameters:
+      - in: path
+        name: slot_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - timetable
+      security:
+      - sessionAuth: []
+      responses:
+        '204':
+          description: No response body
 components:
   schemas:
     AcademicTermKindEnum:
@@ -9303,6 +9532,62 @@ components:
           type: integer
           maximum: 1000
           minimum: 0
+    Period:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        order:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        start_time:
+          type: string
+          format: time
+          readOnly: true
+        end_time:
+          type: string
+          format: time
+          readOnly: true
+        is_break:
+          type: boolean
+          readOnly: true
+      required:
+      - end_time
+      - id
+      - is_break
+      - name
+      - order
+      - start_time
+    PeriodCreateRequest:
+      type: object
+      properties:
+        order:
+          type: integer
+          maximum: 30
+          minimum: 1
+        name:
+          type: string
+          minLength: 1
+          maxLength: 60
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        is_break:
+          type: boolean
+          default: false
+      required:
+      - end_time
+      - name
+      - order
+      - start_time
     Permission:
       type: object
       properties:
@@ -10194,6 +10479,64 @@ components:
         * `platform` - Platform role
         * `template` - Tenant role template
         * `tenant` - Tenant role
+    Room:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        campus:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        capacity:
+          type: integer
+          readOnly: true
+          nullable: true
+      required:
+      - campus
+      - capacity
+      - code
+      - id
+      - institution
+      - name
+    RoomCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          maxLength: 32
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+        campus:
+          type: string
+          format: uuid
+          nullable: true
+        capacity:
+          type: integer
+          nullable: true
+      required:
+      - code
+      - institution
+      - name
     RuleDraftRequest:
       type: object
       properties:
@@ -10251,6 +10594,53 @@ components:
         * `clean` - Clean
         * `infected` - Infected
         * `unscanned` - Unscanned
+    Schedule:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        code:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        periods:
+          type: array
+          items:
+            type: object
+            additionalProperties: {}
+          readOnly: true
+      required:
+      - code
+      - id
+      - institution
+      - name
+      - periods
+    ScheduleCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        code:
+          type: string
+          minLength: 1
+          maxLength: 32
+        name:
+          type: string
+          minLength: 1
+          maxLength: 120
+      required:
+      - code
+      - institution
+      - name
     ScopePermissions:
       type: object
       properties:
@@ -10520,6 +10910,110 @@ components:
           maxLength: 200
       required:
       - token
+    Slot:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        term:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+          readOnly: true
+        unit_name:
+          type: string
+          readOnly: true
+        weekday:
+          allOf:
+          - $ref: '#/components/schemas/WeekdayEnum'
+          readOnly: true
+        period:
+          type: string
+          format: uuid
+          readOnly: true
+        period_name:
+          type: string
+          readOnly: true
+        start_time:
+          type: string
+          format: time
+          readOnly: true
+        end_time:
+          type: string
+          format: time
+          readOnly: true
+        offering:
+          type: string
+          format: uuid
+          readOnly: true
+        subject_name:
+          type: string
+          readOnly: true
+        teacher:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        room:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        room_code:
+          type: string
+          readOnly: true
+          default: ''
+      required:
+      - end_time
+      - id
+      - offering
+      - period
+      - period_name
+      - room
+      - room_code
+      - start_time
+      - subject_name
+      - teacher
+      - term
+      - unit
+      - unit_name
+      - weekday
+      - year
+    SlotCreateRequest:
+      type: object
+      properties:
+        offering:
+          type: string
+          format: uuid
+        weekday:
+          type: integer
+          maximum: 7
+          minimum: 1
+        period:
+          type: string
+          format: uuid
+        teacher:
+          type: string
+          format: uuid
+          nullable: true
+        room:
+          type: string
+          format: uuid
+          nullable: true
+      required:
+      - offering
+      - period
+      - weekday
     SourceEnum:
       enum:
       - staff
@@ -12261,6 +12755,24 @@ components:
       - fields
       - file
       - url
+    WeekdayEnum:
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      type: integer
+      description: |-
+        * `1` - Monday
+        * `2` - Tuesday
+        * `3` - Wednesday
+        * `4` - Thursday
+        * `5` - Friday
+        * `6` - Saturday
+        * `7` - Sunday
     WithdrawRequest:
       type: object
       properties:

@@ -317,6 +317,17 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E38 | **P28 (catalogue, mechanism I):** `students.import_housekeeping` (daily) fans out `students.purge_imports` per active or suspended tenant: jobs older than 30 days are deleted (reports hold personal data) and their files marked deleted (P27 removes the objects) |
 | E39 | **New dependency `openpyxl` 3.1.5** (MIT, with `et-xmlfile`), approved by ADR-074 Q3; mypy treats it as untyped. The XLSX content type joins the files safe-type list (always served as an attachment) |
 
+### 16.7 M7 — timetable (2026-11-26, branch `feat/phase-07-m7`)
+
+| # | Note |
+|---|---|
+| E40 | **New `timetable` app** (module `timetable`, standard, sellable; depends on `academics` and `staff`). Tables `BellSchedule`, `Period` (ordered, non-overlapping within a schedule; breaks take no lessons), `Room` (per institution, optional campus, capacity) and `Slot` (year and term from the offering, unit, weekday 1–7, period, offering, teacher, room); standard RLS and composite tenant/institution keys (`timetable.0002`, reversal refused) |
+| E41 | **Clash detection (ADR-071):** unique constraints refuse a second lesson for the same unit, teacher or room in the same year, term, weekday and period, so concurrent writers can't double-book (tested directly against the database; a lost race is reported as the clash). The service also refuses what the constraints can't see: an overlapping period of **another bell schedule**, and a **whole-year lesson against a term's lesson** (tested) |
+| E42 | **Teachers:** a slot's teacher must teach the offering (Phase 6 offering teachers, ADR-063): the primary teacher by default, another of its teachers, or none yet |
+| E43 | **Who sees what:** staff (`timetable.timetable.view` and `academics.structure.view` in the institution or one of its campuses) see any unit's, room's or teacher's timetable; guardians and students see only units their children or they are actively enrolled in (`TIMETABLE_PORTAL_UNITS`, provided by `students.selectors.portal_units`; `timetable` never imports `students`); `timetable/my/` lists the lessons a member teaches. Everything else answers 404 (tested: another section, a room, staff lists, another tenant) |
+| E44 | **Permissions:** `timetable.timetable.view` and `timetable.timetable.manage` (MFA); 107 codes in total. Role templates: owner and institution admin both; academic coordinator both (manage was already named); campus admin view; teachers, class teachers, guardians and students view |
+| E45 | **API:** `timetable/schedules/` (list with periods, create), `timetable/schedules/{id}/periods/`, `timetable/rooms/`, `timetable/slots/` (by unit, room or teacher; create), `timetable/slots/{id}/` (remove) and `timetable/my/`. Not in Phase 7 (ADR-074 Q6): substitutions and automatic generation |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -326,3 +337,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.4 appended: M4 notes E21–E27.
 - 2026-11-26 — §16.5 appended: M5 notes E28–E33.
 - 2026-11-26 — §16.6 appended: M6 notes E34–E39.
+- 2026-11-26 — §16.7 appended: M7 notes E40–E45.

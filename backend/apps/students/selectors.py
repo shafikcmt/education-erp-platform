@@ -175,3 +175,22 @@ def guardians_shown(actor: Any, student: Student) -> list[Any]:
         return list(links.order_by("-is_primary", "created_at"))
     mine = Guardian.objects.filter(membership_id__in=memberships(actor)).values("pk")
     return list(links.filter(guardian_id__in=mine))
+
+
+def portal_units(actor: Any) -> set[Any]:
+    """Units the member's children (``students.child.view``) or the member (``…view_own``) are
+    actively enrolled in: what a guardian or a student sees in timetables (Phase 7 M7)."""
+    mine = memberships(actor)
+    if not mine:
+        return set()
+    anywhere = ScopeTarget(require_tenant().id)
+    query = Q(pk__in=[])
+    if has_perm(actor, CHILD, target=anywhere, use_cache=False):
+        query |= Q(student__guardian_links__guardian__membership_id__in=mine)
+    if has_perm(actor, OWN, target=anywhere, use_cache=False):
+        query |= Q(student__membership_id__in=mine)
+    return set(
+        Enrollment.objects.filter(query, status=Enrollment.Status.ACTIVE).values_list(
+            "unit_id", flat=True
+        )
+    )
