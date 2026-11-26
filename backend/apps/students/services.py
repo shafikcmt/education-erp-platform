@@ -51,6 +51,10 @@ def _authorise(actor: User, code: str, institution_id: Any) -> None:
     require_perm(actor, code, target=target_of(institution_id), use_cache=False)
 
 
+def require_manage(actor: User, institution_id: Any) -> None:
+    _authorise(actor, MANAGE, institution_id)
+
+
 def _audit(action: str, actor: Any, request: HttpRequest | None, obj: Any, **metadata: Any) -> None:
     record(
         action,
@@ -116,22 +120,39 @@ def create_student(
     if not core.get("name"):
         raise ValidationError({"name": "The student's name is required."})
     custom = validate_values(STUDENT_ENTITY, extra or {})
+    student = insert_student(
+        institution=inst, core=core, custom=custom, number=number,
+        source_application_id=source_application_id, created_by=actor.pk,
+    )  # fmt: skip
+    _audit("students.student.created", actor, request, student, ref=student.number)
+    return student
+
+
+def insert_student(
+    *,
+    institution: Any,
+    core: dict[str, Any],
+    custom: dict[str, Any],
+    number: str = "",
+    source_application_id: Any = None,
+    created_by: Any = None,
+) -> Student:
+    """Insert a validated student (no permission check: callers authorise; the conversion of an
+    accepted application is authorised by the admission decision)."""
     _check_student_limit()
     number = number.strip()
     if number and (len(number) > 64 or not re.match(r"^[\w./-]+$", number)):
         raise ValidationError({"number": "Use letters, digits and . / - _ (at most 64)."})
-    if number and Student.objects.filter(institution=inst, number=number).exists():
+    if number and Student.objects.filter(institution=institution, number=number).exists():
         raise ValidationError({"number": "This number is already used."})
-    student = Student.objects.create(
-        institution=inst,
-        number=number or _next_number(inst),
+    return Student.objects.create(
+        institution=institution,
+        number=number or _next_number(institution),
         extra=custom,
         source_application_id=source_application_id,
-        created_by=actor.pk,
+        created_by=created_by,
         **core,
     )
-    _audit("students.student.created", actor, request, student, ref=student.number)
-    return student
 
 
 @transaction.atomic
@@ -201,26 +222,52 @@ def link_guardian(
         raise ValidationError({"relation": "Choose a relation from the list."})
     if guardian is None:
         core = _person(values or {}, GUARDIAN_FIELDS)
-        if not core.get("phone") and not core.get("email"):
-            raise ValidationError({"phone": "A phone number or an email address is needed."})
-        guardian = match_guardian(phone=core.get("phone", ""), email=core.get("email", ""))
-        if guardian is None:
-            if not core.get("name"):
-                raise ValidationError({"name": "The guardian's name is required."})
-            guardian = Guardian.objects.create(
-                extra=validate_values(GUARDIAN_ENTITY, extra or {}), created_by=actor.pk, **core
-            )
+        guardian, created = find_or_create_guardian(
+            core, validate_values(GUARDIAN_ENTITY, extra or {}), created_by=actor.pk
+        )
+        if created:
             _audit("students.guardian.created", actor, request, guardian)
+    link = attach_guardian(
+        student, guardian, relation=relation, is_primary=is_primary, can_pickup=can_pickup,
+        receives_notices=receives_notices, created_by=actor.pk,
+    )  # fmt: skip
+    _audit("students.guardian.linked", actor, request, student, relation=relation)
+    return link
+
+
+def find_or_create_guardian(
+    core: dict[str, Any], custom: dict[str, Any], *, created_by: Any = None
+) -> tuple[Guardian, bool]:
+    """The tenant's guardian with the same email or phone, or a new one (validated values)."""
+    if not core.get("phone") and not core.get("email"):
+        raise ValidationError({"phone": "A phone number or an email address is needed."})
+    guardian = match_guardian(phone=core.get("phone", ""), email=core.get("email", ""))
+    if guardian is not None:
+        return guardian, False
+    if not core.get("name"):
+        raise ValidationError({"name": "The guardian's name is required."})
+    return Guardian.objects.create(extra=custom, created_by=created_by, **core), True
+
+
+def attach_guardian(
+    student: Student,
+    guardian: Guardian,
+    *,
+    relation: str,
+    is_primary: bool = False,
+    can_pickup: bool = True,
+    receives_notices: bool = True,
+    created_by: Any = None,
+) -> StudentGuardian:
+    """Link (no permission check: callers authorise). One primary guardian per student."""
     if StudentGuardian.objects.filter(student=student, guardian=guardian).exists():
         raise ValidationError({"guardian": "This guardian is already linked."})
     if is_primary:
         StudentGuardian.objects.filter(student=student, is_primary=True).update(is_primary=False)
-    link = StudentGuardian.objects.create(
+    return StudentGuardian.objects.create(
         student=student, guardian=guardian, relation=relation, is_primary=is_primary,
-        can_pickup=can_pickup, receives_notices=receives_notices, created_by=actor.pk,
+        can_pickup=can_pickup, receives_notices=receives_notices, created_by=created_by,
     )  # fmt: skip
-    _audit("students.guardian.linked", actor, request, student, relation=relation)
-    return link
 
 
 @transaction.atomic
@@ -317,6 +364,25 @@ def enroll(
 ) -> Enrollment:
     student = Student.objects.select_for_update().get(pk=student.pk)
     _authorise(actor, MANAGE, student.institution_id)
+    row = insert_enrollment(
+        student, year=year, unit=unit, roll_number=roll_number, start_date=start_date,
+        created_by=actor.pk,
+    )  # fmt: skip
+    _audit("students.enrollment.created", actor, request, row)
+    return row
+
+
+def insert_enrollment(
+    student: Student,
+    *,
+    year: Any,
+    unit: Any,
+    roll_number: str = "",
+    start_date: dt.date | None = None,
+    created_by: Any = None,
+) -> Enrollment:
+    """Validate and insert an enrollment of a locked student (no permission check: callers
+    authorise)."""
     if student.status != Student.Status.ACTIVE:
         raise ValidationError({"student": "Only active students are enrolled."})
     year_row = _open_year(year, student.institution_id)
@@ -335,11 +401,10 @@ def enroll(
         with transaction.atomic():
             row = Enrollment.objects.create(
                 institution_id=student.institution_id, student=student, year=year_row,
-                unit=unit_row, roll_number=roll_number, start_date=start, created_by=actor.pk,
+                unit=unit_row, roll_number=roll_number, start_date=start, created_by=created_by,
             )  # fmt: skip
     except IntegrityError:
         raise ValidationError(
             {"roll_number": "This roll number is already used in the unit."}
         ) from None
-    _audit("students.enrollment.created", actor, request, row)
     return row

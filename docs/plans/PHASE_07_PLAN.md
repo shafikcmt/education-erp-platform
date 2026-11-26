@@ -283,9 +283,22 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E19 | **API** (module `staff`, tenant host): `staff/` list (filters: institution, department, designation, status, name or number) and create; `staff/{id}/` detail (with the units the member advises and why it is visible: `staff` or `self`) and change; `staff/departments/` and `staff/designations/` per institution (list, create, change, archive); `staff/advisors/` per institution and year (list, assign) and `staff/advisors/{id}/` (remove). OpenAPI enum overrides for the staff status and the department kind |
 | E20 | **Shared person validation:** the validation of a person's core values (name, names per language, email, phone, dates, gender) moved from `students.services` to `core.people`, so students, guardians and staff share one implementation (no behaviour change; the students tests are unchanged) |
 
+### 16.4 M4 — admission → student (2026-11-26, branch `feat/phase-07-m4`)
+
+| # | Note |
+|---|---|
+| E21 | **Conversion hook:** `students.conversion.on_application_accepted` is registered in `ADMISSIONS_ACCEPTED_HANDLERS`. After the acceptance commits it queues the tenant task `students.convert_application` (module `students`: refused for tenants without it, so their admissions work exactly as before; tested). `students` reads the application through the new `admissions.selectors.accepted_application`, not admissions tables, and admissions never imports `students` |
+| E22 | **What is created:** the student (name, email, phone, date of birth; a value that doesn't validate for a student is left out rather than failing the conversion), custom values whose keys are student fields, the primary guardian from `guardian_name` / `guardian_phone` (matched by phone within the tenant first, ADR-074 Q8), and the enrollment **at once when the admitted unit has no units below it and the year is open**; otherwise staff choose the section later with the M2 enroll endpoint (ADR-074 Q4) |
+| E23 | **Numbers:** the Studio `student` sequence when defined; otherwise the application number when free; otherwise `APP-` and the end of the application id (unique) |
+| E24 | **Idempotent and safe:** one student per application (the M1 partial unique constraint, plus a concurrent-insert guard). The admission decision (`admissions.application.decide`) authorises the system conversion. A conversion that fails validation, for example the plan's student limit, is audited (`students.student.conversion_failed`, reason only) and leaves the application accepted |
+| E25 | **Staff retry:** `POST students/from-application/` (`students.student.manage` in the application's institution, exact scope re-checked in the service) runs the same conversion: 201 when it creates the student, 200 when it already exists, 400 with the reason when it still can't, 404 for an application that isn't accepted or is outside the member's institutions |
+| E26 | **Staff application entry:** the API already exists since Phase 6 M4 (`POST admissions/applications/`, `admissions.application.review`, validated by the cycle's form). No change was needed; the screen remains a UI gap for M9 |
+| E27 | **Internal service helpers:** `insert_student`, `find_or_create_guardian`, `attach_guardian` and `insert_enrollment` hold the validation and inserts without the permission check; the public services authorise and then call them, so the conversion reuses exactly the same rules |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
 - 2026-11-26 — §16.1 appended: M1 notes E1–E7.
 - 2026-11-26 — §16.2 appended: M2 notes E8–E12.
 - 2026-11-26 — §16.3 appended: M3 notes E13–E20.
+- 2026-11-26 — §16.4 appended: M4 notes E21–E27.

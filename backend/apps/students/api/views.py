@@ -279,3 +279,34 @@ class GuardianMergeView(StudentsBaseView):
                 actor=_actor(request), keep=keep, duplicate=duplicate, request=request._request
             )
         return Response(s.GuardianSerializer(row).data)
+
+
+class StudentFromApplicationView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.manage"})]
+
+    @extend_schema(
+        tags=TAGS,
+        summary="The student of an accepted application (created and enrolled if needed)",
+        request=s.FromApplicationSerializer,
+        responses={200: s.StudentDetailSerializer, 201: s.StudentDetailSerializer},
+    )
+    def post(self, request: Request) -> Response:
+        """Runs the conversion that acceptance queues (idempotent): for example after the
+        plan's student limit was raised. 404 unless the application is accepted and in an
+        institution where the member manages students."""
+        from apps.admissions.selectors import accepted_application
+        from apps.students.conversion import convert
+
+        v = _valid(s.FromApplicationSerializer, request.data)
+        data = accepted_application(v["application"])
+        if data is None:
+            raise NotFound()
+        visible_institution(_actor(request), "students.student.manage", data["institution_id"])
+        existed = Student.objects.filter(source_application_id=data["id"]).exists()
+        with service_errors():
+            row = convert(data["id"], actor=_actor(request), request=request._request,
+                          raise_errors=True)  # fmt: skip
+        if row is None:
+            raise NotFound()
+        code = status.HTTP_200_OK if existed else status.HTTP_201_CREATED
+        return Response(_detail(request, row), status=code)
