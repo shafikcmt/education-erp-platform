@@ -175,3 +175,12 @@ def delete_file(
         target_id=row.pk,
         metadata={"purpose": row.purpose},
     )
+
+
+def read_content(*, file: StoredFile) -> bytes:
+    """The content of a ready, not infected file (callers authorised the owning object; used by
+    tasks that process uploads server-side, such as imports)."""
+    if file.status != StoredFile.Status.READY or file.scan_state == StoredFile.Scan.INFECTED:
+        raise ValidationError({"file": "This file is not available."})
+    spec = _purpose(file.purpose)
+    return storage.read(file.key, spec.max_bytes)

@@ -306,6 +306,17 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E32 | **Printable documents (ADR-074 Q5):** two template kinds, `students.id_card` and `students.transfer_certificate` (HTML, sandboxed and autoescaped, ADR-056). Rendering needs `students.student.view` in the student's institution and a published template **of that kind** (another kind is refused). The API returns the HTML for the browser to print; server PDF arrives in Phase 9 |
 | E33 | **API:** `students/{id}/move/`, `…/withdraw/`, `…/transfer-certificates/` (list, issue), `…/transfer-certificates/{tc}/document/`, `…/id-card/`, `students/promotion/preview/` and `students/promotion/apply/` |
 
+### 16.6 M6 — bulk import (2026-11-26, branch `feat/phase-07-m6`)
+
+| # | Note |
+|---|---|
+| E34 | **Flow:** upload through `files` (new purpose `students.import`: CSV or XLSX, 5 MB, the uploader's own verified file), `POST imports/` with the institution, kind, column mapping (column → field, `extra.<key>` for custom fields) and options; a **dry run** is queued at once. The tenant task `students.run_import` reads the file in the task body (new bounded `files.storage.read` / `files.services.read_content`) and runs every row through the same services staff use, each in its own savepoint; the dry run rolls every row back (tested: nothing is written). `POST imports/{id}/apply/` runs it for real: each valid row is created, each failure is reported, nothing else is affected |
+| E35 | **Kinds** (setting `STUDENTS_IMPORT_KINDS`, loaded by path): `students` (core fields, custom fields, the primary guardian, and the enrollment by unit code in the job's academic year) and `staff` (profiles with department and designation by code, from `staff.imports`). Permissions: `students.student.import` (MFA and **step-up**, tested at the API) or `staff.profile.manage`, checked by the same permission class and again in the exact institution by the service. The import endpoints sit in the `students` module, so a tenant imports staff only with `students` entitled (recorded as a known limitation) |
+| E36 | **Limits and safety:** 5 000 rows and 60 columns; UTF-8 CSV; XLSX through `openpyxl` read-only, first sheet, refused when its uncompressed size exceeds 40 MB or 100× the file (zip bombs). Python 3.13's expat already limits entity expansion. Every rule, including `max_active_students`, is enforced row by row by the services. Custom values are converted to their field types (whole numbers, yes/no, `;`-separated choices) |
+| E37 | **Report:** one entry per row (line number, ok, errors by field, created id) in the job; `GET imports/{id}/report/` downloads it as CSV with formula-looking cells neutralised (`'=…`). Jobs are visible to their starter or to holders of the kind's permission in the institution (others: 404) |
+| E38 | **P28 (catalogue, mechanism I):** `students.import_housekeeping` (daily) fans out `students.purge_imports` per active or suspended tenant: jobs older than 30 days are deleted (reports hold personal data) and their files marked deleted (P27 removes the objects) |
+| E39 | **New dependency `openpyxl` 3.1.5** (MIT, with `et-xmlfile`), approved by ADR-074 Q3; mypy treats it as untyped. The XLSX content type joins the files safe-type list (always served as an attachment) |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -314,3 +325,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.3 appended: M3 notes E13–E20.
 - 2026-11-26 — §16.4 appended: M4 notes E21–E27.
 - 2026-11-26 — §16.5 appended: M5 notes E28–E33.
+- 2026-11-26 — §16.6 appended: M6 notes E34–E39.

@@ -89,3 +89,16 @@ def head(key: str) -> dict[str, Any] | None:
 def delete(key: str) -> None:
     assert_no_open_tenant_transaction("Storage access")
     _internal().delete_object(Bucket=_options()["bucket_name"], Key=key)
+
+
+def read(key: str, max_bytes: int) -> bytes:
+    """The object's content, at most ``max_bytes`` (Phase 7 M6: server-side imports). Only in a
+    task body or outside tenant transactions, like every storage call."""
+    assert_no_open_tenant_transaction("Storage access")
+    response = _internal().get_object(
+        Bucket=_options()["bucket_name"], Key=key, Range=f"bytes=0-{max_bytes}"
+    )
+    body: bytes = response["Body"].read(max_bytes + 1)
+    if len(body) > max_bytes:
+        raise ValueError("The object is larger than allowed.")
+    return body

@@ -9,6 +9,7 @@ from rest_framework import serializers
 from apps.students.models import (
     Enrollment,
     Guardian,
+    ImportJob,
     Student,
     StudentGuardian,
     TransferCertificate,
@@ -173,3 +174,37 @@ class PromotionResultSerializer(serializers.Serializer[Any]):
 
 class DocumentSerializer(serializers.Serializer[Any]):
     html = serializers.CharField()
+
+
+# --------------------------------------------------------------------------- imports (M6)
+class ImportCreateSerializer(serializers.Serializer[Any]):
+    institution = serializers.UUIDField()
+    kind = serializers.CharField(max_length=32)
+    file = serializers.UUIDField()
+    mapping = serializers.DictField(child=serializers.CharField(max_length=80))
+    options = serializers.DictField(required=False, default=dict)
+
+
+class ImportRowSerializer(serializers.Serializer[Any]):
+    row = serializers.IntegerField()
+    ok = serializers.BooleanField()
+    errors = serializers.DictField(child=serializers.CharField())  # type: ignore[assignment]  # field name shadows a DRF attribute
+    id = serializers.CharField(allow_null=True)
+
+
+class ImportJobSerializer(serializers.ModelSerializer[ImportJob]):
+    class Meta:
+        model = ImportJob
+        fields = [
+            "id", "institution", "kind", "file_id", "mapping", "options", "status", "total_rows",
+            "ok_rows", "error_rows", "error", "created_at", "finished_at",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+
+class ImportJobDetailSerializer(ImportJobSerializer):
+    report = ImportRowSerializer(many=True, read_only=True)
+
+    class Meta(ImportJobSerializer.Meta):
+        fields = [*ImportJobSerializer.Meta.fields, "report"]
+        read_only_fields = fields

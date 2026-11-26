@@ -16,7 +16,17 @@ from django.apps import apps
 # Content types a purpose may allow. Anything that a browser could render as active content
 # (HTML, SVG, scripts) is never storable.
 SAFE_TYPES = frozenset(
-    {"application/pdf", "image/jpeg", "image/png", "image/webp", "text/csv", "text/plain"}
+    {
+        "application/pdf",
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "text/csv",
+        "text/plain",
+        # Phase 7 M6 (ADR-072): spreadsheets for bulk import. Never rendered by browsers (always
+        # served as attachments); parsed server-side read-only with size limits.
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
 )
 MAX_BYTES = 50 * 1024 * 1024
 

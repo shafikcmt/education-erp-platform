@@ -1722,6 +1722,95 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/imports/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My imports (newest first)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["imports_list"];
+        put?: never;
+        /**
+         * Start an import (queues the dry run)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["imports_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * An import with its row report
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["imports_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/apply/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply a validated import (each row atomic)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["imports_apply_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/imports/{job_id}/report/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The row report as CSV (formulas neutralised)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["imports_report_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/institutions/": {
         parameters: {
             query?: never;
@@ -4900,6 +4989,77 @@ export interface components {
             keep: string;
             /** Format: uuid */
             duplicate: string;
+        };
+        ImportCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            kind: string;
+            /** Format: uuid */
+            file: string;
+            mapping: {
+                [key: string]: string;
+            };
+            options?: {
+                [key: string]: unknown;
+            };
+        };
+        ImportJob: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly kind: string;
+            /** Format: uuid */
+            readonly file_id: string;
+            readonly mapping: unknown;
+            readonly options: unknown;
+            readonly status: components["schemas"]["ImportJobStatusEnum"];
+            readonly total_rows: number;
+            readonly ok_rows: number;
+            readonly error_rows: number;
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+        };
+        ImportJobDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly kind: string;
+            /** Format: uuid */
+            readonly file_id: string;
+            readonly mapping: unknown;
+            readonly options: unknown;
+            readonly status: components["schemas"]["ImportJobStatusEnum"];
+            readonly total_rows: number;
+            readonly ok_rows: number;
+            readonly error_rows: number;
+            readonly error: string;
+            /** Format: date-time */
+            readonly created_at: string;
+            /** Format: date-time */
+            readonly finished_at: string | null;
+            readonly report: components["schemas"]["ImportRow"][];
+        };
+        /**
+         * @description * `validating` - Validating
+         *     * `validated` - Validated
+         *     * `applying` - Applying
+         *     * `applied` - Applied
+         *     * `failed` - Failed
+         * @enum {string}
+         */
+        ImportJobStatusEnum: "validating" | "validated" | "applying" | "applied" | "failed";
+        ImportRow: {
+            row: number;
+            ok: boolean;
+            errors: {
+                [key: string]: string;
+            };
+            id: string | null;
         };
         Inbox: {
             unread: number;
@@ -8771,6 +8931,111 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Guardian"];
+                };
+            };
+        };
+    };
+    imports_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJob"][];
+                };
+            };
+        };
+    };
+    imports_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ImportCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJob"];
+                };
+            };
+        };
+    };
+    imports_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJobDetail"];
+                };
+            };
+        };
+    };
+    imports_apply_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportJob"];
+                };
+            };
+        };
+    };
+    imports_report_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
                 };
             };
         };

@@ -12,6 +12,8 @@ from typing import Any
 
 from django.core.exceptions import ValidationError
 from django.db.models import Q
+from django.http import HttpResponse
+from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import status
 from rest_framework.exceptions import NotFound
@@ -22,9 +24,15 @@ from rest_framework.response import Response
 from apps.identity.api.utils import service_errors
 from apps.identity.models import User
 from apps.rbac.engine import ScopeTarget
-from apps.students import lifecycle, selectors, services
+from apps.students import imports, lifecycle, selectors, services
 from apps.students.api import serializers as s
-from apps.students.models import Guardian, Student, StudentGuardian, TransferCertificate
+from apps.students.models import (
+    Guardian,
+    ImportJob,
+    Student,
+    StudentGuardian,
+    TransferCertificate,
+)
 from apps.tenancy.api.permissions import (
     HasTenantAnyPermission,
     HasTenantPermission,
@@ -463,3 +471,102 @@ class PromotionApplyView(StudentsBaseView):
                 actor=_actor(request), decisions=decisions, request=request._request, **v
             )
         return Response(counts)
+
+
+# --------------------------------------------------------------------------- imports (M6)
+IMPORT_CODES = ("students.student.import", "staff.profile.manage")
+
+
+def _require_kind_permission(view: Any, request: Request, kind_code: str) -> str:
+    """The kind's permission through the same class as everywhere else (incl. MFA and the
+    step-up the code requires), held in some scope of the tenant; services re-check the exact
+    institution."""
+    from rest_framework.exceptions import PermissionDenied as Forbidden
+
+    try:
+        code = imports.kind(kind_code).permission
+    except ValidationError:
+        raise DRFValidationError({"kind": "Unknown import kind."}) from None
+    check = HasTenantPermission(code)()
+    if not check.has_permission(request, view):
+        raise Forbidden(getattr(check, "message", None))
+    return code
+
+
+def _job(request: Request, job_id: str) -> ImportJob:
+    """The job when the member started it, or holds its kind's permission in its institution."""
+    try:
+        row = ImportJob.objects.filter(pk=job_id).first()
+    except (ValueError, ValidationError):
+        row = None
+    if row is None:
+        raise NotFound()
+    actor = _actor(request)
+    if row.created_by != actor.pk:
+        visible_institution(actor, imports.kind(row.kind).permission, row.institution_id)
+    return row
+
+
+class ImportsView(StudentsBaseView):
+    permission_classes = [HasTenantAnyPermission(*IMPORT_CODES)]
+
+    @extend_schema(
+        tags=TAGS, summary="My imports (newest first)", responses=s.ImportJobSerializer(many=True)
+    )
+    def get(self, request: Request) -> Response:
+        rows = ImportJob.objects.filter(created_by=_actor(request).pk).order_by("-created_at")
+        return Response(s.ImportJobSerializer(rows[:100], many=True).data)
+
+    @extend_schema(
+        tags=TAGS, summary="Start an import (queues the dry run)",
+        request=s.ImportCreateSerializer, responses={201: s.ImportJobSerializer},
+    )  # fmt: skip
+    def post(self, request: Request) -> Response:
+        v = _valid(s.ImportCreateSerializer, request.data)
+        code = _require_kind_permission(self, request, v["kind"])
+        inst = visible_institution(_actor(request), code, v["institution"])
+        with service_errors():
+            row = imports.start(
+                actor=_actor(request), institution=inst, kind_code=v["kind"], file_id=v["file"],
+                mapping=v["mapping"], options=v["options"], request=request._request,
+            )  # fmt: skip
+        return Response(s.ImportJobSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class ImportDetailView(StudentsBaseView):
+    permission_classes = [HasTenantAnyPermission(*IMPORT_CODES)]
+
+    @extend_schema(
+        tags=TAGS, summary="An import with its row report", responses=s.ImportJobDetailSerializer
+    )
+    def get(self, request: Request, job_id: str) -> Response:
+        return Response(s.ImportJobDetailSerializer(_job(request, job_id)).data)
+
+
+class ImportApplyView(StudentsBaseView):
+    permission_classes = [HasTenantAnyPermission(*IMPORT_CODES)]
+
+    @extend_schema(
+        tags=TAGS, summary="Apply a validated import (each row atomic)",
+        request=None, responses=s.ImportJobSerializer,
+    )  # fmt: skip
+    def post(self, request: Request, job_id: str) -> Response:
+        row = _job(request, job_id)
+        _require_kind_permission(self, request, row.kind)
+        with service_errors():
+            row = imports.apply(actor=_actor(request), job=row, request=request._request)
+        return Response(s.ImportJobSerializer(row).data)
+
+
+class ImportReportView(StudentsBaseView):
+    permission_classes = [HasTenantAnyPermission(*IMPORT_CODES)]
+
+    @extend_schema(
+        tags=TAGS, summary="The row report as CSV (formulas neutralised)",
+        responses={(200, "text/csv"): OpenApiTypes.STR},
+    )  # fmt: skip
+    def get(self, request: Request, job_id: str) -> HttpResponse:
+        row = _job(request, job_id)
+        response = HttpResponse(imports.report_csv(row), content_type="text/csv; charset=utf-8")
+        response["Content-Disposition"] = f'attachment; filename="import-{row.pk}.csv"'
+        return response

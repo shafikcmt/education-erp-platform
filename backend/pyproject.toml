@@ -25,6 +25,7 @@ dependencies = [
     "jsonschema>=4.23,<5",                # config/custom-field validation (ADR-057; was transitive)
     "pyyaml>=6.0.2,<7",                   # preset files (ADR-058; was transitive)
     "jinja2>=3.1.6,<4",                   # sandboxed Studio templates (ADR-056, owner-approved)
+    "openpyxl>=3.1.5,<3.2",
 ]
 
 [dependency-groups]
@@ -79,7 +80,7 @@ plugins = ["mypy_django_plugin.main", "mypy_drf_plugin.main"]
 exclude = ["migrations/"]
 
 [[tool.mypy.overrides]]
-module = ["environ.*", "storages.*", "importlinter.*"]
+module = ["environ.*", "storages.*", "importlinter.*", "openpyxl.*"]
 ignore_missing_imports = true
 
 # Tests are type-checked, but test functions/fixtures need not be fully annotated and DB

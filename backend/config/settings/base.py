@@ -279,6 +279,11 @@ STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
 # Phase 7 (ADR-073): where "the students I teach or advise" come from. Each entry is a function
 # ``(actor, memberships) -> {institution_id: {unit_id, ...}}``; ``staff`` adds class-teacher
 # advisors (M3). Loaded by path, so ``students`` never imports the modules that extend it.
+# Phase 7 M6 (ADR-072): import kinds, loaded by path (students never imports staff).
+STUDENTS_IMPORT_KINDS: dict[str, str] = {
+    "students": "apps.students.imports.StudentRows",
+    "staff": "apps.staff.imports.StaffRows",
+}
 STUDENTS_ASSIGNED_UNITS: list[str] = [
     "apps.students.selectors.taught_units",
     "apps.staff.selectors.advised_units",
@@ -384,6 +389,7 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "EnrollmentStatusEnum": "apps.students.models.Enrollment.Status",
         "StaffStatusEnum": "apps.staff.models.StaffProfile.Status",
         "DepartmentKindEnum": "apps.staff.models.Department.Kind",
+        "ImportJobStatusEnum": "apps.students.models.ImportJob.Status",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)
@@ -444,6 +450,12 @@ CELERY_BEAT_SCHEDULE = {
     # Phase 5 M8 (P25): expire unverified sign-ups, delete closed ones after the retention.
     "tenancy-purge-signups": {
         "task": "tenancy.purge_signups",
+        "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 7 M6 (P28): delete import jobs and their files after the retention period.
+    "students-import-housekeeping": {
+        "task": "students.import_housekeeping",
         "schedule": 24 * 60 * 60.0,
         "options": {"queue": "default"},
     },

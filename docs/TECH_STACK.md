@@ -40,6 +40,7 @@
 | Settings/env | `django-environ` (or `pydantic-settings`) | Pick one in Phase 1 |
 | Storage | `django-storages[s3]` + `boto3` | Any S3-compatible endpoint |
 | Logging | `structlog` | JSON logs |
+| Spreadsheet import | `openpyxl` 3.1.x (MIT; pulls `et-xmlfile`) | ADR-072 / ADR-074 Q3: XLSX bulk import, read-only, with row, size and zip-ratio limits (Phase 7 M6) |
 | Error tracking | `sentry-sdk` | |
 | Password hashing | `argon2-cffi` | Django Argon2 hasher |
 | MFA | `django-otp` (TOTP) / WebAuthn later | Decide in Phase 2 |
@@ -110,4 +111,5 @@ Exact Python and JS versions are locked in `backend/uv.lock` and `pnpm-lock.yaml
 - 2026-11-05 — Phase 2 owner-approved libraries recorded with version ranges (installed at implementation).
 - 2026-11-06 — `@hookform/resolvers` 7.0.x approved and recorded (ADR-039).
 - 2026-11-06 — Phase 2 libraries installed at the approved pins. `server-only` and PyYAML were deliberately not added (not approved).
+- 2026-11-26 — Phase 7 M6: `openpyxl` 3.1.x added for XLSX import (approved in ADR-074 Q3).
 - 2026-11-22 — Phase 5: Jinja2 3.1.x (sandboxed Studio templates, ADR-056) added; `jsonschema` and `pyyaml` promoted from transitive to direct dependencies (ADR-057/058).
