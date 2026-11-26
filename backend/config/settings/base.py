@@ -259,8 +259,11 @@ TENANCY_CUSTOM_FIELDS = "apps.customization.fields"
 # undoes the publish (customization never imports the modules that register here).
 CUSTOMIZATION_PUBLISH_CHECKS = ["apps.academics.hooks.check_structure_levels"]
 # Phase 6 M4 (ADR-066 Q3): called after commit with (tenant_id, application_id) when an offer is
-# accepted. Phase 7 registers student creation here; nothing is registered yet.
-ADMISSIONS_ACCEPTED_HANDLERS: list[str] = []
+# accepted (``students`` registers student creation; admissions never imports it).
+ADMISSIONS_ACCEPTED_HANDLERS: list[str] = [
+    # Phase 7 M4: the accepted applicant becomes a student (and is enrolled when possible).
+    "apps.students.conversion.on_application_accepted",
+]
 STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     "max_custom_fields_per_entity": 50,
     "max_forms": 20,

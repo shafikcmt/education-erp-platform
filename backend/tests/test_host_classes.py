@@ -70,6 +70,7 @@ TENANT_HOST_ROUTES = {
     "api/v1/admissions/applications/<str:application_id>/offer-response/": False,
     # Phase 7 M2: students and guardians (members only; relationship scopes)
     "api/v1/students/": False,
+    "api/v1/students/from-application/": False,
     "api/v1/students/<str:student_id>/": False,
     "api/v1/students/<str:student_id>/guardians/": False,
     "api/v1/students/<str:student_id>/guardians/<str:link_id>/": False,

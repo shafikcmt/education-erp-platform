@@ -105,3 +105,7 @@ class EnrollmentCreateSerializer(serializers.Serializer[Any]):
 class GuardianMergeSerializer(serializers.Serializer[Any]):
     keep = serializers.UUIDField()
     duplicate = serializers.UUIDField()
+
+
+class FromApplicationSerializer(serializers.Serializer[Any]):
+    application = serializers.UUIDField()

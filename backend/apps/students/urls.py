@@ -8,6 +8,11 @@ app_name = "students"
 
 urlpatterns = [
     path("students/", v.StudentsView.as_view(), name="students"),
+    path(
+        "students/from-application/",
+        v.StudentFromApplicationView.as_view(),
+        name="student-from-application",
+    ),
     path("students/<str:student_id>/", v.StudentDetailView.as_view(), name="student"),
     path(
         "students/<str:student_id>/guardians/",

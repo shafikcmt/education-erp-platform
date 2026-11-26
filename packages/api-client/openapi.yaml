@@ -5626,6 +5626,37 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/students/from-application/:
+    post:
+      operationId: students_from_application_create
+      description: |-
+        Runs the conversion that acceptance queues (idempotent): for example after the
+        plan's student limit was raised. 404 unless the application is accepted and in an
+        institution where the member manages students.
+      summary: The student of an accepted application (created and enrolled if needed)
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FromApplicationRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
   /api/v1/support-sessions/:
     get:
       operationId: support_sessions_list
@@ -7319,6 +7350,14 @@ components:
             type: string
       required:
       - sections
+    FromApplicationRequest:
+      type: object
+      properties:
+        application:
+          type: string
+          format: uuid
+      required:
+      - application
     GrantRequest:
       type: object
       properties:

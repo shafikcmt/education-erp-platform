@@ -3894,6 +3894,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students/from-application/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The student of an accepted application (created and enrolled if needed)
+         * @description Runs the conversion that acceptance queues (idempotent): for example after the
+         *     plan's student limit was raised. 404 unless the application is accepted and in an
+         *     institution where the member manages students.
+         */
+        post: operations["students_from_application_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/support-sessions/": {
         parameters: {
             query?: never;
@@ -4673,6 +4695,10 @@ export interface components {
         };
         FormVisibility: {
             sections: string[];
+        };
+        FromApplicationRequest: {
+            /** Format: uuid */
+            application: string;
         };
         GrantRequest: {
             /** Format: uuid */
@@ -11360,6 +11386,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    students_from_application_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FromApplicationRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
             };
         };
     };

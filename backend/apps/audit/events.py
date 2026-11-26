@@ -127,6 +127,8 @@ EVENTS: dict[str, frozenset[str]] = {
     "students.guardian.unlinked": frozenset(),
     "students.guardian.merged": frozenset(),
     "students.enrollment.created": frozenset(),
+    "students.student.converted": frozenset({"ref", "guardian", "enrolled"}),
+    "students.student.conversion_failed": frozenset({"reason"}),
     # staff (Phase 7 M3); names, phones and emails are never logged
     "staff.department.created": frozenset({"ref"}),
     "staff.department.updated": frozenset({"fields"}),
