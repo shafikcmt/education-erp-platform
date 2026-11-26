@@ -78,6 +78,13 @@ TENANT_HOST_ROUTES = {
     "api/v1/students/<str:student_id>/transfer-certificates/": False,
     "api/v1/students/<str:student_id>/transfer-certificates/<str:certificate_id>/document/": False,
     "api/v1/students/<str:student_id>/id-card/": False,
+    # Phase 7 M7: timetable (members only)
+    "api/v1/timetable/schedules/": False,
+    "api/v1/timetable/schedules/<str:schedule_id>/periods/": False,
+    "api/v1/timetable/rooms/": False,
+    "api/v1/timetable/slots/": False,
+    "api/v1/timetable/slots/<str:slot_id>/": False,
+    "api/v1/timetable/my/": False,
     "api/v1/imports/": False,
     "api/v1/imports/<str:job_id>/": False,
     "api/v1/imports/<str:job_id>/apply/": False,

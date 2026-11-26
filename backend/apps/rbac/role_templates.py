@@ -179,6 +179,9 @@ _OWNER_CODES = [
     "staff.profile.manage",
     "staff.profile.view_own",
     "staff.structure.manage",
+    # Phase 7 M7: timetable (ADR-071).
+    "timetable.timetable.view",
+    "timetable.timetable.manage",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -247,6 +250,9 @@ _INSTITUTION_ADMIN_CODES = [
     "staff.profile.manage",
     "staff.profile.view_own",
     "staff.structure.manage",
+    # Phase 7 M7: timetable (ADR-071).
+    "timetable.timetable.view",
+    "timetable.timetable.manage",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -270,6 +276,8 @@ _CAMPUS_ADMIN_CODES = [
     # Phase 7 M3: the campus's staff, and view_own so they can assign teachers, who hold it.
     "staff.profile.view",
     "staff.profile.view_own",
+    # Phase 7 M7: and so can assign teachers, who see timetables.
+    "timetable.timetable.view",
 ]
 TENANT_OWNER = "tenant_owner"
 
@@ -310,6 +318,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "academics.subject.manage",
             "academics.offering.view",
             "academics.offering.manage",
+            "timetable.timetable.view",
             "timetable.timetable.manage",
             # Phase 7 M1: students in scope, promotion.
             "students.student.view",
@@ -338,6 +347,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "students.student.view_assigned",
             # Phase 7 M3: their own staff profile.
             "staff.profile.view_own",
+            "timetable.timetable.view",  # Phase 7 M7
         ],
     ),
     _template(
@@ -352,6 +362,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "students.student.view_assigned",
             "students.guardian.view",
             "staff.profile.view_own",  # Phase 7 M3
+            "timetable.timetable.view",  # Phase 7 M7
         ],
     ),
     _template(
@@ -460,13 +471,13 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Student",
         "শিক্ষার্থী",
         "Own timetable, attendance, results, invoices and courses.",
-        ["students.profile.view_own", "examinations.result.view_own"],
+        ["students.profile.view_own", "examinations.result.view_own", "timetable.timetable.view"],
     ),
     _template(
         "guardian",
         "Parent / Guardian",
         "অভিভাবক",
         "Linked children: attendance, results, invoices and payments.",
-        ["students.child.view", "fees.invoice.pay"],
+        ["students.child.view", "fees.invoice.pay", "timetable.timetable.view"],
     ),
 ]

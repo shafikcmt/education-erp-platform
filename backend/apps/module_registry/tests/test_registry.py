@@ -38,7 +38,7 @@ def test_catalogue_covers_every_canonical_module_and_marks_installed_ones():
     assert installed == {
         "core", "identity", "rbac", "audit", "tenancy", "module_registry", "billing",
         "customization", "notifications_core", "academics", "files", "admissions", "students",
-        "staff",
+        "staff", "timetable",
     }  # fmt: skip
     assert all(not s.sellable for s in specs.values() if s.category == "platform")
     assert specs["hostel"].dependencies == ("students", "fees", "attendance")

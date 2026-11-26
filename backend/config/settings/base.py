@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "apps.admissions",
     "apps.students",
     "apps.staff",
+    "apps.timetable",
 ]
 
 MIDDLEWARE = [
@@ -284,6 +285,8 @@ STUDENTS_IMPORT_KINDS: dict[str, str] = {
     "students": "apps.students.imports.StudentRows",
     "staff": "apps.staff.imports.StaffRows",
 }
+# Phase 7 M7: units a portal member (guardian, student) sees in timetables, by path.
+TIMETABLE_PORTAL_UNITS: list[str] = ["apps.students.selectors.portal_units"]
 STUDENTS_ASSIGNED_UNITS: list[str] = [
     "apps.students.selectors.taught_units",
     "apps.staff.selectors.advised_units",

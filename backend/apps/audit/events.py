@@ -136,6 +136,12 @@ EVENTS: dict[str, frozenset[str]] = {
     "students.import.finished": frozenset({"dry_run", "ok", "failed"}),
     "students.student.converted": frozenset({"ref", "guardian", "enrolled"}),
     "students.student.conversion_failed": frozenset({"reason"}),
+    # timetable (Phase 7 M7)
+    "timetable.schedule.created": frozenset({"ref"}),
+    "timetable.period.created": frozenset(),
+    "timetable.room.created": frozenset({"ref"}),
+    "timetable.slot.created": frozenset({"weekday"}),
+    "timetable.slot.deleted": frozenset(),
     # staff (Phase 7 M3); names, phones and emails are never logged
     "staff.department.created": frozenset({"ref"}),
     "staff.department.updated": frozenset({"fields"}),
