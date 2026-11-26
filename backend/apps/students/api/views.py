@@ -22,9 +22,9 @@ from rest_framework.response import Response
 from apps.identity.api.utils import service_errors
 from apps.identity.models import User
 from apps.rbac.engine import ScopeTarget
-from apps.students import selectors, services
+from apps.students import lifecycle, selectors, services
 from apps.students.api import serializers as s
-from apps.students.models import Guardian, Student, StudentGuardian
+from apps.students.models import Guardian, Student, StudentGuardian, TransferCertificate
 from apps.tenancy.api.permissions import (
     HasTenantAnyPermission,
     HasTenantPermission,
@@ -310,3 +310,156 @@ class StudentFromApplicationView(StudentsBaseView):
             raise NotFound()
         code = status.HTTP_200_OK if existed else status.HTTP_201_CREATED
         return Response(_detail(request, row), status=code)
+
+
+# --------------------------------------------------------------------------- lifecycle (M5)
+DOCUMENT_PARAMS = [
+    OpenApiParameter("template", str, required=True, description="Published template key"),
+    OpenApiParameter("locale", str),
+]
+
+
+def _document_args(request: Request) -> tuple[str, str]:
+    template = (request.query_params.get("template") or "").strip()[:64]
+    if not template:
+        raise DRFValidationError({"template": "Choose a template."})
+    return template, (request.query_params.get("locale") or "en")[:16]
+
+
+class StudentMoveView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.manage"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Move a student to another unit within the year",
+        request=s.MoveSerializer, responses={201: s.EnrollmentSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, student_id: str) -> Response:
+        student = _student(request, student_id)
+        v = _valid(s.MoveSerializer, request.data)
+        with service_errors():
+            row = lifecycle.move(
+                actor=_actor(request), student=student, unit=v["unit"],
+                roll_number=v["roll_number"], request=request._request,
+            )  # fmt: skip
+        return Response(s.EnrollmentSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class StudentWithdrawView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.transfer"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Withdraw a student", request=s.WithdrawSerializer,
+        responses=s.StudentDetailSerializer,
+    )  # fmt: skip
+    def post(self, request: Request, student_id: str) -> Response:
+        student = _student(request, student_id)
+        v = _valid(s.WithdrawSerializer, request.data)
+        with service_errors():
+            row = lifecycle.withdraw(
+                actor=_actor(request), student=student, reason=v["reason"], on=v["on"],
+                request=request._request,
+            )  # fmt: skip
+        return Response(_detail(request, row))
+
+
+class StudentTransferCertificatesView(StudentsBaseView):
+    permission_classes = [
+        HasTenantPermission({"GET": "students.student.view", "POST": "students.student.transfer"})
+    ]
+
+    @extend_schema(
+        tags=TAGS, summary="Transfer certificates of a student",
+        responses=s.TransferCertificateSerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request, student_id: str) -> Response:
+        student = _student(request, student_id)
+        rows = TransferCertificate.objects.filter(student=student).order_by("-issued_on")
+        return Response(s.TransferCertificateSerializer(rows, many=True).data)
+
+    @extend_schema(
+        tags=TAGS, summary="Issue a transfer certificate (the student leaves)",
+        request=s.TransferCertificateCreateSerializer,
+        responses={201: s.TransferCertificateSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, student_id: str) -> Response:
+        student = _student(request, student_id)
+        v = _valid(s.TransferCertificateCreateSerializer, request.data)
+        with service_errors():
+            row = lifecycle.issue_transfer_certificate(
+                actor=_actor(request), student=student, reason=v["reason"],
+                destination=v["destination"], number=v["number"], on=v["on"],
+                request=request._request,
+            )  # fmt: skip
+        return Response(s.TransferCertificateSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class TransferCertificateDocumentView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"GET": "students.student.view"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Printable transfer certificate (HTML from a Studio template)",
+        parameters=DOCUMENT_PARAMS, responses=s.DocumentSerializer,
+    )  # fmt: skip
+    def get(self, request: Request, student_id: str, certificate_id: str) -> Response:
+        student = _student(request, student_id)
+        template, locale = _document_args(request)
+        try:
+            row = TransferCertificate.objects.filter(pk=certificate_id, student=student).first()
+        except (ValueError, ValidationError):
+            row = None
+        if row is None:
+            raise NotFound()
+        with service_errors():
+            html = lifecycle.transfer_certificate_document(
+                actor=_actor(request), certificate=row, template_key=template, locale=locale
+            )
+        return Response({"html": html})
+
+
+class StudentIdCardView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"GET": "students.student.view"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Printable ID card (HTML from a Studio template)",
+        parameters=DOCUMENT_PARAMS, responses=s.DocumentSerializer,
+    )  # fmt: skip
+    def get(self, request: Request, student_id: str) -> Response:
+        student = _student(request, student_id)
+        template, locale = _document_args(request)
+        with service_errors():
+            html = lifecycle.id_card(
+                actor=_actor(request), student=student, template_key=template, locale=locale
+            )
+        return Response({"html": html})
+
+
+class PromotionPreviewView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.promote"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Preview a promotion (suggestions; nothing changes)",
+        request=s.PromotionSerializer, responses=s.PromotionRowSerializer(many=True),
+    )  # fmt: skip
+    def post(self, request: Request) -> Response:
+        v = _valid(s.PromotionSerializer, request.data)
+        with service_errors():
+            rows = lifecycle.promotion_preview(actor=_actor(request), **v)
+        return Response(s.PromotionRowSerializer(rows, many=True).data)
+
+
+class PromotionApplyView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.promote"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Apply confirmed promotion decisions (one transaction)",
+        request=s.PromotionApplySerializer, responses=s.PromotionResultSerializer,
+    )  # fmt: skip
+    def post(self, request: Request) -> Response:
+        v = _valid(s.PromotionApplySerializer, request.data)
+        v.pop("rule_key", None)
+        decisions = {str(k): str(a) for k, a in v.pop("decisions").items()}
+        with service_errors():
+            counts = lifecycle.apply_promotion(
+                actor=_actor(request), decisions=decisions, request=request._request, **v
+            )
+        return Response(counts)

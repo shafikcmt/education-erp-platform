@@ -77,3 +77,47 @@ FILE_PURPOSES = {
         "applicant_visible": False,
     },
 }
+
+# Phase 7 M5 (ADR-074 Q5): printable HTML documents rendered from Studio templates (sandboxed,
+# ADR-056). Server PDF arrives in Phase 9.
+_STUDENT_VARIABLES = {
+    "institution": "Institution name",
+    "name": "Student name",
+    "number": "Student number",
+    "date_of_birth": "Date of birth",
+    "unit": "Current class or section",
+    "year": "Current academic year",
+    "issued_on": "Date of issue",
+}
+_STUDENT_SAMPLE = {
+    "institution": "Example Academy", "name": "A. Rahman", "number": "STU-0001",
+    "date_of_birth": "2015-02-01", "unit": "Six A", "year": "2027", "issued_on": "2027-06-30",
+}  # fmt: skip
+TEMPLATE_KINDS = {
+    "students.id_card": {
+        "format": "html",
+        "subject": False,
+        "max_output": 20_000,
+        "variables": {**_STUDENT_VARIABLES, "guardian_phone": "Primary guardian's phone"},
+        "sample": {**_STUDENT_SAMPLE, "guardian_phone": "01711000000"},
+    },
+    "students.transfer_certificate": {
+        "format": "html",
+        "subject": False,
+        "max_output": 50_000,
+        "variables": {
+            **_STUDENT_VARIABLES,
+            "certificate_number": "Transfer certificate number",
+            "reason": "Reason for leaving",
+            "destination": "Institution the student goes to",
+            "admitted_on": "Date of first enrollment",
+        },
+        "sample": {
+            **_STUDENT_SAMPLE,
+            "certificate_number": "TC-2027-0001",
+            "reason": "Family moved",
+            "destination": "City School",
+            "admitted_on": "2025-01-01",
+        },
+    },
+}

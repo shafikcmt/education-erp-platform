@@ -5626,6 +5626,194 @@ paths:
       responses:
         '204':
           description: No response body
+  /api/v1/students/{student_id}/id-card/:
+    get:
+      operationId: students_id_card_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Printable ID card (HTML from a Studio template)
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          type: string
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: template
+        schema:
+          type: string
+        description: Published template key
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+          description: ''
+  /api/v1/students/{student_id}/move/:
+    post:
+      operationId: students_move_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Move a student to another unit within the year
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MoveRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enrollment'
+          description: ''
+  /api/v1/students/{student_id}/transfer-certificates/:
+    get:
+      operationId: students_transfer_certificates_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Transfer certificates of a student
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TransferCertificate'
+          description: ''
+    post:
+      operationId: students_transfer_certificates_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Issue a transfer certificate (the student leaves)
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCertificateCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferCertificate'
+          description: ''
+  /api/v1/students/{student_id}/transfer-certificates/{certificate_id}/document/:
+    get:
+      operationId: students_transfer_certificates_document_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Printable transfer certificate (HTML from a Studio template)
+      parameters:
+      - in: path
+        name: certificate_id
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: locale
+        schema:
+          type: string
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: template
+        schema:
+          type: string
+        description: Published template key
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Document'
+          description: ''
+  /api/v1/students/{student_id}/withdraw/:
+    post:
+      operationId: students_withdraw_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Withdraw a student
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WithdrawRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
   /api/v1/students/from-application/:
     post:
       operationId: students_from_application_create
@@ -5656,6 +5844,56 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StudentDetail'
+          description: ''
+  /api/v1/students/promotion/apply/:
+    post:
+      operationId: students_promotion_apply_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Apply confirmed promotion decisions (one transaction)
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionApplyRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromotionResult'
+          description: ''
+  /api/v1/students/promotion/preview/:
+    post:
+      operationId: students_promotion_preview_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Preview a promotion (suggestions; nothing changes)
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromotionRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PromotionRow'
           description: ''
   /api/v1/support-sessions/:
     get:
@@ -6944,6 +7182,13 @@ components:
       - code
       - institution
       - name
+    Document:
+      type: object
+      properties:
+        html:
+          type: string
+      required:
+      - html
     DocumentConfirmRequest:
       type: object
       properties:
@@ -8186,6 +8431,18 @@ components:
       - enabled
       - reason
       - source
+    MoveRequest:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+        roll_number:
+          type: string
+          default: ''
+          maxLength: 16
+      required:
+      - unit
     Notification:
       type: object
       properties:
@@ -9183,6 +9440,103 @@ components:
       - amount
       - currency
       - interval
+    PromotionApplyRequest:
+      type: object
+      properties:
+        year_from:
+          type: string
+          format: uuid
+        unit_from:
+          type: string
+          format: uuid
+        year_to:
+          type: string
+          format: uuid
+        unit_to:
+          type: string
+          format: uuid
+          nullable: true
+        rule_key:
+          type: string
+          default: ''
+          maxLength: 64
+        decisions:
+          type: object
+          additionalProperties:
+            enum:
+            - promote
+            - repeat
+            - complete
+            type: string
+            description: |-
+              * `promote` - promote
+              * `repeat` - repeat
+              * `complete` - complete
+      required:
+      - decisions
+      - unit_from
+      - year_from
+      - year_to
+    PromotionRequest:
+      type: object
+      properties:
+        year_from:
+          type: string
+          format: uuid
+        unit_from:
+          type: string
+          format: uuid
+        year_to:
+          type: string
+          format: uuid
+        unit_to:
+          type: string
+          format: uuid
+          nullable: true
+        rule_key:
+          type: string
+          default: ''
+          maxLength: 64
+      required:
+      - unit_from
+      - year_from
+      - year_to
+    PromotionResult:
+      type: object
+      properties:
+        promote:
+          type: integer
+        repeat:
+          type: integer
+        complete:
+          type: integer
+      required:
+      - complete
+      - promote
+      - repeat
+    PromotionRow:
+      type: object
+      properties:
+        student:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        roll_number:
+          type: string
+        suggestion:
+          type: string
+        note:
+          type: string
+      required:
+      - name
+      - note
+      - number
+      - roll_number
+      - student
+      - suggestion
     ProvisionRequest:
       type: object
       properties:
@@ -11391,6 +11745,58 @@ components:
           maxLength: 256
       required:
       - token
+    TransferCertificate:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        student:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        destination:
+          type: string
+          readOnly: true
+        issued_on:
+          type: string
+          format: date
+          readOnly: true
+      required:
+      - destination
+      - id
+      - issued_on
+      - number
+      - reason
+      - student
+    TransferCertificateCreateRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        'on':
+          type: string
+          format: date
+          nullable: true
+        destination:
+          type: string
+          default: ''
+          maxLength: 200
+        number:
+          type: string
+          default: ''
+          maxLength: 64
+      required:
+      - reason
     TrialRequest:
       type: object
       properties:
@@ -11552,6 +11958,19 @@ components:
       - fields
       - file
       - url
+    WithdrawRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+        'on':
+          type: string
+          format: date
+          nullable: true
+      required:
+      - reason
     WorkflowDraftRequest:
       type: object
       properties:

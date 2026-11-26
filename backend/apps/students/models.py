@@ -179,3 +179,26 @@ class Enrollment(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"{self.student_id}@{self.unit_id}"
+
+
+class TransferCertificate(TenantScopedModel):
+    """A transfer certificate issued when a student leaves (Phase 7 M5). The printable
+    document is rendered from a Studio template on demand (ADR-056, ADR-074 Q5)."""
+
+    institution = _fk("tenancy.Institution")
+    student = _fk("students.Student", related_name="transfer_certificates")
+    number = models.CharField(max_length=64)
+    reason = models.CharField(max_length=300)
+    destination = models.CharField(max_length=200, blank=True)
+    issued_on = models.DateField()
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "students_transfercertificate"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "institution", "number"], name="students_tc_number_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return self.number

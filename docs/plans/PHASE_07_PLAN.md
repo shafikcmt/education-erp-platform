@@ -295,6 +295,17 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E26 | **Staff application entry:** the API already exists since Phase 6 M4 (`POST admissions/applications/`, `admissions.application.review`, validated by the cycle's form). No change was needed; the screen remains a UI gap for M9 |
 | E27 | **Internal service helpers:** `insert_student`, `find_or_create_guardian`, `attach_guardian` and `insert_enrollment` hold the validation and inserts without the permission check; the public services authorise and then call them, so the conversion reuses exactly the same rules |
 
+### 16.5 M5 — lifecycle (2026-11-26, branch `feat/phase-07-m5`)
+
+| # | Note |
+|---|---|
+| E28 | **Move within the year** (`students.student.manage`): the active enrollment ends as `transferred` and a new one starts in another leaf unit of the same year (history kept) |
+| E29 | **Withdraw** and **transfer certificate** (`students.student.transfer`): only active students; active enrollments end; the student becomes `withdrawn` or `transferred`. New table `students_transfercertificate` (number unique per institution, reason, destination, date; standard RLS, composite keys, `students.0003`/`0004`). Numbers come from the Studio sequence `transfer_certificate`, or staff give one. Free-text reasons never go into the audit log |
+| E30 | **Promotion** (`students.student.promote`; the API needs a fresh step-up, tested): a preview lists the active enrollments of a source unit and year with a suggestion. The published `academics.promotion` rule, when named, suggests promote (true) or repeat (false) from `student.*` (core fields and custom values) and `today`; a failing rule suggests repeat with a note. Without a next unit every suggestion is *complete* (the final level). Staff send their decisions; applying is **one transaction**: any invalid decision rolls back everything (tested). Promote and repeat start the next year's enrollment (target unit or the same unit); the old one ends as promoted or repeated |
+| E31 | **Alumni:** completing the final level makes the student `alumni` (ADR-068) |
+| E32 | **Printable documents (ADR-074 Q5):** two template kinds, `students.id_card` and `students.transfer_certificate` (HTML, sandboxed and autoescaped, ADR-056). Rendering needs `students.student.view` in the student's institution and a published template **of that kind** (another kind is refused). The API returns the HTML for the browser to print; server PDF arrives in Phase 9 |
+| E33 | **API:** `students/{id}/move/`, `…/withdraw/`, `…/transfer-certificates/` (list, issue), `…/transfer-certificates/{tc}/document/`, `…/id-card/`, `students/promotion/preview/` and `students/promotion/apply/` |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -302,3 +313,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.2 appended: M2 notes E8–E12.
 - 2026-11-26 — §16.3 appended: M3 notes E13–E20.
 - 2026-11-26 — §16.4 appended: M4 notes E21–E27.
+- 2026-11-26 — §16.5 appended: M5 notes E28–E33.

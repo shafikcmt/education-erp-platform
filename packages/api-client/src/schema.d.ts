@@ -3894,6 +3894,116 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students/{student_id}/id-card/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Printable ID card (HTML from a Studio template)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["students_id_card_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/move/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Move a student to another unit within the year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_move_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/transfer-certificates/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Transfer certificates of a student
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["students_transfer_certificates_list"];
+        put?: never;
+        /**
+         * Issue a transfer certificate (the student leaves)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_transfer_certificates_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/transfer-certificates/{certificate_id}/document/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Printable transfer certificate (HTML from a Studio template)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["students_transfer_certificates_document_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/withdraw/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw a student
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_withdraw_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/students/from-application/": {
         parameters: {
             query?: never;
@@ -3910,6 +4020,48 @@ export interface paths {
          *     institution where the member manages students.
          */
         post: operations["students_from_application_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/promotion/apply/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apply confirmed promotion decisions (one transaction)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_promotion_apply_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/promotion/preview/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Preview a promotion (suggestions; nothing changes)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_promotion_preview_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4529,6 +4681,9 @@ export interface components {
                 [key: string]: string;
             };
         };
+        Document: {
+            html: string;
+        };
         DocumentConfirmRequest: {
             token: string;
             /** Format: uuid */
@@ -5031,6 +5186,12 @@ export interface components {
             enabled: boolean;
             reason: string;
         };
+        MoveRequest: {
+            /** Format: uuid */
+            unit: string;
+            /** @default  */
+            roll_number: string;
+        };
         Notification: {
             /** Format: uuid */
             id: string;
@@ -5423,6 +5584,47 @@ export interface components {
             interval: components["schemas"]["IntervalEnum"];
             /** Format: decimal */
             amount: string;
+        };
+        PromotionApplyRequest: {
+            /** Format: uuid */
+            year_from: string;
+            /** Format: uuid */
+            unit_from: string;
+            /** Format: uuid */
+            year_to: string;
+            /** Format: uuid */
+            unit_to?: string | null;
+            /** @default  */
+            rule_key: string;
+            decisions: {
+                [key: string]: "promote" | "repeat" | "complete";
+            };
+        };
+        PromotionRequest: {
+            /** Format: uuid */
+            year_from: string;
+            /** Format: uuid */
+            unit_from: string;
+            /** Format: uuid */
+            year_to: string;
+            /** Format: uuid */
+            unit_to?: string | null;
+            /** @default  */
+            rule_key: string;
+        };
+        PromotionResult: {
+            promote: number;
+            repeat: number;
+            complete: number;
+        };
+        PromotionRow: {
+            /** Format: uuid */
+            student: string;
+            name: string;
+            number: string;
+            roll_number: string;
+            suggestion: string;
+            note: string;
         };
         ProvisionRequest: {
             slug: string;
@@ -6238,6 +6440,26 @@ export interface components {
         TokenRequest: {
             token: string;
         };
+        TransferCertificate: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly student: string;
+            readonly number: string;
+            readonly reason: string;
+            readonly destination: string;
+            /** Format: date */
+            readonly issued_on: string;
+        };
+        TransferCertificateCreateRequest: {
+            reason: string;
+            /** Format: date */
+            on?: string | null;
+            /** @default  */
+            destination: string;
+            /** @default  */
+            number: string;
+        };
         TrialRequest: {
             reason: string;
             plan: string;
@@ -6291,6 +6513,11 @@ export interface components {
             fields: {
                 [key: string]: string;
             };
+        };
+        WithdrawRequest: {
+            reason: string;
+            /** Format: date */
+            on?: string | null;
         };
         WorkflowDraftRequest: {
             key: string;
@@ -11389,6 +11616,153 @@ export interface operations {
             };
         };
     };
+    students_id_card_retrieve: {
+        parameters: {
+            query: {
+                locale?: string;
+                /** @description Published template key */
+                template: string;
+            };
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Document"];
+                };
+            };
+        };
+    };
+    students_move_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MoveRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Enrollment"];
+                };
+            };
+        };
+    };
+    students_transfer_certificates_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCertificate"][];
+                };
+            };
+        };
+    };
+    students_transfer_certificates_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TransferCertificateCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TransferCertificate"];
+                };
+            };
+        };
+    };
+    students_transfer_certificates_document_retrieve: {
+        parameters: {
+            query: {
+                locale?: string;
+                /** @description Published template key */
+                template: string;
+            };
+            header?: never;
+            path: {
+                certificate_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Document"];
+                };
+            };
+        };
+    };
+    students_withdraw_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WithdrawRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+        };
+    };
     students_from_application_create: {
         parameters: {
             query?: never;
@@ -11416,6 +11790,52 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+        };
+    };
+    students_promotion_apply_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionApplyRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionResult"];
+                };
+            };
+        };
+    };
+    students_promotion_preview_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionRow"][];
                 };
             };
         };
