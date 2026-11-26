@@ -369,6 +369,8 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "InquiryStatusEnum": "apps.admissions.models.Inquiry.Status",
         "AdmissionCycleStatusEnum": "apps.admissions.models.Cycle.Status",
         "ApplicationStatusEnum": "apps.admissions.models.Application.Status",
+        "StudentStatusEnum": "apps.students.models.Student.Status",
+        "EnrollmentStatusEnum": "apps.students.models.Enrollment.Status",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)

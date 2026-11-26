@@ -68,6 +68,14 @@ TENANT_HOST_ROUTES = {
     "api/v1/admissions/applications/<str:application_id>/review/": False,
     "api/v1/admissions/applications/<str:application_id>/decision/": False,
     "api/v1/admissions/applications/<str:application_id>/offer-response/": False,
+    # Phase 7 M2: students and guardians (members only; relationship scopes)
+    "api/v1/students/": False,
+    "api/v1/students/<str:student_id>/": False,
+    "api/v1/students/<str:student_id>/guardians/": False,
+    "api/v1/students/<str:student_id>/guardians/<str:link_id>/": False,
+    "api/v1/students/<str:student_id>/enrollments/": False,
+    "api/v1/guardians/": False,
+    "api/v1/guardians/merge/": False,
     # Phase 6 M6: admission tests, scores and the merit list (members only)
     "api/v1/admissions/cycles/<str:cycle_id>/tests/": False,
     "api/v1/admissions/tests/": False,

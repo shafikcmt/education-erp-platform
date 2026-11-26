@@ -2386,6 +2386,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/UploadSlot'
           description: ''
+  /api/v1/guardians/:
+    get:
+      operationId: guardians_list
+      description: |-
+        Guardians linked to students the member may see, or matching the exact phone/email
+        typed (so staff can find an existing guardian before creating a duplicate).
+      summary: Find guardians by phone, email or name (to link or merge)
+      parameters:
+      - in: query
+        name: q
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Guardian'
+          description: ''
+  /api/v1/guardians/merge/:
+    post:
+      operationId: guardians_merge_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Merge a duplicate guardian into another
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardianMergeRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Guardian'
+          description: ''
   /api/v1/institutions/:
     get:
       operationId: institutions_list
@@ -5032,6 +5082,204 @@ paths:
               schema:
                 $ref: '#/components/schemas/SignupAccepted'
           description: ''
+  /api/v1/students/:
+    get:
+      operationId: students_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Students I may see (scope, taught, children, myself)
+      parameters:
+      - in: query
+        name: institution
+        schema:
+          type: string
+      - in: query
+        name: q
+        schema:
+          type: string
+        description: Name or number contains
+      - in: query
+        name: status
+        schema:
+          type: string
+      - in: query
+        name: unit
+        schema:
+          type: string
+        description: Active enrollment in this unit
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Student'
+          description: ''
+    post:
+      operationId: students_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Create a student
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StudentCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+  /api/v1/students/{student_id}/:
+    get:
+      operationId: students_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A student
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+    patch:
+      operationId: students_partial_update
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Change a student
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedStudentUpdateRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDetail'
+          description: ''
+  /api/v1/students/{student_id}/enrollments/:
+    post:
+      operationId: students_enrollments_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Enroll a student in a unit for a year
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollmentCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Enrollment'
+          description: ''
+  /api/v1/students/{student_id}/guardians/:
+    post:
+      operationId: students_guardians_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Link a guardian (an existing one, or matched/created from values)
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GuardianLinkCreateRequest'
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GuardianLink'
+          description: ''
+  /api/v1/students/{student_id}/guardians/{link_id}/:
+    delete:
+      operationId: students_guardians_destroy
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Unlink a guardian
+      parameters:
+      - in: path
+        name: link_id
+        schema:
+          type: string
+        required: true
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '204':
+          description: No response body
   /api/v1/support-sessions/:
     get:
       operationId: support_sessions_list
@@ -6217,6 +6465,89 @@ components:
           maxLength: 254
       required:
       - email
+    Enrollment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        year_name:
+          type: string
+          readOnly: true
+        unit:
+          type: string
+          format: uuid
+          readOnly: true
+        unit_name:
+          type: string
+          readOnly: true
+        roll_number:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/EnrollmentStatusEnum'
+          readOnly: true
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+      required:
+      - end_date
+      - id
+      - roll_number
+      - start_date
+      - status
+      - unit
+      - unit_name
+      - year
+      - year_name
+    EnrollmentCreateRequest:
+      type: object
+      properties:
+        year:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          format: uuid
+        roll_number:
+          type: string
+          default: ''
+          maxLength: 16
+        start_date:
+          type: string
+          format: date
+          nullable: true
+      required:
+      - unit
+      - year
+    EnrollmentStatusEnum:
+      enum:
+      - active
+      - promoted
+      - repeated
+      - transferred
+      - completed
+      - withdrawn
+      type: string
+      description: |-
+        * `active` - Active
+        * `promoted` - Promoted
+        * `repeated` - Repeated
+        * `transferred` - Transferred
+        * `completed` - Completed
+        * `withdrawn` - Withdrawn
     Entitlements:
       type: object
       description: 'Phase 4 M5: what the UI may show. Hidden is not secure: the server
@@ -6451,6 +6782,102 @@ components:
       required:
       - reason
       - role
+    Guardian:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        has_login:
+          type: boolean
+          readOnly: true
+      required:
+      - email
+      - has_login
+      - id
+      - name
+      - name_i18n
+      - phone
+    GuardianLink:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        guardian:
+          allOf:
+          - $ref: '#/components/schemas/Guardian'
+          readOnly: true
+        relation:
+          type: string
+          readOnly: true
+        is_primary:
+          type: boolean
+          readOnly: true
+        can_pickup:
+          type: boolean
+          readOnly: true
+        receives_notices:
+          type: boolean
+          readOnly: true
+      required:
+      - can_pickup
+      - guardian
+      - id
+      - is_primary
+      - receives_notices
+      - relation
+    GuardianLinkCreateRequest:
+      type: object
+      properties:
+        guardian:
+          type: string
+          format: uuid
+        values:
+          $ref: '#/components/schemas/PersonValuesRequest'
+        extra:
+          type: object
+          additionalProperties: {}
+        relation:
+          type: string
+          minLength: 1
+          default: guardian
+          maxLength: 32
+        is_primary:
+          type: boolean
+          default: false
+        can_pickup:
+          type: boolean
+          default: true
+        receives_notices:
+          type: boolean
+          default: true
+    GuardianMergeRequest:
+      type: object
+      properties:
+        keep:
+          type: string
+          format: uuid
+        duplicate:
+          type: string
+          format: uuid
+      required:
+      - duplicate
+      - keep
     Inbox:
       type: object
       properties:
@@ -7592,6 +8019,14 @@ components:
         absent:
           type: boolean
           default: false
+    PatchedStudentUpdateRequest:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/PersonValuesRequest'
+        extra:
+          type: object
+          additionalProperties: {}
     PatchedTenantProfileUpdateRequest:
       type: object
       properties:
@@ -7703,6 +8138,34 @@ components:
       - module_code
       - requires_mfa
       - requires_step_up
+    PersonValuesRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 160
+        name_i18n:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        gender:
+          type: string
+          maxLength: 32
+        email:
+          oneOf:
+          - type: string
+            format: email
+          - type: string
+            maxLength: 0
+        phone:
+          type: string
+          maxLength: 40
     Plan:
       type: object
       properties:
@@ -8896,6 +9359,157 @@ components:
         * `ready` - Ready
         * `rejected` - Rejected
         * `deleted` - Deleted
+    Student:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        gender:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StudentStatusEnum'
+          readOnly: true
+      required:
+      - date_of_birth
+      - email
+      - gender
+      - id
+      - institution
+      - name
+      - name_i18n
+      - number
+      - phone
+      - status
+    StudentCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        values:
+          $ref: '#/components/schemas/PersonValuesRequest'
+        extra:
+          type: object
+          additionalProperties: {}
+        number:
+          type: string
+          default: ''
+          maxLength: 64
+      required:
+      - institution
+      - values
+    StudentDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        number:
+          type: string
+          readOnly: true
+        name:
+          type: string
+          readOnly: true
+        name_i18n:
+          readOnly: true
+        date_of_birth:
+          type: string
+          format: date
+          readOnly: true
+          nullable: true
+        gender:
+          type: string
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        phone:
+          type: string
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/StudentStatusEnum'
+          readOnly: true
+        extra:
+          type: object
+          additionalProperties: {}
+          readOnly: true
+        enrollments:
+          type: array
+          items:
+            $ref: '#/components/schemas/Enrollment'
+          readOnly: true
+        guardians:
+          type: array
+          items:
+            $ref: '#/components/schemas/GuardianLink'
+          readOnly: true
+        relation:
+          type: string
+          readOnly: true
+      required:
+      - date_of_birth
+      - email
+      - enrollments
+      - extra
+      - gender
+      - guardians
+      - id
+      - institution
+      - name
+      - name_i18n
+      - number
+      - phone
+      - relation
+      - status
+    StudentStatusEnum:
+      enum:
+      - active
+      - inactive
+      - transferred
+      - alumni
+      - withdrawn
+      type: string
+      description: |-
+        * `active` - Active
+        * `inactive` - Inactive
+        * `transferred` - Transferred
+        * `alumni` - Alumni
+        * `withdrawn` - Withdrawn
     Subject:
       type: object
       properties:
