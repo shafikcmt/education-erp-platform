@@ -28,6 +28,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.files.urls")),
     path("api/v1/", include("apps.admissions.urls")),
     path("api/v1/", include("apps.students.urls")),
+    path("api/v1/", include("apps.staff.urls")),
 ]
 
 if settings.API_DOCS_ENABLED:

@@ -127,6 +127,15 @@ EVENTS: dict[str, frozenset[str]] = {
     "students.guardian.unlinked": frozenset(),
     "students.guardian.merged": frozenset(),
     "students.enrollment.created": frozenset(),
+    # staff (Phase 7 M3); names, phones and emails are never logged
+    "staff.department.created": frozenset({"ref"}),
+    "staff.department.updated": frozenset({"fields"}),
+    "staff.designation.created": frozenset({"ref"}),
+    "staff.designation.updated": frozenset({"fields"}),
+    "staff.profile.created": frozenset({"ref", "login"}),
+    "staff.profile.updated": frozenset({"fields"}),
+    "staff.advisor.assigned": frozenset({"primary"}),
+    "staff.advisor.removed": frozenset(),
     # files (Phase 6 M3); never names, keys or contents
     "files.file.upload_requested": frozenset({"purpose", "size"}),
     "files.file.verified": frozenset({"status", "scan"}),

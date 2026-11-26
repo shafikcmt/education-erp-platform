@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.files",
     "apps.admissions",
     "apps.students",
+    "apps.staff",
 ]
 
 MIDDLEWARE = [
@@ -272,6 +273,13 @@ STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     # values are data, CLAUDE.md §8).
     "max_active_students": 0,
 }
+# Phase 7 (ADR-073): where "the students I teach or advise" come from. Each entry is a function
+# ``(actor, memberships) -> {institution_id: {unit_id, ...}}``; ``staff`` adds class-teacher
+# advisors (M3). Loaded by path, so ``students`` never imports the modules that extend it.
+STUDENTS_ASSIGNED_UNITS: list[str] = [
+    "apps.students.selectors.taught_units",
+    "apps.staff.selectors.advised_units",
+]
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.
 TENANT_DEFAULT_LIMITS: dict[str, int] = {"max_institutions": 1, "max_campuses": 3}
@@ -371,6 +379,8 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "ApplicationStatusEnum": "apps.admissions.models.Application.Status",
         "StudentStatusEnum": "apps.students.models.Student.Status",
         "EnrollmentStatusEnum": "apps.students.models.Enrollment.Status",
+        "StaffStatusEnum": "apps.staff.models.StaffProfile.Status",
+        "DepartmentKindEnum": "apps.staff.models.Department.Kind",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)

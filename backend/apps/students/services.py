@@ -20,12 +20,13 @@ import re
 from typing import TYPE_CHECKING, Any
 
 from django.core.exceptions import ValidationError
-from django.core.validators import validate_email
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import HttpRequest
 
 from apps.audit.services import record
+from apps.core.people import normalise_phone
+from apps.core.people import validate_person as _person
 from apps.core.tenancy import require_tenant
 from apps.rbac.engine import ScopeTarget, require_perm
 from apps.students.models import Enrollment, Guardian, Student, StudentGuardian
@@ -40,7 +41,6 @@ STUDENT_FIELDS = frozenset({"name", "name_i18n", "date_of_birth", "gender", "ema
 GUARDIAN_FIELDS = frozenset({"name", "name_i18n", "phone", "email"})
 RELATIONS = frozenset({"father", "mother", "guardian", "sibling", "grandparent", "relative",
                        "other"})  # fmt: skip
-_PHONE = re.compile(r"^\+?[0-9][0-9 ()-]{5,30}$")
 
 
 def target_of(institution_id: Any) -> ScopeTarget:
@@ -69,71 +69,6 @@ def _institution(institution: Any) -> Any:
     if row is None:
         raise ValidationError({"institution": "Unknown institution."})
     return row
-
-
-def normalise_phone(value: Any) -> str:
-    """Digits with an optional leading ``+`` (spaces, dashes and brackets dropped)."""
-    text = str(value or "").strip()
-    if not text:
-        return ""
-    if not _PHONE.match(text):
-        raise ValidationError({"phone": "Enter a valid phone number."})
-    return ("+" if text.startswith("+") else "") + re.sub(r"\D", "", text)
-
-
-def _person(values: dict[str, Any], allowed: frozenset[str]) -> dict[str, Any]:
-    """Validate the core values of a person (student or guardian)."""
-    unknown = set(values) - allowed
-    if unknown:
-        raise ValidationError(dict.fromkeys(sorted(unknown), "Unknown field."))
-    out: dict[str, Any] = {}
-    errors: dict[str, str] = {}
-    if "name" in values:
-        name = str(values["name"] or "").strip()
-        if not name or len(name) > 160:
-            errors["name"] = "Give a name of at most 160 characters."
-        out["name"] = name
-    if "name_i18n" in values:
-        labels = values["name_i18n"] or {}
-        if not isinstance(labels, dict) or not all(
-            isinstance(k, str) and isinstance(v, str) and len(v) <= 160 for k, v in labels.items()
-        ):
-            errors["name_i18n"] = "Names per language are text."
-        out["name_i18n"] = labels
-    if "email" in values:
-        email = str(values["email"] or "").strip().lower()
-        if email:
-            try:
-                validate_email(email)
-            except ValidationError:
-                errors["email"] = "Enter a valid email address."
-        out["email"] = email
-    if "phone" in values:
-        try:
-            out["phone"] = normalise_phone(values["phone"])
-        except ValidationError:
-            errors["phone"] = "Enter a valid phone number."
-    if "date_of_birth" in values:
-        raw = values["date_of_birth"]
-        try:
-            out["date_of_birth"] = (
-                None if raw in (None, "") else
-                raw if isinstance(raw, dt.date) else dt.date.fromisoformat(str(raw))
-            )  # fmt: skip
-        except ValueError:
-            errors["date_of_birth"] = "Use the date format YYYY-MM-DD."
-        else:
-            dob = out["date_of_birth"]
-            if dob is not None and dob > dt.date.today():
-                errors["date_of_birth"] = "The date of birth is in the future."
-    if "gender" in values:
-        gender = str(values["gender"] or "").strip()
-        if len(gender) > 32:
-            errors["gender"] = "At most 32 characters."
-        out["gender"] = gender
-    if errors:
-        raise ValidationError(errors)
-    return out
 
 
 def active_students() -> int:

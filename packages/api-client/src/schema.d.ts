@@ -3586,6 +3586,199 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Staff profiles I may see (my scope, and my own)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["staff_list"];
+        put?: never;
+        /**
+         * Create a staff profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["staff_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/{profile_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A staff profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["staff_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a staff profile
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["staff_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/advisors/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Class teachers (advisors) of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["staff_advisors_list"];
+        put?: never;
+        /**
+         * Make a staff member a class teacher (advisor) of a unit
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["staff_advisors_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/advisors/{advisor_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Remove a class teacher (advisor)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["staff_advisors_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/departments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Departments of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["staff_departments_list"];
+        put?: never;
+        /**
+         * Create a department
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["staff_departments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/departments/{department_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change, move or archive a department
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["staff_departments_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/staff/designations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Designations of an institution
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["staff_designations_list"];
+        put?: never;
+        /**
+         * Create a designation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["staff_designations_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/designations/{designation_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Rename or archive a designation
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["staff_designations_partial_update"];
+        trace?: never;
+    };
     "/api/v1/students/": {
         parameters: {
             query?: never;
@@ -3932,6 +4125,30 @@ export interface components {
          * @enum {string}
          */
         AdmissionCycleStatusEnum: "draft" | "open" | "closed" | "archived";
+        Advisor: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly year: string;
+            readonly year_name: string;
+            /** Format: uuid */
+            readonly unit: string;
+            readonly unit_name: string;
+            /** Format: uuid */
+            readonly staff: string;
+            readonly staff_name: string;
+            readonly is_primary: boolean;
+        };
+        AdvisorCreateRequest: {
+            /** Format: uuid */
+            year: string;
+            /** Format: uuid */
+            unit: string;
+            /** Format: uuid */
+            staff: string;
+            /** @default true */
+            is_primary: boolean;
+        };
         Application: {
             /** Format: uuid */
             readonly id: string;
@@ -4239,6 +4456,57 @@ export interface components {
          * @enum {string}
          */
         DefaultLocaleEnum: "en" | "bn";
+        Department: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly parent: string | null;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly kind: components["schemas"]["DepartmentKindEnum"];
+            readonly archived: boolean;
+        };
+        DepartmentCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** @default academic */
+            kind: components["schemas"]["DepartmentKindEnum"];
+            /** Format: uuid */
+            parent?: string | null;
+        };
+        /**
+         * @description * `academic` - Academic
+         *     * `administrative` - Administrative
+         * @enum {string}
+         */
+        DepartmentKindEnum: "academic" | "administrative";
+        Designation: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly code: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly archived: boolean;
+        };
+        DesignationCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            code: string;
+            name: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+        };
         DocumentConfirmRequest: {
             token: string;
             /** Format: uuid */
@@ -4272,6 +4540,15 @@ export interface components {
         EmailRequestRequest: {
             email: string;
         };
+        /**
+         * @description * `permanent` - Permanent
+         *     * `contract` - Contract
+         *     * `part_time` - Part-time
+         *     * `visiting` - Visiting
+         *     * `volunteer` - Volunteer
+         * @enum {string}
+         */
+        EmploymentTypeEnum: "permanent" | "contract" | "part_time" | "visiting" | "volunteer";
         Enrollment: {
             /** Format: uuid */
             readonly id: string;
@@ -4821,6 +5098,23 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        PatchedDepartmentUpdateRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            kind?: components["schemas"]["DepartmentKindEnum"];
+            /** Format: uuid */
+            parent?: string | null;
+            archived?: boolean;
+        };
+        PatchedDesignationUpdateRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            archived?: boolean;
+        };
         PatchedFieldUpdateRequest: {
             labels?: {
                 [key: string]: unknown;
@@ -4906,6 +5200,13 @@ export interface components {
             score?: string | null;
             /** @default false */
             absent: boolean;
+        };
+        PatchedStaffUpdateRequest: {
+            values?: components["schemas"]["StaffValuesRequest"];
+            extra?: {
+                [key: string]: unknown;
+            };
+            links?: components["schemas"]["StaffLinksRequest"];
         };
         PatchedStudentUpdateRequest: {
             values?: components["schemas"]["PersonValuesRequest"];
@@ -5354,6 +5655,109 @@ export interface components {
          * @enum {string}
          */
         SourceEnum: "staff" | "public";
+        StaffCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            values: components["schemas"]["StaffValuesRequest"];
+            extra?: {
+                [key: string]: unknown;
+            };
+            /** @default  */
+            number: string;
+            links?: components["schemas"]["StaffLinksRequest"];
+        };
+        StaffLinksRequest: {
+            /** Format: uuid */
+            campus?: string | null;
+            /** Format: uuid */
+            department?: string | null;
+            /** Format: uuid */
+            designation?: string | null;
+            /** Format: uuid */
+            membership?: string | null;
+            status?: components["schemas"]["StaffStatusEnum"];
+            employment_type?: components["schemas"]["EmploymentTypeEnum"];
+        };
+        StaffProfile: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly campus: string | null;
+            readonly number: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly gender: string;
+            /** Format: email */
+            readonly email: string;
+            readonly phone: string;
+            /** Format: date */
+            readonly joining_date: string | null;
+            readonly status: components["schemas"]["StaffStatusEnum"];
+            readonly employment_type: components["schemas"]["EmploymentTypeEnum"];
+            /** Format: uuid */
+            readonly department: string | null;
+            /** @default  */
+            readonly department_name: string;
+            /** Format: uuid */
+            readonly designation: string | null;
+            /** @default  */
+            readonly designation_name: string;
+            readonly has_login: boolean;
+        };
+        StaffProfileDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly campus: string | null;
+            readonly number: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly gender: string;
+            /** Format: email */
+            readonly email: string;
+            readonly phone: string;
+            /** Format: date */
+            readonly joining_date: string | null;
+            readonly status: components["schemas"]["StaffStatusEnum"];
+            readonly employment_type: components["schemas"]["EmploymentTypeEnum"];
+            /** Format: uuid */
+            readonly department: string | null;
+            /** @default  */
+            readonly department_name: string;
+            /** Format: uuid */
+            readonly designation: string | null;
+            /** @default  */
+            readonly designation_name: string;
+            readonly has_login: boolean;
+            readonly extra: {
+                [key: string]: unknown;
+            };
+            readonly advising: components["schemas"]["Advisor"][];
+            readonly relation: string;
+        };
+        /**
+         * @description * `active` - Active
+         *     * `on_leave` - On leave
+         *     * `inactive` - Inactive
+         *     * `left` - Left
+         * @enum {string}
+         */
+        StaffStatusEnum: "active" | "on_leave" | "inactive" | "left";
+        StaffValuesRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            gender?: string;
+            email?: string;
+            phone?: string;
+            /** Format: date */
+            joining_date?: string | null;
+        };
         StatusDocument: {
             /** Format: uuid */
             id: string;
@@ -10491,6 +10895,304 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SignupAccepted"];
+                };
+            };
+        };
+    };
+    staff_list: {
+        parameters: {
+            query?: {
+                department?: string;
+                designation?: string;
+                institution?: string;
+                /** @description Name or number contains */
+                q?: string;
+                status?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffProfile"][];
+                };
+            };
+        };
+    };
+    staff_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffProfileDetail"];
+                };
+            };
+        };
+    };
+    staff_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffProfileDetail"];
+                };
+            };
+        };
+    };
+    staff_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                profile_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedStaffUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffProfileDetail"];
+                };
+            };
+        };
+    };
+    staff_advisors_list: {
+        parameters: {
+            query: {
+                institution: string;
+                year?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Advisor"][];
+                };
+            };
+        };
+    };
+    staff_advisors_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdvisorCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Advisor"];
+                };
+            };
+        };
+    };
+    staff_advisors_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                advisor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    staff_departments_list: {
+        parameters: {
+            query: {
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"][];
+                };
+            };
+        };
+    };
+    staff_departments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DepartmentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+        };
+    };
+    staff_departments_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                department_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDepartmentUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Department"];
+                };
+            };
+        };
+    };
+    staff_designations_list: {
+        parameters: {
+            query: {
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Designation"][];
+                };
+            };
+        };
+    };
+    staff_designations_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesignationCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Designation"];
+                };
+            };
+        };
+    };
+    staff_designations_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                designation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedDesignationUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Designation"];
                 };
             };
         };
