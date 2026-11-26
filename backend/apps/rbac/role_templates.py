@@ -174,6 +174,11 @@ _OWNER_CODES = [
     "students.guardian.manage",
     "students.document.view",
     "students.document.upload",
+    # Phase 7 M3: staff (ADR-070); view_own so they can assign teachers, who hold it.
+    "staff.profile.view",
+    "staff.profile.manage",
+    "staff.profile.view_own",
+    "staff.structure.manage",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -237,6 +242,11 @@ _INSTITUTION_ADMIN_CODES = [
     "students.guardian.manage",
     "students.document.view",
     "students.document.upload",
+    # Phase 7 M3: staff (ADR-070); view_own so they can assign teachers, who hold it.
+    "staff.profile.view",
+    "staff.profile.manage",
+    "staff.profile.view_own",
+    "staff.structure.manage",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -257,6 +267,9 @@ _CAMPUS_ADMIN_CODES = [
     "students.student.view",
     "students.student.view_assigned",
     "students.guardian.view",
+    # Phase 7 M3: the campus's staff, and view_own so they can assign teachers, who hold it.
+    "staff.profile.view",
+    "staff.profile.view_own",
 ]
 TENANT_OWNER = "tenant_owner"
 
@@ -304,6 +317,8 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "students.student.manage",
             "students.student.promote",
             "students.guardian.view",
+            # Phase 7 M3: staff in scope, to choose subject teachers and class teachers.
+            "staff.profile.view",
         ],
     ),
     _template(
@@ -321,6 +336,8 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "lms.content.manage",
             # Phase 7 M1 (ADR-073): only the students they teach.
             "students.student.view_assigned",
+            # Phase 7 M3: their own staff profile.
+            "staff.profile.view_own",
         ],
     ),
     _template(
@@ -334,6 +351,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "attendance.record.mark",
             "students.student.view_assigned",
             "students.guardian.view",
+            "staff.profile.view_own",  # Phase 7 M3
         ],
     ),
     _template(
@@ -393,7 +411,14 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "HR Manager",
         "মানবসম্পদ ব্যবস্থাপক",
         "Staff records, leave and payroll.",
-        [TENANT_VIEW, "hr_payroll.payroll.manage"],
+        [
+            TENANT_VIEW,
+            "hr_payroll.payroll.manage",
+            # Phase 7 M3: staff records and structure.
+            "staff.profile.view",
+            "staff.profile.manage",
+            "staff.structure.manage",
+        ],
     ),
     _template(
         "librarian",

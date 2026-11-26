@@ -76,6 +76,15 @@ TENANT_HOST_ROUTES = {
     "api/v1/students/<str:student_id>/enrollments/": False,
     "api/v1/guardians/": False,
     "api/v1/guardians/merge/": False,
+    # Phase 7 M3: staff, departments, designations, advisors (members only)
+    "api/v1/staff/": False,
+    "api/v1/staff/departments/": False,
+    "api/v1/staff/departments/<str:department_id>/": False,
+    "api/v1/staff/designations/": False,
+    "api/v1/staff/designations/<str:designation_id>/": False,
+    "api/v1/staff/advisors/": False,
+    "api/v1/staff/advisors/<str:advisor_id>/": False,
+    "api/v1/staff/<str:profile_id>/": False,
     # Phase 6 M6: admission tests, scores and the merit list (members only)
     "api/v1/admissions/cycles/<str:cycle_id>/tests/": False,
     "api/v1/admissions/tests/": False,
