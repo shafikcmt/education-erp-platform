@@ -108,7 +108,7 @@ def _define(owner, **kw):
 def test_custom_fields_are_defined_validated_and_immutable(org, owner):
     with tenant_atomic(org.tenant):
         with pytest.raises(ValidationError, match="doesn't accept"):
-            _define(owner, entity="students.student")
+            _define(owner, entity="fees.invoice")  # fees declares no custom-field entity yet
         with pytest.raises(ValidationError, match="1-100 options"):
             _define(owner)
         blood = _define(

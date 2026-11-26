@@ -119,6 +119,14 @@ EVENTS: dict[str, frozenset[str]] = {
     "admissions.application.evaluated": frozenset({"tests"}),
     "admissions.merit.published": frozenset({"version", "ranked"}),
     "admissions.merit.offers_made": frozenset({"version", "offered", "via"}),
+    # students (Phase 7); names, phones and emails are never logged
+    "students.student.created": frozenset({"ref"}),
+    "students.student.updated": frozenset({"fields"}),
+    "students.guardian.created": frozenset(),
+    "students.guardian.linked": frozenset({"relation"}),
+    "students.guardian.unlinked": frozenset(),
+    "students.guardian.merged": frozenset(),
+    "students.enrollment.created": frozenset(),
     # files (Phase 6 M3); never names, keys or contents
     "files.file.upload_requested": frozenset({"purpose", "size"}),
     "files.file.verified": frozenset({"status", "scan"}),

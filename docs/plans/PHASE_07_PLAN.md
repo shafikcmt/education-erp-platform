@@ -246,6 +246,21 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - Every new tenant table has RLS and isolation tests. The URL audit, catalogue completeness, host-route review and migration rehearsal pass.
 - Tests, lint, type checks, OpenAPI drift, E2E and CI all pass. The docs, progress file, decision log and security self-review are updated.
 
+## 16. Implementation notes (appended during implementation)
+
+### 16.1 M1 — students data model (2026-11-26, branch `feat/phase-07-m1`)
+
+| # | Note |
+|---|---|
+| E1 | **New `students` app** (module `students`, standard, sellable; depends on `academics` and `customization`). Tables: `Student`, `Guardian`, `StudentGuardian` and `Enrollment`, all with standard RLS (`students.0002`, reversal refused). Composite keys keep an enrollment's student, year and unit in its institution, and every membership and guardian link in the tenant. The database refuses an enrollment in another institution's unit (tested) |
+| E2 | **Numbers (ADR-074 Q1):** when the tenant defines the Studio sequence `student`, numbers are allocated from it, gap-free, inside the transaction. Otherwise staff give the number (letters, digits and `. / - _`, unique per institution) |
+| E3 | **Guardians (ADR-074 Q8):** they are tenant-wide, because a guardian can have children in several institutions. Before creating one, the service matches by normalised phone (digits with an optional `+`) or lower-cased email, **within the tenant only** (RLS plus the tenant manager; tested). One primary guardian per student is enforced by a partial unique constraint. A merge moves links and the login to the kept guardian and needs `students.guardian.manage` in every affected institution |
+| E4 | **Enrollments:** a leaf unit of the student's institution, an open year, a start date inside the year; at most one active enrollment per student and year, and unique roll numbers per unit (both partial unique constraints) |
+| E5 | Custom-field entities `students.student` and `students.guardian`; file purpose `students.document` (PDF/JPEG/PNG, 10 MB, 30 per student, staff only). New plan limit key `max_active_students`, with a default of 0 (no limit) until plans set it (plan values are data, CLAUDE.md §8) |
+| E6 | **Permissions:** 12 students codes (101 in total). Role templates: owner and institution admin get all staff codes; the academic coordinator gets view, manage and promote; the admission officer gets view, manage, import, guardians and documents; teachers and class teachers get **`view_assigned` only** (the class teacher's old `students.student.view` is replaced, ADR-073); the campus admin gets the view codes so they can assign teachers; guardian and student keep `students.child.view` and `students.profile.view_own`. The relationship selectors that give `view_assigned`, `child` and `own` their meaning arrive in M2. Until then those codes open nothing |
+| E7 | Existing gates updated to the new facts: `students` is now built (the "unbuilt stays refused" tests use `fees`); 101 permission codes; the teacher's exact code set includes `view_assigned` |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
+- 2026-11-26 — §16.1 appended: M1 notes E1–E7.
