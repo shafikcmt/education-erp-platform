@@ -2436,6 +2436,121 @@ paths:
               schema:
                 $ref: '#/components/schemas/Guardian'
           description: ''
+  /api/v1/imports/:
+    get:
+      operationId: imports_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: My imports (newest first)
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ImportJob'
+          description: ''
+    post:
+      operationId: imports_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Start an import (queues the dry run)
+      tags:
+      - students
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ImportCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+  /api/v1/imports/{job_id}/:
+    get:
+      operationId: imports_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: An import with its row report
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobDetail'
+          description: ''
+  /api/v1/imports/{job_id}/apply/:
+    post:
+      operationId: imports_apply_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Apply a validated import (each row atomic)
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJob'
+          description: ''
+  /api/v1/imports/{job_id}/report/:
+    get:
+      operationId: imports_report_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: The row report as CSV (formulas neutralised)
+      parameters:
+      - in: path
+        name: job_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            text/csv:
+              schema:
+                type: string
+          description: ''
   /api/v1/institutions/:
     get:
       operationId: institutions_list
@@ -7712,6 +7827,194 @@ components:
       required:
       - duplicate
       - keep
+    ImportCreateRequest:
+      type: object
+      properties:
+        institution:
+          type: string
+          format: uuid
+        kind:
+          type: string
+          minLength: 1
+          maxLength: 32
+        file:
+          type: string
+          format: uuid
+        mapping:
+          type: object
+          additionalProperties:
+            type: string
+            minLength: 1
+            maxLength: 80
+        options:
+          type: object
+          additionalProperties: {}
+      required:
+      - file
+      - institution
+      - kind
+      - mapping
+    ImportJob:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        file_id:
+          type: string
+          format: uuid
+          readOnly: true
+        mapping:
+          readOnly: true
+        options:
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ImportJobStatusEnum'
+          readOnly: true
+        total_rows:
+          type: integer
+          readOnly: true
+        ok_rows:
+          type: integer
+          readOnly: true
+        error_rows:
+          type: integer
+          readOnly: true
+        error:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - created_at
+      - error
+      - error_rows
+      - file_id
+      - finished_at
+      - id
+      - institution
+      - kind
+      - mapping
+      - ok_rows
+      - options
+      - status
+      - total_rows
+    ImportJobDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          type: string
+          readOnly: true
+        file_id:
+          type: string
+          format: uuid
+          readOnly: true
+        mapping:
+          readOnly: true
+        options:
+          readOnly: true
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ImportJobStatusEnum'
+          readOnly: true
+        total_rows:
+          type: integer
+          readOnly: true
+        ok_rows:
+          type: integer
+          readOnly: true
+        error_rows:
+          type: integer
+          readOnly: true
+        error:
+          type: string
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        finished_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        report:
+          type: array
+          items:
+            $ref: '#/components/schemas/ImportRow'
+          readOnly: true
+      required:
+      - created_at
+      - error
+      - error_rows
+      - file_id
+      - finished_at
+      - id
+      - institution
+      - kind
+      - mapping
+      - ok_rows
+      - options
+      - report
+      - status
+      - total_rows
+    ImportJobStatusEnum:
+      enum:
+      - validating
+      - validated
+      - applying
+      - applied
+      - failed
+      type: string
+      description: |-
+        * `validating` - Validating
+        * `validated` - Validated
+        * `applying` - Applying
+        * `applied` - Applied
+        * `failed` - Failed
+    ImportRow:
+      type: object
+      properties:
+        row:
+          type: integer
+        ok:
+          type: boolean
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+        id:
+          type: string
+          nullable: true
+      required:
+      - errors
+      - id
+      - ok
+      - row
     Inbox:
       type: object
       properties:

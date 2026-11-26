@@ -202,3 +202,36 @@ class TransferCertificate(TenantScopedModel):
 
     def __str__(self) -> str:
         return self.number
+
+
+class ImportJob(TenantScopedModel):
+    """A bulk import (Phase 7 M6; ADR-072): a dry run validates every row, then the apply
+    creates the rows one by one (each atomic). The report holds one entry per row; jobs and
+    their files are deleted after the retention period (P28)."""
+
+    class Status(models.TextChoices):
+        VALIDATING = "validating", "Validating"
+        VALIDATED = "validated", "Validated"
+        APPLYING = "applying", "Applying"
+        APPLIED = "applied", "Applied"
+        FAILED = "failed", "Failed"
+
+    institution = _fk("tenancy.Institution")
+    kind = models.CharField(max_length=32)
+    file_id = models.UUIDField()
+    mapping = models.JSONField(default=dict)
+    options = models.JSONField(default=dict, blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.VALIDATING)
+    total_rows = models.PositiveIntegerField(default=0)
+    ok_rows = models.PositiveIntegerField(default=0)
+    error_rows = models.PositiveIntegerField(default=0)
+    report = models.JSONField(default=list, blank=True)
+    error = models.CharField(max_length=300, blank=True)
+    finished_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "students_importjob"
+        indexes = [models.Index(fields=["tenant", "created_at"])]
+
+    def __str__(self) -> str:
+        return f"{self.kind}:{self.status}"

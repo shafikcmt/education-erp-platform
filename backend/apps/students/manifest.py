@@ -121,3 +121,9 @@ TEMPLATE_KINDS = {
         },
     },
 }
+FILE_PURPOSES["students.import"] = {  # Phase 7 M6: bulk import files (CSV or XLSX)
+    "types": ["text/csv", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+    "max_bytes": 5 * 1024 * 1024,
+    "max_per_owner": 1,
+    "applicant_visible": False,
+}
