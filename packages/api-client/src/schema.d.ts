@@ -1680,6 +1680,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/guardians/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find guardians by phone, email or name (to link or merge)
+         * @description Guardians linked to students the member may see, or matching the exact phone/email
+         *     typed (so staff can find an existing guardian before creating a duplicate).
+         */
+        get: operations["guardians_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/guardians/merge/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Merge a duplicate guardian into another
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["guardians_merge_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/institutions/": {
         parameters: {
             query?: never;
@@ -3544,6 +3586,121 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Students I may see (scope, taught, children, myself)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["students_list"];
+        put?: never;
+        /**
+         * Create a student
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A student
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["students_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Change a student
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        patch: operations["students_partial_update"];
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/enrollments/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Enroll a student in a unit for a year
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_enrollments_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/guardians/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Link a guardian (an existing one, or matched/created from values)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_guardians_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/guardians/{link_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Unlink a guardian
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        delete: operations["students_guardians_destroy"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/support-sessions/": {
         parameters: {
             query?: never;
@@ -4115,6 +4272,42 @@ export interface components {
         EmailRequestRequest: {
             email: string;
         };
+        Enrollment: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly year: string;
+            readonly year_name: string;
+            /** Format: uuid */
+            readonly unit: string;
+            readonly unit_name: string;
+            readonly roll_number: string;
+            readonly status: components["schemas"]["EnrollmentStatusEnum"];
+            /** Format: date */
+            readonly start_date: string;
+            /** Format: date */
+            readonly end_date: string | null;
+        };
+        EnrollmentCreateRequest: {
+            /** Format: uuid */
+            year: string;
+            /** Format: uuid */
+            unit: string;
+            /** @default  */
+            roll_number: string;
+            /** Format: date */
+            start_date?: string | null;
+        };
+        /**
+         * @description * `active` - Active
+         *     * `promoted` - Promoted
+         *     * `repeated` - Repeated
+         *     * `transferred` - Transferred
+         *     * `completed` - Completed
+         *     * `withdrawn` - Withdrawn
+         * @enum {string}
+         */
+        EnrollmentStatusEnum: "active" | "promoted" | "repeated" | "transferred" | "completed" | "withdrawn";
         /** @description Phase 4 M5: what the UI may show. Hidden is not secure: the server enforces. */
         Entitlements: {
             modules: string[];
@@ -4208,6 +4401,47 @@ export interface components {
             /** Format: uuid */
             role: string;
             reason: string;
+        };
+        Guardian: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            readonly phone: string;
+            /** Format: email */
+            readonly email: string;
+            readonly has_login: boolean;
+        };
+        GuardianLink: {
+            /** Format: uuid */
+            readonly id: string;
+            readonly guardian: components["schemas"]["Guardian"];
+            readonly relation: string;
+            readonly is_primary: boolean;
+            readonly can_pickup: boolean;
+            readonly receives_notices: boolean;
+        };
+        GuardianLinkCreateRequest: {
+            /** Format: uuid */
+            guardian?: string;
+            values?: components["schemas"]["PersonValuesRequest"];
+            extra?: {
+                [key: string]: unknown;
+            };
+            /** @default guardian */
+            relation: string;
+            /** @default false */
+            is_primary: boolean;
+            /** @default true */
+            can_pickup: boolean;
+            /** @default true */
+            receives_notices: boolean;
+        };
+        GuardianMergeRequest: {
+            /** Format: uuid */
+            keep: string;
+            /** Format: uuid */
+            duplicate: string;
         };
         Inbox: {
             unread: number;
@@ -4673,6 +4907,12 @@ export interface components {
             /** @default false */
             absent: boolean;
         };
+        PatchedStudentUpdateRequest: {
+            values?: components["schemas"]["PersonValuesRequest"];
+            extra?: {
+                [key: string]: unknown;
+            };
+        };
         PatchedTenantProfileUpdateRequest: {
             name?: string;
             default_locale?: string;
@@ -4707,6 +4947,17 @@ export interface components {
             readonly is_sensitive: boolean;
             readonly requires_mfa: boolean;
             readonly requires_step_up: boolean;
+        };
+        PersonValuesRequest: {
+            name?: string;
+            name_i18n?: {
+                [key: string]: string;
+            };
+            /** Format: date */
+            date_of_birth?: string | null;
+            gender?: string;
+            email?: string;
+            phone?: string;
         };
         Plan: {
             code: string;
@@ -5148,6 +5399,63 @@ export interface components {
          * @enum {string}
          */
         StoredFileStatusEnum: "awaiting_upload" | "verifying" | "ready" | "rejected" | "deleted";
+        Student: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly number: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            /** Format: date */
+            readonly date_of_birth: string | null;
+            readonly gender: string;
+            /** Format: email */
+            readonly email: string;
+            readonly phone: string;
+            readonly status: components["schemas"]["StudentStatusEnum"];
+        };
+        StudentCreateRequest: {
+            /** Format: uuid */
+            institution: string;
+            values: components["schemas"]["PersonValuesRequest"];
+            extra?: {
+                [key: string]: unknown;
+            };
+            /** @default  */
+            number: string;
+        };
+        StudentDetail: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            readonly number: string;
+            readonly name: string;
+            readonly name_i18n: unknown;
+            /** Format: date */
+            readonly date_of_birth: string | null;
+            readonly gender: string;
+            /** Format: email */
+            readonly email: string;
+            readonly phone: string;
+            readonly status: components["schemas"]["StudentStatusEnum"];
+            readonly extra: {
+                [key: string]: unknown;
+            };
+            readonly enrollments: components["schemas"]["Enrollment"][];
+            readonly guardians: components["schemas"]["GuardianLink"][];
+            readonly relation: string;
+        };
+        /**
+         * @description * `active` - Active
+         *     * `inactive` - Inactive
+         *     * `transferred` - Transferred
+         *     * `alumni` - Alumni
+         *     * `withdrawn` - Withdrawn
+         * @enum {string}
+         */
+        StudentStatusEnum: "active" | "inactive" | "transferred" | "alumni" | "withdrawn";
         Subject: {
             /** Format: uuid */
             readonly id: string;
@@ -7766,6 +8074,50 @@ export interface operations {
             };
         };
     };
+    guardians_list: {
+        parameters: {
+            query: {
+                q: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Guardian"][];
+                };
+            };
+        };
+    };
+    guardians_merge_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GuardianMergeRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Guardian"];
+                };
+            };
+        };
+    };
     institutions_list: {
         parameters: {
             query?: never;
@@ -10140,6 +10492,172 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SignupAccepted"];
                 };
+            };
+        };
+    };
+    students_list: {
+        parameters: {
+            query?: {
+                institution?: string;
+                /** @description Name or number contains */
+                q?: string;
+                status?: string;
+                /** @description Active enrollment in this unit */
+                unit?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Student"][];
+                };
+            };
+        };
+    };
+    students_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StudentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+        };
+    };
+    students_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+        };
+    };
+    students_partial_update: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PatchedStudentUpdateRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentDetail"];
+                };
+            };
+        };
+    };
+    students_enrollments_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnrollmentCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Enrollment"];
+                };
+            };
+        };
+    };
+    students_guardians_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["GuardianLinkCreateRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GuardianLink"];
+                };
+            };
+        };
+    };
+    students_guardians_destroy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                link_id: string;
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No response body */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
