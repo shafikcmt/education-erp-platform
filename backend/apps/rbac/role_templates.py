@@ -163,6 +163,17 @@ _OWNER_CODES = [
     "admissions.test.manage",
     "admissions.test.score",
     "admissions.merit.publish",
+    # Phase 7 M1: students (ADR-068, ADR-073).
+    "students.student.view",
+    "students.student.view_assigned",
+    "students.student.manage",
+    "students.student.import",
+    "students.student.promote",
+    "students.student.transfer",
+    "students.guardian.view",
+    "students.guardian.manage",
+    "students.document.view",
+    "students.document.upload",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -215,6 +226,17 @@ _INSTITUTION_ADMIN_CODES = [
     "admissions.test.manage",
     "admissions.test.score",
     "admissions.merit.publish",
+    # Phase 7 M1: students (ADR-068, ADR-073).
+    "students.student.view",
+    "students.student.view_assigned",
+    "students.student.manage",
+    "students.student.import",
+    "students.student.promote",
+    "students.student.transfer",
+    "students.guardian.view",
+    "students.guardian.manage",
+    "students.document.view",
+    "students.document.upload",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -231,6 +253,10 @@ _CAMPUS_ADMIN_CODES = [
     "academics.structure.view",
     "academics.subject.view",
     "academics.offering.view",
+    # Phase 7 M1: and so can assign teachers and class teachers, who see their students.
+    "students.student.view",
+    "students.student.view_assigned",
+    "students.guardian.view",
 ]
 TENANT_OWNER = "tenant_owner"
 
@@ -272,6 +298,12 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "academics.offering.view",
             "academics.offering.manage",
             "timetable.timetable.manage",
+            # Phase 7 M1: students in scope, promotion.
+            "students.student.view",
+            "students.student.view_assigned",
+            "students.student.manage",
+            "students.student.promote",
+            "students.guardian.view",
         ],
     ),
     _template(
@@ -287,6 +319,8 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "attendance.record.mark",
             "examinations.marks.enter",
             "lms.content.manage",
+            # Phase 7 M1 (ADR-073): only the students they teach.
+            "students.student.view_assigned",
         ],
     ),
     _template(
@@ -294,7 +328,13 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Class Teacher",
         "শ্রেণি শিক্ষক",
         "Teacher plus advisor duties for an assigned section.",
-        [TENANT_VIEW, "attendance.record.mark", "students.student.view"],
+        # Phase 7 M1 (ADR-073): advisors see the students of their units, not the institution.
+        [
+            TENANT_VIEW,
+            "attendance.record.mark",
+            "students.student.view_assigned",
+            "students.guardian.view",
+        ],
     ),
     _template(
         "exam_controller",
@@ -324,6 +364,14 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "admissions.test.manage",
             "admissions.test.score",
             "files.file.upload",
+            # Phase 7 M1: completing enrollment of admitted students.
+            "students.student.view",
+            "students.student.manage",
+            "students.student.import",
+            "students.guardian.view",
+            "students.guardian.manage",
+            "students.document.view",
+            "students.document.upload",
         ],
     ),
     _template(

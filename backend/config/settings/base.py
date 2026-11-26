@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     "apps.academics",
     "apps.files",
     "apps.admissions",
+    "apps.students",
 ]
 
 MIDDLEWARE = [
@@ -267,6 +268,9 @@ STUDIO_QUOTA_DEFAULTS: dict[str, int] = {
     "max_templates": 50,
     # Phase 6 M3 (ADR-064): object storage per tenant, in MB (plan key ``max_storage_mb``).
     "max_storage_mb": 1024,
+    # Phase 7 (plan §7): active students per tenant; 0 = no limit until plans set it (plan
+    # values are data, CLAUDE.md §8).
+    "max_active_students": 0,
 }
 # Default institution/campus limits copied onto each new tenant (Q12); overridable per tenant
 # by a Super Admin (ADR-010) and replaced by subscription plans in Phase 4.

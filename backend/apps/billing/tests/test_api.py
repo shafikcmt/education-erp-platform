@@ -95,7 +95,8 @@ def test_feature_flags_and_module_catalogue():
     by_code = {m["code"]: m for m in modules}
     assert by_code["tenancy"]["category"] == "platform" and by_code["tenancy"]["available"]
     assert by_code["academics"]["available"] is True  # built in Phase 6
-    assert by_code["students"]["available"] is False
+    assert by_code["students"]["available"] is True  # built in Phase 7
+    assert by_code["fees"]["available"] is False
     body = {"key": "new.dashboard", "default_enabled": False, "rules": {"percentage": 10}}
     saved = admin.post(f"{V1}/platform/feature-flags/", body)
     assert saved.status_code == 200, saved.content

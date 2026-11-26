@@ -53,6 +53,7 @@ TEACHER_CODES = {
     "academics.structure.view",
     "academics.subject.view",
     "academics.offering.view",
+    "students.student.view_assigned",  # Phase 7 (ADR-073)
 }
 
 

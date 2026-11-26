@@ -79,11 +79,11 @@ def test_unbuilt_modules_stay_refused_even_when_granted(admin, org):
     from apps.module_registry import entitlements
     from apps.module_registry.errors import ModuleNotEntitledError
 
-    _grant(admin, org, "students")  # no ``built`` patch: students is not built yet
+    _grant(admin, org, "fees")  # no ``built`` patch: fees is not built yet
     with tenant_atomic(org.tenant):
-        assert not entitlements.is_entitled("students")
+        assert not entitlements.is_entitled("fees")
         with pytest.raises(ModuleNotEntitledError):
-            entitlements.require_module("students")
+            entitlements.require_module("fees")
 
 
 def test_tenant_tasks_of_a_module_are_refused_for_tenants_without_it(admin, org, built):
