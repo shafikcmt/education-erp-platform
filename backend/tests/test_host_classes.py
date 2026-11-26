@@ -71,6 +71,13 @@ TENANT_HOST_ROUTES = {
     # Phase 7 M2: students and guardians (members only; relationship scopes)
     "api/v1/students/": False,
     "api/v1/students/from-application/": False,
+    "api/v1/students/promotion/preview/": False,
+    "api/v1/students/promotion/apply/": False,
+    "api/v1/students/<str:student_id>/move/": False,
+    "api/v1/students/<str:student_id>/withdraw/": False,
+    "api/v1/students/<str:student_id>/transfer-certificates/": False,
+    "api/v1/students/<str:student_id>/transfer-certificates/<str:certificate_id>/document/": False,
+    "api/v1/students/<str:student_id>/id-card/": False,
     "api/v1/students/<str:student_id>/": False,
     "api/v1/students/<str:student_id>/guardians/": False,
     "api/v1/students/<str:student_id>/guardians/<str:link_id>/": False,

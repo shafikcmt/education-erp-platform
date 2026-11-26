@@ -6,7 +6,13 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.students.models import Enrollment, Guardian, Student, StudentGuardian
+from apps.students.models import (
+    Enrollment,
+    Guardian,
+    Student,
+    StudentGuardian,
+    TransferCertificate,
+)
 
 
 class EnrollmentSerializer(serializers.ModelSerializer[Enrollment]):
@@ -109,3 +115,61 @@ class GuardianMergeSerializer(serializers.Serializer[Any]):
 
 class FromApplicationSerializer(serializers.Serializer[Any]):
     application = serializers.UUIDField()
+
+
+# --------------------------------------------------------------------------- lifecycle (M5)
+class MoveSerializer(serializers.Serializer[Any]):
+    unit = serializers.UUIDField()
+    roll_number = serializers.CharField(max_length=16, required=False, allow_blank=True, default="")
+
+
+class WithdrawSerializer(serializers.Serializer[Any]):
+    reason = serializers.CharField(max_length=300)
+    on = serializers.DateField(required=False, allow_null=True, default=None)
+
+
+class TransferCertificateCreateSerializer(WithdrawSerializer):
+    destination = serializers.CharField(
+        max_length=200, required=False, allow_blank=True, default=""
+    )
+    number = serializers.CharField(max_length=64, required=False, allow_blank=True, default="")
+
+
+class TransferCertificateSerializer(serializers.ModelSerializer[TransferCertificate]):
+    class Meta:
+        model = TransferCertificate
+        fields = ["id", "student", "number", "reason", "destination", "issued_on"]
+        read_only_fields = fields
+
+
+class PromotionSerializer(serializers.Serializer[Any]):
+    year_from = serializers.UUIDField()
+    unit_from = serializers.UUIDField()
+    year_to = serializers.UUIDField()
+    unit_to = serializers.UUIDField(required=False, allow_null=True, default=None)
+    rule_key = serializers.CharField(max_length=64, required=False, allow_blank=True, default="")
+
+
+class PromotionApplySerializer(PromotionSerializer):
+    decisions = serializers.DictField(
+        child=serializers.ChoiceField(choices=["promote", "repeat", "complete"])
+    )
+
+
+class PromotionRowSerializer(serializers.Serializer[Any]):
+    student = serializers.UUIDField()
+    name = serializers.CharField()
+    number = serializers.CharField()
+    roll_number = serializers.CharField()
+    suggestion = serializers.CharField()
+    note = serializers.CharField()
+
+
+class PromotionResultSerializer(serializers.Serializer[Any]):
+    promote = serializers.IntegerField()
+    repeat = serializers.IntegerField()
+    complete = serializers.IntegerField()
+
+
+class DocumentSerializer(serializers.Serializer[Any]):
+    html = serializers.CharField()
