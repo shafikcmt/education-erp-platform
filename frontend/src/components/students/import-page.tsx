@@ -1,8 +1,8 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useInstitutionChoice } from "@/components/academics/institution-picker";
 import { PageHeader } from "@/components/app/page-header";
@@ -17,7 +17,7 @@ import { unwrap } from "@/lib/api/errors";
 import { postToSlot } from "@/lib/files/upload";
 import { canAnywhere, useTenantContext } from "@/lib/tenancy/context";
 
-import { useEnrollmentChoices } from "./shared";
+import { STUDENTS_KEY, useEnrollmentChoices } from "./shared";
 
 const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -166,6 +166,13 @@ export function ImportPage() {
       await job.refetch();
     });
   const current = job.data;
+  const queryClient = useQueryClient();
+  // Applied rows are new students or staff: lists elsewhere must not show the cached past.
+  useEffect(() => {
+    if (current?.status !== "applied") return;
+    void queryClient.invalidateQueries({ queryKey: STUDENTS_KEY });
+    void queryClient.invalidateQueries({ queryKey: ["staff"] });
+  }, [current?.status, queryClient]);
   return (
     <>
       <PageHeader title={t("title")} description={t("subtitle")} />

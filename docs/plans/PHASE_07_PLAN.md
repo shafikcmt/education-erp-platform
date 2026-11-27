@@ -352,6 +352,16 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E58 | **Staff application entry** (the Phase 6 gap): "Enter an application" on an open cycle renders the cycle's Studio form for staff through two new endpoints, `admissions/cycles/{id}/form/` and `…/visibility/` (`admissions.application.review` in the cycle's institution; tested allowed and denied), and submits to the existing staff endpoint |
 | E59 | **Navigation** gains Students, Staff, Timetable and My children, each shown only with its permission and its module. **API schema fix:** the bell schedule's `periods` are now typed in OpenAPI (they were untyped), so the client is typed end to end. All strings are in English and Bengali |
 
+### 16.10 M10 — E2E, security review, Phase 7 Complete (2026-11-27, branch `feat/phase-07-m10`)
+
+| # | Note |
+|---|---|
+| E60 | **Real-stack E2E** (`frontend/e2e/people.spec.ts`): a school organisation with the Phase 7 modules; the owner creates and enrols a student, links a guardian and invites them, previews an ID card from a Studio template (sandboxed iframe), adds a staff member without a login, builds a bell schedule, a room and a Monday lesson, imports students from a CSV through the object store (the dry run reports the bad row; apply), and the invited guardian sees only their child's class and week in the portal. Accessibility (axe) on each screen, no CSP violations on either page |
+| E61 | **Defect found by the E2E and fixed:** after an import was applied, the student list showed cached data without the new rows; the import page now refreshes the students and staff lists when a job is applied |
+| E62 | **Test note:** axe cannot enter a sandboxed frame without scripts (by design), so the accessibility check runs before the document preview opens |
+| E63 | **Security self-review:** `docs/security/PHASE_07_SECURITY_REVIEW.md` (defects found and fixed, attack-surface review, residual risks) |
+| E64 | **Phase 7 Complete**, awaiting the owner's approval. Not started: Phase 8 |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -364,3 +374,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.7 appended: M7 notes E40–E45.
 - 2026-11-26 — §16.8 appended: M8 notes E46–E51.
 - 2026-11-27 — §16.9 appended: M9 notes E52–E59.
+- 2026-11-27 — §16.10 appended: M10 notes E60–E64; Phase 7 Complete, awaiting approval.
