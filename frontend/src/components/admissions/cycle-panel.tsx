@@ -16,6 +16,7 @@ import { unwrap } from "@/lib/api/errors";
 import { canAnywhere, localName, useTenantContext } from "@/lib/tenancy/context";
 
 import { ADMISSIONS_KEY, Tabs, useAdmissionsRefresh, useStatusName } from "./shared";
+import { StaffEntry } from "./staff-entry";
 import { TestCard } from "./tests-section";
 
 type Cycle = Schemas["Cycle"];
@@ -99,6 +100,11 @@ function ApplicationsPanel({ cycle, rows }: { cycle: Cycle; rows: Application[] 
   return (
     <Card>
       <CardContent className="grid gap-2 pt-6">
+        {review && cycle.status === "open" ? (
+          <div className="flex justify-end">
+            <StaffEntry cycle={cycle} onDone={() => void refresh()} />
+          </div>
+        ) : null}
         {failure ? <Alert variant="destructive">{failure}</Alert> : null}
         {rows.length ? (
           <ul className="grid gap-2 text-sm" data-testid="applications">

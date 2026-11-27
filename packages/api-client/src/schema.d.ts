@@ -501,6 +501,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admissions/cycles/{cycle_id}/form/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The cycle's application form (staff entry)
+         * @description The cycle's application form for staff entering an application on an applicant's behalf
+         *     (Phase 7 M9; the Phase 6 staff-entry gap). Same render as the public form, but behind
+         *     ``admissions.application.review`` in the cycle's institution, for any cycle status.
+         */
+        get: operations["admissions_cycles_form_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admissions/cycles/{cycle_id}/status/": {
         parameters: {
             query?: never;
@@ -563,6 +585,27 @@ export interface paths {
          *     authenticated sessions).
          */
         post: operations["admissions_cycles_tests_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admissions/cycles/{cycle_id}/visibility/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sections visible for these values (staff entry)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["admissions_cycles_visibility_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6271,9 +6314,7 @@ export interface components {
             readonly institution: string;
             readonly code: string;
             readonly name: string;
-            readonly periods: {
-                [key: string]: unknown;
-            }[];
+            readonly periods: components["schemas"]["Period"][];
         };
         ScheduleCreateRequest: {
             /** Format: uuid */
@@ -7822,6 +7863,29 @@ export interface operations {
             };
         };
     };
+    admissions_cycles_form_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
     admissions_cycles_status_create: {
         parameters: {
             query?: never;
@@ -7914,6 +7978,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Test"];
+                };
+            };
+        };
+    };
+    admissions_cycles_visibility_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                cycle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

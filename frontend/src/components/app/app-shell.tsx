@@ -3,6 +3,10 @@
 import { useQueryClient } from "@tanstack/react-query";
 import {
   BookOpen,
+  Briefcase,
+  CalendarDays,
+  GraduationCap,
+  HeartHandshake,
   Building2,
   ClipboardList,
   CreditCard,
@@ -105,6 +109,20 @@ function tenantNav(context: TenantContext | undefined): NavItem[] {
         has("admissions.test.score") ||
         has("admissions.inquiry.view"),
     },
+    {
+      href: "/students",
+      key: "students",
+      icon: GraduationCap,
+      show: has("students.student.view") || has("students.student.view_assigned"),
+    },
+    { href: "/staff", key: "staff", icon: Briefcase, show: has("staff.profile.view") },
+    {
+      href: "/timetable",
+      key: "timetable",
+      icon: CalendarDays,
+      show: has("timetable.timetable.view"),
+    },
+    { href: "/portal", key: "portal", icon: HeartHandshake, show: has("parent_portal.portal.use") },
     { href: "/roles", key: "roles", icon: UserCog, show: has("rbac.role.view") },
     { href: "/settings", key: "settings", icon: Settings, show: has("tenancy.tenant.view") },
     {

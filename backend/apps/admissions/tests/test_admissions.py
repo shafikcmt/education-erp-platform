@@ -19,7 +19,7 @@ from apps.customization import forms, numbering, workflows
 from apps.customization.models import WorkflowInstance
 from apps.module_registry import services as registry_services
 from apps.tenancy.models import Institution, Membership
-from tests.helpers import Api, make_user
+from tests.helpers import Api, Person, make_user
 from tests.isolation.factories import grant_role, seed_tenant_roles, tenant_host
 
 pytestmark = pytest.mark.django_db(databases=["default", "audit_durable"])
@@ -254,6 +254,16 @@ def test_api_back_office_and_scopes(org, owner, setup, admin):
         {"cycle": str(cycle.pk), "target": str(target.pk), "values": {"applicant_name": "Ana"}},
     )
     assert created.status_code == 201, created.content
+    # Phase 7 M9: the form for staff entry, behind admissions.application.review.
+    form = api.get(f"/api/v1/admissions/cycles/{cycle.pk}/form/")
+    assert form.status_code == 200, form.content
+    names = [f["name"] for sec in form.json()["sections"] for f in sec["fields"]]
+    assert "applicant_name" in names
+    shown = api.post(f"/api/v1/admissions/cycles/{cycle.pk}/visibility/", {"values": {}})
+    assert shown.status_code == 200 and isinstance(shown.json()["sections"], list)
+    teacher = Api(host=tenant_host(org.tenant))
+    teacher.login(Person(user=org.teacher), expect="authenticated")
+    assert teacher.get(f"/api/v1/admissions/cycles/{cycle.pk}/form/").status_code == 403
     listed = api.get("/api/v1/admissions/applications/", cycle=str(cycle.pk)).json()
     assert [a["applicant_name"] for a in listed] == ["Ana"]
     app_id = created.json()["id"]
