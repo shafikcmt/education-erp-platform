@@ -182,6 +182,11 @@ _OWNER_CODES = [
     # Phase 7 M7: timetable (ADR-071).
     "timetable.timetable.view",
     "timetable.timetable.manage",
+    # Phase 7 M8: so they can invite guardians and students to the portal (nobody grants a code
+    # they don't hold; these codes only open children or oneself, never other students).
+    "students.child.view",
+    "students.profile.view_own",
+    "parent_portal.portal.use",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -253,6 +258,11 @@ _INSTITUTION_ADMIN_CODES = [
     # Phase 7 M7: timetable (ADR-071).
     "timetable.timetable.view",
     "timetable.timetable.manage",
+    # Phase 7 M8: so they can invite guardians and students to the portal (nobody grants a code
+    # they don't hold; these codes only open children or oneself, never other students).
+    "students.child.view",
+    "students.profile.view_own",
+    "parent_portal.portal.use",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -471,13 +481,23 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Student",
         "শিক্ষার্থী",
         "Own timetable, attendance, results, invoices and courses.",
-        ["students.profile.view_own", "examinations.result.view_own", "timetable.timetable.view"],
+        [
+            "students.profile.view_own",
+            "examinations.result.view_own",
+            "timetable.timetable.view",
+            "parent_portal.portal.use",
+        ],
     ),
     _template(
         "guardian",
         "Parent / Guardian",
         "অভিভাবক",
         "Linked children: attendance, results, invoices and payments.",
-        ["students.child.view", "fees.invoice.pay", "timetable.timetable.view"],
+        [
+            "students.child.view",
+            "fees.invoice.pay",
+            "timetable.timetable.view",
+            "parent_portal.portal.use",
+        ],
     ),
 ]

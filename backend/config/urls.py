@@ -30,6 +30,7 @@ urlpatterns: list[URLPattern | URLResolver] = [
     path("api/v1/", include("apps.students.urls")),
     path("api/v1/", include("apps.staff.urls")),
     path("api/v1/", include("apps.timetable.urls")),
+    path("api/v1/", include("apps.parent_portal.urls")),
 ]
 
 if settings.API_DOCS_ENABLED:

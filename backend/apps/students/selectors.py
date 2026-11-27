@@ -53,6 +53,17 @@ def holds_in_institution(actor: Any, code: str, institution_id: Any) -> bool:
     )
 
 
+def holds_anywhere(actor: Any, code: str) -> bool:
+    """``code`` held in some scope of the tenant (guardian and student roles may be granted
+    tenant-wide or in an institution, Phase 7 M8)."""
+    from apps.tenancy.api.permissions import actor_targets
+
+    return any(
+        has_perm(actor, code, target=target, use_cache=False)
+        for target in actor_targets(actor, require_tenant().id)
+    )
+
+
 def memberships(actor: Any) -> list[Any]:
     from apps.tenancy.models import Membership
 
@@ -143,12 +154,10 @@ def visible_students(actor: Any) -> QuerySet[Student]:
                 status=Enrollment.Status.ACTIVE, unit_id__in=units
             ).values("student_id")
         )
-    tenant = require_tenant()
-    anywhere = ScopeTarget(tenant.id)
     mine = memberships(actor)
-    if mine and has_perm(actor, CHILD, target=anywhere, use_cache=False):
+    if mine and holds_anywhere(actor, CHILD):
         query |= Q(guardian_links__guardian__membership_id__in=mine)
-    if mine and has_perm(actor, OWN, target=anywhere, use_cache=False):
+    if mine and holds_anywhere(actor, OWN):
         query |= Q(membership_id__in=mine)
     return Student.objects.filter(query).distinct()
 
@@ -183,11 +192,10 @@ def portal_units(actor: Any) -> set[Any]:
     mine = memberships(actor)
     if not mine:
         return set()
-    anywhere = ScopeTarget(require_tenant().id)
     query = Q(pk__in=[])
-    if has_perm(actor, CHILD, target=anywhere, use_cache=False):
+    if holds_anywhere(actor, CHILD):
         query |= Q(student__guardian_links__guardian__membership_id__in=mine)
-    if has_perm(actor, OWN, target=anywhere, use_cache=False):
+    if holds_anywhere(actor, OWN):
         query |= Q(student__membership_id__in=mine)
     return set(
         Enrollment.objects.filter(query, status=Enrollment.Status.ACTIVE).values_list(

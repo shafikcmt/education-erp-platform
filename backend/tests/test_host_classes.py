@@ -85,6 +85,11 @@ TENANT_HOST_ROUTES = {
     "api/v1/timetable/slots/": False,
     "api/v1/timetable/slots/<str:slot_id>/": False,
     "api/v1/timetable/my/": False,
+    # Phase 7 M8: portal invitations and the portal (members only)
+    "api/v1/students/<str:student_id>/invite/": False,
+    "api/v1/guardians/<str:guardian_id>/invite/": False,
+    "api/v1/portal/children/": False,
+    "api/v1/portal/children/<str:student_id>/": False,
     "api/v1/imports/": False,
     "api/v1/imports/<str:job_id>/": False,
     "api/v1/imports/<str:job_id>/apply/": False,

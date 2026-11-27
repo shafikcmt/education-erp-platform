@@ -328,6 +328,17 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E44 | **Permissions:** `timetable.timetable.view` and `timetable.timetable.manage` (MFA); 107 codes in total. Role templates: owner and institution admin both; academic coordinator both (manage was already named); campus admin view; teachers, class teachers, guardians and students view |
 | E45 | **API:** `timetable/schedules/` (list with periods, create), `timetable/schedules/{id}/periods/`, `timetable/rooms/`, `timetable/slots/` (by unit, room or teacher; create), `timetable/slots/{id}/` (remove) and `timetable/my/`. Not in Phase 7 (ADR-074 Q6): substitutions and automatic generation |
 
+### 16.8 M8 — portal invitations and the portal (2026-11-26, branch `feat/phase-07-m8`)
+
+| # | Note |
+|---|---|
+| E46 | **Portal invitations (ADR-069):** `POST guardians/{id}/invite/` (`students.guardian.manage` in every institution where the guardian has a child) and `POST students/{id}/invite/` (`students.student.manage`) use the Phase 3 invitation flow unchanged: the tenant's system role `guardian` or `student`, granted in the student's institution, so `create_invitation` checks `tenancy.member.invite` and that the inviter holds every code of the role (no escalation). New table `students_portalinvite` (invitation, kind, record, linked time; standard RLS). An email address is required; phone-only guardians stay without a login until phone sign-in (ADR-074 Q2) |
+| E47 | **Linking on acceptance:** a new tenancy hook, `TENANCY_INVITATION_ACCEPTED_HANDLERS`, runs inside the acceptance transaction (both the signed-in and the password paths); `students.portal.on_invitation_accepted` links the membership to the guardian or student record once. A record that got another login meanwhile, or a login already linked to another record of that kind, is left alone. One account serves several children; a guardian who is also staff keeps one account |
+| E48 | **Relationship codes in any scope:** `students.child.view` and `students.profile.view_own` now count when held in any scope of the tenant (`holds_anywhere`), because invited guardians and students hold their role in an institution. They still only open the member's children or own record |
+| E49 | **Role templates:** owner and institution admin also hold `students.child.view`, `students.profile.view_own` and `parent_portal.portal.use`, so they can invite guardians and students (nobody grants a code they don't hold); these codes open nothing else for them. Guardian and student templates gain `parent_portal.portal.use` |
+| E50 | **New `parent_portal` module** (no tables; permission `parent_portal.portal.use`; 108 codes in total): `portal/children/` (the switcher: children or oneself, the relation, the current enrollment) and `portal/children/{id}/` (profile, enrollment and the unit's timetable when the tenant has `timetable`). Only the child and own grounds apply, never staff scope, so a teacher who is a parent sees only their children in the portal (tested: staff get an empty list and 404) |
+| E51 | **Not yet:** guardian-visible student documents. Student documents have a file purpose (M1) but no upload API or guardian visibility flag yet; recorded as a known gap. Attendance, results, fees and notices plug into the portal in Phases 8–14 |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -338,3 +349,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.5 appended: M5 notes E28–E33.
 - 2026-11-26 — §16.6 appended: M6 notes E34–E39.
 - 2026-11-26 — §16.7 appended: M7 notes E40–E45.
+- 2026-11-26 — §16.8 appended: M8 notes E46–E51.

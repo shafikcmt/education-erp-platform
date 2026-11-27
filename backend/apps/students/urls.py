@@ -48,10 +48,16 @@ urlpatterns = [
         name="student-tc-document",
     ),
     path("students/<str:student_id>/id-card/", v.StudentIdCardView.as_view(), name="id-card"),
+    path("students/<str:student_id>/invite/", v.StudentInviteView.as_view(), name="student-invite"),
     path("imports/", v.ImportsView.as_view(), name="imports"),
     path("imports/<str:job_id>/", v.ImportDetailView.as_view(), name="import"),
     path("imports/<str:job_id>/apply/", v.ImportApplyView.as_view(), name="import-apply"),
     path("imports/<str:job_id>/report/", v.ImportReportView.as_view(), name="import-report"),
     path("guardians/", v.GuardiansView.as_view(), name="guardians"),
     path("guardians/merge/", v.GuardianMergeView.as_view(), name="guardian-merge"),
+    path(
+        "guardians/<str:guardian_id>/invite/",
+        v.GuardianInviteView.as_view(),
+        name="guardian-invite",
+    ),
 ]
