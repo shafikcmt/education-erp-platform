@@ -10,6 +10,7 @@ from apps.students.models import (
     Enrollment,
     Guardian,
     ImportJob,
+    PortalInvite,
     Student,
     StudentGuardian,
     TransferCertificate,
@@ -207,4 +208,11 @@ class ImportJobDetailSerializer(ImportJobSerializer):
 
     class Meta(ImportJobSerializer.Meta):
         fields = [*ImportJobSerializer.Meta.fields, "report"]
+        read_only_fields = fields
+
+
+class PortalInviteSerializer(serializers.ModelSerializer[PortalInvite]):
+    class Meta:
+        model = PortalInvite
+        fields = ["id", "invitation_id", "kind", "record_id", "linked_at"]
         read_only_fields = fields

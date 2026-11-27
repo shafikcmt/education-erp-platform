@@ -134,6 +134,7 @@ EVENTS: dict[str, frozenset[str]] = {
     "students.import.started": frozenset({"kind"}),
     "students.import.applied": frozenset({"kind"}),
     "students.import.finished": frozenset({"dry_run", "ok", "failed"}),
+    "students.portal.invited": frozenset({"kind"}),
     "students.student.converted": frozenset({"ref", "guardian", "enrolled"}),
     "students.student.conversion_failed": frozenset({"reason"}),
     # timetable (Phase 7 M7)

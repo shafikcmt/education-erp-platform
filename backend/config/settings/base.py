@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "apps.students",
     "apps.staff",
     "apps.timetable",
+    "apps.parent_portal",
 ]
 
 MIDDLEWARE = [
@@ -285,6 +286,8 @@ STUDENTS_IMPORT_KINDS: dict[str, str] = {
     "students": "apps.students.imports.StudentRows",
     "staff": "apps.staff.imports.StaffRows",
 }
+# Phase 7 M8: called inside the acceptance transaction with (invitation, membership).
+TENANCY_INVITATION_ACCEPTED_HANDLERS: list[str] = ["apps.students.portal.on_invitation_accepted"]
 # Phase 7 M7: units a portal member (guardian, student) sees in timetables, by path.
 TIMETABLE_PORTAL_UNITS: list[str] = ["apps.students.selectors.portal_units"]
 STUDENTS_ASSIGNED_UNITS: list[str] = [

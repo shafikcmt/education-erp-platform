@@ -1701,6 +1701,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/guardians/{guardian_id}/invite/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite a guardian to the portal (by their email)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["guardians_invite_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/guardians/merge/": {
         parameters: {
             query?: never;
@@ -3346,6 +3367,48 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/portal/children/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My children (or myself): the portal's switcher
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["portal_children_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/portal/children/{student_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A child's profile, enrollment and timetable
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["portal_children_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/admissions/cycles/": {
         parameters: {
             query?: never;
@@ -3998,6 +4061,27 @@ export interface paths {
         get: operations["students_id_card_retrieve"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/invite/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Invite a student to the portal (by their email)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["students_invite_create"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4724,6 +4808,31 @@ export interface components {
         ChangeReasonRequest: {
             reason: string;
         };
+        Child: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            number: string;
+            /** Format: uuid */
+            institution: string;
+            status: string;
+            relation: string;
+            current: components["schemas"]["CurrentEnrollment"] | null;
+        };
+        ChildDetail: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            number: string;
+            /** Format: uuid */
+            institution: string;
+            status: string;
+            relation: string;
+            current: components["schemas"]["CurrentEnrollment"] | null;
+            /** Format: date */
+            date_of_birth: string | null;
+            timetable: components["schemas"]["Lesson"][];
+        };
         ConfigDraftRequest: {
             /** Format: uuid */
             institution?: string | null;
@@ -4793,6 +4902,15 @@ export interface components {
         };
         Csrf: {
             detail: string;
+        };
+        CurrentEnrollment: {
+            /** Format: uuid */
+            unit: string;
+            unit_name: string;
+            /** Format: uuid */
+            year: string;
+            year_name: string;
+            roll_number: string;
         };
         Cycle: {
             /** Format: uuid */
@@ -5342,6 +5460,16 @@ export interface components {
             /** Format: uuid */
             campus?: string | null;
         };
+        Lesson: {
+            weekday: number;
+            /** Format: time */
+            start_time: string;
+            /** Format: time */
+            end_time: string;
+            period_name: string;
+            subject_name: string;
+            room_code: string;
+        };
         LimitUsage: {
             limit: number;
             used: number;
@@ -5878,6 +6006,23 @@ export interface components {
             readonly mfa_enabled: boolean;
             readonly active_sessions: number;
         };
+        PortalInvite: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly invitation_id: string;
+            readonly kind: components["schemas"]["PortalInviteKindEnum"];
+            /** Format: uuid */
+            readonly record_id: string;
+            /** Format: date-time */
+            readonly linked_at: string | null;
+        };
+        /**
+         * @description * `guardian` - Guardian
+         *     * `student` - Student
+         * @enum {string}
+         */
+        PortalInviteKindEnum: "guardian" | "student";
         Preset: {
             code: string;
             institution_type: string;
@@ -9161,6 +9306,27 @@ export interface operations {
             };
         };
     };
+    guardians_invite_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                guardian_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalInvite"];
+                };
+            };
+        };
+    };
     guardians_merge_create: {
         parameters: {
             query?: never;
@@ -11263,6 +11429,46 @@ export interface operations {
             };
         };
     };
+    portal_children_list: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Child"][];
+                };
+            };
+        };
+    };
+    portal_children_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ChildDetail"];
+                };
+            };
+        };
+    };
     public_admissions_cycles_list: {
         parameters: {
             query?: never;
@@ -12151,6 +12357,27 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Document"];
+                };
+            };
+        };
+    };
+    students_invite_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalInvite"];
                 };
             };
         };

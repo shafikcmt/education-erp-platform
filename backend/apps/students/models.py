@@ -235,3 +235,29 @@ class ImportJob(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"{self.kind}:{self.status}"
+
+
+class PortalInvite(TenantScopedModel):
+    """A portal invitation for a guardian or a student (Phase 7 M8; ADR-069): accepting the
+    invitation links the new login (membership) to this record."""
+
+    class Kind(models.TextChoices):
+        GUARDIAN = "guardian", "Guardian"
+        STUDENT = "student", "Student"
+
+    invitation_id = models.UUIDField()
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    record_id = models.UUIDField()
+    linked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "students_portalinvite"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "invitation_id"], name="students_portalinvite_unique"
+            ),
+        ]
+        indexes = [models.Index(fields=["tenant", "kind", "record_id"])]
+
+    def __str__(self) -> str:
+        return f"{self.kind}:{self.record_id}"

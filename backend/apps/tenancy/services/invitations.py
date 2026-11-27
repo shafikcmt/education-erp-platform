@@ -330,6 +330,12 @@ def accept_invitation(*, token: str, user: User, request: HttpRequest | None = N
         )
         invitation.accepted_at = timezone.now()
         invitation.save(update_fields=["accepted_at", "updated_at"])
+        # Phase 7 M8: modules link the new login to their records (a guardian or a student
+        # invited to the portal), in the same transaction. Loaded by path: tenancy imports none.
+        from django.utils.module_loading import import_string
+
+        for path in getattr(settings, "TENANCY_INVITATION_ACCEPTED_HANDLERS", []):
+            import_string(path)(invitation=invitation, membership=membership)
         bump_tenant_version(ctx.id)
         record(
             "tenancy.invitation.accepted",

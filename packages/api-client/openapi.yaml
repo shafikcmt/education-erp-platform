@@ -2412,6 +2412,30 @@ paths:
                 items:
                   $ref: '#/components/schemas/Guardian'
           description: ''
+  /api/v1/guardians/{guardian_id}/invite/:
+    post:
+      operationId: guardians_invite_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Invite a guardian to the portal (by their email)
+      parameters:
+      - in: path
+        name: guardian_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalInvite'
+          description: ''
   /api/v1/guardians/merge/:
     post:
       operationId: guardians_merge_create
@@ -4756,6 +4780,50 @@ paths:
               schema:
                 $ref: '#/components/schemas/RevokedCount'
           description: ''
+  /api/v1/portal/children/:
+    get:
+      operationId: portal_children_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: 'My children (or myself): the portal''s switcher'
+      tags:
+      - portal
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Child'
+          description: ''
+  /api/v1/portal/children/{student_id}/:
+    get:
+      operationId: portal_children_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A child's profile, enrollment and timetable
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - portal
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChildDetail'
+          description: ''
   /api/v1/public/admissions/cycles/:
     get:
       operationId: public_admissions_cycles_list
@@ -5774,6 +5842,30 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Document'
+          description: ''
+  /api/v1/students/{student_id}/invite/:
+    post:
+      operationId: students_invite_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Invite a student to the portal (by their email)
+      parameters:
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - students
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalInvite'
           description: ''
   /api/v1/students/{student_id}/move/:
     post:
@@ -7046,6 +7138,74 @@ components:
           maxLength: 200
       required:
       - reason
+    Child:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        institution:
+          type: string
+          format: uuid
+        status:
+          type: string
+        relation:
+          type: string
+        current:
+          allOf:
+          - $ref: '#/components/schemas/CurrentEnrollment'
+          nullable: true
+      required:
+      - current
+      - id
+      - institution
+      - name
+      - number
+      - relation
+      - status
+    ChildDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        institution:
+          type: string
+          format: uuid
+        status:
+          type: string
+        relation:
+          type: string
+        current:
+          allOf:
+          - $ref: '#/components/schemas/CurrentEnrollment'
+          nullable: true
+        date_of_birth:
+          type: string
+          format: date
+          nullable: true
+        timetable:
+          type: array
+          items:
+            $ref: '#/components/schemas/Lesson'
+      required:
+      - current
+      - date_of_birth
+      - id
+      - institution
+      - name
+      - number
+      - relation
+      - status
+      - timetable
     ConfigDraftRequest:
       type: object
       properties:
@@ -7209,6 +7369,27 @@ components:
           type: string
       required:
       - detail
+    CurrentEnrollment:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+        unit_name:
+          type: string
+        year:
+          type: string
+          format: uuid
+        year_name:
+          type: string
+        roll_number:
+          type: string
+      required:
+      - roll_number
+      - unit
+      - unit_name
+      - year
+      - year_name
     Cycle:
       type: object
       properties:
@@ -8595,6 +8776,30 @@ components:
       - email
       - role
       - scope_type
+    Lesson:
+      type: object
+      properties:
+        weekday:
+          type: integer
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+        period_name:
+          type: string
+        subject_name:
+          type: string
+        room_code:
+          type: string
+      required:
+      - end_time
+      - period_name
+      - room_code
+      - start_time
+      - subject_name
+      - weekday
     LimitUsage:
       type: object
       properties:
@@ -9947,6 +10152,44 @@ components:
       - locale
       - mfa_enabled
       - platform_roles
+    PortalInvite:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        invitation_id:
+          type: string
+          format: uuid
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/PortalInviteKindEnum'
+          readOnly: true
+        record_id:
+          type: string
+          format: uuid
+          readOnly: true
+        linked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+      required:
+      - id
+      - invitation_id
+      - kind
+      - linked_at
+      - record_id
+    PortalInviteKindEnum:
+      enum:
+      - guardian
+      - student
+      type: string
+      description: |-
+        * `guardian` - Guardian
+        * `student` - Student
     Preset:
       type: object
       properties:

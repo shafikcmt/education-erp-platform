@@ -570,3 +570,48 @@ class ImportReportView(StudentsBaseView):
         response = HttpResponse(imports.report_csv(row), content_type="text/csv; charset=utf-8")
         response["Content-Disposition"] = f'attachment; filename="import-{row.pk}.csv"'
         return response
+
+
+# ------------------------------------------------------------------- portal invitations (M8)
+class StudentInviteView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.student.manage"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Invite a student to the portal (by their email)", request=None,
+        responses={201: s.PortalInviteSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, student_id: str) -> Response:
+        from apps.students import portal
+
+        student = _student(request, student_id)
+        with service_errors():
+            row = portal.invite_student(
+                actor=_actor(request), student=student, request=request._request
+            )
+        return Response(s.PortalInviteSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class GuardianInviteView(StudentsBaseView):
+    permission_classes = [HasTenantPermission({"POST": "students.guardian.manage"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Invite a guardian to the portal (by their email)", request=None,
+        responses={201: s.PortalInviteSerializer},
+    )  # fmt: skip
+    def post(self, request: Request, guardian_id: str) -> Response:
+        from apps.students import portal
+
+        visible = selectors.visible_students(_actor(request))
+        try:
+            guardian = Guardian.objects.filter(
+                pk=guardian_id, student_links__student__in=visible
+            ).first()
+        except (ValueError, ValidationError):
+            guardian = None
+        if guardian is None:
+            raise NotFound()
+        with service_errors():
+            row = portal.invite_guardian(
+                actor=_actor(request), guardian=guardian, request=request._request
+            )
+        return Response(s.PortalInviteSerializer(row).data, status=status.HTTP_201_CREATED)
