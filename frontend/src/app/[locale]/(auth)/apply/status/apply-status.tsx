@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { api, ensureCsrf } from "@/lib/api/browser";
 import { unwrap } from "@/lib/api/errors";
+import { postToSlot } from "@/lib/files/upload";
 import { useErrorMessage } from "@/lib/auth/use-error-message";
 import { useFragmentToken } from "@/lib/auth/fragment-token";
 
@@ -75,14 +76,8 @@ export function ApplyStatus() {
           body: { token, name: file.name, size: file.size, content_type: file.type },
         }),
       );
-      const form = new FormData();
-      for (const [key, value] of Object.entries(slot.fields)) form.append(key, value);
-      form.append("file", file); // the file goes last in an S3 POST form
-      // A multipart POST is a CORS "simple" request: sent without CORS on the object store, the
-      // response is opaque. The server checks the stored object (size, type) after the
-      // confirmation, so a failed upload shows up as a rejected document.
       try {
-        await fetch(slot.url, { method: "POST", body: form, mode: "no-cors", credentials: "omit" });
+        await postToSlot(slot, file);
       } catch {
         throw new Error(t("apply.uploadFailed"));
       }

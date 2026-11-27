@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.timetable.models import BellSchedule, Period, Room, Slot
@@ -24,6 +25,7 @@ class ScheduleSerializer(serializers.ModelSerializer[BellSchedule]):
         fields = ["id", "institution", "code", "name", "periods"]
         read_only_fields = fields
 
+    @extend_schema_field(PeriodSerializer(many=True))
     def get_periods(self, obj: BellSchedule) -> list[dict[str, Any]]:
         rows = Period.objects.filter(schedule=obj).order_by("order")
         return list(PeriodSerializer(rows, many=True).data)

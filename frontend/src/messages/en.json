@@ -61,7 +61,11 @@
     "studio": "Studio",
     "signups": "Sign-ups",
     "academics": "Academics",
-    "admissions": "Admissions"
+    "admissions": "Admissions",
+    "students": "Students",
+    "staff": "Staff",
+    "timetable": "Timetable",
+    "portal": "My children"
   },
   "auth": {
     "email": "Email address",
@@ -963,6 +967,13 @@
         "converted": "Converted",
         "closed": "Closed"
       }
+    },
+    "entry": {
+      "open": "Enter an application",
+      "hint": "For an applicant who applies in person or by phone. The cycle's form is checked by the server.",
+      "target": "Applying for",
+      "submit": "Submit the application",
+      "close": "Close"
     }
   },
   "apply": {
@@ -996,5 +1007,252 @@
     "documentHint": "PDF, JPEG or PNG, up to 5 MB each, at most 5 files.",
     "tooLarge": "This file is larger than 5 MB.",
     "uploadFailed": "The upload failed. Please try again."
+  },
+  "students": {
+    "title": "Students",
+    "subtitle": "The students you may see: your scope, the ones you teach or advise, your children, yourself.",
+    "add": "Add student",
+    "numberHint": "Leave the number empty to take the next one from the 'student' numbering sequence.",
+    "save": "Save",
+    "search": "Name or number",
+    "empty": "No students to show.",
+    "notFound": "This student doesn't exist or isn't visible to you.",
+    "profile": "Profile",
+    "enrollments": "Enrollments",
+    "enroll": "Enroll",
+    "move": "Move to another unit",
+    "year": "Academic year",
+    "unit": "Unit",
+    "rollNumber": "Roll",
+    "notEnrolled": "Not enrolled.",
+    "invite": "Invite to the portal",
+    "invited": "Invitation sent",
+    "fields": {
+      "name": "Name",
+      "number": "Number",
+      "date_of_birth": "Date of birth",
+      "gender": "Gender",
+      "phone": "Phone",
+      "email": "Email"
+    },
+    "statuses": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "transferred": "Transferred",
+      "alumni": "Alumni",
+      "withdrawn": "Withdrawn",
+      "promoted": "Promoted",
+      "repeated": "Repeated",
+      "completed": "Completed"
+    },
+    "relations": {
+      "staff": "Staff view",
+      "teacher": "You teach or advise",
+      "guardian": "Your child",
+      "self": "You"
+    },
+    "guardians": {
+      "title": "Guardians",
+      "add": "Link a guardian",
+      "matchHint": "An existing guardian with the same phone or email is linked instead of a new one.",
+      "relation": "Relation",
+      "primary": "Primary",
+      "unlink": "Unlink",
+      "none": "No guardians shown.",
+      "relations": {
+        "mother": "Mother",
+        "father": "Father",
+        "guardian": "Guardian",
+        "grandparent": "Grandparent",
+        "sibling": "Sibling",
+        "relative": "Relative",
+        "other": "Other"
+      }
+    },
+    "actions": {
+      "title": "Actions and documents",
+      "withdraw": "Withdraw",
+      "transferCertificate": "Transfer certificate",
+      "tcHint": "The student leaves; the number comes from the 'transfer_certificate' sequence unless you give one.",
+      "confirm": "Confirm",
+      "reason": "Reason",
+      "destination": "Going to",
+      "number": "Certificate number",
+      "invitePortal": "Invite to the portal",
+      "template": "Template key",
+      "idCard": "ID card",
+      "printTc": "Transfer certificate",
+      "preview": "Printable document"
+    },
+    "import": {
+      "title": "Import",
+      "subtitle": "Bulk import of students or staff from a CSV or Excel file: a dry run first, then apply.",
+      "kind": "What to import",
+      "kinds": {
+        "students": "Students",
+        "staff": "Staff"
+      },
+      "file": "File (CSV or XLSX, up to 5 MB)",
+      "upload": "Upload",
+      "uploading": "Uploading…",
+      "mapping": "Columns",
+      "column": "Column in the file",
+      "field": "Field",
+      "skip": "Do not import",
+      "year": "Academic year for enrollments",
+      "start": "Start the dry run",
+      "apply": "Apply",
+      "status": "Status",
+      "rows": "{ok} of {total} rows passed",
+      "report": "Download the report",
+      "row": "Row",
+      "errors": "Problems",
+      "ready": "The file is checked. Map its columns.",
+      "statuses": {
+        "validating": "Checking…",
+        "validated": "Dry run finished",
+        "applying": "Applying…",
+        "applied": "Applied",
+        "failed": "Failed"
+      },
+      "targets": {
+        "name": "Name",
+        "number": "Number",
+        "date_of_birth": "Date of birth",
+        "gender": "Gender",
+        "phone": "Phone",
+        "email": "Email",
+        "guardian_name": "Guardian's name",
+        "guardian_phone": "Guardian's phone",
+        "guardian_email": "Guardian's email",
+        "guardian_relation": "Guardian's relation",
+        "unit": "Unit code",
+        "roll_number": "Roll",
+        "joining_date": "Joining date",
+        "department": "Department code",
+        "designation": "Designation code",
+        "employment_type": "Employment"
+      }
+    },
+    "promotion": {
+      "title": "Promotion",
+      "subtitle": "Move the students of a unit to the next year: preview, adjust, then apply.",
+      "from": "From unit",
+      "fromYear": "This year",
+      "toYear": "Next year",
+      "to": "To unit (empty: final level)",
+      "rule": "Promotion rule (optional)",
+      "preview": "Preview",
+      "apply": "Apply",
+      "decision": "Decision",
+      "decisions": {
+        "promote": "Promote",
+        "repeat": "Repeat",
+        "complete": "Complete"
+      },
+      "done": "Promoted {promote}, repeated {repeat}, completed {complete}."
+    }
+  },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "Staff profiles, departments, designations and class teachers.",
+    "directory": "Directory",
+    "add": "Add staff member",
+    "save": "Save",
+    "empty": "Nothing here yet.",
+    "numberHint": "Leave the number empty to take the next one from the 'staff' numbering sequence. A login is optional.",
+    "noLogin": "no login",
+    "fields": {
+      "name": "Name",
+      "number": "Number",
+      "phone": "Phone",
+      "email": "Email",
+      "joining_date": "Joining date",
+      "department": "Department",
+      "designation": "Designation",
+      "employment_type": "Employment",
+      "code": "Code"
+    },
+    "employment": {
+      "permanent": "Permanent",
+      "contract": "Contract",
+      "part_time": "Part-time",
+      "visiting": "Visiting",
+      "volunteer": "Volunteer"
+    },
+    "departments": {
+      "title": "Departments",
+      "add": "Add department"
+    },
+    "designations": {
+      "title": "Designations",
+      "add": "Add designation"
+    },
+    "advisors": {
+      "title": "Class teachers",
+      "add": "Assign a class teacher",
+      "hint": "Class teachers see the students of the unit (and the units below it) for that year.",
+      "year": "Academic year",
+      "unit": "Unit",
+      "staff": "Staff member (with a login)",
+      "assistant": "assistant",
+      "remove": "Remove"
+    }
+  },
+  "timetable": {
+    "title": "Timetable",
+    "subtitle": "Weekly lessons by unit, and your own lessons.",
+    "tabs": {
+      "units": "By unit",
+      "mine": "My lessons"
+    },
+    "unit": "Unit",
+    "time": "Time",
+    "empty": "No lessons yet.",
+    "remove": "Remove",
+    "save": "Save",
+    "days": {
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday",
+      "7": "Sunday"
+    },
+    "lesson": {
+      "add": "Add a lesson",
+      "hint": "A clash (the same unit, teacher or room at that time) is refused.",
+      "year": "Academic year",
+      "offering": "Subject",
+      "weekday": "Day",
+      "period": "Period",
+      "room": "Room (optional)"
+    },
+    "schedules": "Bell schedules",
+    "addSchedule": "Add a schedule",
+    "addPeriod": "Add a period",
+    "schedule": "Schedule",
+    "rooms": "Rooms",
+    "addRoom": "Add a room",
+    "code": "Code",
+    "name": "Name",
+    "order": "Number",
+    "start": "Starts",
+    "end": "Ends",
+    "break": "Break",
+    "capacity": "Capacity"
+  },
+  "portal": {
+    "title": "My children",
+    "subtitle": "Your children's class and timetable.",
+    "none": "No child is linked to your account yet. Ask the institution to invite you.",
+    "switcher": "Choose a child",
+    "number": "Student number",
+    "status": "Status",
+    "class": "Class",
+    "roll": "Roll",
+    "timetable": "Timetable",
+    "comingSoon": "Attendance, results, fees and notices will appear here as they arrive."
   }
 }

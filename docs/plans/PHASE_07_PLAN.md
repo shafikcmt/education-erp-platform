@@ -339,6 +339,19 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E50 | **New `parent_portal` module** (no tables; permission `parent_portal.portal.use`; 108 codes in total): `portal/children/` (the switcher: children or oneself, the relation, the current enrollment) and `portal/children/{id}/` (profile, enrollment and the unit's timetable when the tenant has `timetable`). Only the child and own grounds apply, never staff scope, so a teacher who is a parent sees only their children in the portal (tested: staff get an empty list and 404) |
 | E51 | **Not yet:** guardian-visible student documents. Student documents have a file purpose (M1) but no upload API or guardian visibility flag yet; recorded as a known gap. Attendance, results, fees and notices plug into the portal in Phases 8–14 |
 
+### 16.9 M9 — frontend (2026-11-27, branch `feat/phase-07-m9`)
+
+| # | Note |
+|---|---|
+| E52 | **Students** (`/students`, `/students/{id}`): the list the server allows (search by name or number, per institution), creation (number from the Studio sequence or given), and the detail with why it is visible (staff, you teach or advise, your child, you), the profile, enrollments (enroll in a leaf unit of an open year, or move within the year), guardians (link with phone/email matching, primary, unlink, portal invitation), and actions (withdraw, transfer certificate, portal invitation, ID card and transfer certificate previews from Studio templates in a **sandboxed iframe**, no scripts) |
+| E53 | **Promotion** (`/students/promotion`): choose the source unit and year and the next year (and unit, or none for the final level), an optional promotion rule; preview the suggestions, change any decision, apply in one transaction (step-up handled by the shared action helper) |
+| E54 | **Import** (`/students/import`): kind (students or staff, by permission), upload through `files` (shared presigned-upload helper, now also used by the applicant status page), wait for verification, map columns (suggested from the CSV header read in the browser; typed for XLSX), the year for enrollments, the dry run with the row errors, apply, and the formula-safe report download |
+| E55 | **Staff** (`/staff`): directory (login optional), creation with department, designation and employment type, departments and designations, and class teachers (assign and remove; staff with a login only) |
+| E56 | **Timetable** (`/timetable`): a unit's week as a grid (rows by start time, columns by day), "my lessons", and for managers bell schedules with periods and breaks, rooms, and adding or removing lessons (clashes refused by the server) |
+| E57 | **Portal** (`/portal`): the child switcher and the chosen child's class and week (read-only) |
+| E58 | **Staff application entry** (the Phase 6 gap): "Enter an application" on an open cycle renders the cycle's Studio form for staff through two new endpoints, `admissions/cycles/{id}/form/` and `…/visibility/` (`admissions.application.review` in the cycle's institution; tested allowed and denied), and submits to the existing staff endpoint |
+| E59 | **Navigation** gains Students, Staff, Timetable and My children, each shown only with its permission and its module. **API schema fix:** the bell schedule's `periods` are now typed in OpenAPI (they were untyped), so the client is typed end to end. All strings are in English and Bengali |
+
 ### Change notes
 - 2026-11-24 — Created (Proposed).
 - 2026-11-26 — Approved by the owner with all recommended answers (ADR-074); ADR-068 to ADR-073 Accepted.
@@ -350,3 +363,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.6 appended: M6 notes E34–E39.
 - 2026-11-26 — §16.7 appended: M7 notes E40–E45.
 - 2026-11-26 — §16.8 appended: M8 notes E46–E51.
+- 2026-11-27 — §16.9 appended: M9 notes E52–E59.

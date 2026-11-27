@@ -550,3 +550,36 @@ def _is_uuid(value: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+class CycleStaffFormView(AdmissionsView):
+    """The cycle's application form for staff entering an application on an applicant's behalf
+    (Phase 7 M9; the Phase 6 staff-entry gap). Same render as the public form, but behind
+    ``admissions.application.review`` in the cycle's institution, for any cycle status."""
+
+    permission_classes = [HasTenantPermission({"GET": "admissions.application.review"})]
+
+    @extend_schema(tags=TAGS, summary="The cycle's application form (staff entry)", responses=dict)
+    def get(self, request: Request, cycle_id: str) -> Response:
+        from apps.customization.forms import render
+
+        cycle = _visible(request, Cycle, cycle_id, "admissions.application.review")
+        with service_errors():
+            return Response(render(cycle.form_key))
+
+
+class CycleStaffVisibilityView(AdmissionsView):
+    permission_classes = [HasTenantPermission({"POST": "admissions.application.review"})]
+
+    @extend_schema(
+        tags=TAGS, summary="Sections visible for these values (staff entry)",
+        request=dict, responses=dict,
+    )  # fmt: skip
+    def post(self, request: Request, cycle_id: str) -> Response:
+        from apps.customization.forms import visible_sections
+
+        cycle = _visible(request, Cycle, cycle_id, "admissions.application.review")
+        values = request.data.get("values") if isinstance(request.data, dict) else None
+        with service_errors():
+            shown = visible_sections(cycle.form_key, values if isinstance(values, dict) else {})
+        return Response({"sections": shown})

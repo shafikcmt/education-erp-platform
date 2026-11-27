@@ -52,6 +52,14 @@ urlpatterns = [
     ),
     # ------------------------------------------------------------- tests and merit (M6)
     path("admissions/cycles/<str:cycle_id>/tests/", v.CycleTestsView.as_view(), name="cycle-tests"),
+    path(
+        "admissions/cycles/<str:cycle_id>/form/", v.CycleStaffFormView.as_view(), name="cycle-form"
+    ),
+    path(
+        "admissions/cycles/<str:cycle_id>/visibility/",
+        v.CycleStaffVisibilityView.as_view(),
+        name="cycle-visibility",
+    ),
     path("admissions/tests/", v.InstitutionTestsView.as_view(), name="institution-tests"),
     path(
         "admissions/tests/<str:test_id>/assignments/",

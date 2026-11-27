@@ -111,6 +111,8 @@ TENANT_HOST_ROUTES = {
     "api/v1/staff/<str:profile_id>/": False,
     # Phase 6 M6: admission tests, scores and the merit list (members only)
     "api/v1/admissions/cycles/<str:cycle_id>/tests/": False,
+    "api/v1/admissions/cycles/<str:cycle_id>/form/": False,
+    "api/v1/admissions/cycles/<str:cycle_id>/visibility/": False,
     "api/v1/admissions/tests/": False,
     "api/v1/admissions/tests/<str:test_id>/assignments/": False,
     "api/v1/admissions/assignments/<str:assignment_id>/": False,
