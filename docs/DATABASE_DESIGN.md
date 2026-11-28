@@ -22,7 +22,7 @@
 | Translations | Translatable master names stored as `name` + `name_i18n JSONB` (`{"bn": "...", "ar": "..."}`) |
 | Optimistic locking | `version INTEGER` on records edited concurrently (marks, timetable, config drafts) |
 | Uniqueness | Business keys unique per tenant: `UNIQUE (tenant_id, code)` |
-| Large append-only tables | Range-partitioned by month when volume requires (audit, attendance, notifications) |
+| Large append-only tables | Range-partitioned by month when volume requires (audit, attendance, notifications). `attendance_record` was evaluated in Phase 8 M7 (5 M rows: every report query under 40 ms, no gain from partitioning) and stays a plain table until the ADR-080 trigger; see the decision log |
 
 ### Base abstract models (Phase 1/3)
 
@@ -244,3 +244,4 @@ Implemented in Phase 3 (migrations `tenancy.0001`–`0005`, `rbac.0005`–`0007`
 - 2026-11-23 — Phase 6 M6: `admissions_test` (cycle, start, venue, capacity, maximum score `NUMERIC(8,2)`), `admissions_testassignment` (test, application, seat, score, absent; one seat per application and test) and `admissions_meritlist` (target, version, frozen ranking JSONB, rule key); `admissions_application` gains the composite key `(tenant_id, cycle_id, id)`; standard tenant RLS with composite keys.
 - 2026-11-28 — Phase 8 M1 (ADR-076): `attendance_register` (one daily register per unit and date, one period register per offering, date and sequence; optimistic version), `attendance_record` (unique per register and student; date and institution kept equal to the register's by the composite key `(tenant_id, institution_id, register_id, date)`), `attendance_staffrecord` (unique per staff and date) and `attendance_leaverequest` (one person, valid dates); standard tenant RLS with composite tenant/institution keys.
 - 2026-11-28 — Phase 8 M5 (ADR-078): `attendance_absencealert` (student, date unique; recipients count) and `attendance_studentflag` (student, year unique; percent, by rule, flagged on); standard tenant RLS with composite tenant/institution keys.
+- 2026-11-28 — Phase 8 M7: the `attendance_record` partition evaluation is referenced in the conventions table (ADR-080); no schema change.

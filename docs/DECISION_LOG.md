@@ -836,6 +836,27 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - **ADR-078:** absence alerts in-app (optional email) to guardians with portal logins, once per student per day; the percentage counts registers taken; the `attendance.flag` rule namespace and the P29 nightly job.
 - **ADR-079:** the device-integration API is designed, not built, until a machine-credential path (ADR-028) is accepted.
 - **ADR-080:** `attendance_record` is partition-ready (date copied onto the row, tenant-first indexes) but not partitioned until a measured trigger (50 M rows or p95 > 200 ms in the Phase 18 benchmark); the evaluation is recorded.
+  - **Evaluation (Phase 8 M7, 2026-11-28; local measurement, not production):**
+    - **Method:** `infra/scripts/attendance_partition_eval.sql`, run in a throwaway database on the local PostgreSQL 17.11 container (4 CPUs, 15 GB RAM).
+      - 5 000 000 generated rows: 50 tenants × 2 000 students × 50 school days.
+      - The production indexes, and standard tenant RLS (ENABLE + FORCE).
+      - Queries run as a non-owner `NOBYPASSRLS` role with the transaction-scoped tenant setting.
+      - One plain table against a monthly range-partitioned copy (key `(id, date)`; the unique key gains `date`).
+    - **Results (execution time, plain vs partitioned):**
+      - one student's month (portal): 0.085 vs 0.061 ms;
+      - a 40-student unit over four months: 30.9 vs 40.0 ms;
+      - an institution's day: 3.3 vs 3.1 ms;
+      - an institution's month (2 000 students): 15.6 vs 17.3 ms.
+      - Size: 1 404 MB plain, 1 505 MB partitioned.
+      - RLS returned exactly the tenant's 100 000 rows.
+    - **Conclusion:** at 5 M rows every report query is far below the 200 ms trigger, and partitioning brings no gain. It adds a wider unique key, more planning work and partition maintenance. The decision stands: not partitioned now, partition-ready, with the trigger re-measured in the Phase 18 benchmark (with ADR-049's D9).
+    - **Migration path when triggered:**
+      1. Expand: create the partitioned table with monthly partitions.
+      2. Copy in batches by month, writing both through a trigger meanwhile.
+      3. Switch names inside one transaction.
+      4. Contract: drop the old table.
+
+      The `(register, date)` composite foreign key already carries `date`, so it maps onto the partition key. RLS policies are created on the parent and apply to every partition.
 - **ADR-081 (owner answers, all recommendations; Accepted 2026-11-28):**
   - Q1: daily registers for school, college and madrasa; period registers for university, coaching and training; changeable in Studio.
   - Q2: the marker edits for 3 days, then `manage` with a reason; registers lock after 30 days (tenant settings).
@@ -878,3 +899,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-26 — Owner approved the Phase 7 plan with all recommendations: ADR-068 to ADR-073 Accepted; ADR-074 added (Accepted). No other ADR changed.
 - 2026-11-28 — Owner approved Phase 7: ADR-075 added (Accepted; cross-schedule clash guard moves to Phase 18). ADR-076 to ADR-080 added (Proposed) with the Phase 8 plan. No other ADR changed.
 - 2026-11-28 — Owner approved the Phase 8 plan with all recommendations: ADR-076 to ADR-080 Accepted; ADR-081 added (Accepted). No other ADR changed.
+- 2026-11-28 — ADR-080: the Phase 8 M7 partition evaluation appended (measurements and migration path); the decision is unchanged. ADR-079: the device API design is written (`ATTENDANCE_DEVICE_API.md`). No ADR status changed.

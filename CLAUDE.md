@@ -350,7 +350,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
 | 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–067 Accepted; **Complete**: plan merged in PR #61; M1–M8 merged in PRs #62–#69; **Approved** by the owner 2026-11-24 (ADR-067: automatic offer on decline kept, score-only permission `admissions.test.score`); `timetable` moved to Phase 7, `files` built here) |
 | 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066; plan `docs/plans/PHASE_07_PLAN.md` **Approved** (owner 2026-11-26), ADR-068–074 Accepted; **Complete**: plan merged in PR #71; M1–M10 merged in PRs #72–#78, #84–#86; **Approved** by the owner 2026-11-28 (ADR-075: cross-schedule clash guard moves to Phase 18)) |
-| 8 | Attendance management (plan `docs/plans/PHASE_08_PLAN.md` **Approved** (owner 2026-11-28), ADR-076–081 Accepted; plan merged in PR #87; M1 merged in PR #88; M2 merged in PR #89; M3 merged in PR #90; M4 merged in PR #91; M5 merged in PR #92; M6 on `feat/phase-08-m6`) |
+| 8 | Attendance management (plan `docs/plans/PHASE_08_PLAN.md` **Approved** (owner 2026-11-28), ADR-076–081 Accepted; plan merged in PR #87; M1 merged in PR #88; M2 merged in PR #89; M3 merged in PR #90; M4 merged in PR #91; M5 merged in PR #92; M6 merged in PR #93; M7 on `feat/phase-08-m7`) |
 | 9 | Examination and results |
 | 10 | Fees and financial accounting |
 | 11 | HR and payroll |
@@ -503,3 +503,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-28 — Phase 8 M3 merged (PR #90); M4 on its branch; phase table updated. No rule changed.
 - 2026-11-28 — Phase 8 M4 merged (PR #91); M5 on its branch; phase table updated. No rule changed.
 - 2026-11-28 — Phase 8 M5 merged (PR #92); M6 on its branch; phase table updated. No rule changed.
+- 2026-11-28 — Phase 8 M6 merged (PR #93); M7 on its branch; phase table updated. No rule changed.
