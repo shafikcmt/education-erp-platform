@@ -13,6 +13,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.utils import timezone
 
 from apps.academics import services as academics
+from apps.core import spreadsheets
 from apps.core.tenancy import tenant_atomic
 from apps.customization import fields, numbering
 from apps.files import storage
@@ -132,8 +133,8 @@ def test_parsing_csv_and_xlsx_within_limits():
         imports.parse("Name\nÄna\n".encode("latin-1"), imports.CSV_TYPE)
     with pytest.raises(ValidationError, match="not a valid XLSX"):
         imports.parse(b"PK-not-a-zip", imports.XLSX_TYPE)
-    assert imports.safe_cell("=HYPERLINK(1)") == "'=HYPERLINK(1)"
-    assert imports.safe_cell("+1") == "'+1" and imports.safe_cell("Ana") == "Ana"
+    assert spreadsheets.safe_cell("=HYPERLINK(1)") == "'=HYPERLINK(1)"
+    assert spreadsheets.safe_cell("+1") == "'+1" and spreadsheets.safe_cell("Ana") == "Ana"
 
 
 def test_dry_run_writes_nothing_and_apply_creates_valid_rows(

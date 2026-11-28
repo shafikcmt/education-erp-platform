@@ -1332,6 +1332,34 @@ paths:
               schema:
                 $ref: '#/components/schemas/Leave'
           description: ''
+  /api/v1/attendance/portal/students/{student_id}/:
+    get:
+      operationId: attendance_portal_students_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A child's (or my own) attendance month, figures and leave
+      parameters:
+      - in: query
+        name: month
+        schema:
+          type: string
+      - in: path
+        name: student_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PortalAttendance'
+          description: ''
   /api/v1/attendance/registers/:
     get:
       operationId: attendance_registers_list
@@ -1502,6 +1530,192 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RegisterDetail'
+          description: ''
+  /api/v1/attendance/reports/daily/:
+    get:
+      operationId: attendance_reports_daily_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Each unit's daily register on a date (taken or missing)
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: '''csv'' downloads the report'
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DailyStatus'
+          description: ''
+  /api/v1/attendance/reports/staff-month/:
+    get:
+      operationId: attendance_reports_staff_month_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: The staff monthly register (staff x days)
+      parameters:
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: '''csv'' downloads the report'
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: month
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StaffMonth'
+          description: ''
+  /api/v1/attendance/reports/students/:
+    get:
+      operationId: attendance_reports_students_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Per-student attendance over a date range
+      parameters:
+      - in: query
+        name: end
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: '''csv'' downloads the report'
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: start
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: unit
+        schema:
+          type: string
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StudentSummary'
+          description: ''
+  /api/v1/attendance/reports/unit-month/:
+    get:
+      operationId: attendance_reports_unit_month_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A unit's monthly register (students x days)
+      parameters:
+      - in: query
+        name: export
+        schema:
+          type: string
+        description: '''csv'' downloads the report'
+      - in: query
+        name: month
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: unit
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnitMonth'
+          description: ''
+  /api/v1/attendance/reports/unit-month/document/:
+    get:
+      operationId: attendance_reports_unit_month_document_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: The monthly register rendered from a Studio template (HTML)
+      parameters:
+      - in: query
+        name: locale
+        schema:
+          type: string
+      - in: query
+        name: month
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: template
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: unit
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDocument'
           description: ''
   /api/v1/attendance/staff/mine/:
     get:
@@ -8023,6 +8237,43 @@ components:
           $ref: '#/components/schemas/AdmissionCycleStatusEnum'
       required:
       - status
+    DailyStatus:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+        unit_name:
+          type: string
+        register:
+          type: string
+          format: uuid
+          nullable: true
+        state:
+          $ref: '#/components/schemas/DailyStatusStateEnum'
+        marked:
+          type: integer
+        absent:
+          type: integer
+      required:
+      - absent
+      - marked
+      - register
+      - state
+      - unit
+      - unit_name
+    DailyStatusStateEnum:
+      enum:
+      - open
+      - submitted
+      - locked
+      - missing
+      type: string
+      description: |-
+        * `open` - open
+        * `submitted` - submitted
+        * `locked` - locked
+        * `missing` - missing
     DecisionEnum:
       enum:
       - offered
@@ -8665,6 +8916,34 @@ components:
       required:
       - reason
       - role
+    GridRow:
+      type: object
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        roll_number:
+          type: string
+        cells:
+          type: object
+          additionalProperties:
+            type: string
+        percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - cells
+      - name
+      - number
+      - percent
+      - roll_number
+      - student_id
     Guardian:
       type: object
       properties:
@@ -10842,6 +11121,42 @@ components:
       - locale
       - mfa_enabled
       - platform_roles
+    PortalAttendance:
+      type: object
+      properties:
+        student:
+          type: string
+          format: uuid
+        month:
+          type: string
+        days:
+          type: object
+          additionalProperties:
+            type: string
+        percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+        absent_days:
+          type: integer
+        late_days:
+          type: integer
+        flagged:
+          type: boolean
+        leave:
+          type: array
+          items:
+            $ref: '#/components/schemas/Leave'
+      required:
+      - absent_days
+      - days
+      - flagged
+      - late_days
+      - leave
+      - month
+      - percent
+      - student
     PortalInvite:
       type: object
       properties:
@@ -11384,6 +11699,13 @@ components:
       - outside_window
       - register
       - roster
+    RegisterDocument:
+      type: object
+      properties:
+        html:
+          type: string
+      required:
+      - html
     RegisterKindEnum:
       enum:
       - daily
@@ -12198,6 +12520,28 @@ components:
       required:
       - staff
       - status
+    StaffGridRow:
+      type: object
+      properties:
+        staff_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        cells:
+          type: object
+          additionalProperties:
+            type: string
+        absent:
+          type: integer
+      required:
+      - absent
+      - cells
+      - name
+      - number
+      - staff_id
     StaffLinksRequest:
       type: object
       properties:
@@ -12221,6 +12565,23 @@ components:
           $ref: '#/components/schemas/StaffStatusEnum'
         employment_type:
           $ref: '#/components/schemas/EmploymentTypeEnum'
+    StaffMonth:
+      type: object
+      properties:
+        month:
+          type: string
+        dates:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/StaffGridRow'
+      required:
+      - dates
+      - month
+      - rows
     StaffProfile:
       type: object
       properties:
@@ -12815,6 +13176,44 @@ components:
         * `transferred` - Transferred
         * `alumni` - Alumni
         * `withdrawn` - Withdrawn
+    StudentSummary:
+      type: object
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        unit:
+          type: string
+        roll_number:
+          type: string
+        attended_days:
+          type: integer
+        absent_days:
+          type: integer
+        late_days:
+          type: integer
+        not_counted_days:
+          type: integer
+        percent:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,2})?$
+          nullable: true
+      required:
+      - absent_days
+      - attended_days
+      - late_days
+      - name
+      - not_counted_days
+      - number
+      - percent
+      - roll_number
+      - student_id
+      - unit
     Subject:
       type: object
       properties:
@@ -13975,6 +14374,30 @@ components:
       - institution
       - level_key
       - name
+    UnitMonth:
+      type: object
+      properties:
+        unit:
+          type: string
+          format: uuid
+        unit_name:
+          type: string
+        month:
+          type: string
+        dates:
+          type: array
+          items:
+            type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/GridRow'
+      required:
+      - dates
+      - month
+      - rows
+      - unit
+      - unit_name
     UnlockRequest:
       type: object
       properties:

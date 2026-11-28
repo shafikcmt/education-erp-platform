@@ -101,6 +101,13 @@ TENANT_HOST_ROUTES = {
     "api/v1/attendance/staff/register/": False,
     "api/v1/attendance/staff/register/save/": False,
     "api/v1/attendance/staff/mine/": False,
+    # Phase 8 M6: reports and the portal view (members only)
+    "api/v1/attendance/reports/daily/": False,
+    "api/v1/attendance/reports/unit-month/": False,
+    "api/v1/attendance/reports/unit-month/document/": False,
+    "api/v1/attendance/reports/students/": False,
+    "api/v1/attendance/reports/staff-month/": False,
+    "api/v1/attendance/portal/students/<str:student_id>/": False,
     # Phase 7 M8: portal invitations and the portal (members only)
     "api/v1/students/<str:student_id>/invite/": False,
     "api/v1/guardians/<str:guardian_id>/invite/": False,

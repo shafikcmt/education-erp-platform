@@ -40,4 +40,20 @@ urlpatterns = [
         name="staff-register-save",
     ),
     path("attendance/staff/mine/", v.MyStaffDaysView.as_view(), name="staff-mine"),
+    path("attendance/reports/daily/", v.DailyStatusReportView.as_view(), name="report-daily"),
+    path("attendance/reports/unit-month/", v.UnitMonthReportView.as_view(), name="report-unit"),
+    path(
+        "attendance/reports/unit-month/document/",
+        v.UnitMonthDocumentView.as_view(),
+        name="report-unit-document",
+    ),
+    path(
+        "attendance/reports/students/", v.StudentSummaryReportView.as_view(), name="report-students"
+    ),
+    path("attendance/reports/staff-month/", v.StaffMonthReportView.as_view(), name="report-staff"),
+    path(
+        "attendance/portal/students/<str:student_id>/",
+        v.PortalAttendanceView.as_view(),
+        name="portal-student",
+    ),
 ]

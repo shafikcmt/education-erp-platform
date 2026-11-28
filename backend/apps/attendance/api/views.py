@@ -386,3 +386,179 @@ class MyStaffDaysView(AttendanceView):
         end = (start.replace(day=28) + dt.timedelta(days=4)).replace(day=1) - dt.timedelta(1)
         rows = staff_register.my_days(_actor(request), start, end)
         return Response(s.StaffDaySerializer(rows, many=True).data)
+
+
+# --------------------------------------------------------------------------- reports (M6)
+REPORT = "attendance.report.view"
+
+
+def _uuid(value: Any) -> Any:
+    import uuid
+
+    try:
+        return uuid.UUID(str(value))
+    except (TypeError, ValueError):
+        raise NotFound() from None
+
+
+def _date(value: Any, default: Any = None) -> Any:
+    if not value:
+        if default is not None:
+            return default
+        raise NotFound()
+    try:
+        return s.OpenSerializer().fields["date"].to_internal_value(value)
+    except Exception:  # any malformed date is simply not found
+        raise NotFound() from None
+
+
+def _report(call: Any) -> Any:
+    from django.core.exceptions import PermissionDenied
+
+    try:
+        with service_errors():
+            return call()
+    except PermissionDenied:
+        raise NotFound() from None
+
+
+def _csv(text: str, name: str) -> Any:
+    from django.http import HttpResponse
+
+    response = HttpResponse(text, content_type="text/csv; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{name}.csv"'
+    return response
+
+
+EXPORT = OpenApiParameter("export", str, description="'csv' downloads the report")
+
+
+class DailyStatusReportView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(REPORT)]
+
+    @extend_schema(
+        tags=TAGS, summary="Each unit's daily register on a date (taken or missing)",
+        parameters=[OpenApiParameter("institution", str, required=True),
+                    OpenApiParameter("date", str), EXPORT],
+        responses=s.DailyStatusSerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request) -> Any:
+        from apps.attendance import reports
+        from apps.core.spreadsheets import csv_text
+
+        p = request.query_params
+        inst, on = _uuid(p.get("institution")), _date(p.get("date"), services.today())
+        rows = _report(lambda: reports.daily_status(_actor(request), inst, on))
+        if p.get("export") == "csv":
+            header = ["unit_name", "state", "marked", "absent"]
+            return _csv(csv_text(header, [[r[h] for h in header] for r in rows]), f"daily-{on}")
+        return Response(s.DailyStatusSerializer(rows, many=True).data)
+
+
+class UnitMonthReportView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(REPORT)]
+
+    @extend_schema(
+        tags=TAGS, summary="A unit's monthly register (students x days)",
+        parameters=[OpenApiParameter("unit", str, required=True),
+                    OpenApiParameter("month", str, required=True), EXPORT],
+        responses=s.UnitMonthSerializer,
+    )  # fmt: skip
+    def get(self, request: Request) -> Any:
+        from apps.attendance import reports
+
+        p = request.query_params
+        unit, month = _uuid(p.get("unit")), p.get("month") or ""
+        data = _report(lambda: reports.unit_month(_actor(request), unit, month))
+        if p.get("export") == "csv":
+            return _csv(reports.grid_csv(data, "student_id"), f"register-{data['month']}")
+        return Response(s.UnitMonthSerializer(data).data)
+
+
+class UnitMonthDocumentView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(REPORT)]
+
+    @extend_schema(
+        tags=TAGS, summary="The monthly register rendered from a Studio template (HTML)",
+        parameters=[OpenApiParameter("unit", str, required=True),
+                    OpenApiParameter("month", str, required=True),
+                    OpenApiParameter("template", str, required=True),
+                    OpenApiParameter("locale", str)],
+        responses=s.RegisterDocumentSerializer,
+    )  # fmt: skip
+    def get(self, request: Request) -> Response:
+        from apps.attendance import reports
+
+        p = request.query_params
+        unit, month = _uuid(p.get("unit")), p.get("month") or ""
+        template, locale = p.get("template") or "", p.get("locale") or "en"
+        html = _report(
+            lambda: reports.monthly_register_document(
+                _actor(request), unit, month, template, locale
+            )
+        )
+        return Response({"html": html})
+
+
+class StudentSummaryReportView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(REPORT)]
+
+    @extend_schema(
+        tags=TAGS, summary="Per-student attendance over a date range",
+        parameters=[OpenApiParameter("institution", str, required=True),
+                    OpenApiParameter("start", str, required=True),
+                    OpenApiParameter("end", str, required=True), OpenApiParameter("unit", str),
+                    EXPORT],
+        responses=s.StudentSummarySerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request) -> Any:
+        from apps.attendance import reports
+
+        p = request.query_params
+        inst, start, end = _uuid(p.get("institution")), _date(p.get("start")), _date(p.get("end"))
+        unit = _uuid(p["unit"]) if p.get("unit") else None
+        rows = _report(lambda: reports.student_summary(_actor(request), inst, start, end, unit))
+        if p.get("export") == "csv":
+            return _csv(reports.summary_csv(rows), f"attendance-{start}-{end}")
+        return Response(s.StudentSummarySerializer(rows, many=True).data)
+
+
+class StaffMonthReportView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(REPORT)]
+
+    @extend_schema(
+        tags=TAGS, summary="The staff monthly register (staff x days)",
+        parameters=[OpenApiParameter("institution", str, required=True),
+                    OpenApiParameter("month", str, required=True), EXPORT],
+        responses=s.StaffMonthSerializer,
+    )  # fmt: skip
+    def get(self, request: Request) -> Any:
+        from apps.attendance import reports
+
+        p = request.query_params
+        inst, month = _uuid(p.get("institution")), p.get("month") or ""
+        data = _report(lambda: reports.staff_month(_actor(request), inst, month))
+        if p.get("export") == "csv":
+            return _csv(reports.grid_csv(data, "staff_id"), f"staff-{data['month']}")
+        return Response(s.StaffMonthSerializer(data).data)
+
+
+# --------------------------------------------------------------------------- portal (M6)
+CHILD, OWN = "students.child.view", "students.profile.view_own"
+
+
+class PortalAttendanceView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(CHILD, OWN)]
+
+    @extend_schema(
+        tags=TAGS, summary="A child's (or my own) attendance month, figures and leave",
+        parameters=[OpenApiParameter("month", str)], responses=s.PortalAttendanceSerializer,
+    )  # fmt: skip
+    def get(self, request: Request, student_id: str) -> Response:
+        from apps.attendance import portal
+
+        raw = request.query_params.get("month") or services.today().strftime("%Y-%m")
+        data = _report(lambda: portal.month(_actor(request), _uuid(student_id), raw))
+        if data is None:
+            raise NotFound()
+        return Response(s.PortalAttendanceSerializer(data).data)
