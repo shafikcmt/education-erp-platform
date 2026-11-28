@@ -44,6 +44,7 @@ const KNOWN = new Set<string>([
   "rate_limited",
   "role_in_use",
   "step_up_required",
+  "stale_register",
   "system_role_read_only",
   "validation_error",
 ]);

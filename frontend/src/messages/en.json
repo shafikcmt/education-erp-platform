@@ -65,7 +65,8 @@
     "students": "Students",
     "staff": "Staff",
     "timetable": "Timetable",
-    "portal": "My children"
+    "portal": "My children",
+    "attendance": "Attendance"
   },
   "auth": {
     "email": "Email address",
@@ -191,7 +192,8 @@
     "support_access_read_only": "Support access can only read data.",
     "support_session_expired": "The support session has ended.",
     "tenant_unavailable": "This organisation no longer accepts changes.",
-    "module_not_entitled": "Your organisation's plan doesn't include this module."
+    "module_not_entitled": "Your organisation's plan doesn't include this module.",
+    "stale_register": "Someone saved this register after you opened it. Reload and try again."
   },
   "dashboard": {
     "title": "Welcome, {name}",
@@ -1254,5 +1256,85 @@
     "roll": "Roll",
     "timetable": "Timetable",
     "comingSoon": "Attendance, results, fees and notices will appear here as they arrive."
+  },
+  "attendance": {
+    "title": "Attendance",
+    "subtitle": "Take registers, handle leave and see attendance.",
+    "tabs": {
+      "today": "Today",
+      "registers": "Registers",
+      "leave": "Leave",
+      "staff": "Staff register",
+      "reports": "Reports"
+    },
+    "status": {
+      "present": "Present",
+      "absent": "Absent",
+      "late": "Late",
+      "excused": "Excused",
+      "leave": "Leave"
+    },
+    "states": {
+      "open": "Open",
+      "submitted": "Submitted",
+      "locked": "Locked"
+    },
+    "kinds": {
+      "daily": "Daily register",
+      "period": "Class register"
+    },
+    "leaveStates": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "cancelled": "Cancelled"
+    },
+    "loading": "Loading…",
+    "back": "Back",
+    "date": "Date",
+    "month": "Month",
+    "from": "From",
+    "to": "To",
+    "nothingDue": "No registers to take on this date.",
+    "notTaken": "Not taken",
+    "take": "Take register",
+    "openRegister": "Open",
+    "noRegisters": "No registers on this date.",
+    "roster": "Students",
+    "emptyRoster": "No students are enrolled here on this date.",
+    "onLeave": "on leave",
+    "choose": "Status of {name}",
+    "save": "Save",
+    "submit": "Submit",
+    "saved": "Saved.",
+    "stale": "Someone saved this register after you opened it. Reload to see their changes.",
+    "reload": "Reload",
+    "locked": "This register is locked.",
+    "unlock": "Unlock",
+    "unlockTitle": "Unlock the register",
+    "reason": "Reason",
+    "reasonHint": "This date is past the edit window: a reason is required.",
+    "noLeave": "No leave requests.",
+    "cancelLeave": "Cancel",
+    "decide": "Decide",
+    "approve": "Approve",
+    "reject": "Reject",
+    "note": "Note (optional)",
+    "requestLeave": "Request leave",
+    "send": "Send",
+    "checkIn": "Check-in of {name}",
+    "checkOut": "Check-out of {name}",
+    "noReportAccess": "You can't see attendance reports for this institution.",
+    "dailyStatus": "Registers on {date}",
+    "studentSummary": "Students",
+    "csv": "Download CSV",
+    "unit": "Class",
+    "state": "State",
+    "student": "Student",
+    "percent": "Attendance %",
+    "portalTitle": "Attendance",
+    "yearPercent": "This year: {percent}%",
+    "flagged": "Attendance is below the institution's threshold.",
+    "noDays": "No registers this month."
   }
 }

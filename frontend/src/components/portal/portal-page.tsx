@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 import { PageHeader } from "@/components/app/page-header";
+import { PortalAttendance } from "@/components/attendance/portal-attendance";
 import { useStudentStatus } from "@/components/students/shared";
 import { WeekGrid } from "@/components/timetable/timetable-page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -92,6 +93,7 @@ export function PortalPage() {
               <WeekGrid lessons={child.timetable} />
             </CardContent>
           </Card>
+          <PortalAttendance studentId={child.id} />
           <p className="text-muted-foreground text-xs">{t("comingSoon")}</p>
         </div>
       ) : null}
