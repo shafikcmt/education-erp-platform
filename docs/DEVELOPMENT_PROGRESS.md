@@ -324,7 +324,7 @@ See `DECISION_LOG.md`.
 ### 2026-11-28 — Session 31 (continued): Phase 8 M6
 - **M5:** [PR #92](https://github.com/shafikcmt/education-erp-platform/pull/92) — GitHub CI **8/8 success**; squash-merged pinned to `8ccaf6a` → **`a2e8172`** (tree identical to the head).
 - **M6 (`feat/phase-08-m6`):** reports (daily status, unit month, student summary, staff month) with formula-safe CSV; `safe_cell` moved to core; the monthly register template kind and document; the guardian/student attendance view (plan §18.6 A30–A33).
-- **Verification (local):** pending the full suite.
+- **Verification (local, not GitHub CI):** backend **1157 passed, 9 skipped** (5 new report and portal tests; the import's `safe_cell` test now targets core); ruff, format, mypy (455 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean after renaming a colliding `DocumentSerializer`, client regenerated; frontend `tsc` clean; Prettier clean.
 - **Next:** M7 (partition evaluation with generated data and query plans; the device API design document).
 
 ## Known gaps / open questions
