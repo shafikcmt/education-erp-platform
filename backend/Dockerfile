@@ -48,15 +48,17 @@ FROM base AS runtime
 ENV DJANGO_SETTINGS_MODULE=config.settings.prod
 # The app runs from /opt/venv; the base image's system pip/setuptools are not needed at
 # runtime and carry their own vendored CVEs — remove them to shrink the attack surface.
-# Debian security fixes published after the pinned base image (CVE-2025-6020, linux-pam):
+# Debian security fixes published after the pinned base image (CVE-2025-6020, linux-pam;
+# CVE-2026-124851, zstd):
 # upgrade only the affected packages, keeping the image otherwise reproducible (ADR-030).
 # Fails closed: an unreachable mirror or a missing fix stops the build.
 RUN python -m pip uninstall -y pip setuptools wheel >/dev/null 2>&1 || true \
  && rm -rf /usr/local/lib/python3.13/ensurepip \
  && apt-get update --error-on=any \
  && apt-get install -y --no-install-recommends --only-upgrade \
-      libpam-modules libpam-modules-bin libpam-runtime libpam0g \
+      libpam-modules libpam-modules-bin libpam-runtime libpam0g libzstd1 \
  && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libpam0g)" ge 1.5.2-6+deb12u3 \
+ && dpkg --compare-versions "$(dpkg-query -W -f='${Version}' libzstd1)" ge 1.5.4+dfsg2-5+deb12u1 \
  && rm -rf /var/lib/apt/lists/*
 COPY --from=deps-prod /opt/venv /opt/venv
 COPY --chown=app:app . /app

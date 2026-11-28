@@ -1,6 +1,6 @@
 # Phase 7 Plan — Student, Teacher and Parent Management
 
-- **Status:** **Approved** (owner, 2026-11-26: "approval all ur recommended and continue develop same") with the recommended answers to Q1–Q8 (ADR-074). ADR-068 to ADR-073 Accepted.
+- **Status:** Phase 7 **Approved** by the owner (2026-11-28; ADR-075). Plan **Approved** (owner, 2026-11-26: "approval all ur recommended and continue develop same") with the recommended answers to Q1–Q8 (ADR-074). ADR-068 to ADR-073 Accepted.
 - **Depends on:**
   - Phase 6 (**Approved** by the owner, 2026-11-24; ADR-063 to ADR-067).
   - Accepted ADRs:
@@ -361,6 +361,7 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 | E62 | **Test note:** axe cannot enter a sandboxed frame without scripts (by design), so the accessibility check runs before the document preview opens |
 | E63 | **Security self-review:** `docs/security/PHASE_07_SECURITY_REVIEW.md` (defects found and fixed, attack-surface review, residual risks) |
 | E64 | **Phase 7 Complete**, awaiting the owner's approval. Not started: Phase 8 |
+| E65 | M10 merged in PR #86 (`9844695`). **Phase 7 Approved** by the owner on 2026-11-28 with all recommendations (ADR-075): the cross-schedule clash guard moves to Phase 18 |
 
 ### Change notes
 - 2026-11-24 — Created (Proposed).
@@ -375,3 +376,4 @@ The conversion handler runs as a tenant task (P26-style, no platform scope).
 - 2026-11-26 — §16.8 appended: M8 notes E46–E51.
 - 2026-11-27 — §16.9 appended: M9 notes E52–E59.
 - 2026-11-27 — §16.10 appended: M10 notes E60–E64; Phase 7 Complete, awaiting approval.
+- 2026-11-28 — §16.10 E65 appended; status line: Phase 7 Approved by the owner (ADR-075).

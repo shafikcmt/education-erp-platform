@@ -47,6 +47,10 @@
 1. **Guardian-visible student documents** are not built: student documents have a file purpose but no upload API or visibility flag yet.
 2. **Staff imports need the `students` module** entitled, because the import endpoints belong to it.
 3. **The document preview inherits the page's CSP**, so inline styles inside a Studio template may not apply in the preview; server PDF arrives in Phase 9 (ADR-074 Q5).
-4. **Cross-schedule clashes** are refused by the service, not by a constraint: two concurrent writers on overlapping periods of different bell schedules could both succeed. Same-period clashes are constraint-backed.
+4. **Cross-schedule clashes** are refused by the service, not by a constraint: two concurrent writers on overlapping periods of different bell schedules could both succeed. Same-period clashes are constraint-backed. **Owner decision (2026-11-28, ADR-075):** a database-level guard is added in Phase 18.
 5. **Phone sign-in for guardians** waits for an SMS provider (ADR-074 Q2, Phase 14; the provider is the owner's decision).
 6. **Still open from earlier phases:** no malware scanner (ADR-066 Q8); applicant decision emails (Phase 14); preset content is a draft (ADR-060 Q4); the items moved to Phase 18 (D9 benchmark, prefork K6, alerting); one client address in the E2E stack.
+
+### Change notes
+- 2026-11-27 — Created (M10).
+- 2026-11-28 — §3 item 4: the owner's decision (ADR-075) appended; Phase 7 approved.
