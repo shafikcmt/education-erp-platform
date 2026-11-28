@@ -350,6 +350,14 @@ Absence alerts run as tenant tasks (no platform scope).
 | A32 | **Deviation (module boundary):** the portal view lives in `attendance` as `attendance/portal/students/{id}/` rather than under `/portal/children/`, because `parent_portal` does not depend on `attendance`. It shows only one's children or oneself (`students.child.view` / `…profile.view_own`, checked through `students.selectors.relation_to`): the month's days, year-to-date figures, whether flagged, and leave requests |
 | A33 | New read selectors in `students`: `active_units`, `active_enrollments_in`. API answers 404 when the caller lacks the report scope for an institution or unit (the permission class answers 403 without any report code) |
 
+### 18.7 M7 — partition evaluation and the device API design (2026-11-28, branch `feat/phase-08-m7`)
+
+| # | Note |
+|---|---|
+| A34 | **Partition evaluation (exit criterion):** `infra/scripts/attendance_partition_eval.sql` builds 5 M generated rows twice (plain and monthly-partitioned) in a throwaway database with the production indexes and RLS, and times the report queries as a non-owner `NOBYPASSRLS` role. Every query took under 40 ms and partitioning brought no gain. Measurements, conclusion and migration path are in ADR-080. The scratch database and role were dropped afterwards; no real data was touched |
+| A35 | **Device API design:** `docs/ATTENDANCE_DEVICE_API.md`: device registration with hashed secrets and IP allow-lists, an idempotent batch event endpoint keyed by device event id, clock-skew and rate limits, person references without biometric data, and derivation of the staff register that never overwrites a person's save. Nothing is built (ADR-079); it waits for ADR-028 and a real device |
+| A36 | These are local measurements on a 4-CPU container, not production numbers; the Phase 18 benchmark re-measures them together with D9 |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
@@ -359,3 +367,4 @@ Absence alerts run as tenant tasks (no platform scope).
 - 2026-11-28 — §18.4 appended: M4 notes A21–A24.
 - 2026-11-28 — §18.5 appended: M5 notes A25–A29.
 - 2026-11-28 — §18.6 appended: M6 notes A30–A33.
+- 2026-11-28 — §18.7 appended: M7 notes A34–A36.
