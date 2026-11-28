@@ -110,3 +110,47 @@ class LeaveCreateSerializer(serializers.Serializer[Any]):
 class LeaveDecisionSerializer(serializers.Serializer[Any]):
     approve = serializers.BooleanField()
     note = serializers.CharField(max_length=300, required=False, allow_blank=True)
+
+
+class StaffRowSerializer(serializers.Serializer[Any]):
+    staff_id = serializers.UUIDField()
+    name = serializers.CharField()
+    number = serializers.CharField()
+    campus = serializers.UUIDField(allow_null=True)
+    status = serializers.ChoiceField(choices=Status.choices)
+    check_in = serializers.TimeField(allow_null=True)
+    check_out = serializers.TimeField(allow_null=True)
+    remark = serializers.CharField(allow_blank=True)
+    status_source = serializers.ChoiceField(choices=["saved", "leave", "default"])
+    on_leave = serializers.BooleanField()
+
+
+class StaffRegisterSerializer(serializers.Serializer[Any]):
+    institution = serializers.UUIDField()
+    date = serializers.DateField()
+    outside_window = serializers.BooleanField()
+    can_mark = serializers.BooleanField()
+    rows = StaffRowSerializer(many=True)
+
+
+class StaffEntrySerializer(serializers.Serializer[Any]):
+    staff = serializers.UUIDField()
+    status = serializers.ChoiceField(choices=Status.choices)
+    check_in = serializers.TimeField(required=False, allow_null=True)
+    check_out = serializers.TimeField(required=False, allow_null=True)
+    remark = serializers.CharField(max_length=160, required=False, allow_blank=True)
+
+
+class StaffSaveSerializer(serializers.Serializer[Any]):
+    institution = serializers.UUIDField()
+    date = serializers.DateField()
+    entries = serializers.ListField(child=StaffEntrySerializer(), allow_empty=False,
+                                    max_length=2000)  # fmt: skip
+    reason = serializers.CharField(max_length=300, required=False, allow_blank=True)
+
+
+class StaffDaySerializer(serializers.Serializer[Any]):
+    date = serializers.DateField()
+    status = serializers.ChoiceField(choices=Status.choices)
+    check_in = serializers.TimeField(allow_null=True)
+    check_out = serializers.TimeField(allow_null=True)

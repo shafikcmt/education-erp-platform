@@ -322,9 +322,19 @@ Absence alerts run as tenant tasks (no platform scope).
 | A19 | API: `attendance/leave/` (list visible requests, request), `…/{id}/`, `…/{id}/decide/`, `…/{id}/cancel/`; hidden requests answer 404 |
 | A20 | **Deviation: attachments are not built in M3.** Guardians hold no file-upload permission and the generic upload API is staff-facing; a guardian-facing upload for leave evidence needs its own authorisation. Recorded as a known gap, to be revisited with the frontend (M8) |
 
+### 18.4 M4 — staff daily register (2026-11-28, branch `feat/phase-08-m4`)
+
+| # | Note |
+|---|---|
+| A21 | `attendance/staff_register.py`: the day's register of active staff in the member's scope (`attendance.staff.mark` or `…view` at the institution: everyone; at a campus: the staff whose home campus it is), with saved status, approved staff leave (pre-filled, never overwriting) or the default; save in one request (status, check-in, check-out after check-in, remark); one record per staff member and date, concurrent first saves resolved by the unique constraint |
+| A22 | **Deviation from plan §4 for staff:** past the edit window the staff register needs a reason and a fresh step-up, but not `attendance.record.manage` (HR holds `attendance.staff.mark`, MFA, and not the student-register code). Future dates are refused |
+| A23 | `staff/mine/`: one's own days for a month (`staff.profile.view_own`, the profile linked to one's login). Audit event `attendance.staff.saved` (ids, statuses, counts, whether a reason was given) |
+| A24 | API: `attendance/staff/register/` (GET, institution and date, optional campus), `…/register/save/`, `attendance/staff/mine/`. A query-parameter institution id is parsed as a UUID before the scope check (a plain string did not match the permission engine's targets and answered 404; found by the API test) |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
 - 2026-11-28 — §18.1 appended: M1 notes A1–A8.
 - 2026-11-28 — §18.2 appended: M2 notes A9–A14.
 - 2026-11-28 — §18.3 appended: M3 notes A15–A20.
+- 2026-11-28 — §18.4 appended: M4 notes A21–A24.
