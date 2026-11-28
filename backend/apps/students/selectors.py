@@ -265,3 +265,34 @@ def current_units(student_ids: Any) -> dict[Any, tuple[Any, Any]]:
         student_id__in=student_ids, status=Enrollment.Status.ACTIVE
     ).values_list("student_id", "unit_id", "unit__campus_id")
     return {student: (unit, campus) for student, unit, campus in rows}
+
+
+def notice_memberships(student_ids: Any) -> dict[Any, list[Any]]:
+    """Logins of each student's guardians who receive notices (attendance alerts, Phase 8 M5)."""
+    from apps.students.models import StudentGuardian
+
+    rows = StudentGuardian.objects.filter(
+        student_id__in=student_ids, receives_notices=True, guardian__membership_id__isnull=False
+    ).values_list("student_id", "guardian__membership_id")
+    out: dict[Any, list[Any]] = {}
+    for student, membership in rows:
+        out.setdefault(student, []).append(membership)
+    return out
+
+
+def current_year_id(student_id: Any) -> Any:
+    """The academic year of the student's active enrollment, if any (Phase 8 M5)."""
+    return (
+        Enrollment.objects.filter(student_id=student_id, status=Enrollment.Status.ACTIVE)
+        .values_list("year_id", flat=True)
+        .first()
+    )
+
+
+def active_enrollments(year_id: Any) -> dict[Any, Any]:
+    """``{student: unit}`` of the year's active enrollments (attendance flags, Phase 8 M5)."""
+    return dict(
+        Enrollment.objects.filter(year_id=year_id, status=Enrollment.Status.ACTIVE).values_list(
+            "student_id", "unit_id"
+        )
+    )

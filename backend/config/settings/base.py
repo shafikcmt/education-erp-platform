@@ -292,7 +292,9 @@ TENANCY_INVITATION_ACCEPTED_HANDLERS: list[str] = ["apps.students.portal.on_invi
 # Phase 7 M7: units a portal member (guardian, student) sees in timetables, by path.
 TIMETABLE_PORTAL_UNITS: list[str] = ["apps.students.selectors.portal_units"]
 # Phase 8 M2: run after a register is submitted (absence alerts arrive in M5).
-ATTENDANCE_SUBMITTED_HANDLERS: list[str] = []
+ATTENDANCE_SUBMITTED_HANDLERS: list[str] = ["apps.attendance.alerts.on_register_submitted"]
+# Phase 8 M5: extra variables of ``academics.promotion`` rules (attendance percentage).
+STUDENTS_PROMOTION_CONTEXT: list[str] = ["apps.attendance.stats.promotion_context"]
 STUDENTS_ASSIGNED_UNITS: list[str] = [
     "apps.students.selectors.taught_units",
     "apps.staff.selectors.advised_units",
@@ -463,6 +465,12 @@ CELERY_BEAT_SCHEDULE = {
     # Phase 5 M8 (P25): expire unverified sign-ups, delete closed ones after the retention.
     "tenancy-purge-signups": {
         "task": "tenancy.purge_signups",
+        "schedule": 24 * 60 * 60.0,
+        "options": {"queue": "default"},
+    },
+    # Phase 8 M5 (P29): lock old attendance registers, refresh low-attendance flags.
+    "attendance-nightly": {
+        "task": "attendance.nightly",
         "schedule": 24 * 60 * 60.0,
         "options": {"queue": "default"},
     },

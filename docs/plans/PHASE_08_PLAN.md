@@ -331,6 +331,16 @@ Absence alerts run as tenant tasks (no platform scope).
 | A23 | `staff/mine/`: one's own days for a month (`staff.profile.view_own`, the profile linked to one's login). Audit event `attendance.staff.saved` (ids, statuses, counts, whether a reason was given) |
 | A24 | API: `attendance/staff/register/` (GET, institution and date, optional campus), `…/register/save/`, `attendance/staff/mine/`. A query-parameter institution id is parsed as a UUID before the scope check (a plain string did not match the permission engine's targets and answered 404; found by the API test) |
 
+### 18.5 M5 — absence alerts, flags and the nightly job (2026-11-28, branch `feat/phase-08-m5`)
+
+| # | Note |
+|---|---|
+| A25 | **Absence alerts:** `ATTENDANCE_SUBMITTED_HANDLERS` queues `attendance.send_absence_alerts` (tenant task, module-gated) after a submission commits. Guardians who receive notices and have a portal login get an in-app notification (email when `attendance.alert_email` is on); `attendance.alert_guardians` off sends nothing. **Once per student per day** is enforced by the new table `attendance_absencealert` (unique student and date; also records how many logins were told) |
+| A26 | **Figures** (`attendance/stats.py`): days from records of registers taken; a day is attended (present or late), absent, or not counted (excused, leave); percentage = attended ÷ (attended + absent), `None` with nothing counted; trailing consecutive absences. The `academics.promotion` namespace gains `attendance.*` variables through the new `STUDENTS_PROMOTION_CONTEXT` hook (students never imports attendance) |
+| A27 | **P29** `attendance.nightly` (system, per-tenant iteration, daily beat) → `attendance.nightly_tenant`: `lock_due`, then flags for open years: below `attendance.threshold_percent`, or a published `attendance.flag` rule (variables `attendance.*`, `today`) is true. New table `attendance_studentflag` (unique student and year): class teachers (advisors with logins) are notified once when a flag appears; a cleared flag is removed so a relapse notifies again |
+| A28 | Migrations `0004` (the two tables) and `0005` (composite keys, standard RLS, reversal refused). Platform catalogue now P1–P29. New selectors: `students.notice_memberships`, `students.active_enrollments`, `students.current_year_id`, `staff.advisor_memberships` |
+| A29 | **Not in M5:** a correction from absent to present sends no follow-up (plan §7); SMS waits for Phase 14 (ADR-081 Q5). Flags are computed over the year to date; a per-term window can come with reports (M6) |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
@@ -338,3 +348,4 @@ Absence alerts run as tenant tasks (no platform scope).
 - 2026-11-28 — §18.2 appended: M2 notes A9–A14.
 - 2026-11-28 — §18.3 appended: M3 notes A15–A20.
 - 2026-11-28 — §18.4 appended: M4 notes A21–A24.
+- 2026-11-28 — §18.5 appended: M5 notes A25–A29.

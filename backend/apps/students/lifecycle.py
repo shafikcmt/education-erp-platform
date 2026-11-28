@@ -189,6 +189,13 @@ def promotion_context(student: Student) -> dict[str, Any]:
             "student.date_of_birth": student.date_of_birth,
         }
     )
+    # Other modules add variables by path (Phase 8: ``attendance.*``), so students never
+    # imports them.
+    from django.conf import settings
+    from django.utils.module_loading import import_string
+
+    for path in getattr(settings, "STUDENTS_PROMOTION_CONTEXT", []):
+        context.update(import_string(path)(student))
     return context
 
 
