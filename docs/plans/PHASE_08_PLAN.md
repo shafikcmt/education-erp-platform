@@ -358,6 +358,16 @@ Absence alerts run as tenant tasks (no platform scope).
 | A35 | **Device API design:** `docs/ATTENDANCE_DEVICE_API.md`: device registration with hashed secrets and IP allow-lists, an idempotent batch event endpoint keyed by device event id, clock-skew and rate limits, person references without biometric data, and derivation of the staff register that never overwrites a person's save. Nothing is built (ADR-079); it waits for ADR-028 and a real device |
 | A36 | These are local measurements on a 4-CPU container, not production numbers; the Phase 18 benchmark re-measures them together with D9 |
 
+### 18.8 M8 — frontend (2026-11-28, branch `feat/phase-08-m8`)
+
+| # | Note |
+|---|---|
+| A37 | `/attendance` (en and bn, mobile-first) with tabs shown by permission: **Today** (the teacher's due registers for a date, open or take), **Registers** (an institution's registers on a date), **Leave** (visible requests, decide with a note, cancel), **Staff register** (status, check-in and check-out per staff member, reason past the window), **Reports** (daily status and the student summary, each with a CSV link). A navigation entry appears with any attendance code and the module |
+| A38 | **Quick-mark screen:** one large button per student (at least 48 px tall) that cycles present → absent → late, plus a menu for excused and leave; live counts; a sticky Save / Submit bar on phones. Save sends only changed rows and rows never saved, with the register version. A 409 (`stale_register`, now a known error code in en and bn) shows a reload prompt instead of overwriting. Past the edit window a reason is required (the server also asks for step-up, handled by the existing step-up recovery). Locked registers offer an unlock dialog to managers |
+| A39 | The portal shows each child's (or one's own) attendance month, the year's percentage, the low-attendance flag, leave requests and a leave form, only when the organisation has the `attendance` module |
+| A40 | Server data is never copied into effects: the register sheet is remounted with a new key when the server returns a new version, and the staff register keeps only the marker's edits over the server rows (ESLint `react-hooks/set-state-in-effect`). Pure helpers (`nextStatus`, `changedEntries`, counts, local dates) have unit tests |
+| A41 | **Still deferred:** leave attachments (plan §18.3 A20) remain a known gap; the M9 E2E will exercise these screens on a mobile viewport |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
@@ -368,3 +378,4 @@ Absence alerts run as tenant tasks (no platform scope).
 - 2026-11-28 — §18.5 appended: M5 notes A25–A29.
 - 2026-11-28 — §18.6 appended: M6 notes A30–A33.
 - 2026-11-28 — §18.7 appended: M7 notes A34–A36.
+- 2026-11-28 — §18.8 appended: M8 notes A37–A41.
