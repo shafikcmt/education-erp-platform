@@ -4,7 +4,7 @@
 code: college.general.v2
 institution_type: college
 version: 2
-default_for_type: true
+default_for_type: false
 name: {en: College (general), bn: কলেজ (সাধারণ)}
 suggested_modules: [academics, admissions, students, staff, attendance, examinations, fees]
 settings:

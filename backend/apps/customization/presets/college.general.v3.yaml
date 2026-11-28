@@ -1,0 +1,25 @@
+# Draft v3 (Phase 8, ADR-076): v2 plus the attendance mode (plan Q1). Still a draft to
+# validate with real institutions (ADR-060 Q4); existing institutions adopt it by opting in.
+code: college.general.v3
+institution_type: college
+version: 3
+default_for_type: true
+name: {en: College (general), bn: কলেজ (সাধারণ)}
+suggested_modules: [academics, admissions, students, staff, attendance, examinations, fees]
+settings:
+  customization.structure_levels:
+    - {key: group}
+    - {key: class}
+    - {key: section}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.section_enabled: true
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.session: Academic session, unit.group: Group, unit.class: Year, unit.section: Section, unit.subject: Subject, unit.teacher: Teacher, unit.student: Student, unit.head: Principal}
+    bn: {unit.session: শিক্ষাবর্ষ, unit.group: বিভাগ, unit.class: বর্ষ, unit.section: শাখা, unit.subject: বিষয়, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: অধ্যক্ষ}
+  customization.role_labels:
+    en: {institution_admin: Principal}
+    bn: {institution_admin: অধ্যক্ষ}
+  attendance.mode: daily

@@ -827,15 +827,25 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
   2. **Cross-schedule clashes stay service-checked until Phase 18.** Same-period clashes remain constraint-backed (ADR-071). A database-level guard for overlapping periods of different bell schedules (for example an exclusion constraint or a serialising lock) is added to the Phase 18 hardening list. The risk is two concurrent writers on overlapping periods of different schedules, which is rare in practice.
 - **Consequences:** no code change. Phase 8 planning may start (`plans/PHASE_08_PLAN.md`, Proposed).
 
-## ADR-076 to ADR-080 — Phase 8 (attendance)
+## ADR-076 to ADR-081 — Phase 8 (attendance)
 
-**Status:** **Proposed** (2026-11-28, with `plans/PHASE_08_PLAN.md` §15). Not built on before the owner approves the plan.
+**Status:** **Accepted** (owner, 2026-11-28, with the Phase 8 plan); proposed 2026-11-28 with `plans/PHASE_08_PLAN.md` §15.
 
 - **ADR-076:** attendance registers (sessions) per unit, date and kind, with per-student records; fixed status categories (present, absent, late, excused, leave) with configurable labels; the mode is a Studio setting from the preset (v3 presets).
 - **ADR-077:** marking by relationship scope (assigned units and offerings) or `attendance.record.manage`; optimistic concurrency with a register version; an edit window, auto-lock and audited unlock; one audit event per save.
 - **ADR-078:** absence alerts in-app (optional email) to guardians with portal logins, once per student per day; the percentage counts registers taken; the `attendance.flag` rule namespace and the P29 nightly job.
 - **ADR-079:** the device-integration API is designed, not built, until a machine-credential path (ADR-028) is accepted.
 - **ADR-080:** `attendance_record` is partition-ready (date copied onto the row, tenant-first indexes) but not partitioned until a measured trigger (50 M rows or p95 > 200 ms in the Phase 18 benchmark); the evaluation is recorded.
+- **ADR-081 (owner answers, all recommendations; Accepted 2026-11-28):**
+  - Q1: daily registers for school, college and madrasa; period registers for university, coaching and training; changeable in Studio.
+  - Q2: the marker edits for 3 days, then `manage` with a reason; registers lock after 30 days (tenant settings).
+  - Q3: the percentage counts registers taken; no holiday calendar in Phase 8.
+  - Q4: no offline marking in Phase 8 and nothing stored on the device.
+  - Q5: in-app alerts now, email as an option (off), SMS in Phase 14 after the owner chooses a provider.
+  - Q6: the device API is a written design only.
+  - Q7: staff leave requests without leave types or balances (Phase 11).
+  - Q8: no substitution feature; a coordinator marks with `manage`.
+  - Q9: no partitioning now; partition-ready, trigger and benchmark in Phase 18.
 
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
@@ -867,3 +877,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-24 — Added ADR-068 to ADR-073 (Proposed) with the Phase 7 plan. No existing ADR changed.
 - 2026-11-26 — Owner approved the Phase 7 plan with all recommendations: ADR-068 to ADR-073 Accepted; ADR-074 added (Accepted). No other ADR changed.
 - 2026-11-28 — Owner approved Phase 7: ADR-075 added (Accepted; cross-schedule clash guard moves to Phase 18). ADR-076 to ADR-080 added (Proposed) with the Phase 8 plan. No other ADR changed.
+- 2026-11-28 — Owner approved the Phase 8 plan with all recommendations: ADR-076 to ADR-080 Accepted; ADR-081 added (Accepted). No other ADR changed.

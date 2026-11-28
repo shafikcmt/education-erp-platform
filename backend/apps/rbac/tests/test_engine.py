@@ -47,8 +47,8 @@ def test_registry_covers_the_phase_2_catalog_and_seed_is_idempotent():
     # 20 (Phase 2) + 17 (M4) + 4 support-session codes (M5) + 5 registry codes (M8)
     # + 1 module catalogue code (Phase 4 M1) + 6 billing and 1 flag code (Phase 4 M2)
     # Phase 6: academics 8, files 2, admissions 10
-    # Phase 7: students 12, staff 4, timetable 2, parent_portal 1
-    assert len(codes) == 108
+    # Phase 7: students 12, staff 4, timetable 2, parent_portal 1; Phase 8: attendance 8
+    assert len(codes) == 116
     assert {"identity.user.view", "audit.event.view_ip", "rbac.platform_role.assign"} <= codes
     assert set(Permission.objects.values_list("code", flat=True)) >= codes
     assert catalog_drift() == []

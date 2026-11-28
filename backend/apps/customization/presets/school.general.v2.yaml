@@ -4,7 +4,7 @@
 code: school.general.v2
 institution_type: school
 version: 2
-default_for_type: true
+default_for_type: false
 name: {en: School (general), bn: স্কুল (সাধারণ)}
 suggested_modules: [academics, students, staff, attendance, examinations, fees, parent_portal]
 settings:

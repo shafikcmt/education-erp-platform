@@ -187,6 +187,15 @@ _OWNER_CODES = [
     "students.child.view",
     "students.profile.view_own",
     "parent_portal.portal.use",
+    # Phase 8 M1: attendance (ADR-076, ADR-077).
+    "attendance.record.mark",
+    "attendance.record.view",
+    "attendance.record.manage",
+    "attendance.report.view",
+    "attendance.staff.mark",
+    "attendance.staff.view",
+    "attendance.leave.request",
+    "attendance.leave.review",
 ]
 # What a tenant owner keeps while the tenant is suspended (restricted mode, D2, plan §11.3):
 # review and decide support access, nothing else.
@@ -263,6 +272,15 @@ _INSTITUTION_ADMIN_CODES = [
     "students.child.view",
     "students.profile.view_own",
     "parent_portal.portal.use",
+    # Phase 8 M1: attendance (ADR-076, ADR-077).
+    "attendance.record.mark",
+    "attendance.record.view",
+    "attendance.record.manage",
+    "attendance.report.view",
+    "attendance.staff.mark",
+    "attendance.staff.view",
+    "attendance.leave.request",
+    "attendance.leave.review",
 ]
 _CAMPUS_ADMIN_CODES = [
     TENANT_VIEW,
@@ -288,6 +306,15 @@ _CAMPUS_ADMIN_CODES = [
     "staff.profile.view_own",
     # Phase 7 M7: and so can assign teachers, who see timetables.
     "timetable.timetable.view",
+    # Phase 8 M1: attendance in campus scope (and so can assign teachers).
+    "attendance.record.mark",
+    "attendance.record.view",
+    "attendance.record.manage",
+    "attendance.report.view",
+    "attendance.staff.mark",
+    "attendance.staff.view",
+    "attendance.leave.request",
+    "attendance.leave.review",
 ]
 TENANT_OWNER = "tenant_owner"
 
@@ -338,6 +365,11 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "students.guardian.view",
             # Phase 7 M3: staff in scope, to choose subject teachers and class teachers.
             "staff.profile.view",
+            # Phase 8 M1: attendance across their scope.
+            "attendance.record.view",
+            "attendance.record.manage",
+            "attendance.report.view",
+            "attendance.leave.review",
         ],
     ),
     _template(
@@ -358,6 +390,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             # Phase 7 M3: their own staff profile.
             "staff.profile.view_own",
             "timetable.timetable.view",  # Phase 7 M7
+            "attendance.leave.request",  # Phase 8 M1
         ],
     ),
     _template(
@@ -373,6 +406,9 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "students.guardian.view",
             "staff.profile.view_own",  # Phase 7 M3
             "timetable.timetable.view",  # Phase 7 M7
+            # Phase 8 M1: leave of their units' students (refined to own units in M3).
+            "attendance.leave.review",
+            "attendance.leave.request",
         ],
     ),
     _template(
@@ -439,6 +475,11 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "staff.profile.view",
             "staff.profile.manage",
             "staff.structure.manage",
+            # Phase 8 M1: the staff register and staff leave.
+            "attendance.staff.mark",
+            "attendance.staff.view",
+            "attendance.leave.review",
+            "attendance.report.view",
         ],
     ),
     _template(
@@ -467,14 +508,24 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
         "Front Desk",
         "ফ্রন্ট ডেস্ক",
         "Inquiries, visitors and notices.",
-        [TENANT_VIEW, "admissions.inquiry.view", "admissions.inquiry.manage"],
+        [
+            TENANT_VIEW,
+            "admissions.inquiry.view",
+            "admissions.inquiry.manage",
+            "attendance.staff.mark",  # Phase 8 M1
+        ],
     ),
     _template(
         "staff_member",
         "Staff",
         "কর্মচারী",
         "Generic non-teaching staff: own profile, attendance, payslips and leave.",
-        [TENANT_VIEW, "staff.profile.view_own", "hr_payroll.payslip.view_own"],
+        [
+            TENANT_VIEW,
+            "staff.profile.view_own",
+            "hr_payroll.payslip.view_own",
+            "attendance.leave.request",  # Phase 8 M1
+        ],
     ),
     _template(
         "student",
@@ -486,6 +537,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "examinations.result.view_own",
             "timetable.timetable.view",
             "parent_portal.portal.use",
+            "attendance.leave.request",  # Phase 8 M1
         ],
     ),
     _template(
@@ -498,6 +550,7 @@ TEMPLATE_ROLES: list[dict[str, Any]] = [
             "fees.invoice.pay",
             "timetable.timetable.view",
             "parent_portal.portal.use",
+            "attendance.leave.request",  # Phase 8 M1
         ],
     ),
 ]
