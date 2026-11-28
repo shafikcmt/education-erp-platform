@@ -7,7 +7,7 @@
 - **Project:** Education ERP — Global Multi-Tenant Configurable Education Management SaaS
 - **Repository:** `shafikcmt/education-erp-platform`
 - **Document owner:** Project owner (approval authority). Claude acts as Principal Software Architect, Technical Project Manager and Lead Full-Stack Engineer.
-- **Last updated:** 2026-11-28 (Phase 7 **Approved** (ADR-075); Phase 8 plan **Proposed** (ADR-076–080); tenant hosts disabled)
+- **Last updated:** 2026-11-28 (Phase 7 **Approved** (ADR-075); Phase 8 plan **Approved** (ADR-076–081), M1 in progress; tenant hosts disabled)
 
 ---
 
@@ -350,7 +350,7 @@ Details: `docs/AI_ASSISTANT.md`.
 | 5 | Customization Studio and institution configuration (plan `docs/plans/PHASE_05_PLAN.md` **Approved**; ADR-055–062 Accepted; **Complete**: plan merged in PR #51; M1 merged in PR #52; M2 merged in PR #53; M3 merged in PR #54; M4 merged in PR #55; M5 merged in PR #56; M6 merged in PR #57; M7 merged in PR #58; M8 merged in PR #59; **Approved** by the owner 2026-11-23) |
 | 6 | Academic structure and student admission (plan `docs/plans/PHASE_06_PLAN.md` **Approved**; ADR-063–067 Accepted; **Complete**: plan merged in PR #61; M1–M8 merged in PRs #62–#69; **Approved** by the owner 2026-11-24 (ADR-067: automatic offer on decline kept, score-only permission `admissions.test.score`); `timetable` moved to Phase 7, `files` built here) |
 | 7 | Student, teacher and parent management (incl. `timetable`, moved from Phase 6 by ADR-066; plan `docs/plans/PHASE_07_PLAN.md` **Approved** (owner 2026-11-26), ADR-068–074 Accepted; **Complete**: plan merged in PR #71; M1–M10 merged in PRs #72–#78, #84–#86; **Approved** by the owner 2026-11-28 (ADR-075: cross-schedule clash guard moves to Phase 18)) |
-| 8 | Attendance management (plan `docs/plans/PHASE_08_PLAN.md` **Proposed**; ADR-076–080 Proposed) |
+| 8 | Attendance management (plan `docs/plans/PHASE_08_PLAN.md` **Approved** (owner 2026-11-28), ADR-076–081 Accepted; plan merged in PR #87; M1 on `feat/phase-08-m1`) |
 | 9 | Examination and results |
 | 10 | Fees and financial accounting |
 | 11 | HR and payroll |
@@ -497,3 +497,4 @@ Details, deliverables and exit criteria: `docs/DEVELOPMENT_ROADMAP.md`.
 - 2026-11-27 — Phase 7 M8 merged (PR #84, with the linux-pam image fix); M9 on its branch; phase table updated. No rule changed.
 - 2026-11-27 — Phase 7 M9 merged (PR #85); M10 on its branch; Phase 7 Complete, awaiting approval; phase table and last-updated line updated. No rule changed.
 - 2026-11-28 — Phase 7 M10 merged (PR #86) and Phase 7 approved by the owner with all recommendations (ADR-075 Accepted); Phase 8 plan proposed (ADR-076 to ADR-080 Proposed); phase table and last-updated line updated. No rule changed.
+- 2026-11-28 — Owner approved the Phase 8 plan with all recommendations (ADR-076 to ADR-081 Accepted); M1 on its branch; phase table and last-updated line updated. No rule changed.

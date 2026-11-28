@@ -1,6 +1,6 @@
 # Phase 8 Plan — Attendance Management
 
-- **Status:** **Proposed** (2026-11-28). Not to be built on until the owner approves it (CLAUDE.md §0.6, §17).
+- **Status:** **Approved** (owner, 2026-11-28: "approval all ur recommended and continur develop same") with the recommended answers to Q1–Q9 (ADR-081). ADR-076 to ADR-080 Accepted.
 - **Depends on:**
   - Phase 7 (**Approved** by the owner, 2026-11-28; ADR-068 to ADR-075).
   - Accepted ADRs:
@@ -287,7 +287,20 @@ Absence alerts run as tenant tasks (no platform scope).
 
 ## 18. Implementation notes (appended during implementation)
 
-_None yet._
+### 18.1 M1 — data model (2026-11-28, branch `feat/phase-08-m1`)
+
+| # | Note |
+|---|---|
+| A1 | New `apps/attendance`: `Register`, `Record`, `StaffRecord`, `LeaveRequest`; migrations `0001_initial` and `0002_keys_rls` (composite tenant/institution keys, standard RLS on the four tables, reversal refused) |
+| A2 | **Naming deviation:** the plan's `attendance_session` table is `attendance_register` (model `Register`), to avoid confusion with login sessions. `DATABASE_DESIGN.md` §2.7 is updated |
+| A3 | **Period registers are keyed by offering, date and `sequence`** (several lectures of one offering on a day), not by a timetable period: `timetable` is not a dependency of `attendance`, so the slot is kept by id only (`slot_ref`). One daily register per unit and date. Both are partial unique constraints |
+| A4 | A record's `date` and `institution` are kept equal to its register's by a composite key on `(tenant, institution, register, date)` (ADR-080); a record's student must belong to the register's institution. Late minutes only with the `late` status |
+| A5 | Leave requests: exactly one person (student or staff), end ≥ start, half days on one date only. The attachment column arrives with M3 (attachments through `files`) |
+| A6 | Settings declared by the `attendance` manifest: `mode`, `default_status`, `edit_window_days` (3), `lock_after_days` (30), `threshold_percent` (75), `alert_guardians` (on), `alert_email` (off); read in one place (`attendance/config.py`). **Deviation:** `late_after_minutes` (a label hint only) is not added, because nothing would use it |
+| A7 | **v3 presets** for the six types: v2 plus `attendance.mode` (daily: school, college, madrasa; period: university, coaching, training); v3 is the default for new institutions, v2 stays for existing ones (opt-in, ADR-058). The university v3 preset also suggests `attendance` |
+| A8 | 8 permission codes (116 in total) and role templates as in §11. **Deviation:** the class teacher does not get `attendance.record.view` (an institution- or campus-wide code); their view comes from the assigned scope of `attendance.record.mark`. Their `attendance.leave.review` is narrowed to their own units in M3 |
 
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
+- 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
+- 2026-11-28 — §18.1 appended: M1 notes A1–A8.

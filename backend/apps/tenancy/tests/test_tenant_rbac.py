@@ -56,6 +56,8 @@ TEACHER_CODES = {
     "students.student.view_assigned",  # Phase 7 (ADR-073)
     "staff.profile.view_own",  # Phase 7 M3
     "timetable.timetable.view",  # Phase 7 M7
+    "attendance.record.mark",
+    "attendance.leave.request",  # Phase 8 M1
 }
 
 

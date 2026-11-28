@@ -123,9 +123,10 @@ Object-level scopes (e.g. teacher → own sections; guardian → own children) a
 
 | Table | Key columns |
 |---|---|
-| `attendance_session` | tenant_id, campus_id, unit_id, date, period/slot, taken_by, kind (daily/period/hostel_rollcall) |
-| `attendance_record` | session_id, student_id (or staff_id), status (present/absent/late/excused/leave), remark — partition candidate |
-| `attendance_leaverequest` | person, dates, reason, workflow_instance_id |
+| `attendance_register` (built, Phase 8 M1; the planned `attendance_session`) | tenant_id, institution_id, campus_id, year_id, term_id, unit_id, date, kind (daily/period; `hostel_rollcall` reserved for Phase 12), offering_id + sequence (period), slot_ref, taken_by, state (open/submitted/locked), submitted_at, locked_at, version |
+| `attendance_record` (built) | institution_id, register_id, student_id, date (copied; kept equal by a composite key), status (present/absent/late/excused/leave), late_minutes, remark — partition-ready (ADR-080) |
+| `attendance_staffrecord` (built) | institution_id, campus_id, staff_id, date (unique per staff), status, check_in, check_out, remark, marked_by |
+| `attendance_leaverequest` (built) | institution_id, student_id **or** staff_id, start/end date, half_day, reason, state (pending/approved/rejected/cancelled), requested_by, decided_by, decided_at, workflow_instance_id |
 | `examinations_gradingscheme` | tenant_id, institution_id, kind, bands JSONB (validated), pass_rules JSONB |
 | `examinations_exam` | academic_year_id, term_id, name, components JSONB, weightage, status |
 | `examinations_markentry` | exam_id, offering_id, student_id, component, marks NUMERIC, status (draft/submitted/locked), version |
@@ -241,3 +242,4 @@ Implemented in Phase 3 (migrations `tenancy.0001`–`0005`, `rbac.0005`–`0007`
 - 2026-11-26 — Phase 7 M7 (ADR-071): `timetable_bellschedule` (institution, code, name, archive), `timetable_period` (schedule, order unique per schedule, name, start and end time with end after start, break flag), `timetable_room` (institution, optional campus, code, name, capacity, archive) and `timetable_slot` (year, term, unit, weekday 1–7, period, offering, teacher membership, room; unique per unit, per teacher and per room for the same year, term, weekday and period); standard tenant RLS with composite tenant/institution keys.
 - 2026-11-26 — Phase 7 M8: `students_portalinvite` (invitation id unique per tenant, kind guardian or student, record id, linked time); standard tenant RLS.
 - 2026-11-23 — Phase 6 M6: `admissions_test` (cycle, start, venue, capacity, maximum score `NUMERIC(8,2)`), `admissions_testassignment` (test, application, seat, score, absent; one seat per application and test) and `admissions_meritlist` (target, version, frozen ranking JSONB, rule key); `admissions_application` gains the composite key `(tenant_id, cycle_id, id)`; standard tenant RLS with composite keys.
+- 2026-11-28 — Phase 8 M1 (ADR-076): `attendance_register` (one daily register per unit and date, one period register per offering, date and sequence; optimistic version), `attendance_record` (unique per register and student; date and institution kept equal to the register's by the composite key `(tenant_id, institution_id, register_id, date)`), `attendance_staffrecord` (unique per staff and date) and `attendance_leaverequest` (one person, valid dates); standard tenant RLS with composite tenant/institution keys.

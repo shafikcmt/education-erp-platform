@@ -6,7 +6,7 @@
 code: madrasa.general.v2
 institution_type: madrasa
 version: 2
-default_for_type: true
+default_for_type: false
 name: {en: Madrasa (general), bn: মাদ্রাসা (সাধারণ)}
 suggested_modules: [academics, students, staff, attendance, examinations, fees, hostel, ext_hifz_tracking]
 settings:

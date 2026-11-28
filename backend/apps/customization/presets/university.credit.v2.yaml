@@ -4,7 +4,7 @@
 code: university.credit.v2
 institution_type: university
 version: 2
-default_for_type: true
+default_for_type: false
 name: {en: University (credit-based), bn: বিশ্ববিদ্যালয় (ক্রেডিটভিত্তিক)}
 suggested_modules: [academics, admissions, students, staff, examinations, fees, accounting, hostel, ext_course_registration]
 settings:

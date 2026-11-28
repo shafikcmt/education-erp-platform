@@ -1,0 +1,24 @@
+# Draft v3 (Phase 8, ADR-076): v2 plus the attendance mode (plan Q1). Still a draft to
+# validate with real institutions (ADR-060 Q4); existing institutions adopt it by opting in.
+code: coaching.general.v3
+institution_type: coaching_center
+version: 3
+default_for_type: true
+name: {en: Coaching center (general), bn: কোচিং সেন্টার (সাধারণ)}
+suggested_modules: [academics, students, attendance, fees, online_exams, ext_batch_management]
+settings:
+  customization.structure_levels:
+    - {key: program}
+    - {key: batch}
+  customization.capabilities:
+    academics.credit_based: false
+    academics.section_enabled: false
+    academics.semester_based: false
+    hostel.residential_default: false
+  customization.terminology:
+    en: {unit.program: Course, unit.batch: Batch, unit.class: Batch, unit.subject: Subject, unit.teacher: Instructor, unit.student: Student, unit.head: Director}
+    bn: {unit.program: কোর্স, unit.batch: ব্যাচ, unit.class: ব্যাচ, unit.subject: বিষয়, unit.teacher: শিক্ষক, unit.student: শিক্ষার্থী, unit.head: পরিচালক}
+  customization.role_labels:
+    en: {institution_admin: Director}
+    bn: {institution_admin: পরিচালক}
+  attendance.mode: period
