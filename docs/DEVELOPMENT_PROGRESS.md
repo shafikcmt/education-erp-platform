@@ -306,7 +306,7 @@ See `DECISION_LOG.md`.
 - **M2:** [PR #89](https://github.com/shafikcmt/education-erp-platform/pull/89) — GitHub CI **8/8 success**; squash-merged pinned to `753d61e` → **`b750304`** (tree identical to the head).
 - **M3 (`feat/phase-08-m3`):** leave requests for students and staff: request, decide, cancel; reviewers by permission combination (class teachers only for their own units); optional workflow gate (`attendance.leave_workflow`, subject `attendance.leave_request`); pre-fill through the roster; API (plan §18.3 A15–A20).
 - **Known gap added:** leave attachments (A20).
-- **Verification (local):** pending the full suite.
+- **Verification (local, not GitHub CI):** backend **1143 passed, 9 skipped** (5 new leave tests; shared attendance fixtures moved to a conftest); ruff, format, mypy (445 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean and client regenerated; frontend `tsc` clean; Prettier clean.
 - **Next:** M4 (staff daily register and staff leave pre-fill).
 
 ## Known gaps / open questions
