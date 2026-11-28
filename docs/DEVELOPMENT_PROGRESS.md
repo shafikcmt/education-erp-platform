@@ -312,7 +312,7 @@ See `DECISION_LOG.md`.
 ### 2026-11-28 — Session 31 (continued): Phase 8 M4
 - **M3:** [PR #90](https://github.com/shafikcmt/education-erp-platform/pull/90) — GitHub CI **8/8 success**; squash-merged pinned to `751dd3a` → **`69fb10e`** (tree identical to the head).
 - **M4 (`feat/phase-08-m4`):** the staff daily register (campus and institution scopes, check-in and check-out, approved staff leave pre-filled, reason and step-up past the edit window), one's own days, API (plan §18.4 A21–A24).
-- **Verification (local):** pending the full suite.
+- **Verification (local, not GitHub CI):** backend **1146 passed, 9 skipped** (3 new staff-register tests); ruff, format, mypy (447 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean and client regenerated; frontend `tsc` clean; Prettier clean.
 - **Next:** M5 (absence alerts, the `attendance.flag` rule namespace, P29 nightly lock and flags, the promotion variable).
 
 ## Known gaps / open questions
