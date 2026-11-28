@@ -293,7 +293,7 @@ See `DECISION_LOG.md`.
 - **Plan:** [PR #87](https://github.com/shafikcmt/education-erp-platform/pull/87) — GitHub CI **8/8 success** after the libzstd1 image fix; squash-merged pinned to `ae620fe` → **`138c35e`** (tree identical to the head).
 - **Owner (2026-11-28):** "approval all ur recommended and continur develop same". The Phase 8 plan is **Approved** with all nine recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
 - **M1 (`feat/phase-08-m1`):** `attendance` app (registers, records, staff records, leave requests) with composite keys and RLS; seven Studio settings read in one place; v3 presets (attendance mode per type, the new defaults); 8 permission codes and role templates (plan §18.1 A1–A8, with the deviations recorded there).
-- **Verification (local):** see the M1 PR; GitHub CI pending.
+- **Verification (local, not GitHub CI):** backend **1132 passed, 9 skipped** (6 new attendance tests; test facts updated: 116 codes, 18 presets with v3 defaults, teacher codes, installed modules); ruff, format, mypy (435 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI regenerated with no drift (no API in M1). The first full run had 2 failures, both stale facts (preset count, default preset version), fixed.
 - **Next:** M2 (marking services and API: registers, roster, save with optimistic concurrency, submit, edit window, lock and unlock, audit; scope tests).
 
 ## Known gaps / open questions
