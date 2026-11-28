@@ -88,3 +88,13 @@ SETTINGS = {
         "scopes": _SCOPES,
     },
 }
+
+# Phase 8 M3: leave requests may run through a tenant workflow (plan §6). The workflow's start
+# permission should be ``attendance.leave.request`` so guardians and students can start it.
+SETTINGS["attendance.leave_workflow"] = {
+    "description": "Key of the published workflow that leave requests run through ('' = none)",
+    "schema": {"type": "string", "pattern": "^([a-z][a-z0-9_]{1,63})?$"},
+    "default": "",
+    "scopes": ["tenant", "institution"],
+}
+WORKFLOW_SUBJECTS = {"attendance.leave_request": {"label": "Leave request"}}

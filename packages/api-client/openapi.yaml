@@ -1206,6 +1206,132 @@ paths:
                 items:
                   $ref: '#/components/schemas/Due'
           description: ''
+  /api/v1/attendance/leave/:
+    get:
+      operationId: attendance_leave_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Leave requests I made, of my children or myself, or that I review
+      parameters:
+      - in: query
+        name: state
+        schema:
+          type: string
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Leave'
+          description: ''
+    post:
+      operationId: attendance_leave_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Request leave
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveCreateRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leave'
+          description: ''
+  /api/v1/attendance/leave/{leave_id}/:
+    get:
+      operationId: attendance_leave_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A leave request
+      parameters:
+      - in: path
+        name: leave_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leave'
+          description: ''
+  /api/v1/attendance/leave/{leave_id}/cancel/:
+    post:
+      operationId: attendance_leave_cancel_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Cancel a pending or future leave request
+      parameters:
+      - in: path
+        name: leave_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leave'
+          description: ''
+  /api/v1/attendance/leave/{leave_id}/decide/:
+    post:
+      operationId: attendance_leave_decide_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Approve or reject a leave request
+      parameters:
+      - in: path
+        name: leave_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaveDecisionRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Leave'
+          description: ''
   /api/v1/attendance/registers/:
     get:
       operationId: attendance_registers_list
@@ -9093,6 +9219,148 @@ components:
       - email
       - role
       - scope_type
+    Leave:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        student:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        student_name:
+          type: string
+          readOnly: true
+          default: ''
+        staff:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        staff_name:
+          type: string
+          readOnly: true
+          default: ''
+        start_date:
+          type: string
+          format: date
+          readOnly: true
+        end_date:
+          type: string
+          format: date
+          readOnly: true
+        half_day:
+          type: boolean
+          readOnly: true
+        reason:
+          type: string
+          readOnly: true
+        state:
+          allOf:
+          - $ref: '#/components/schemas/LeaveStateEnum'
+          readOnly: true
+        requested_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        decided_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        decided_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        decision_note:
+          type: string
+          readOnly: true
+        workflow_instance_id:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created_at
+      - decided_at
+      - decided_by
+      - decision_note
+      - end_date
+      - half_day
+      - id
+      - institution
+      - reason
+      - requested_by
+      - staff
+      - staff_name
+      - start_date
+      - state
+      - student
+      - student_name
+      - workflow_instance_id
+    LeaveCreateRequest:
+      type: object
+      properties:
+        student:
+          type: string
+          format: uuid
+          nullable: true
+        staff:
+          type: string
+          format: uuid
+          nullable: true
+        start_date:
+          type: string
+          format: date
+        end_date:
+          type: string
+          format: date
+        half_day:
+          type: boolean
+          default: false
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 500
+      required:
+      - end_date
+      - reason
+      - start_date
+    LeaveDecisionRequest:
+      type: object
+      properties:
+        approve:
+          type: boolean
+        note:
+          type: string
+          maxLength: 300
+      required:
+      - approve
+    LeaveStateEnum:
+      enum:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+      type: string
+      description: |-
+        * `pending` - Pending
+        * `approved` - Approved
+        * `rejected` - Rejected
+        * `cancelled` - Cancelled
     Lesson:
       type: object
       properties:

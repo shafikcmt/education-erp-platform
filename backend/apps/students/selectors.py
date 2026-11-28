@@ -234,3 +234,34 @@ def unit_roster(unit_ids: set[Any], year_id: Any, on: Any) -> list[dict[str, Any
 def units_below(unit_ids: set[Any]) -> set[Any]:
     """The units and every unit below them (shared with attendance, Phase 8 M2)."""
     return _below(set(unit_ids))
+
+
+def relation_to(actor: Any, student_id: Any) -> set[str]:
+    """``{"child"}`` when the member is a guardian of the student (with ``students.child.view``),
+    ``{"own"}`` when it is the member's own record (with ``students.profile.view_own``); used by
+    attendance leave requests (Phase 8 M3)."""
+    mine = memberships(actor)
+    out: set[str] = set()
+    if not mine:
+        return out
+    if (
+        holds_anywhere(actor, CHILD)
+        and Student.objects.filter(
+            pk=student_id, guardian_links__guardian__membership_id__in=mine
+        ).exists()
+    ):
+        out.add("child")
+    if (
+        holds_anywhere(actor, OWN)
+        and Student.objects.filter(pk=student_id, membership_id__in=mine).exists()
+    ):
+        out.add("own")
+    return out
+
+
+def current_units(student_ids: Any) -> dict[Any, tuple[Any, Any]]:
+    """Each student's active enrollment unit and its campus (attendance, Phase 8 M3)."""
+    rows = Enrollment.objects.filter(
+        student_id__in=student_ids, status=Enrollment.Status.ACTIVE
+    ).values_list("student_id", "unit_id", "unit__campus_id")
+    return {student: (unit, campus) for student, unit, campus in rows}

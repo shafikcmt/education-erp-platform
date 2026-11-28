@@ -150,6 +150,9 @@ EVENTS: dict[str, frozenset[str]] = {
     ),
     "attendance.register.submitted": frozenset({"date", "students", "absent"}),
     "attendance.register.unlocked": frozenset({"date", "reason_given"}),
+    "attendance.leave.requested": frozenset({"kind", "days", "workflow"}),
+    "attendance.leave.decided": frozenset({"decision"}),
+    "attendance.leave.cancelled": frozenset(),
     # staff (Phase 7 M3); names, phones and emails are never logged
     "staff.department.created": frozenset({"ref"}),
     "staff.department.updated": frozenset({"fields"}),
