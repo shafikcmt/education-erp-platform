@@ -6,7 +6,7 @@ from typing import Any
 
 from rest_framework import serializers
 
-from apps.attendance.models import Register, Status
+from apps.attendance.models import LeaveRequest, Register, Status
 
 
 class RegisterSerializer(serializers.ModelSerializer[Register]):
@@ -82,3 +82,31 @@ class SubmitSerializer(serializers.Serializer[Any]):
 
 class UnlockSerializer(serializers.Serializer[Any]):
     reason = serializers.CharField(max_length=300)
+
+
+class LeaveSerializer(serializers.ModelSerializer[LeaveRequest]):
+    student_name = serializers.CharField(source="student.name", default="", read_only=True)
+    staff_name = serializers.CharField(source="staff.name", default="", read_only=True)
+
+    class Meta:
+        model = LeaveRequest
+        fields = [
+            "id", "institution", "student", "student_name", "staff", "staff_name", "start_date",
+            "end_date", "half_day", "reason", "state", "requested_by", "decided_by",
+            "decided_at", "decision_note", "workflow_instance_id", "created_at",
+        ]  # fmt: skip
+        read_only_fields = fields
+
+
+class LeaveCreateSerializer(serializers.Serializer[Any]):
+    student = serializers.UUIDField(required=False, allow_null=True)
+    staff = serializers.UUIDField(required=False, allow_null=True)
+    start_date = serializers.DateField()
+    end_date = serializers.DateField()
+    half_day = serializers.BooleanField(default=False)
+    reason = serializers.CharField(max_length=500)
+
+
+class LeaveDecisionSerializer(serializers.Serializer[Any]):
+    approve = serializers.BooleanField()
+    note = serializers.CharField(max_length=300, required=False, allow_blank=True)

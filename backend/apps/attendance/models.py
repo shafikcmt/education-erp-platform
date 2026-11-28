@@ -211,6 +211,7 @@ class LeaveRequest(TenantScopedModel):
     decided_by = _fk("tenancy.Membership", null=True)
     decided_at = models.DateTimeField(null=True, blank=True)
     workflow_instance_id = models.UUIDField(null=True, blank=True)
+    decision_note = models.CharField(max_length=300, blank=True)  # Phase 8 M3
 
     class Meta(TenantScopedModel.Meta):
         db_table = "attendance_leaverequest"

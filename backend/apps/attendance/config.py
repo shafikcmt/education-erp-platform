@@ -22,6 +22,7 @@ class AttendanceConfig:
     threshold_percent: int
     alert_guardians: bool
     alert_email: bool
+    leave_workflow: str
 
     @property
     def takes_daily(self) -> bool:
@@ -42,4 +43,5 @@ def config_for(institution_id: uuid.UUID, campus_id: uuid.UUID | None = None) ->
         threshold_percent=int(values["attendance.threshold_percent"]),
         alert_guardians=bool(values["attendance.alert_guardians"]),
         alert_email=bool(values["attendance.alert_email"]),
+        leave_workflow=str(values["attendance.leave_workflow"] or ""),
     )

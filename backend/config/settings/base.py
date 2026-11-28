@@ -402,6 +402,7 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "AttendanceStatusEnum": "apps.attendance.models.Status",
         "RegisterKindEnum": "apps.attendance.models.Register.Kind",
         "RegisterStateEnum": "apps.attendance.models.Register.State",
+        "LeaveStateEnum": "apps.attendance.models.LeaveRequest.State",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)

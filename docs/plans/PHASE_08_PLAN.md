@@ -311,8 +311,20 @@ Absence alerts run as tenant tasks (no platform scope).
 | A13 | API (tenant host, module `attendance`): `attendance/due/`, `attendance/registers/` (list per institution and date; open), `…/{id}/` (roster), `…/{id}/save/`, `…/{id}/submit/`, `…/{id}/unlock/`. Hidden registers answer 404; the routes are in the host-route review. `ATTENDANCE_SUBMITTED_HANDLERS` (empty) is ready for the M5 alerts |
 | A14 | **Not in M2:** the leave workflow (M3), staff registers (M4), alerts and P29 scheduling (M5), the frontend (M8). Concurrent saves are serialised by `select_for_update` on the register and the version check; a threaded concurrency test is deferred to M9 with the E2E |
 
+### 18.3 M3 — leave requests (2026-11-28, branch `feat/phase-08-m3`)
+
+| # | Note |
+|---|---|
+| A15 | `attendance/leave.py`: request (guardian for a child, student for themselves, staff for themselves, or a reviewer on their behalf), decide (approve or reject, with an optional note), cancel (pending, or approved leave that has not started). Overlapping pending or approved leave of the same person is refused; at most 60 days per request and 30 days in the past; half days are single dates |
+| A16 | **Reviewers by permission combination, not role:** `attendance.leave.review` in the person's institution plus — for students — `attendance.record.manage` at the institution or the student's campus, or being the class teacher of the student's current unit; for staff — `staff.profile.view` at the institution or the staff member's campus. So a class teacher reviews only their own units' students (the M1 refinement, plan §18.1 A8), HR reviews staff leave, and a coordinator reviews students' |
+| A17 | **Workflow:** new institution setting `attendance.leave_workflow` (a workflow key, default none) and the workflow subject `attendance.leave_request`. With a published workflow, it starts with the request (its start permission should be `attendance.leave.request`) and must finish before the decision, as for admission applications; without one, the decision is the built-in single step |
+| A18 | Approved leave is pre-filled in registers through the roster (M2) and never overwrites a saved status; the requester gets an in-app notification of the decision. Audit events `attendance.leave.requested/decided/cancelled` (kind, days, decision only; reasons and notes never logged). Migration `0003` adds `decision_note` |
+| A19 | API: `attendance/leave/` (list visible requests, request), `…/{id}/`, `…/{id}/decide/`, `…/{id}/cancel/`; hidden requests answer 404 |
+| A20 | **Deviation: attachments are not built in M3.** Guardians hold no file-upload permission and the generic upload API is staff-facing; a guardian-facing upload for leave evidence needs its own authorisation. Recorded as a known gap, to be revisited with the frontend (M8) |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
 - 2026-11-28 — §18.1 appended: M1 notes A1–A8.
 - 2026-11-28 — §18.2 appended: M2 notes A9–A14.
+- 2026-11-28 — §18.3 appended: M3 notes A15–A20.

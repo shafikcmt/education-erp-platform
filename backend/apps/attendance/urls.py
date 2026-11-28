@@ -25,4 +25,12 @@ urlpatterns = [
         v.RegisterUnlockView.as_view(),
         name="register-unlock",
     ),
+    path("attendance/leave/", v.LeavesView.as_view(), name="leaves"),
+    path("attendance/leave/<str:leave_id>/", v.LeaveView.as_view(), name="leave"),
+    path(
+        "attendance/leave/<str:leave_id>/decide/", v.LeaveDecideView.as_view(), name="leave-decide"
+    ),
+    path(
+        "attendance/leave/<str:leave_id>/cancel/", v.LeaveCancelView.as_view(), name="leave-cancel"
+    ),
 ]

@@ -199,3 +199,90 @@ class RegisterUnlockView(AttendanceView):
                 actor=_actor(request), register=row, reason=v["reason"], request=request._request
             )
         return Response(s.RegisterDetailSerializer(_detail(_actor(request), row)).data)
+
+
+# --------------------------------------------------------------------------- leave (M3)
+LEAVE_REQUEST, LEAVE_REVIEW = "attendance.leave.request", "attendance.leave.review"
+
+
+def _leave(request: Request, leave_id: str) -> Any:
+    from apps.attendance import leave
+
+    try:
+        row = leave.visible_leave(_actor(request)).filter(pk=leave_id).first()
+    except (ValueError, ValidationError):
+        row = None
+    if row is None:
+        raise NotFound()
+    return row
+
+
+class LeavesView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(LEAVE_REQUEST, LEAVE_REVIEW)]
+
+    @extend_schema(
+        tags=TAGS, summary="Leave requests I made, of my children or myself, or that I review",
+        parameters=[OpenApiParameter("state", str)], responses=s.LeaveSerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request) -> Response:
+        from apps.attendance import leave
+
+        rows = leave.visible_leave(_actor(request)).select_related("student", "staff")
+        if state_filter := request.query_params.get("state"):
+            rows = rows.filter(state=state_filter)
+        rows = rows.order_by("-start_date", "-created_at")[:500]
+        return Response(s.LeaveSerializer(rows, many=True).data)
+
+    @extend_schema(tags=TAGS, summary="Request leave", request=s.LeaveCreateSerializer,
+                   responses={201: s.LeaveSerializer})  # fmt: skip
+    def post(self, request: Request) -> Response:
+        from apps.attendance import leave
+
+        v = _valid(s.LeaveCreateSerializer, request.data)
+        with service_errors():
+            row = leave.request_leave(
+                actor=_actor(request), student=v.get("student"), staff=v.get("staff"),
+                start_date=v["start_date"], end_date=v["end_date"], half_day=v["half_day"],
+                reason=v["reason"], request=request._request,
+            )  # fmt: skip
+        return Response(s.LeaveSerializer(row).data, status=status.HTTP_201_CREATED)
+
+
+class LeaveView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(LEAVE_REQUEST, LEAVE_REVIEW)]
+
+    @extend_schema(tags=TAGS, summary="A leave request", responses=s.LeaveSerializer)
+    def get(self, request: Request, leave_id: str) -> Response:
+        return Response(s.LeaveSerializer(_leave(request, leave_id)).data)
+
+
+class LeaveDecideView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(LEAVE_REVIEW)]
+
+    @extend_schema(tags=TAGS, summary="Approve or reject a leave request",
+                   request=s.LeaveDecisionSerializer, responses=s.LeaveSerializer)  # fmt: skip
+    def post(self, request: Request, leave_id: str) -> Response:
+        from apps.attendance import leave
+
+        row = _leave(request, leave_id)
+        v = _valid(s.LeaveDecisionSerializer, request.data)
+        with service_errors():
+            row = leave.decide(
+                actor=_actor(request), leave=row, approve=v["approve"],
+                note=v.get("note", ""), request=request._request,
+            )  # fmt: skip
+        return Response(s.LeaveSerializer(row).data)
+
+
+class LeaveCancelView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(LEAVE_REQUEST, LEAVE_REVIEW)]
+
+    @extend_schema(tags=TAGS, summary="Cancel a pending or future leave request", request=None,
+                   responses=s.LeaveSerializer)  # fmt: skip
+    def post(self, request: Request, leave_id: str) -> Response:
+        from apps.attendance import leave
+
+        row = _leave(request, leave_id)
+        with service_errors():
+            row = leave.cancel(actor=_actor(request), leave=row, request=request._request)
+        return Response(s.LeaveSerializer(row).data)
