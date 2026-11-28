@@ -300,7 +300,19 @@ Absence alerts run as tenant tasks (no platform scope).
 | A7 | **v3 presets** for the six types: v2 plus `attendance.mode` (daily: school, college, madrasa; period: university, coaching, training); v3 is the default for new institutions, v2 stays for existing ones (opt-in, ADR-058). The university v3 preset also suggests `attendance` |
 | A8 | 8 permission codes (116 in total) and role templates as in §11. **Deviation:** the class teacher does not get `attendance.record.view` (an institution- or campus-wide code); their view comes from the assigned scope of `attendance.record.mark`. Their `attendance.leave.review` is narrowed to their own units in M3 |
 
+### 18.2 M2 — marking services and API (2026-11-28, branch `feat/phase-08-m2`)
+
+| # | Note |
+|---|---|
+| A9 | `attendance/selectors.py`: who may mark (class teacher of the unit or a unit above it for daily registers; teacher of the offering for period registers; both need `attendance.record.mark` in the institution or a campus), manage (`attendance.record.manage` at the institution or the register's campus) and view; the roster (students whose enrollment covers the date, through the new `students.selectors.unit_roster`); approved leave pre-filled; the teacher's work list (`due_for`) |
+| A10 | `attendance/services.py`: open (idempotent; the mode, future dates, open year and leaf unit are checked), save with the register `version` (stale → 409 `stale_register`, nothing changes), submit (every roster student needs a status), unlock (manager, reason), `lock_due` for P29. Students outside the roster and duplicate entries are refused |
+| A11 | **Edit window:** within `edit_window_days` the marker edits; later only `attendance.record.manage`, with a reason, MFA and a fresh step-up at the API. Locked registers refuse saves until unlocked. **Unlock lasts until the nightly lock (P29, M5) runs again**: it is meant for a correction, not to reopen a month |
+| A12 | Audit events `attendance.register.opened/saved/submitted/unlocked` carry ids, dates, statuses (`"<student>:<old>><new>"`, at most 50, plus a count) and whether a reason was given; reasons and remarks are never logged |
+| A13 | API (tenant host, module `attendance`): `attendance/due/`, `attendance/registers/` (list per institution and date; open), `…/{id}/` (roster), `…/{id}/save/`, `…/{id}/submit/`, `…/{id}/unlock/`. Hidden registers answer 404; the routes are in the host-route review. `ATTENDANCE_SUBMITTED_HANDLERS` (empty) is ready for the M5 alerts |
+| A14 | **Not in M2:** the leave workflow (M3), staff registers (M4), alerts and P29 scheduling (M5), the frontend (M8). Concurrent saves are serialised by `select_for_update` on the register and the version check; a threaded concurrency test is deferred to M9 with the E2E |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
 - 2026-11-28 — §18.1 appended: M1 notes A1–A8.
+- 2026-11-28 — §18.2 appended: M2 notes A9–A14.

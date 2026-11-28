@@ -1181,6 +1181,202 @@ paths:
               schema:
                 $ref: '#/components/schemas/TestSeat'
           description: ''
+  /api/v1/attendance/due/:
+    get:
+      operationId: attendance_due_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Registers I am expected to take on a date (default today)
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Due'
+          description: ''
+  /api/v1/attendance/registers/:
+    get:
+      operationId: attendance_registers_list
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Registers of an institution on a date
+      parameters:
+      - in: query
+        name: date
+        schema:
+          type: string
+      - in: query
+        name: institution
+        schema:
+          type: string
+        required: true
+      - in: query
+        name: unit
+        schema:
+          type: string
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Register'
+          description: ''
+    post:
+      operationId: attendance_registers_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Open (or return) a daily or period register
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDetail'
+          description: ''
+  /api/v1/attendance/registers/{register_id}/:
+    get:
+      operationId: attendance_registers_retrieve
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: A register with its roster
+      parameters:
+      - in: path
+        name: register_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDetail'
+          description: ''
+  /api/v1/attendance/registers/{register_id}/save/:
+    post:
+      operationId: attendance_registers_save_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Save students' statuses (optimistic version)
+      parameters:
+      - in: path
+        name: register_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SaveRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDetail'
+          description: ''
+  /api/v1/attendance/registers/{register_id}/submit/:
+    post:
+      operationId: attendance_registers_submit_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Submit a register
+      parameters:
+      - in: path
+        name: register_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDetail'
+          description: ''
+  /api/v1/attendance/registers/{register_id}/unlock/:
+    post:
+      operationId: attendance_registers_unlock_create
+      description: |-
+        Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+        authenticated sessions).
+      summary: Unlock a locked register (manager, reason, step-up)
+      parameters:
+      - in: path
+        name: register_id
+        schema:
+          type: string
+        required: true
+      tags:
+      - attendance
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnlockRequest'
+        required: true
+      security:
+      - sessionAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterDetail'
+          description: ''
   /api/v1/audit-events/:
     get:
       operationId: tenant_audit_events_list
@@ -6973,6 +7169,20 @@ components:
       - reason
       - role
       - role_code
+    AttendanceStatusEnum:
+      enum:
+      - present
+      - absent
+      - late
+      - excused
+      - leave
+      type: string
+      description: |-
+        * `present` - Present
+        * `absent` - Absent
+        * `late` - Late
+        * `excused` - Excused
+        * `leave` - Leave
     AuditEvent:
       type: object
       properties:
@@ -7840,6 +8050,37 @@ components:
       - expires_in
       - scan_state
       - url
+    Due:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/RegisterKindEnum'
+        institution:
+          type: string
+          format: uuid
+        unit:
+          type: string
+          format: uuid
+        unit_name:
+          type: string
+        offering:
+          type: string
+          format: uuid
+          nullable: true
+        subject_name:
+          type: string
+        register:
+          allOf:
+          - $ref: '#/components/schemas/Register'
+          nullable: true
+      required:
+      - institution
+      - kind
+      - offering
+      - register
+      - subject_name
+      - unit
+      - unit_name
     EmailChangeRequest:
       type: object
       properties:
@@ -7977,6 +8218,25 @@ components:
       - flags
       - limits
       - modules
+    EntryRequest:
+      type: object
+      properties:
+        student:
+          type: string
+          format: uuid
+        status:
+          $ref: '#/components/schemas/AttendanceStatusEnum'
+        late_minutes:
+          type: integer
+          maximum: 600
+          minimum: 0
+          nullable: true
+        remark:
+          type: string
+          maxLength: 160
+      required:
+      - status
+      - student
     Field:
       type: object
       properties:
@@ -9341,6 +9601,30 @@ components:
       - subject
       - unit
       - year
+    OpenRequest:
+      type: object
+      properties:
+        kind:
+          $ref: '#/components/schemas/RegisterKindEnum'
+        date:
+          type: string
+          format: date
+        unit:
+          type: string
+          format: uuid
+          nullable: true
+        offering:
+          type: string
+          format: uuid
+          nullable: true
+        sequence:
+          type: integer
+          maximum: 20
+          minimum: 1
+          default: 1
+      required:
+      - date
+      - kind
     OutcomeEnum:
       enum:
       - success
@@ -10638,6 +10922,137 @@ components:
             type: string
       required:
       - recovery_codes
+    Register:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        institution:
+          type: string
+          format: uuid
+          readOnly: true
+        campus:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        year:
+          type: string
+          format: uuid
+          readOnly: true
+        term:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        unit:
+          type: string
+          format: uuid
+          readOnly: true
+        unit_name:
+          type: string
+          readOnly: true
+        date:
+          type: string
+          format: date
+          readOnly: true
+        kind:
+          allOf:
+          - $ref: '#/components/schemas/RegisterKindEnum'
+          readOnly: true
+        offering:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+        subject_name:
+          type: string
+          readOnly: true
+          default: ''
+        sequence:
+          type: integer
+          readOnly: true
+        state:
+          allOf:
+          - $ref: '#/components/schemas/RegisterStateEnum'
+          readOnly: true
+        submitted_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        locked_at:
+          type: string
+          format: date-time
+          readOnly: true
+          nullable: true
+        version:
+          type: integer
+          readOnly: true
+        taken_by:
+          type: string
+          format: uuid
+          readOnly: true
+          nullable: true
+      required:
+      - campus
+      - date
+      - id
+      - institution
+      - kind
+      - locked_at
+      - offering
+      - sequence
+      - state
+      - subject_name
+      - submitted_at
+      - taken_by
+      - term
+      - unit
+      - unit_name
+      - version
+      - year
+    RegisterDetail:
+      type: object
+      properties:
+        register:
+          $ref: '#/components/schemas/Register'
+        roster:
+          type: array
+          items:
+            $ref: '#/components/schemas/RosterEntry'
+        can_mark:
+          type: boolean
+        can_manage:
+          type: boolean
+        outside_window:
+          type: boolean
+      required:
+      - can_manage
+      - can_mark
+      - outside_window
+      - register
+      - roster
+    RegisterKindEnum:
+      enum:
+      - daily
+      - period
+      type: string
+      description: |-
+        * `daily` - Daily
+        * `period` - Period
+    RegisterStateEnum:
+      enum:
+      - open
+      - submitted
+      - locked
+      type: string
+      description: |-
+        * `open` - Open
+        * `submitted` - Submitted
+        * `locked` - Locked
     RegistryReasonRequest:
       type: object
       properties:
@@ -10837,6 +11252,39 @@ components:
       - code
       - institution
       - name
+    RosterEntry:
+      type: object
+      properties:
+        student_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        number:
+          type: string
+        roll_number:
+          type: string
+        status:
+          $ref: '#/components/schemas/AttendanceStatusEnum'
+        late_minutes:
+          type: integer
+          nullable: true
+        remark:
+          type: string
+        status_source:
+          $ref: '#/components/schemas/StatusSourceEnum'
+        on_leave:
+          type: boolean
+      required:
+      - late_minutes
+      - name
+      - number
+      - on_leave
+      - remark
+      - roll_number
+      - status
+      - status_source
+      - student_id
     RuleDraftRequest:
       type: object
       properties:
@@ -10882,6 +11330,23 @@ components:
         results: {}
       required:
       - results
+    SaveRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EntryRequest'
+          maxItems: 2000
+        reason:
+          type: string
+          maxLength: 300
+      required:
+      - entries
+      - version
     ScanStateEnum:
       enum:
       - pending
@@ -11605,6 +12070,16 @@ components:
       - id
       - name
       - status
+    StatusSourceEnum:
+      enum:
+      - saved
+      - leave
+      - default
+      type: string
+      description: |-
+        * `saved` - saved
+        * `leave` - leave
+        * `default` - default
     StatusTest:
       type: object
       properties:
@@ -11939,6 +12414,14 @@ components:
       - code
       - institution
       - name
+    SubmitRequest:
+      type: object
+      properties:
+        version:
+          type: integer
+          minimum: 1
+      required:
+      - version
     SubscribedAddOn:
       type: object
       properties:
@@ -13015,6 +13498,15 @@ components:
       - institution
       - level_key
       - name
+    UnlockRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 1
+          maxLength: 300
+      required:
+      - reason
     UploadRequestRequest:
       type: object
       properties:

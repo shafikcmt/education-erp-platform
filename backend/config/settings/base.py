@@ -291,6 +291,8 @@ STUDENTS_IMPORT_KINDS: dict[str, str] = {
 TENANCY_INVITATION_ACCEPTED_HANDLERS: list[str] = ["apps.students.portal.on_invitation_accepted"]
 # Phase 7 M7: units a portal member (guardian, student) sees in timetables, by path.
 TIMETABLE_PORTAL_UNITS: list[str] = ["apps.students.selectors.portal_units"]
+# Phase 8 M2: run after a register is submitted (absence alerts arrive in M5).
+ATTENDANCE_SUBMITTED_HANDLERS: list[str] = []
 STUDENTS_ASSIGNED_UNITS: list[str] = [
     "apps.students.selectors.taught_units",
     "apps.staff.selectors.advised_units",
@@ -397,6 +399,9 @@ SPECTACULAR_SETTINGS: dict[str, Any] = {
         "StaffStatusEnum": "apps.staff.models.StaffProfile.Status",
         "DepartmentKindEnum": "apps.staff.models.Department.Kind",
         "ImportJobStatusEnum": "apps.students.models.ImportJob.Status",
+        "AttendanceStatusEnum": "apps.attendance.models.Status",
+        "RegisterKindEnum": "apps.attendance.models.Register.Kind",
+        "RegisterStateEnum": "apps.attendance.models.Register.State",
     },
 }
 API_DOCS_ENABLED: bool = env.bool("API_DOCS_ENABLED", default=False)
