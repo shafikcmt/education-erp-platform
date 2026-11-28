@@ -286,6 +286,7 @@ See `DECISION_LOG.md`.
   - the database-level guard for clashes between overlapping periods of different bell schedules moves to Phase 18 (same-period clashes stay constraint-backed).
 - **Phase 8 plan proposed (`docs/phase-08-plan`):** `docs/plans/PHASE_08_PLAN.md` covers registers and records, statuses and modes as Studio settings, marking by relationship scope with optimistic concurrency, edit window and lock, staff attendance, leave requests through workflows, absence alerts and thresholds, reports and the portal, the device API design and the partition evaluation. Nine owner questions with recommendations. ADR-076 to ADR-080 are Proposed.
 - **Verification:** documentation only; no code changed, so no test suite was re-run in this step.
+- **CI finding fixed on the same branch:** the first CI run failed only in Trivy: CVE-2026-124851 (HIGH, `libzstd1`), fixed by Debian (`1.5.4+dfsg2-5+deb12u1`) after the base image was pinned. The backend runtime stage now upgrades `libzstd1` with the same fail-closed pattern as linux-pam (`apt-get update --error-on=any` and a version check). It could not be built locally: the Debian mirrors are blocked from this environment, so GitHub CI is the verification.
 - **Next:** the owner's decision on the Phase 8 plan and Q1–Q9. No Phase 8 code is written before approval.
 
 ## Known gaps / open questions
