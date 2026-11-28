@@ -318,7 +318,7 @@ See `DECISION_LOG.md`.
 ### 2026-11-28 — Session 31 (continued): Phase 8 M5
 - **M4:** [PR #91](https://github.com/shafikcmt/education-erp-platform/pull/91) — GitHub CI **8/8 success**; squash-merged pinned to `537bdcf` → **`04962fc`** (tree identical to the head).
 - **M5 (`feat/phase-08-m5`):** absence alerts once per student per day; figures and percentages; P29 nightly lock and low-attendance flags with class-teacher notices; the `attendance.flag` rule namespace; `attendance.*` variables for promotion rules (plan §18.5 A25–A29).
-- **Verification (local):** pending the full suite.
+- **Verification (local, not GitHub CI):** backend **1152 passed, 9 skipped** (6 new alert, figure and flag tests; catalogue test now P1–P29); ruff, format, mypy (451 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI unchanged (no API in M5); Prettier clean.
 - **Next:** M6 (reports, CSV, the monthly register template, portal endpoints; `safe_cell` moved to core).
 
 ## Known gaps / open questions
