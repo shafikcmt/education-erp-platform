@@ -242,3 +242,47 @@ class LeaveRequest(TenantScopedModel):
 
     def __str__(self) -> str:
         return f"leave {self.start_date}..{self.end_date} {self.state}"
+
+
+class AbsenceAlert(TenantScopedModel):
+    """One absence alert per student and date (Phase 8 M5, ADR-078): the unique key makes the
+    alert once a day even when several period registers mark the student absent."""
+
+    institution = _fk("tenancy.Institution")
+    student = _fk("students.Student")
+    date = models.DateField()
+    recipients = models.PositiveSmallIntegerField(default=0)
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "attendance_absencealert"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "student", "date"], name="attendance_alert_once_a_day"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"alert {self.student_id} {self.date}"
+
+
+class StudentFlag(TenantScopedModel):
+    """A student currently flagged for low attendance in a year (Phase 8 M5, P29): class
+    teachers are told once when the flag appears; the row is removed when it clears."""
+
+    institution = _fk("tenancy.Institution")
+    student = _fk("students.Student")
+    year = _fk("academics.AcademicYear")
+    percent = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
+    by_rule = models.BooleanField(default=False)
+    flagged_on = models.DateField()
+
+    class Meta(TenantScopedModel.Meta):
+        db_table = "attendance_studentflag"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["tenant", "student", "year"], name="attendance_flag_unique"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"flag {self.student_id} {self.year_id}"

@@ -98,3 +98,12 @@ SETTINGS["attendance.leave_workflow"] = {
     "scopes": ["tenant", "institution"],
 }
 WORKFLOW_SUBJECTS = {"attendance.leave_request": {"label": "Leave request"}}
+
+# Phase 8 M5 (ADR-078): a tenant rule that flags a student (besides the threshold percentage).
+RULE_NAMESPACES = {
+    "attendance.flag": {
+        "description": "Flag a student for attention when the rule is true",
+        "variables": ["attendance.*", "today"],
+        "result": "boolean",
+    },
+}

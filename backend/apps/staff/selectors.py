@@ -92,3 +92,17 @@ def advised_units(actor: Any, memberships: list[Any]) -> dict[Any, set[Any]]:
     for institution_id, unit_id in rows:
         units.setdefault(institution_id, set()).add(unit_id)
     return units
+
+
+def advisor_memberships(year_id: Any, unit_ids: set[Any]) -> dict[Any, list[Any]]:
+    """Logins of the active class teachers of each unit in the year (Phase 8 M5 notices)."""
+    rows = UnitAdvisor.objects.filter(
+        year_id=year_id,
+        unit_id__in=unit_ids,
+        staff__status=StaffProfile.Status.ACTIVE,
+        staff__membership_id__isnull=False,
+    ).values_list("unit_id", "staff__membership_id")
+    out: dict[Any, list[Any]] = {}
+    for unit, membership in rows:
+        out.setdefault(unit, []).append(membership)
+    return out

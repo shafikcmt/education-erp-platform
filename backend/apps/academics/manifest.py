@@ -45,7 +45,8 @@ PERMISSIONS = [
 RULE_NAMESPACES = {
     "academics.promotion": {
         "description": "Promote a student when the rule is true",
-        "variables": ["student.*", "today"],
+        # Phase 8 M5: attendance figures of the student's current year (``attendance`` hook).
+        "variables": ["student.*", "attendance.*", "today"],
         "result": "boolean",
     },
 }
