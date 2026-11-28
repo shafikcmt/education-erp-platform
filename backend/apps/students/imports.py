@@ -38,6 +38,7 @@ from django.utils import timezone
 from django.utils.module_loading import import_string
 
 from apps.audit.services import record
+from apps.core.spreadsheets import safe_cell  # shared with reports (Phase 8 M6)
 from apps.core.tenancy import require_tenant
 from apps.rbac.engine import ScopeTarget, require_perm
 from apps.students.models import ImportJob
@@ -53,7 +54,6 @@ MAX_COLUMNS = 60
 MAX_UNZIPPED = 40 * 1024 * 1024
 MAX_RATIO = 100
 RETENTION_DAYS = 30
-_FORMULA_START = ("=", "+", "-", "@", "\t", "\r")
 
 
 class RowKind(Protocol):
@@ -363,12 +363,6 @@ def run(job_id: Any, *, apply_rows: bool, content: bytes | None = None) -> Impor
         metadata={"dry_run": not apply_rows, "ok": job.ok_rows, "failed": job.error_rows},
     )
     return job
-
-
-def safe_cell(value: Any) -> str:
-    """A report cell that spreadsheets never evaluate as a formula."""
-    text = str(value if value is not None else "")
-    return f"'{text}" if text.startswith(_FORMULA_START) else text
 
 
 def report_csv(job: ImportJob) -> str:

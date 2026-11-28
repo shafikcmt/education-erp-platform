@@ -154,3 +154,71 @@ class StaffDaySerializer(serializers.Serializer[Any]):
     status = serializers.ChoiceField(choices=Status.choices)
     check_in = serializers.TimeField(allow_null=True)
     check_out = serializers.TimeField(allow_null=True)
+
+
+class DailyStatusSerializer(serializers.Serializer[Any]):
+    unit = serializers.UUIDField()
+    unit_name = serializers.CharField()
+    register = serializers.UUIDField(allow_null=True)
+    state = serializers.ChoiceField(choices=["open", "submitted", "locked", "missing"])
+    marked = serializers.IntegerField()
+    absent = serializers.IntegerField()
+
+
+class GridRowSerializer(serializers.Serializer[Any]):
+    student_id = serializers.UUIDField()
+    name = serializers.CharField()
+    number = serializers.CharField()
+    roll_number = serializers.CharField()
+    cells = serializers.DictField(child=serializers.CharField())
+    percent = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+
+
+class UnitMonthSerializer(serializers.Serializer[Any]):
+    unit = serializers.UUIDField()
+    unit_name = serializers.CharField()
+    month = serializers.CharField()
+    dates = serializers.ListField(child=serializers.CharField())
+    rows = GridRowSerializer(many=True)
+
+
+class StudentSummarySerializer(serializers.Serializer[Any]):
+    student_id = serializers.UUIDField()
+    name = serializers.CharField()
+    number = serializers.CharField()
+    unit = serializers.CharField()
+    roll_number = serializers.CharField()
+    attended_days = serializers.IntegerField()
+    absent_days = serializers.IntegerField()
+    late_days = serializers.IntegerField()
+    not_counted_days = serializers.IntegerField()
+    percent = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+
+
+class StaffGridRowSerializer(serializers.Serializer[Any]):
+    staff_id = serializers.UUIDField()
+    name = serializers.CharField()
+    number = serializers.CharField()
+    cells = serializers.DictField(child=serializers.CharField())
+    absent = serializers.IntegerField()
+
+
+class StaffMonthSerializer(serializers.Serializer[Any]):
+    month = serializers.CharField()
+    dates = serializers.ListField(child=serializers.CharField())
+    rows = StaffGridRowSerializer(many=True)
+
+
+class RegisterDocumentSerializer(serializers.Serializer[Any]):
+    html = serializers.CharField()
+
+
+class PortalAttendanceSerializer(serializers.Serializer[Any]):
+    student = serializers.UUIDField()
+    month = serializers.CharField()
+    days = serializers.DictField(child=serializers.CharField())
+    percent = serializers.DecimalField(max_digits=5, decimal_places=2, allow_null=True)
+    absent_days = serializers.IntegerField()
+    late_days = serializers.IntegerField()
+    flagged = serializers.BooleanField()
+    leave = LeaveSerializer(many=True)

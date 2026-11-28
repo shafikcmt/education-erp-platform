@@ -341,6 +341,15 @@ Absence alerts run as tenant tasks (no platform scope).
 | A28 | Migrations `0004` (the two tables) and `0005` (composite keys, standard RLS, reversal refused). Platform catalogue now P1–P29. New selectors: `students.notice_memberships`, `students.active_enrollments`, `students.current_year_id`, `staff.advisor_memberships` |
 | A29 | **Not in M5:** a correction from absent to present sends no follow-up (plan §7); SMS waits for Phase 14 (ADR-081 Q5). Flags are computed over the year to date; a per-term window can come with reports (M6) |
 
+### 18.6 M6 — reports, CSV, the monthly register and the portal (2026-11-28, branch `feat/phase-08-m6`)
+
+| # | Note |
+|---|---|
+| A30 | `attendance/reports.py`: daily register status per unit (taken or missing, state, marked, absent), a unit's students x days month with percentages, per-student figures over a range (at most a year), and the staff month. **Access by permission combination:** student reports need `attendance.report.view` plus `attendance.record.view` or `…manage`; the staff report needs `attendance.report.view` plus `attendance.staff.view` or `…mark`; held only at a campus, they cover that campus. So HR sees the staff report but not students' attendance |
+| A31 | CSV for every report (`?export=csv`), formula-safe: `safe_cell` moved from the Phase 7 import to `apps/core/spreadsheets.py` (with `csv_text`), used by both (no duplicated code). Template kind `attendance.monthly_register` (sandboxed, ADR-056) renders the printable register; server PDF stays in Phase 9 |
+| A32 | **Deviation (module boundary):** the portal view lives in `attendance` as `attendance/portal/students/{id}/` rather than under `/portal/children/`, because `parent_portal` does not depend on `attendance`. It shows only one's children or oneself (`students.child.view` / `…profile.view_own`, checked through `students.selectors.relation_to`): the month's days, year-to-date figures, whether flagged, and leave requests |
+| A33 | New read selectors in `students`: `active_units`, `active_enrollments_in`. API answers 404 when the caller lacks the report scope for an institution or unit (the permission class answers 403 without any report code) |
+
 ### Change notes
 - 2026-11-28 — Created (Proposed) after the owner approved Phase 7.
 - 2026-11-28 — Approved by the owner with all recommended answers (ADR-081); ADR-076 to ADR-080 Accepted.
@@ -349,3 +358,4 @@ Absence alerts run as tenant tasks (no platform scope).
 - 2026-11-28 — §18.3 appended: M3 notes A15–A20.
 - 2026-11-28 — §18.4 appended: M4 notes A21–A24.
 - 2026-11-28 — §18.5 appended: M5 notes A25–A29.
+- 2026-11-28 — §18.6 appended: M6 notes A30–A33.

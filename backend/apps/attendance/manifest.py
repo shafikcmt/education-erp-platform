@@ -107,3 +107,31 @@ RULE_NAMESPACES = {
         "result": "boolean",
     },
 }
+
+# Phase 8 M6: a printable monthly register (sandboxed template, ADR-056); server PDF in Phase 9.
+TEMPLATE_KINDS = {
+    "attendance.monthly_register": {
+        "format": "html",
+        "subject": False,
+        "max_output": 200_000,
+        "variables": {
+            "unit": "Class, section or batch",
+            "month": "Month (YYYY-MM)",
+            "days": "Dates with registers",
+            "rows": "Students: name, roll, cells (one status per date), percent",
+        },
+        "sample": {
+            "unit": "Six A",
+            "month": "2027-03",
+            "days": ["2027-03-01", "2027-03-02"],
+            "rows": [
+                {
+                    "name": "A. Rahman",
+                    "roll": "1",
+                    "cells": ["present", "absent"],
+                    "percent": "50.00",
+                },
+            ],
+        },
+    },
+}

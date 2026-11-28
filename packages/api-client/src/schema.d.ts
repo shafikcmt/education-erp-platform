@@ -878,6 +878,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attendance/portal/students/{student_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A child's (or my own) attendance month, figures and leave
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_portal_students_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/attendance/registers/": {
         parameters: {
             query?: never;
@@ -982,6 +1003,111 @@ export interface paths {
          *     authenticated sessions).
          */
         post: operations["attendance_registers_unlock_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/reports/daily/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Each unit's daily register on a date (taken or missing)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_reports_daily_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/reports/staff-month/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The staff monthly register (staff x days)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_reports_staff_month_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/reports/students/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Per-student attendance over a date range
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_reports_students_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/reports/unit-month/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A unit's monthly register (students x days)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_reports_unit_month_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/reports/unit-month/document/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The monthly register rendered from a Studio template (HTML)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_reports_unit_month_document_retrieve"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -5296,6 +5422,24 @@ export interface components {
         CycleStatusRequest: {
             status: components["schemas"]["AdmissionCycleStatusEnum"];
         };
+        DailyStatus: {
+            /** Format: uuid */
+            unit: string;
+            unit_name: string;
+            /** Format: uuid */
+            register: string | null;
+            state: components["schemas"]["DailyStatusStateEnum"];
+            marked: number;
+            absent: number;
+        };
+        /**
+         * @description * `open` - open
+         *     * `submitted` - submitted
+         *     * `locked` - locked
+         *     * `missing` - missing
+         * @enum {string}
+         */
+        DailyStatusStateEnum: "open" | "submitted" | "locked" | "missing";
         /**
          * @description * `offered` - offered
          *     * `rejected` - rejected
@@ -5561,6 +5705,18 @@ export interface components {
             /** Format: uuid */
             role: string;
             reason: string;
+        };
+        GridRow: {
+            /** Format: uuid */
+            student_id: string;
+            name: string;
+            number: string;
+            roll_number: string;
+            cells: {
+                [key: string]: string;
+            };
+            /** Format: decimal */
+            percent: string | null;
         };
         Guardian: {
             /** Format: uuid */
@@ -6428,6 +6584,20 @@ export interface components {
             readonly mfa_enabled: boolean;
             readonly active_sessions: number;
         };
+        PortalAttendance: {
+            /** Format: uuid */
+            student: string;
+            month: string;
+            days: {
+                [key: string]: string;
+            };
+            /** Format: decimal */
+            percent: string | null;
+            absent_days: number;
+            late_days: number;
+            flagged: boolean;
+            leave: components["schemas"]["Leave"][];
+        };
         PortalInvite: {
             /** Format: uuid */
             readonly id: string;
@@ -6629,6 +6799,9 @@ export interface components {
             can_mark: boolean;
             can_manage: boolean;
             outside_window: boolean;
+        };
+        RegisterDocument: {
+            html: string;
         };
         /**
          * @description * `daily` - Daily
@@ -6944,6 +7117,16 @@ export interface components {
             check_out?: string | null;
             remark?: string;
         };
+        StaffGridRow: {
+            /** Format: uuid */
+            staff_id: string;
+            name: string;
+            number: string;
+            cells: {
+                [key: string]: string;
+            };
+            absent: number;
+        };
         StaffLinksRequest: {
             /** Format: uuid */
             campus?: string | null;
@@ -6955,6 +7138,11 @@ export interface components {
             membership?: string | null;
             status?: components["schemas"]["StaffStatusEnum"];
             employment_type?: components["schemas"]["EmploymentTypeEnum"];
+        };
+        StaffMonth: {
+            month: string;
+            dates: string[];
+            rows: components["schemas"]["StaffGridRow"][];
         };
         StaffProfile: {
             /** Format: uuid */
@@ -7178,6 +7366,20 @@ export interface components {
          * @enum {string}
          */
         StudentStatusEnum: "active" | "inactive" | "transferred" | "alumni" | "withdrawn";
+        StudentSummary: {
+            /** Format: uuid */
+            student_id: string;
+            name: string;
+            number: string;
+            unit: string;
+            roll_number: string;
+            attended_days: number;
+            absent_days: number;
+            late_days: number;
+            not_counted_days: number;
+            /** Format: decimal */
+            percent: string | null;
+        };
         Subject: {
             /** Format: uuid */
             readonly id: string;
@@ -7592,6 +7794,14 @@ export interface components {
             capacity?: number | null;
             /** @default 0 */
             order: number;
+        };
+        UnitMonth: {
+            /** Format: uuid */
+            unit: string;
+            unit_name: string;
+            month: string;
+            dates: string[];
+            rows: components["schemas"]["GridRow"][];
         };
         UnlockRequest: {
             reason: string;
@@ -8857,6 +9067,29 @@ export interface operations {
             };
         };
     };
+    attendance_portal_students_retrieve: {
+        parameters: {
+            query?: {
+                month?: string;
+            };
+            header?: never;
+            path: {
+                student_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PortalAttendance"];
+                };
+            };
+        };
+    };
     attendance_registers_list: {
         parameters: {
             query: {
@@ -8995,6 +9228,128 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_reports_daily_list: {
+        parameters: {
+            query: {
+                date?: string;
+                /** @description 'csv' downloads the report */
+                export?: string;
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DailyStatus"][];
+                };
+            };
+        };
+    };
+    attendance_reports_staff_month_retrieve: {
+        parameters: {
+            query: {
+                /** @description 'csv' downloads the report */
+                export?: string;
+                institution: string;
+                month: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffMonth"];
+                };
+            };
+        };
+    };
+    attendance_reports_students_list: {
+        parameters: {
+            query: {
+                end: string;
+                /** @description 'csv' downloads the report */
+                export?: string;
+                institution: string;
+                start: string;
+                unit?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StudentSummary"][];
+                };
+            };
+        };
+    };
+    attendance_reports_unit_month_retrieve: {
+        parameters: {
+            query: {
+                /** @description 'csv' downloads the report */
+                export?: string;
+                month: string;
+                unit: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnitMonth"];
+                };
+            };
+        };
+    };
+    attendance_reports_unit_month_document_retrieve: {
+        parameters: {
+            query: {
+                locale?: string;
+                month: string;
+                template: string;
+                unit: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDocument"];
                 };
             };
         };

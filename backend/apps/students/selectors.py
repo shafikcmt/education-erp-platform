@@ -296,3 +296,31 @@ def active_enrollments(year_id: Any) -> dict[Any, Any]:
             "student_id", "unit_id"
         )
     )
+
+
+def active_units(institution_id: Any) -> set[Any]:
+    """Units with active enrollments in the institution (attendance reports, Phase 8 M6)."""
+    return set(
+        Enrollment.objects.filter(
+            institution_id=institution_id, status=Enrollment.Status.ACTIVE
+        ).values_list("unit_id", flat=True)
+    )
+
+
+def active_enrollments_in(
+    institution_id: Any, campuses: set[Any] | None, unit_id: Any = None
+) -> list[dict[str, Any]]:
+    """Active enrollments of the institution (optionally of some campuses or one unit), with
+    the student's name and number (attendance reports, Phase 8 M6)."""
+    rows = Enrollment.objects.filter(institution_id=institution_id, status=Enrollment.Status.ACTIVE)
+    if campuses is not None:
+        rows = rows.filter(unit__campus_id__in=campuses)
+    if unit_id is not None:
+        rows = rows.filter(unit_id=unit_id)
+    return [
+        {"student_id": r["student_id"], "name": r["student__name"], "number": r["student__number"],
+         "unit": r["unit__name"], "roll_number": r["roll_number"]}
+        for r in rows.order_by("unit__code", "roll_number", "student__name").values(
+            "student_id", "student__name", "student__number", "unit__name", "roll_number"
+        )[:5000]
+    ]  # fmt: skip
