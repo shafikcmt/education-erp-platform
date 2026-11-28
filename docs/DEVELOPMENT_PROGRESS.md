@@ -299,7 +299,7 @@ See `DECISION_LOG.md`.
 ### 2026-11-28 — Session 31 (continued): Phase 8 M2
 - **M1:** [PR #88](https://github.com/shafikcmt/education-erp-platform/pull/88) — GitHub CI **8/8 success**; squash-merged pinned to `900dede` → **`5113fc7`** (tree identical to the head).
 - **M2 (`feat/phase-08-m2`):** marking selectors, services and API: open, roster with approved leave, save with optimistic version (409), submit, edit window with manager reason, MFA and step-up, unlock, `lock_due`; audit events; host-route review entries; OpenAPI and client regenerated (plan §18.2 A9–A14).
-- **Verification (local):** see below once the full suite finishes.
+- **Verification (local, not GitHub CI):** backend **1138 passed, 9 skipped** (6 new marking tests; host-route review updated); attendance tests re-run after a fixture change (12 passed); ruff, format, mypy (442 files), import-linter 9/9, `makemigrations --check` clean; OpenAPI `--validate --fail-on-warn` clean (two serializer names changed to avoid a component clash) and client regenerated; frontend `tsc` clean; Prettier clean on the docs and client.
 - **Next:** M3 (leave requests: workflow subject, built-in single step, pre-fill and conflicts, attachments).
 
 ## Known gaps / open questions
