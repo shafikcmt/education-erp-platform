@@ -143,6 +143,13 @@ EVENTS: dict[str, frozenset[str]] = {
     "timetable.room.created": frozenset({"ref"}),
     "timetable.slot.created": frozenset({"weekday"}),
     "timetable.slot.deleted": frozenset(),
+    # attendance (Phase 8 M2); ids and statuses only, never remarks or reasons
+    "attendance.register.opened": frozenset({"kind", "date"}),
+    "attendance.register.saved": frozenset(
+        {"date", "changes", "changed", "late_edit", "reason_given", "after_submit"}
+    ),
+    "attendance.register.submitted": frozenset({"date", "students", "absent"}),
+    "attendance.register.unlocked": frozenset({"date", "reason_given"}),
     # staff (Phase 7 M3); names, phones and emails are never logged
     "staff.department.created": frozenset({"ref"}),
     "staff.department.updated": frozenset({"fields"}),

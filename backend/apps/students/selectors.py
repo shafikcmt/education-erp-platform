@@ -202,3 +202,35 @@ def portal_units(actor: Any) -> set[Any]:
             "unit_id", flat=True
         )
     )
+
+
+def unit_roster(unit_ids: set[Any], year_id: Any, on: Any) -> list[dict[str, Any]]:
+    """Students enrolled in one of ``unit_ids`` for the year on the date ``on`` (an enrollment
+    covers its start date up to its end date, if any): the roster of an attendance register
+    (Phase 8 M2). Callers authorise; ordered by roll number, then name."""
+    rows = (
+        Enrollment.objects.filter(unit_id__in=unit_ids, year_id=year_id, start_date__lte=on)
+        .filter(Q(end_date__isnull=True) | Q(end_date__gte=on))
+        .values("student_id", "student__name", "student__number", "roll_number")
+        .order_by("roll_number", "student__name", "student_id")
+    )
+    seen: set[Any] = set()
+    out = []
+    for row in rows:
+        if row["student_id"] in seen:  # moved within the year: the first row wins
+            continue
+        seen.add(row["student_id"])
+        out.append(
+            {
+                "student_id": row["student_id"],
+                "name": row["student__name"],
+                "number": row["student__number"],
+                "roll_number": row["roll_number"],
+            }
+        )
+    return out
+
+
+def units_below(unit_ids: set[Any]) -> set[Any]:
+    """The units and every unit below them (shared with attendance, Phase 8 M2)."""
+    return _below(set(unit_ids))

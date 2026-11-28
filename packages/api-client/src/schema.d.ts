@@ -768,6 +768,137 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attendance/due/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Registers I am expected to take on a date (default today)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_due_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/registers/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Registers of an institution on a date
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_registers_list"];
+        put?: never;
+        /**
+         * Open (or return) a daily or period register
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["attendance_registers_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/registers/{register_id}/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * A register with its roster
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_registers_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/registers/{register_id}/save/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save students' statuses (optimistic version)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["attendance_registers_save_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/registers/{register_id}/submit/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a register
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["attendance_registers_submit_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/registers/{register_id}/unlock/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Unlock a locked register (manager, reason, step-up)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["attendance_registers_unlock_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events/": {
         parameters: {
             query?: never;
@@ -4766,6 +4897,15 @@ export interface components {
             readonly granted_at: string;
             readonly reason: string;
         };
+        /**
+         * @description * `present` - Present
+         *     * `absent` - Absent
+         *     * `late` - Late
+         *     * `excused` - Excused
+         *     * `leave` - Leave
+         * @enum {string}
+         */
+        AttendanceStatusEnum: "present" | "absent" | "late" | "excused" | "leave";
         AuditEvent: {
             /** Format: uuid */
             readonly id: string;
@@ -5101,6 +5241,18 @@ export interface components {
             scan_state: string;
             expires_in: number;
         };
+        Due: {
+            kind: components["schemas"]["RegisterKindEnum"];
+            /** Format: uuid */
+            institution: string;
+            /** Format: uuid */
+            unit: string;
+            unit_name: string;
+            /** Format: uuid */
+            offering: string | null;
+            subject_name: string;
+            register: components["schemas"]["Register"] | null;
+        };
         EmailChangeRequest: {
             /** Format: email */
             new_email: string;
@@ -5162,6 +5314,13 @@ export interface components {
             limits: {
                 [key: string]: components["schemas"]["LimitUsage"];
             };
+        };
+        EntryRequest: {
+            /** Format: uuid */
+            student: string;
+            status: components["schemas"]["AttendanceStatusEnum"];
+            late_minutes?: number | null;
+            remark?: string;
         };
         Field: {
             /** Format: uuid */
@@ -5706,6 +5865,17 @@ export interface components {
             /** Format: decimal */
             credits?: string | null;
         };
+        OpenRequest: {
+            kind: components["schemas"]["RegisterKindEnum"];
+            /** Format: date */
+            date: string;
+            /** Format: uuid */
+            unit?: string | null;
+            /** Format: uuid */
+            offering?: string | null;
+            /** @default 1 */
+            sequence: number;
+        };
         /**
          * @description * `success` - Success
          *     * `failure` - Failure
@@ -6213,6 +6383,57 @@ export interface components {
         RecoveryCodes: {
             recovery_codes: string[];
         };
+        Register: {
+            /** Format: uuid */
+            readonly id: string;
+            /** Format: uuid */
+            readonly institution: string;
+            /** Format: uuid */
+            readonly campus: string | null;
+            /** Format: uuid */
+            readonly year: string;
+            /** Format: uuid */
+            readonly term: string | null;
+            /** Format: uuid */
+            readonly unit: string;
+            readonly unit_name: string;
+            /** Format: date */
+            readonly date: string;
+            readonly kind: components["schemas"]["RegisterKindEnum"];
+            /** Format: uuid */
+            readonly offering: string | null;
+            /** @default  */
+            readonly subject_name: string;
+            readonly sequence: number;
+            readonly state: components["schemas"]["RegisterStateEnum"];
+            /** Format: date-time */
+            readonly submitted_at: string | null;
+            /** Format: date-time */
+            readonly locked_at: string | null;
+            readonly version: number;
+            /** Format: uuid */
+            readonly taken_by: string | null;
+        };
+        RegisterDetail: {
+            register: components["schemas"]["Register"];
+            roster: components["schemas"]["RosterEntry"][];
+            can_mark: boolean;
+            can_manage: boolean;
+            outside_window: boolean;
+        };
+        /**
+         * @description * `daily` - Daily
+         *     * `period` - Period
+         * @enum {string}
+         */
+        RegisterKindEnum: "daily" | "period";
+        /**
+         * @description * `open` - Open
+         *     * `submitted` - Submitted
+         *     * `locked` - Locked
+         * @enum {string}
+         */
+        RegisterStateEnum: "open" | "submitted" | "locked";
         RegistryReasonRequest: {
             reason: string;
         };
@@ -6284,6 +6505,18 @@ export interface components {
             campus?: string | null;
             capacity?: number | null;
         };
+        RosterEntry: {
+            /** Format: uuid */
+            student_id: string;
+            name: string;
+            number: string;
+            roll_number: string;
+            status: components["schemas"]["AttendanceStatusEnum"];
+            late_minutes: number | null;
+            remark: string;
+            status_source: components["schemas"]["StatusSourceEnum"];
+            on_leave: boolean;
+        };
         RuleDraftRequest: {
             namespace: string;
             key: string;
@@ -6298,6 +6531,11 @@ export interface components {
         };
         RuleTestResult: {
             results: unknown;
+        };
+        SaveRequest: {
+            version: number;
+            entries: components["schemas"]["EntryRequest"][];
+            reason?: string;
         };
         /**
          * @description * `pending` - Pending
@@ -6576,6 +6814,13 @@ export interface components {
             name: string;
             status: string;
         };
+        /**
+         * @description * `saved` - saved
+         *     * `leave` - leave
+         *     * `default` - default
+         * @enum {string}
+         */
+        StatusSourceEnum: "saved" | "leave" | "default";
         StatusTest: {
             name: string;
             /** Format: date-time */
@@ -6698,6 +6943,9 @@ export interface components {
             subject_type: string;
             /** Format: decimal */
             credits?: string | null;
+        };
+        SubmitRequest: {
+            version: number;
         };
         SubscribedAddOn: {
             code: string;
@@ -7083,6 +7331,9 @@ export interface components {
             capacity?: number | null;
             /** @default 0 */
             order: number;
+        };
+        UnlockRequest: {
+            reason: string;
         };
         UploadRequestRequest: {
             purpose: string;
@@ -8209,6 +8460,169 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TestSeat"];
+                };
+            };
+        };
+    };
+    attendance_due_list: {
+        parameters: {
+            query?: {
+                date?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Due"][];
+                };
+            };
+        };
+    };
+    attendance_registers_list: {
+        parameters: {
+            query: {
+                date?: string;
+                institution: string;
+                unit?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Register"][];
+                };
+            };
+        };
+    };
+    attendance_registers_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpenRequest"];
+            };
+        };
+        responses: {
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_registers_retrieve: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                register_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_registers_save_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                register_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_registers_submit_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                register_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmitRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_registers_unlock_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                register_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UnlockRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RegisterDetail"];
                 };
             };
         };

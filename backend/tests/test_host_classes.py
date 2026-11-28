@@ -85,6 +85,13 @@ TENANT_HOST_ROUTES = {
     "api/v1/timetable/slots/": False,
     "api/v1/timetable/slots/<str:slot_id>/": False,
     "api/v1/timetable/my/": False,
+    # Phase 8 M2: attendance registers (members only)
+    "api/v1/attendance/due/": False,
+    "api/v1/attendance/registers/": False,
+    "api/v1/attendance/registers/<str:register_id>/": False,
+    "api/v1/attendance/registers/<str:register_id>/save/": False,
+    "api/v1/attendance/registers/<str:register_id>/submit/": False,
+    "api/v1/attendance/registers/<str:register_id>/unlock/": False,
     # Phase 7 M8: portal invitations and the portal (members only)
     "api/v1/students/<str:student_id>/invite/": False,
     "api/v1/guardians/<str:guardian_id>/invite/": False,
