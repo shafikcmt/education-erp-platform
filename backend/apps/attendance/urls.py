@@ -33,4 +33,11 @@ urlpatterns = [
     path(
         "attendance/leave/<str:leave_id>/cancel/", v.LeaveCancelView.as_view(), name="leave-cancel"
     ),
+    path("attendance/staff/register/", v.StaffRegisterView.as_view(), name="staff-register"),
+    path(
+        "attendance/staff/register/save/",
+        v.StaffRegisterSaveView.as_view(),
+        name="staff-register-save",
+    ),
+    path("attendance/staff/mine/", v.MyStaffDaysView.as_view(), name="staff-mine"),
 ]

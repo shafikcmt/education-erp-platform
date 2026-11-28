@@ -286,3 +286,103 @@ class LeaveCancelView(AttendanceView):
         with service_errors():
             row = leave.cancel(actor=_actor(request), leave=row, request=request._request)
         return Response(s.LeaveSerializer(row).data)
+
+
+# --------------------------------------------------------------------------- staff (M4)
+STAFF_MARK, STAFF_VIEW, STAFF_OWN = (
+    "attendance.staff.mark",
+    "attendance.staff.view",
+    "staff.profile.view_own",
+)
+
+
+def _staff_register(actor: User, institution_id: Any, on: Any, campus: Any = None) -> Any:
+    from apps.attendance import staff_register
+
+    return {
+        "institution": institution_id,
+        "date": on,
+        "outside_window": staff_register.outside_window(institution_id, on),
+        "can_mark": staff_register.staff_in_scope(actor, institution_id, STAFF_MARK).exists(),
+        "rows": staff_register.register(actor, institution_id, on, campus),
+    }
+
+
+class StaffRegisterView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(STAFF_VIEW, STAFF_MARK)]
+
+    @extend_schema(
+        tags=TAGS, summary="The staff register of an institution on a date",
+        parameters=[OpenApiParameter("institution", str, required=True),
+                    OpenApiParameter("date", str), OpenApiParameter("campus", str)],
+        responses=s.StaffRegisterSerializer,
+    )  # fmt: skip
+    def get(self, request: Request) -> Response:
+        from apps.attendance import staff_register
+
+        actor, params = _actor(request), request.query_params
+        try:
+            import uuid
+
+            inst = uuid.UUID(params.get("institution") or "")
+            if not staff_register.can_see(actor, inst):
+                raise NotFound()
+            raw = params.get("date")
+            on = (
+                s.OpenSerializer().fields["date"].to_internal_value(raw)
+                if raw
+                else services.today()
+            )
+            campus = uuid.UUID(params["campus"]) if params.get("campus") else None
+            data = _staff_register(actor, inst, on, campus)
+        except (ValueError, ValidationError):
+            raise NotFound() from None
+        return Response(s.StaffRegisterSerializer(data).data)
+
+
+class StaffRegisterSaveView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(STAFF_MARK)]
+
+    @extend_schema(tags=TAGS, summary="Save the staff register (step-up past the edit window)",
+                   request=s.StaffSaveSerializer, responses=s.StaffRegisterSerializer)  # fmt: skip
+    def post(self, request: Request) -> Response:
+        from apps.attendance import staff_register
+
+        v = _valid(s.StaffSaveSerializer, request.data)
+        actor = _actor(request)
+        if not staff_register.can_see(actor, v["institution"]):
+            raise NotFound()
+        if staff_register.outside_window(v["institution"], v["date"]) and not state.step_up_fresh(
+            request._request
+        ):
+            raise errors.StepUpRequired()
+        entries = [{**e, "staff": str(e["staff"])} for e in v["entries"]]
+        with service_errors():
+            staff_register.save(
+                actor=actor, institution=v["institution"], on=v["date"], entries=entries,
+                reason=v.get("reason", ""), request=request._request,
+            )  # fmt: skip
+        return Response(s.StaffRegisterSerializer(
+            _staff_register(actor, v["institution"], v["date"])).data)  # fmt: skip
+
+
+class MyStaffDaysView(AttendanceView):
+    permission_classes = [HasTenantAnyPermission(STAFF_OWN)]
+
+    @extend_schema(
+        tags=TAGS, summary="My own staff attendance in a month (YYYY-MM, default this month)",
+        parameters=[OpenApiParameter("month", str)], responses=s.StaffDaySerializer(many=True),
+    )  # fmt: skip
+    def get(self, request: Request) -> Response:
+        import datetime as dt
+
+        from apps.attendance import staff_register
+
+        raw = request.query_params.get("month") or services.today().strftime("%Y-%m")
+        try:
+            start = dt.date.fromisoformat(f"{raw}-01")
+        except ValueError:
+            raise NotFound() from None
+        end = (start.replace(day=28) + dt.timedelta(days=4)).replace(day=1) - dt.timedelta(1)
+        rows = staff_register.my_days(_actor(request), start, end)
+        return Response(s.StaffDaySerializer(rows, many=True).data)

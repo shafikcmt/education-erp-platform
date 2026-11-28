@@ -988,6 +988,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/attendance/staff/mine/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My own staff attendance in a month (YYYY-MM, default this month)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_staff_mine_list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/staff/register/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The staff register of an institution on a date
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        get: operations["attendance_staff_register_retrieve"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/attendance/staff/register/save/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Save the staff register (step-up past the edit window)
+         * @description Enforce CSRF on unsafe methods for anonymous callers too (login CSRF; DRF only checks
+         *     authenticated sessions).
+         */
+        post: operations["attendance_staff_register_save_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/audit-events/": {
         parameters: {
             query?: never;
@@ -6862,6 +6925,25 @@ export interface components {
             number: string;
             links?: components["schemas"]["StaffLinksRequest"];
         };
+        StaffDay: {
+            /** Format: date */
+            date: string;
+            status: components["schemas"]["AttendanceStatusEnum"];
+            /** Format: time */
+            check_in: string | null;
+            /** Format: time */
+            check_out: string | null;
+        };
+        StaffEntryRequest: {
+            /** Format: uuid */
+            staff: string;
+            status: components["schemas"]["AttendanceStatusEnum"];
+            /** Format: time */
+            check_in?: string | null;
+            /** Format: time */
+            check_out?: string | null;
+            remark?: string;
+        };
         StaffLinksRequest: {
             /** Format: uuid */
             campus?: string | null;
@@ -6934,6 +7016,39 @@ export interface components {
             };
             readonly advising: components["schemas"]["Advisor"][];
             readonly relation: string;
+        };
+        StaffRegister: {
+            /** Format: uuid */
+            institution: string;
+            /** Format: date */
+            date: string;
+            outside_window: boolean;
+            can_mark: boolean;
+            rows: components["schemas"]["StaffRow"][];
+        };
+        StaffRow: {
+            /** Format: uuid */
+            staff_id: string;
+            name: string;
+            number: string;
+            /** Format: uuid */
+            campus: string | null;
+            status: components["schemas"]["AttendanceStatusEnum"];
+            /** Format: time */
+            check_in: string | null;
+            /** Format: time */
+            check_out: string | null;
+            remark: string;
+            status_source: components["schemas"]["StatusSourceEnum"];
+            on_leave: boolean;
+        };
+        StaffSaveRequest: {
+            /** Format: uuid */
+            institution: string;
+            /** Format: date */
+            date: string;
+            entries: components["schemas"]["StaffEntryRequest"][];
+            reason?: string;
         };
         /**
          * @description * `active` - Active
@@ -8880,6 +8995,73 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["RegisterDetail"];
+                };
+            };
+        };
+    };
+    attendance_staff_mine_list: {
+        parameters: {
+            query?: {
+                month?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffDay"][];
+                };
+            };
+        };
+    };
+    attendance_staff_register_retrieve: {
+        parameters: {
+            query: {
+                campus?: string;
+                date?: string;
+                institution: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRegister"];
+                };
+            };
+        };
+    };
+    attendance_staff_register_save_create: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StaffSaveRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StaffRegister"];
                 };
             };
         };

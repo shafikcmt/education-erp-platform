@@ -97,6 +97,10 @@ TENANT_HOST_ROUTES = {
     "api/v1/attendance/leave/<str:leave_id>/": False,
     "api/v1/attendance/leave/<str:leave_id>/decide/": False,
     "api/v1/attendance/leave/<str:leave_id>/cancel/": False,
+    # Phase 8 M4: the staff register (members only)
+    "api/v1/attendance/staff/register/": False,
+    "api/v1/attendance/staff/register/save/": False,
+    "api/v1/attendance/staff/mine/": False,
     # Phase 7 M8: portal invitations and the portal (members only)
     "api/v1/students/<str:student_id>/invite/": False,
     "api/v1/guardians/<str:guardian_id>/invite/": False,
