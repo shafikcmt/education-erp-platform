@@ -818,6 +818,25 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
   - Q7: discipline notes are deferred until a retention decision.
   - Q8: guardian duplicates are matched by email or phone within the tenant only, with a staff merge.
 
+## ADR-075 — Phase 7 approval decisions
+
+- **Status:** Accepted (owner, 2026-11-28: "approval all ur recommended and continue develop same"; Phase 7 approved).
+- **Context:** the Phase 7 self-review (`security/PHASE_07_SECURITY_REVIEW.md` §3) and the completion report left one choice to the owner: whether clashes between overlapping periods of *different* bell schedules must be refused by the database before Phase 8.
+- **Decision:**
+  1. **Phase 7 is approved** with the residual risks of the self-review §3 accepted as recorded.
+  2. **Cross-schedule clashes stay service-checked until Phase 18.** Same-period clashes remain constraint-backed (ADR-071). A database-level guard for overlapping periods of different bell schedules (for example an exclusion constraint or a serialising lock) is added to the Phase 18 hardening list. The risk is two concurrent writers on overlapping periods of different schedules, which is rare in practice.
+- **Consequences:** no code change. Phase 8 planning may start (`plans/PHASE_08_PLAN.md`, Proposed).
+
+## ADR-076 to ADR-080 — Phase 8 (attendance)
+
+**Status:** **Proposed** (2026-11-28, with `plans/PHASE_08_PLAN.md` §15). Not built on before the owner approves the plan.
+
+- **ADR-076:** attendance registers (sessions) per unit, date and kind, with per-student records; fixed status categories (present, absent, late, excused, leave) with configurable labels; the mode is a Studio setting from the preset (v3 presets).
+- **ADR-077:** marking by relationship scope (assigned units and offerings) or `attendance.record.manage`; optimistic concurrency with a register version; an edit window, auto-lock and audited unlock; one audit event per save.
+- **ADR-078:** absence alerts in-app (optional email) to guardians with portal logins, once per student per day; the percentage counts registers taken; the `attendance.flag` rule namespace and the P29 nightly job.
+- **ADR-079:** the device-integration API is designed, not built, until a machine-credential path (ADR-028) is accepted.
+- **ADR-080:** `attendance_record` is partition-ready (date copied onto the row, tenant-first indexes) but not partitioned until a measured trigger (50 M rows or p95 > 200 ms in the Phase 18 benchmark); the evaluation is recorded.
+
 ### Change notes
 - 2026-11-05 — Initial log created (Phase 0).
 - 2026-11-05 — Owner approved ADR-009, ADR-010, ADR-012, ADR-013, ADR-014 (Accepted) and ADR-011 (Accepted with modification: Django session auth for browser app). Added ADR-028 (Proposed) for future mobile/third-party auth. No other ADR status changed.
@@ -847,3 +866,4 @@ Rev. 2 answers these points in plan §5.4, §6, §7 and §14. If accepted, this 
 - 2026-11-24 — Owner approved Phase 6 with all recommendations: ADR-067 added (Accepted): automatic offer on decline kept; score-only permission `admissions.test.score`. No other ADR changed.
 - 2026-11-24 — Added ADR-068 to ADR-073 (Proposed) with the Phase 7 plan. No existing ADR changed.
 - 2026-11-26 — Owner approved the Phase 7 plan with all recommendations: ADR-068 to ADR-073 Accepted; ADR-074 added (Accepted). No other ADR changed.
+- 2026-11-28 — Owner approved Phase 7: ADR-075 added (Accepted; cross-schedule clash guard moves to Phase 18). ADR-076 to ADR-080 added (Proposed) with the Phase 8 plan. No other ADR changed.
